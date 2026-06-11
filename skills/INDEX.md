@@ -27,7 +27,7 @@ Skills sobre skills y sobre el repositorio — para crear, auditar y estructurar
 
 | Skill | Descripción | Status |
 |-------|-------------|--------|
-| *(próximamente)* | | |
+| [coferlandia-software-dev](./engineering/coferlandia-software-dev/) | Proceso de control para tareas de desarrollo: estudio previo, plan aprobado, implementación, code review obligatoria y preparación de commit | active |
 
 ## Data
 
@@ -56,3 +56,4 @@ Skills sobre skills y sobre el repositorio — para crear, auditar y estructurar
 ---
 
 *Última actualización: 2026-06-11*
+
