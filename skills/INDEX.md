@@ -39,6 +39,9 @@ Convierte el logging tradicional en observabilidad comprensible por agentes. `ag
 | [logging-designer](./engineering/logging-designer/) | Estudia el sistema y define el modelo de observación: qué estados, decisiones y variables registrar | active |
 | [logging-instrumenter](./engineering/logging-instrumenter/) | Implementa/adapta el logging según el diseño, en NDJSON, sin alterar el comportamiento funcional | active |
 | [logging-analyst](./engineering/logging-analyst/) | Lee logs, reconstruye ejecuciones, detecta anomalías y compara corridas; separa hechos de hipótesis | active |
+| [logging-distiller](./engineering/logging-distiller/) | Compacta un período (hora/día/semana/mes) en un resumen factual, completo y trazable; destilación jerárquica | active |
+| [logging-fidelity-checker](./engineering/logging-fidelity-checker/) | Verifica que un resumen represente fielmente sus fuentes (cobertura, conteos, trazabilidad) y emite un veredicto | active |
+| [logging-philosopher](./engineering/logging-philosopher/) | Pensamiento profundo sobre resúmenes validados: causas, tendencias, riesgos, oportunidades; separa hechos/inferencias/hipótesis | active |
 | [logging-critic](./engineering/logging-critic/) | Evalúa si el log es realmente comprensible: gaps, variables ambiguas, redundancias; audita NDJSON | active |
 | [logging-curator](./engineering/logging-curator/) | Decide qué sugerencias incorporar sin inflar el log y mantiene la base de conocimiento acumulado | active |
 

@@ -42,8 +42,9 @@ la base de conocimiento; la distinción fact/interpretation/hypothesis es obliga
 
 ## Pasos
 
-1. **Recibir las sugerencias** del crítico (y las preguntas sin responder del analista),
-   clasificadas en *agregar* / *quitar* / *aclarar*.
+1. **Recibir las propuestas** de dos fuentes: el **crítico** (deficiencias del logging detectadas)
+   y el **filósofo** (nuevas variables o eventos que valdría observar), más las preguntas sin
+   responder del analista. Clasifícalas en *agregar* / *quitar* / *aclarar*.
 2. **Aplicar el criterio de valor a cada una.** Acepta una sugerencia de *agregar* solo si existe
    una pregunta real que hoy no se puede responder y este dato la responde. Acepta una de *quitar*
    si el dato no respondió ninguna pregunta en las últimas corridas. Ante duda en *agregar*,

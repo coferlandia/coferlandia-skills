@@ -35,6 +35,12 @@ analista): juzga si el **log mismo** permite entender qué pasó. Mira el log co
 agente que nunca vio el sistema y pregunta: *¿puedo responder las preguntas clave con solo este
 archivo?* Lo que falte, sobre o ambigüe, se vuelve una sugerencia concreta.
 
+Tus señales de entrada incluyen las **dificultades que toparon otros roles**: si el analista no
+pudo explicar un fallo, el destilador no pudo destilar un período, el fidelizador halló algo no
+verificable, o el filósofo no pudo confirmar una hipótesis por falta de datos, eso apunta a una
+deficiencia del logging que el crítico debe nombrar (variable ambigua, decisión sin causa, falta
+de métrica o correlación, ruido, evento importante no registrado).
+
 Lee primero `../agent-friendly-logging/references/log-format-spec.md` — su §7 "checklist de
 agent-friendly" es la vara contra la que criticas.
 

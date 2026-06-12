@@ -6,10 +6,12 @@ description: >
   nivel, componente, mensaje, correlación, excepciones, rotación), llevan el contexto semántico
   para que un agente que nunca vio el sistema reconstruya qué hizo, qué decidió y por qué. Define
   el formato canónico (header autoexplicativo + eventos NDJSON), los niveles de profundidad y el
-  ciclo de mejora continua, y una vista humana canónica del log (render Markdown + dashboard en
-  vivo). Enruta a los roles diseñador, instrumentador, analista, crítico y curador. Keywords:
-  logging, logs, observabilidad, trazabilidad, NDJSON, structured logging, correlation id,
-  diagnóstico, log agent-friendly, instrumentar, render markdown, dashboard de logs en vivo.
+  ciclo de mejora continua, una vista humana canónica del log (render Markdown + dashboard en
+  vivo) y una capa de destilación de períodos (resúmenes factuales jerárquicos, verificación de
+  fidelidad y análisis profundo). Enruta a los ocho roles: diseñador, instrumentador, analista,
+  destilador, fidelizador, filósofo, crítico y curador. Keywords: logging, logs, observabilidad,
+  trazabilidad, NDJSON, correlation id, diagnóstico, log agent-friendly, instrumentar, render
+  markdown, dashboard de logs, destilación, resumen de período, análisis de tendencias.
 when_to_use: >
   Actívala cuando el usuario quiera diseñar, implementar, leer, analizar, criticar o mejorar
   logging pensado para que lo interpreten agentes; cuando hable de "logs que un agente pueda
@@ -28,7 +30,7 @@ metadata:
   version: "1.0"
   category: engineering
   status: active
-  tested: "2026-06-11 — validada con _protocol/scripts/validate_skill.py (código 0); parser compartido aflog.py provee load/group/outcome/state_path/markers a render_log.py, reconstruct_run.py y audit_log.py (las 3 dan la misma reconstrucción que antes del refactor); render_log.py renderiza example-log.ndjson en Markdown (digest/timeline, marcadores ✅/❌/⚠); correlación anidada parent/child verificada en aflog, render_log y dashboard; dashboard.html con sintaxis JS validada (node --check) y agrupación coincidente con aflog.py."
+  tested: "2026-06-11 — validada con _protocol/scripts/validate_skill.py (código 0). Capa de log: aflog.py provee el parseo a render_log.py/reconstruct_run.py/audit_log.py; render_log.py rinde example-log.ndjson (digest/timeline); correlación anidada y dashboard.html (node --check) verificados. Capa de destilación: summary-format-spec.md definido; check_summary.py aprueba un resumen correcto (exit 0) y rechaza uno degradado (exit 1: cobertura, conteos, referencia)."
 ---
 
 ## Qué construye esta suite
@@ -45,52 +47,77 @@ La suite **no reemplaza** las herramientas de logging/monitoreo existentes; las 
 con contexto semántico y funcional, y aporta un ciclo agéntico para que el sistema explique su
 propia ejecución y los agentes le enseñen progresivamente qué registrar.
 
-## El formato — fuente de verdad única
+## Los formatos — fuente de verdad única
 
-El formato canónico (header autoexplicativo + eventos NDJSON, niveles de profundidad, distinción
-hecho/interpretación/hipótesis, base de conocimiento) vive en **un solo lugar**:
+Dos formatos canónicos, cada uno en **un solo lugar**:
 
-> **Lee `references/log-format-spec.md`** antes de diseñar, instrumentar, analizar o criticar un
-> log. Todas las skills de roles enlazan a ese archivo; no lo redefinas en otro lado.
-> Ejemplo trabajado en `references/example-log.ndjson`.
+> **`references/log-format-spec.md`** — el log crudo (una ejecución): header autoexplicativo +
+> eventos NDJSON, niveles de profundidad, hecho/interpretación/hipótesis, vista humana, base de
+> conocimiento. Léelo antes de diseñar, instrumentar, analizar o criticar. Ejemplo en
+> `references/example-log.ndjson`.
+>
+> **`references/summary-format-spec.md`** — la destilación temporal (un período): resumen Markdown
+> con bloque meta, jerarquía logs→hora→día→semana→mes, trazabilidad `[ref: …]` y veredicto de
+> fidelidad. Léelo antes de destilar, fidelizar o analizar tendencias.
 
-## Los cinco roles
+Las skills de roles enlazan a estos archivos; no redefinas los formatos en otro lado.
+
+## Los ocho roles
 
 Estos roles son **capacidades**, no necesariamente agentes separados: en sistemas pequeños los
-ejecuta un mismo agente en secuencia; en sistemas complejos se distribuyen. Cada uno tiene su
-skill:
+ejecuta un mismo agente en secuencia; en sistemas complejos se distribuyen. El destilador y el
+fidelizador corren bien con **modelos baratos** (método estricto); el filósofo conviene en
+**modelos de alta capacidad**. Cada uno tiene su skill:
 
 | Rol | Skill | Qué hace |
 |-----|-------|----------|
 | **Diseñador** | `logging-designer` | Estudia el sistema y define el **modelo de observación**: qué procesos, estados, decisiones y variables registrar. |
 | **Instrumentador** | `logging-instrumenter` | Implementa o adapta el logging según el diseño, **sin cambiar el comportamiento funcional** del sistema. |
-| **Analista** | `logging-analyst` | Lee los logs, reconstruye ejecuciones, detecta anomalías y compara corridas; formula explicaciones e hipótesis. |
-| **Crítico** | `logging-critic` | Evalúa si el log es **realmente comprensible**: datos faltantes, variables ambiguas, eventos redundantes, decisiones sin explicación. |
-| **Curador** | `logging-curator` | Decide qué sugerencias incorporar; evita tanto la falta de información como el crecimiento descontrolado del log. |
+| **Analista** | `logging-analyst` | Lee logs crudos, reconstruye ejecuciones concretas, detecta anomalías y compara corridas (comprensión **operativa**). |
+| **Destilador** | `logging-distiller` | Compacta un período (hora/día/semana/mes) en un resumen **factual, completo y trazable**; no interpreta. |
+| **Fidelizador** | `logging-fidelity-checker` | Verifica que un resumen represente fielmente sus fuentes (fidelidad, cobertura, trazabilidad) y emite un veredicto. |
+| **Filósofo** | `logging-philosopher` | Piensa en profundidad sobre resúmenes validados: causas, tendencias, riesgos, oportunidades (análisis **estratégico**). |
+| **Crítico** | `logging-critic` | Evalúa si las dificultades de los demás roles vienen de **deficiencias del logging**: variables ambiguas, decisiones sin causa, falta de métricas/correlación, ruido. |
+| **Curador** | `logging-curator` | Decide qué propuestas (del crítico y del filósofo) incorporar; evita tanto la falta de información como el crecimiento descontrolado. |
 
-## El ciclo de mejora continua
+## Los dos ciclos
 
-El núcleo de la suite es un lazo agéntico de aprendizaje. El logging evoluciona a partir de
-necesidades **reales** de análisis, no agregando datos indiscriminadamente:
+La suite combina dos lazos: el **ciclo de conocimiento** convierte logs en entendimiento; el
+**ciclo de mejora** convierte ese entendimiento en mejor instrumentación.
 
 ```
-1. logging-designer   → estudia el sistema y diseña el modelo de observación
-2. logging-instrumenter→ implementa/adapta la instrumentación
-3. (el sistema corre)  → genera ejecuciones reales
-4. logging-analyst     → reconstruye corridas y detecta qué NO puede responder
-5. logging-critic      → propone mejoras concretas (gaps, ambigüedades, redundancias)
-6. logging-curator     → decide qué incorporar (sin inflar el log)
-7. logging-designer    → refina el modelo  ──┐
-                                             └─► vuelve a 2, próximas corridas son más útiles
+Sistema → Logs → Analista → Destilador → Fidelizador → Filósofo → Crítico → Curador → Diseñador → Instrumentador → Sistema
+                 └────────────── ciclo de conocimiento ─────────────┘   └──────────── ciclo de mejora ────────────┘
 ```
+
+**Ciclo de conocimiento** (logs → entendimiento):
+1. (el sistema corre) → genera logs por rolling
+2. logging-analyst          → reconstruye ejecuciones concretas (y puede asistir al destilador)
+3. logging-distiller        → compacta el período en un resumen factual y trazable
+4. logging-fidelity-checker → verifica fidelidad; si falla, vuelve al destilador hasta aprobar
+5. logging-philosopher      → piensa sobre los resúmenes aprobados: patrones, riesgos, hipótesis
+
+**Ciclo de mejora** (entendimiento → mejor logging):
+6. logging-critic   → ¿las dificultades vienen de deficiencias del logging?
+7. logging-curator  → decide qué propuestas (crítico + filósofo) incorporar, sin inflar el log
+8. logging-designer / logging-instrumenter → evolucionan el modelo y la instrumentación → nuevo ciclo
+
+Regla esencial: **responsabilidades separadas.** El destilador conserva y compacta hechos; el
+fidelizador verifica que no se hayan deformado; el filósofo interpreta; el crítico evalúa la
+calidad de la observación; el curador decide qué cambios entran; diseñador e instrumentador
+evolucionan el logging. Solo los resúmenes **aprobados** se usan como fuente de períodos mayores o
+del análisis del filósofo.
 
 ## Cómo usar la suite
 
-1. Identifica en qué punto del ciclo está el usuario (diseñar desde cero, instrumentar, analizar
-   un log existente, criticar, o curar sugerencias) y carga la skill del rol correspondiente.
-2. En todos los casos, lee primero `references/log-format-spec.md` para hablar el mismo formato.
+1. Identifica en qué punto de los dos ciclos está el usuario (diseñar, instrumentar, analizar un
+   log, destilar un período, verificar un resumen, pensar tendencias, criticar o curar) y carga la
+   skill del rol correspondiente.
+2. Lee primero el spec del formato que corresponda: `references/log-format-spec.md` para logs
+   crudos; `references/summary-format-spec.md` para destilar, fidelizar o analizar períodos.
 3. Si el pedido es "mejorá nuestro logging" sin más, corre el ciclo: diseñador → instrumentador,
-   luego invita a generar corridas y volver con analista/crítico/curador.
+   luego invita a generar corridas y volver con analista/crítico/curador. Si el pedido es "entendé
+   qué pasó esta semana/mes", corre el ciclo de conocimiento: destilador → fidelizador → filósofo.
 4. Mantén la **profundidad progresiva**: empieza en `explanatory`; sube a `diagnostic`/`deep`
    solo cuando una anomalía concreta no se explica con lo disponible, y de forma temporal.
 
@@ -125,11 +152,15 @@ renderers producen ese mismo layout:
   corrida o por rotación de archivo, no por línea. Repetirlo infla el log y no añade información.
 - **Saltarse al instrumentador sin diseño.** Instrumentar sin haber estudiado el sistema produce
   logs que registran lo fácil de loguear, no lo que hace falta para comprender la ejecución.
-- **Mezclar hechos con interpretaciones.** El sistema solo emite hechos; analista y crítico
-  escriben en artefactos separados y etiquetan cada afirmación como fact/interpretation/hypothesis.
-  Nunca escribas conclusiones de agente dentro del log del sistema.
+- **Mezclar hechos con interpretaciones.** El sistema solo emite hechos; el destilador también
+  solo hechos; analista, fidelizador, filósofo y crítico escriben en artefactos separados y
+  etiquetan cada afirmación (fact/interpretation/hypothesis). Nunca metas conclusiones de agente en
+  el log del sistema ni opiniones en un resumen destilado.
+- **Saltarse la fidelización.** Un resumen no verificado no debe usarse como fuente de un período
+  mayor ni del análisis del filósofo: los errores se componen nivel a nivel. Solo fuentes crudas o
+  resúmenes con verdict aprobado.
 - **Tratar los roles como agentes obligatoriamente separados.** En un sistema chico, un mismo
-  agente hace los cinco roles en secuencia. La separación es de *capacidades*, no de procesos.
+  agente hace los ocho roles en secuencia. La separación es de *capacidades*, no de procesos.
 - **Subir a `deep` permanentemente.** El nivel profundo es temporal y localizado; dejarlo activo
   convierte el log en ruido caro.
 
@@ -142,8 +173,11 @@ ciclo está el trabajo, y deja al usuario con la skill de rol cargada y el spec 
 
 ## Referencias
 
-- Leer `references/log-format-spec.md` **siempre** antes de cualquier trabajo de logging: define
-  el formato canónico que comparten los cinco roles.
+- Leer `references/log-format-spec.md` antes de cualquier trabajo sobre logs crudos (diseñar,
+  instrumentar, analizar, criticar): define el formato del log que comparten esos roles.
+- Leer `references/summary-format-spec.md` antes de destilar, fidelizar o analizar períodos:
+  define el resumen de período (meta + secciones), la jerarquía, la trazabilidad `[ref: …]` y el
+  veredicto de fidelidad que comparten destilador, fidelizador y filósofo.
 - Leer `references/example-log.ndjson` cuando necesites un ejemplo concreto de header + eventos
   (dos corridas, una normal y una con anomalía) para mostrar o para probar los scripts.
 - Ejecutar `scripts/render_log.py <log.ndjson>` para producir la vista humana en Markdown; ver
@@ -154,3 +188,5 @@ ciclo está el trabajo, y deja al usuario con la skill de rol cargada y el spec 
   parseo en `aflog.py` (Python) y en el JS del dashboard — no en cada script.
 - Entregar `assets/dashboard.html` cuando el sistema quiera una vista del log en vivo para humanos
   (apuntarlo a la URL del NDJSON con `?src=`); es opcional y recomendado, no obligatorio.
+- El verificador mecánico de fidelidad vive en `logging-fidelity-checker/scripts/check_summary.py`
+  (también importa `aflog.py`): valida cobertura, referencias y recomputa conteos de un resumen.
