@@ -29,6 +29,19 @@ Skills sobre skills y sobre el repositorio — para crear, auditar y estructurar
 |-------|-------------|--------|
 | [coferlandia-software-dev](./engineering/coferlandia-software-dev/) | Proceso de control para tareas de desarrollo: estudio previo, plan aprobado, implementación, code review obligatoria y preparación de commit | active |
 
+### Suite — Logging orientado a agentes
+
+Convierte el logging tradicional en observabilidad comprensible por agentes. `agent-friendly-logging` es el punto de entrada (formato canónico + ciclo de mejora); las otras cinco son los roles del ciclo.
+
+| Skill | Descripción | Status |
+|-------|-------------|--------|
+| [agent-friendly-logging](./engineering/agent-friendly-logging/) | Orquesta la suite: formato canónico (header explicativo + eventos NDJSON), niveles de profundidad y ciclo de mejora; enruta a los cinco roles | active |
+| [logging-designer](./engineering/logging-designer/) | Estudia el sistema y define el modelo de observación: qué estados, decisiones y variables registrar | active |
+| [logging-instrumenter](./engineering/logging-instrumenter/) | Implementa/adapta el logging según el diseño, en NDJSON, sin alterar el comportamiento funcional | active |
+| [logging-analyst](./engineering/logging-analyst/) | Lee logs, reconstruye ejecuciones, detecta anomalías y compara corridas; separa hechos de hipótesis | active |
+| [logging-critic](./engineering/logging-critic/) | Evalúa si el log es realmente comprensible: gaps, variables ambiguas, redundancias; audita NDJSON | active |
+| [logging-curator](./engineering/logging-curator/) | Decide qué sugerencias incorporar sin inflar el log y mantiene la base de conocimiento acumulado | active |
+
 ## Data
 
 | Skill | Descripción | Status |
