@@ -1,20 +1,10 @@
 ---
 name: logging-critic
 description: >
-  Rol crítico del logging agent-friendly: evalúa si un log es REALMENTE comprensible para un
-  agente sin contexto previo. Detecta header faltante o incompleto, variables usadas pero no
-  definidas, decisiones sin reason, esperado-vs-real ausente, eventos redundantes, niveles mal
-  usados y detalle técnico que no aporta. Produce sugerencias concretas de mejora (qué agregar,
-  qué quitar). Incluye un script que audita un log NDJSON y reporta los gaps semánticos.
-  Keywords: crítica de logs, calidad de logging, gaps, datos faltantes, variables ambiguas,
-  redundancia, auditoría de log, comprensibilidad.
-when_to_use: >
-  Actívala para juzgar la CALIDAD de un log como fuente de observabilidad: tras un análisis que
-  reveló preguntas sin respuesta, antes de dar por bueno un logging recién instrumentado, o
-  cuando el usuario pida "¿este log se entiende?", "qué le falta a nuestro logging", "está
-  redundante". Es el paso 5 del ciclo de agent-friendly-logging; sus sugerencias van al curador.
-  Aplica aunque no exista análisis previo (auditoría directa del log). No la uses para explicar
-  qué pasó en una corrida (logging-analyst) ni para implementar las mejoras (logging-instrumenter).
+  Audita si un log NDJSON es comprensible sin contexto previo: header, variables, reasons,
+  esperado-vs-real, redundancia y niveles. Usar cuando se pregunte qué le falta al logging, si se
+  entiende o si está inflado, incluso sin análisis previo. No usar para explicar una corrida ni
+  para implementar las mejoras.
 license: MIT
 compatibility: >
   Requiere acceso de lectura a los archivos de log y Python 3.11+ para el auditor. Opera sobre el

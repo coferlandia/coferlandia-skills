@@ -1,19 +1,10 @@
 ---
 name: logging-instrumenter
 description: >
-  Rol instrumentador del logging agent-friendly: implementa o adapta el logging de un sistema
-  según el modelo de observación del diseñador, emitiendo el header explicativo una vez por
-  corrida/rotación y eventos NDJSON estructurados (con event_type, reason, expected/actual,
-  correlación), sin alterar el comportamiento funcional del sistema. Agnóstico del lenguaje.
-  Keywords: instrumentar logging, structured logging, NDJSON, logger, emitir eventos, header de
-  log, correlation id, rotación, adaptar logging existente.
-when_to_use: >
-  Actívala cuando haya que ESCRIBIR o MODIFICAR el código de logging: implementar el modelo de
-  observación, migrar logs de texto plano a eventos estructurados, agregar header explicativo,
-  o instrumentar decisiones/estados/llamadas externas que faltan. Es el paso 2 del ciclo de
-  agent-friendly-logging y se reactiva cuando el curador aprueba cambios. Requiere un modelo de
-  observación (de logging-designer); si no existe, primero diseña. No la uses para decidir QUÉ
-  loguear (eso es logging-designer) ni para leer logs (logging-analyst).
+  Implementa o adapta logging según un modelo de observación, con header y eventos NDJSON
+  estructurados, sin cambiar el comportamiento funcional. Usar cuando haya que escribir o migrar
+  código de logging, instrumentar decisiones, estados o llamadas externas. Requiere diseño previo;
+  no usar para decidir qué registrar ni analizar logs.
 license: MIT
 compatibility: >
   Requiere acceso de lectura/escritura al repositorio del sistema y su toolchain para verificar

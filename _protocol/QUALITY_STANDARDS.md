@@ -5,6 +5,11 @@
 > reproducir la lista. **Todo agente debe verificar estos criterios antes de hacer commit.**
 > Lo mecánico de este checklist está automatizado en `_protocol/scripts/validate_skill.py`.
 
+El formato base pertenece a
+[agentskills.io/specification](https://agentskills.io/specification). Las reglas de este archivo
+son extensiones locales. El runner integral es
+`skills/meta/coferlandia-skill-testing/scripts/test_skills.py`.
+
 ---
 
 ## ⚠️ Seguridad y Privacidad — CRÍTICO
@@ -54,6 +59,7 @@ Si la skill necesita datos de configuración privados, instrúyela a leerlos de 
 - [ ] La `description` indica cuándo usar la skill ("Usa cuando...", "Activar cuando el usuario pide...")
 - [ ] La `description` menciona casos no-obvios donde aplica, aunque el usuario no use los términos exactos
 - [ ] La `description` NO es genérica ("Esta skill ayuda con X") — debe ser específica y accionable
+- [ ] El frontmatter no agrega campos fuera de agentskills.io; triggering vive en `description`
 
 ---
 
@@ -115,6 +121,7 @@ probada" es inverificable si no queda rastro, así que se registra en el frontma
   ```
 
 Si una skill `active` no tiene `metadata.tested`, el validador la marca con un warning.
+- [ ] Existe `tests/cases.json` con al menos un prompt positivo y uno negativo
 
 ---
 

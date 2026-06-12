@@ -10,6 +10,13 @@ Este archivo es tu punto de entrada a `coferlandia-skills`. Léelo completo ante
 
 Un repositorio de **Agent Skills** en formato [agentskills.io](https://agentskills.io), construido para ser usado y mantenido por agentes de IA. Cada skill es un conjunto de instrucciones especializadas que puedes cargar para ejecutar tareas específicas de Coferlandia con mayor precisión.
 
+## Contrato canónico
+
+La [especificación de agentskills.io](https://agentskills.io/specification) es la autoridad sobre
+estructura, frontmatter y progressive disclosure. Ante cualquier duda de formato, consulta ese
+protocolo primero. Este repositorio no duplica la especificación: agrega únicamente convenciones
+locales verificables, como categorías, status, evidencia conductual e índice.
+
 **Filosofía:** Este repo es *para agentes* y *por agentes*. Tienes toda la información necesaria para crear nuevas skills, mejorar las existentes y mantener el índice — sin necesidad de instrucciones adicionales del humano.
 
 ---
@@ -20,7 +27,7 @@ Un repositorio de **Agent Skills** en formato [agentskills.io](https://agentskil
 coferlandia-skills/
 ├── AGENTS.md              ← Estás aquí
 ├── README.md              ← Overview para humanos
-├── Genesis_Plan.md        ← Visión y arquitectura completa del repo
+├── vault/Genesis_Plan.md  ← Visión y arquitectura completa del repo
 │
 ├── _protocol/             ← Lee esto antes de crear o modificar skills
 │   ├── HOW_TO_CREATE_SKILLS.md   ← Protocolo completo de creación
@@ -72,10 +79,10 @@ Cada regla vive en **un solo archivo dueño**. Este entry point y cualquier otro
 |-------|-------|
 | Naming, categorías y desempate | [`_protocol/NAMING_CONVENTIONS.md`](./_protocol/NAMING_CONVENTIONS.md) |
 | Checklist de calidad y seguridad | [`_protocol/QUALITY_STANDARDS.md`](./_protocol/QUALITY_STANDARDS.md) |
-| Formato de SKILL.md y disclosure progresivo | [`vault/Skill_Format.md`](./vault/Skill_Format.md) |
+| Formato de SKILL.md y disclosure progresivo | [agentskills.io/specification](https://agentskills.io/specification) |
 | Inventario de skills y formato de su fila | [`skills/INDEX.md`](./skills/INDEX.md) |
 | Estados del ciclo de vida | [`_protocol/SKILL_LIFECYCLE.md`](./_protocol/SKILL_LIFECYCLE.md) |
-| Invariantes mecánicos (ejecutable) | [`_protocol/scripts/validate_skill.py`](./_protocol/scripts/validate_skill.py) |
+| Invariantes mecánicos (ejecutable) | [`skills/meta/coferlandia-skill-testing/`](./skills/meta/coferlandia-skill-testing/) |
 
 ---
 

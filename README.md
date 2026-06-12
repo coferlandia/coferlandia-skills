@@ -1,6 +1,7 @@
 # coferlandia-skills
 
-Repositorio de [Agent Skills](https://agentskills.io) de Coferlandia.
+Repositorio de [Agent Skills](https://agentskills.io) de Coferlandia. La especificación de
+agentskills.io es la fuente canónica del formato; este repo solo define convenciones locales.
 
 ## Para agentes de IA
 
@@ -8,7 +9,7 @@ Lee [`AGENTS.md`](./AGENTS.md) — contiene todo lo que necesitas para usar y cr
 
 ## Para humanos
 
-Lee [`Genesis_Plan.md`](./Genesis_Plan.md) para entender la visión y arquitectura completa.
+Lee [`vault/Genesis_Plan.md`](./vault/Genesis_Plan.md) para entender la visión y arquitectura completa.
 
 ## Estructura rápida
 
@@ -16,7 +17,7 @@ Lee [`Genesis_Plan.md`](./Genesis_Plan.md) para entender la visión y arquitectu
 skills/          ← Todas las skills organizadas por categoría
 _protocol/       ← Protocolo para crear y mantener skills
 AGENTS.md        ← Entry point para agentes
-Genesis_Plan.md  ← Documento fundacional
+vault/           ← Visión, arquitectura y auditorías
 ```
 
 ## Skills disponibles

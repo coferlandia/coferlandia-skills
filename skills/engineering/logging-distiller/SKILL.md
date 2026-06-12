@@ -1,22 +1,9 @@
 ---
 name: logging-distiller
 description: >
-  Rol destilador del logging agent-friendly: convierte logs NDJSON (o resúmenes menores ya
-  validados) en un resumen factual, compacto, completo y trazable de un período configurable
-  —una hora, un día, una semana, un mes, o cualquier intervalo—. Ordena cronológicamente, agrupa
-  repetidos conservando cantidades, preserva estados/decisiones/errores/métricas y mantiene
-  referencias a la evidencia original. Solo describe hechos: no diagnostica, no opina, no formula
-  hipótesis. Produce un Markdown con bloque meta. Keywords: destilar logs, resumen de período,
-  compactar, resumen horario/diario/semanal, destilación jerárquica, rollup de logs.
-when_to_use: >
-  Actívala cuando haya que COMPACTAR un volumen de logs o resúmenes en un resumen de período:
-  "resumí los logs de hoy/esta hora/esta semana", "armá un rollup", "necesito un resumen factual
-  del período", o como paso previo a un análisis profundo que no puede leer millones de líneas.
-  Es el paso de destilación del ciclo de conocimiento de agent-friendly-logging. Aplica tanto
-  desde logs crudos como desde resúmenes menores ya aprobados por logging-fidelity-checker. NO la
-  uses para interpretar/diagnosticar (eso es logging-philosopher) ni para verificar un resumen
-  (logging-fidelity-checker). Pensada para ejecutarse incluso con un modelo barato: el método es
-  estricto y debe seguirse al pie de la letra.
+  Compacta logs NDJSON o resúmenes validados en un resumen factual, completo y trazable de una
+  hora, día, semana, mes u otro período. Usar para rollups o antes de análisis sobre grandes
+  volúmenes. Preserva conteos y referencias; no diagnostica ni verifica fidelidad.
 license: MIT
 compatibility: >
   Requiere acceso de lectura a los logs/resúmenes fuente y de escritura para el resumen Markdown.

@@ -3,9 +3,10 @@ tags: [formato, especificacion, agentskills]
 created: 2026-06-11
 ---
 
-# Skill Format — Especificación
+# Skill Format — Guía local
 
-> Referencia técnica del formato SKILL.md. Fuente: [agentskills.io/specification](https://agentskills.io/specification)
+> La [especificación de agentskills.io](https://agentskills.io/specification) es canónica.
+> Este archivo solo explica cómo aplica Coferlandia ese contrato; no agrega campos al estándar.
 
 ---
 
@@ -27,7 +28,6 @@ skill-name/
 |-------|-----------|---------------|
 | `name` | ✅ | Lowercase, hyphens, 1-64 chars, coincide con carpeta |
 | `description` | ✅ | 1-1024 chars. QUÉ hace (conciso) — se carga siempre en discovery |
-| `when_to_use` | No (recomendado) | Reglas de activación detalladas. Descarga la `description` |
 | `license` | No | Nombre de licencia o referencia a archivo |
 | `compatibility` | No | 1-500 chars. **Entorno requerido** (binarios/runtime/accesos), no marcas de agentes |
 | `metadata` | No | Key-value libre (category, version, status, `tested`) |
@@ -59,12 +59,11 @@ description: >
 description: Ayuda con archivos de datos.
 ```
 
-### `description` vs `when_to_use` — presupuesto de discovery
+### `description` y presupuesto de discovery
 
-Toda `description` se carga durante discovery, en **todas** las skills a la vez (~100 tokens ×
-N). Por eso es un costo fijo que escala con el tamaño del repo: mantén `description` tensa con el
-"qué hace". Las reglas de activación largas (casos no-obvios, sinónimos, "aplica aunque digan X")
-van en `when_to_use`, que solo se evalúa al decidir si activar — no infla el costo de discovery.
+Toda `description` se carga durante discovery. Debe describir tanto qué hace la skill como cuándo
+usarla, según agentskills.io, pero mantenerse concisa. Los procedimientos y excepciones extensas
+van en el cuerpo de `SKILL.md`.
 
 ---
 

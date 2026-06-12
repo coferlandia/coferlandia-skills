@@ -1,23 +1,10 @@
 ---
 name: logging-philosopher
 description: >
-  Rol filósofo del logging agent-friendly: piensa en profundidad sobre resúmenes ya destilados y
-  fidelizados. Hace análisis causales, comparaciones entre períodos, detección de patrones y
-  tendencias, degradaciones progresivas, estadísticas, correlaciones, identificación de riesgos y
-  vulnerabilidades, oportunidades de mejora, evaluación del cumplimiento del objetivo del sistema,
-  comportamientos emergentes, y propuestas de nuevas variables o eventos a observar. Separa
-  siempre hechos, inferencias, hipótesis y recomendaciones; no inventa explicaciones cuando falta
-  evidencia. Keywords: análisis profundo de logs, tendencias, correlaciones, causa raíz, riesgos,
-  degradación, comparar períodos, hipótesis, observabilidad estratégica.
-when_to_use: >
-  Actívala para PENSAR sobre información ya concentrada y validada: "qué está pasando con el
-  sistema a lo largo del tiempo", "compará esta semana con la anterior", "qué riesgos o
-  degradaciones se ven", "qué patrones o correlaciones hay", "evaluá si el sistema cumple su
-  objetivo". Es el paso de pensamiento profundo del ciclo de conocimiento de agent-friendly-logging
-  y alimenta al curador con propuestas. Requiere resúmenes con verdict aprobado (de
-  logging-fidelity-checker); sobre datos crudos o no validados, primero destilá y fidelizá. NO la
-  uses para reconstruir una ejecución concreta (logging-analyst) ni para compactar (logging-distiller).
-  Apta para modelos de alta capacidad: recibe información limpia y concentrada.
+  Analiza resúmenes destilados y validados para detectar causas, tendencias, correlaciones,
+  degradaciones, riesgos y oportunidades, separando hechos, inferencias, hipótesis y
+  recomendaciones. Usar para comparar períodos o evaluar evolución del sistema. No usar sobre
+  logs crudos, ejecuciones individuales ni resúmenes sin veredicto aprobado.
 license: MIT
 compatibility: >
   Requiere acceso de lectura a los resúmenes fidelizados. Opera sobre summary-format-spec.md.

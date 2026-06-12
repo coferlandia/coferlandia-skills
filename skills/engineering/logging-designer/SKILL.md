@@ -1,19 +1,10 @@
 ---
 name: logging-designer
 description: >
-  Rol diseñador del logging agent-friendly: estudia un sistema y define su modelo de observación
-  —qué procesos, estados, decisiones, variables, dependencias y condiciones excepcionales deben
-  registrarse para que una ejecución pueda reconstruirse y comprenderse. Produce un documento de
-  modelo de observación y el header explicativo del log, sin tocar todavía el código. Keywords:
-  diseño de logging, modelo de observación, qué loguear, estados, decisiones, variables, reglas
-  de negocio, header de log, observabilidad semántica.
-when_to_use: >
-  Actívala antes de instrumentar: cuando haya que decidir QUÉ registrar de un sistema para que un
-  agente lo entienda, cuando el usuario pida "diseñar el logging", "definir qué loguear", o
-  cuando un análisis revele que faltan datos y haya que rediseñar el modelo de observación.
-  Aplica aunque no exista logging previo (diseño desde cero) o aunque ya exista (rediseño). Es el
-  paso 1 y 7 del ciclo de agent-friendly-logging. No la uses para escribir el código de logging
-  —eso es logging-instrumenter— ni para leer logs ya generados —eso es logging-analyst.
+  Diseña el modelo de observación: procesos, estados, decisiones, variables, dependencias y header
+  necesarios para comprender ejecuciones. Usar antes de instrumentar o cuando un análisis revele
+  datos faltantes, tanto desde cero como para rediseñar logging existente. No usar para escribir
+  código ni analizar corridas.
 license: MIT
 compatibility: >
   Requiere acceso de lectura al repositorio y documentación del sistema a observar. No modifica

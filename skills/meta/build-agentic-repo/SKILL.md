@@ -6,7 +6,6 @@ description: >
   vive en un único lugar, las afirmaciones son verificables y la estructura se explica a sí
   misma. Produce la arquitectura de carpetas, el entry point para agentes, el índice como
   fuente de verdad y los invariantes verificables por máquina.
-when_to_use: >
   Actívala cuando el usuario quiera: crear un repo para que lo mantengan agentes; arreglar un
   repo donde la documentación se contradice o se duplica; hacer que un repo de skills, prompts,
   playbooks o convenciones sea "auto-mantenible"; o auditar por qué dos agentes producen
@@ -151,10 +150,9 @@ validador y actualizar el índice. Es el lazo que mantiene el repo coherente a m
 - **Metadata de marketing.** Listar en `compatibility` agentes/plataformas que nunca se probaron
   es afirmar sin evidencia. `compatibility` describe el **entorno requerido** (binarios, runtime,
   accesos), no una lista de marcas compatibles.
-- **Triggering inflado en el campo equivocado.** Las reglas de activación largas no van en
-  `description` (que se carga siempre y consume presupuesto de descubrimiento en *todas* las
-  entradas a la vez). Mantén `description` tensa con el "qué hace" y mueve las reglas extensas a
-  `when_to_use`, que se carga al evaluar la activación.
+- **Triggering fuera del campo canónico.** agentskills.io define `description` como el lugar
+  para explicar qué hace la skill y cuándo usarla. No inventes campos de frontmatter: mantén la
+  descripción concisa y mueve el detalle operativo al cuerpo.
 - **Entry point que crece hasta ser un manual.** Si el archivo de entrada empieza a contener las
   reglas en vez de enlazarlas, dejó de ser índice. Recórtalo: su trabajo es enrutar, no enseñar.
 

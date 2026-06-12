@@ -113,6 +113,9 @@ def render_timeline(run: dict) -> list[str]:
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     ap = argparse.ArgumentParser(
         description="Renderiza un log NDJSON agent-friendly como Markdown (proyección canónica §6).",
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)

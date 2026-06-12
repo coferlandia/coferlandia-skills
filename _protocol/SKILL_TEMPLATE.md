@@ -13,11 +13,8 @@
 name: {nombre-skill}
 <!-- Reglas de naming: ver _protocol/NAMING_CONVENTIONS.md (fuente de verdad). Coincide con la carpeta. -->
 description: >
-  {QUÉ hace la skill, con keywords específicos del dominio. Conciso: se carga siempre en discovery.}
-  {Máximo 1024 caracteres. Específico, no genérico. Las reglas de CUÁNDO activarla van en when_to_use.}
-when_to_use: >
-  {Cuándo activarla, en lenguaje imperativo: "Actívala cuando el usuario pide X".}
-  {Mencionar casos no-obvios: "aplica aunque no mencionen X explícitamente".}
+  {QUÉ hace la skill y CUÁNDO usarla, con keywords específicos del dominio.}
+  {Máximo 1024 caracteres. Mencionar casos no-obvios sin inventar campos adicionales.}
 license: MIT
 compatibility: >
   <!-- ENTORNO REQUERIDO, no marcas de agentes. Ej: "Requiere git y Python 3.11+". -->
@@ -104,7 +101,7 @@ La lista autoritativa está en [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md);
 aquí para no duplicarla. Atajo: corre el validador, que cubre todo lo mecánico —
 
 ```bash
-python _protocol/scripts/validate_skill.py skills/{categoria}/{nombre-skill}   # código 0 = OK
+python skills/meta/coferlandia-skill-testing/scripts/test_skills.py .   # código 0 = OK
 ```
 
 Lo que el validador no puede chequear y debes revisar a mano: que las instrucciones sean

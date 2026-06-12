@@ -8,6 +8,7 @@
 ## Prerrequisitos
 
 Antes de crear una skill, lee:
+- [La especificación canónica de agentskills.io](https://agentskills.io/specification)
 - [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) — reglas de nombre y categoría
 - [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) — template a usar
 - [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — checklist de calidad
@@ -68,10 +69,8 @@ Copia el template de [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) y completa cada 
 ```yaml
 ---
 name: {nombre-skill}          # DEBE coincidir con el nombre de la carpeta (ver NAMING_CONVENTIONS.md)
-description: >               # Conciso: QUÉ hace + keywords del dominio. Se carga siempre en discovery.
-  [Qué hace la skill, con keywords específicos del dominio. Mantenla tensa.]
-when_to_use: >              # Reglas de activación detalladas. Campo oficial agentskills.io.
-  [Cuándo activarla: "Actívala cuando el usuario pide X", casos no-obvios "aunque no diga Y".]
+description: >               # QUÉ hace + CUÁNDO usarla. Campo canónico de triggering.
+  [Qué hace la skill y cuándo activarla, con keywords específicos del dominio.]
 license: MIT
 compatibility: >            # ENTORNO REQUERIDO (binarios, runtime, accesos), no marcas de agentes.
   Requiere {git / Python 3.11+ / acceso al repo / ...}
@@ -84,9 +83,9 @@ metadata:
 ---
 ```
 
-> **Triggering:** `description` se carga durante discovery en *todas* las skills a la vez, así que
-> consume presupuesto fijo de contexto. Mantenla corta (el "qué") y mueve las reglas de activación
-> largas a `when_to_use`, que solo se evalúa al decidir la activación. Ver `vault/Skill_Format.md`.
+> **Triggering:** agentskills.io define `description` como el campo que explica qué hace la skill
+> y cuándo usarla. Se carga durante discovery, así que debe ser específica y concisa. El detalle
+> operativo pertenece al cuerpo de `SKILL.md`, no a campos de frontmatter inventados.
 
 ### Cuerpo de instrucciones
 
@@ -154,7 +153,7 @@ La lista autoritativa está en [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) 
 completa (no se reproduce aquí para no duplicarla). Primero corre el validador mecánico:
 
 ```bash
-python _protocol/scripts/validate_skill.py skills/{categoria}/{nombre-skill}
+python skills/meta/coferlandia-skill-testing/scripts/test_skills.py .
 # debe salir con código 0 (sin errores)
 ```
 
@@ -186,5 +185,5 @@ skill(engineering/code-review): agregar skill de review con estándares Coferlan
 ## Notas para el agente
 
 - Si encuentras un error en una skill existente mientras trabajas, corrígelo y agrega un Gotcha
-- Si el scope de lo que necesitas crear no encaja en ninguna categoría, propón una nueva en `Genesis_Plan.md`
+- Si el scope de lo que necesitas crear no encaja en ninguna categoría, propón una nueva en `vault/Genesis_Plan.md`
 - La skill `skills/meta/skill-factory/` existe para automatizar este proceso — úsala si está disponible

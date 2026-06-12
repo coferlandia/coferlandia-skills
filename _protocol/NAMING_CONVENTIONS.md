@@ -45,7 +45,7 @@ name: deploy--checklist # guiones dobles
 | `design` | `skills/design/` | UX, producto, diseño visual, copy |
 | `ops` | `skills/ops/` | Operaciones, automatizaciones, incidentes, standups |
 
-Si tu skill no encaja en ninguna categoría, propón una nueva en `Genesis_Plan.md`.
+Si tu skill no encaja en ninguna categoría, propón una nueva en `vault/Genesis_Plan.md`.
 
 ### Regla de desempate de categoría
 

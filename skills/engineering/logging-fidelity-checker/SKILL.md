@@ -1,22 +1,9 @@
 ---
 name: logging-fidelity-checker
 description: >
-  Rol fidelizador del logging agent-friendly: garantiza que un resumen de período represente
-  fielmente sus fuentes. Compara el resumen contra los logs o resúmenes originales y detecta
-  omisiones, alteraciones de significado, conteos incorrectos, errores cronológicos,
-  generalizaciones excesivas, eventos excepcionales ocultos por agrupación, datos inventados,
-  opiniones presentadas como hechos, períodos sin cobertura y referencias incompletas. Emite un
-  veredicto (aprobado / aprobado con observaciones / requiere corrección / no verificable) y
-  devuelve observaciones concretas al destilador. Incluye un verificador mecánico. Keywords:
-  fidelidad de resumen, verificar destilación, cobertura, trazabilidad, conteos, veredicto.
-when_to_use: >
-  Actívala después de destilar, para VALIDAR que un resumen es fiel a sus fuentes antes de usarlo:
-  "verificá este resumen", "¿el rollup representa bien los logs?", o como puerta de calidad antes
-  de destilar un período mayor o de pasar el resumen al Filósofo. Es el paso de fidelización del
-  ciclo de conocimiento de agent-friendly-logging. Aplica aunque el usuario solo diga "revisá que
-  el resumen no haya deformado los datos". NO la uses para juzgar la calidad de la instrumentación
-  (eso es logging-critic, que evalúa el logging, no el resumen) ni para interpretar
-  (logging-philosopher). Pensada para ejecutarse con un modelo barato, pero debe ser crítica.
+  Verifica que un resumen represente fielmente sus logs o resúmenes fuente: cobertura, conteos,
+  cronología, referencias, omisiones e invenciones. Usar después de destilar y antes de reutilizar
+  el resumen en períodos mayores o análisis. No usar para auditar instrumentación ni interpretar.
 license: MIT
 compatibility: >
   Requiere acceso de lectura al resumen y a sus fuentes, y Python 3.11+ para el verificador

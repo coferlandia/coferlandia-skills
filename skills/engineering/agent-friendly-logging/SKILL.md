@@ -1,26 +1,12 @@
 ---
 name: agent-friendly-logging
 description: >
-  Orquesta una suite para convertir el logging tradicional de un sistema en observabilidad
-  comprensible por agentes de IA: logs que, además de los campos técnicos habituales (timestamp,
-  nivel, componente, mensaje, correlación, excepciones, rotación), llevan el contexto semántico
-  para que un agente que nunca vio el sistema reconstruya qué hizo, qué decidió y por qué. Define
-  el formato canónico (header autoexplicativo + eventos NDJSON), los niveles de profundidad y el
-  ciclo de mejora continua, una vista humana canónica del log (render Markdown + dashboard en
-  vivo) y una capa de destilación de períodos (resúmenes factuales jerárquicos, verificación de
-  fidelidad y análisis profundo). Enruta a los ocho roles: diseñador, instrumentador, analista,
-  destilador, fidelizador, filósofo, crítico y curador. Keywords: logging, logs, observabilidad,
-  trazabilidad, NDJSON, correlation id, diagnóstico, log agent-friendly, instrumentar, render
-  markdown, dashboard de logs, destilación, resumen de período, análisis de tendencias.
-when_to_use: >
-  Actívala cuando el usuario quiera diseñar, implementar, leer, analizar, criticar o mejorar
-  logging pensado para que lo interpreten agentes; cuando hable de "logs que un agente pueda
-  entender", "observabilidad semántica", "que el sistema explique su propia ejecución", o de
-  transformar logging existente en algo más explicativo. Úsala como punto de entrada que decide
-  qué rol aplicar; para una tarea puntual, salta directo al rol (logging-designer / -instrumenter
-  / -analyst / -critic / -curator). Aplica aunque no digan "agent-friendly": basta "logs más
-  útiles para depurar con IA", "que se entienda qué pasó en esta corrida" o "mejorar nuestro
-  logging". No la uses para configurar un agregador concreto (Datadog, ELK) — eso es otra tarea.
+  Orquesta observabilidad semántica para agentes: header autoexplicativo, eventos NDJSON,
+  correlación, vista humana, destilación, fidelidad y mejora continua mediante ocho roles. Usar
+  cuando haya que diseñar, instrumentar, leer, resumir, verificar, criticar o evolucionar logs
+  para que una IA reconstruya qué ocurrió y por qué, aunque el pedido diga solo "mejorar nuestros
+  logs" o "entender esta corrida". No usar para configurar un agregador concreto como Datadog o
+  ELK.
 license: MIT
 compatibility: >
   Requiere acceso de lectura/escritura al repositorio del sistema a instrumentar y git. Los

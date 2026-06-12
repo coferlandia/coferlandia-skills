@@ -1,19 +1,10 @@
 ---
 name: coferlandia-software-dev
 description: >
-  Proceso de control para tareas de desarrollo de software en Coferlandia: implementar
-  features e investigar/corregir bugs siguiendo un flujo consistente y disciplinado de
-  estudio previo, plan aprobado, implementación, code review obligatoria y preparación de
-  commit. Define CÓMO se trabaja (el método y los puntos de control), no cómo programar una
-  tecnología concreta. Keywords: feature, funcionalidad, bug, error, fix, refactor, plan,
-  aprobación, code review, tests, commit, regresión.
-when_to_use: >
-  Actívala al inicio de CUALQUIER tarea de desarrollo de software —agregar funcionalidad,
-  modificar comportamiento existente, investigar o corregir un error, refactorizar— aunque
-  el usuario no pida un "proceso" ni mencione plan, review o commit. Aplica en conjunto con
-  los skills técnicos especializados, que dicen cómo programar una tecnología; este skill
-  dice en qué orden hacerlo y con qué controles. No la uses para preguntas conceptuales o de
-  arquitectura que no terminan tocando código.
+  Define el proceso de control para desarrollo en Coferlandia: estudio previo, plan aprobado,
+  implementación, code review, tests y preparación de commit. Usar cuando una tarea agregue o
+  modifique código, corrija bugs o refactorice, aunque el usuario no pida explícitamente un
+  proceso. Combinar con skills técnicos; no usar para preguntas conceptuales sin cambios.
 license: MIT
 compatibility: >
   Requiere acceso de lectura/escritura al repositorio de trabajo y git. Asume que el agente

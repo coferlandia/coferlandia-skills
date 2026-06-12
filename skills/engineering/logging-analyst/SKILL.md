@@ -1,20 +1,10 @@
 ---
 name: logging-analyst
 description: >
-  Rol analista del logging agent-friendly: lee logs NDJSON, reconstruye ejecuciones a partir del
-  header y la correlación, arma la línea de tiempo de estados y decisiones, detecta anomalías,
-  compara corridas y formula explicaciones e hipótesis — distinguiendo siempre hechos de
-  interpretaciones de hipótesis. Identifica qué preguntas el log NO puede responder y recomienda
-  subir la profundidad. Incluye un script que reconstruye una corrida a partir del NDJSON.
-  Keywords: análisis de logs, reconstruir ejecución, timeline, anomalías, comparar corridas,
-  diagnóstico, root cause, observabilidad, NDJSON.
-when_to_use: >
-  Actívala cuando haya logs generados y haya que ENTENDER qué pasó: reconstruir una corrida,
-  explicar un fallo, comparar una corrida buena con una mala, detectar anomalías, o decidir si
-  hace falta más detalle. Es el paso 4 del ciclo de agent-friendly-logging y alimenta al crítico.
-  Aplica aunque el usuario solo diga "qué pasó en esta corrida", "por qué falló esto" o "compará
-  estas dos ejecuciones". No la uses para escribir logging (logging-instrumenter) ni para juzgar
-  la calidad del formato del log (eso es logging-critic).
+  Reconstruye ejecuciones desde logs NDJSON, correlación, estados y decisiones; compara corridas y
+  separa hechos, interpretaciones e hipótesis. Usar cuando haya que entender qué pasó, explicar un
+  fallo, detectar anomalías o comparar ejecuciones. No usar para instrumentar logging ni para
+  auditar la calidad del formato.
 license: MIT
 compatibility: >
   Requiere acceso de lectura a los archivos de log y Python 3.11+ para el script de

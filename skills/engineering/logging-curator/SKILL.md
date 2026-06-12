@@ -1,20 +1,9 @@
 ---
 name: logging-curator
 description: >
-  Rol curador del logging agent-friendly: decide qué sugerencias del crítico se incorporan,
-  equilibrando dos riesgos opuestos —falta de información y crecimiento descontrolado del log—.
-  Acepta lo que ayuda a responder preguntas reales, rechaza lo redundante, y mantiene la base de
-  conocimiento acumulado (comportamientos normales, rangos, patrones, anomalías conocidas,
-  hipótesis confirmadas/descartadas, variables útiles vs redundantes). Cierra el ciclo devolviendo
-  cambios accionables al diseñador/instrumentador. Keywords: curaduría de logging, qué loguear,
-  podar logs, base de conocimiento, gobernanza de observabilidad, evolución del logging.
-when_to_use: >
-  Actívala cuando haya un conjunto de sugerencias (del crítico o del análisis) y haya que DECIDIR
-  cuáles aplicar sin inflar el log, o cuando haya que registrar conocimiento aprendido entre
-  corridas (rangos normales, anomalías conocidas, hipótesis confirmadas). Es el paso 6 del ciclo
-  de agent-friendly-logging y emite la orden de cambio al diseñador/instrumentador. Aplica aunque
-  el usuario solo diga "qué de esto vale la pena loguear" o "esto está creciendo demasiado". No la
-  uses para producir las sugerencias (logging-critic) ni para implementarlas (logging-instrumenter).
+  Decide qué sugerencias incorporar al logging sin perder información ni inflar el volumen, y
+  mantiene conocimiento sobre rangos, patrones y anomalías. Usar cuando haya propuestas para
+  priorizar o el log esté creciendo demasiado. No usar para generar sugerencias ni implementarlas.
 license: MIT
 compatibility: >
   Requiere acceso de lectura/escritura a la base de conocimiento del sistema (p. ej.
