@@ -1,0 +1,12 @@
+{
+  "name": "coferlandia",
+  "description": "Agent Skills reutilizables de Coferlandia.",
+  "owner": { "name": "Coferlandia" },
+  "plugins": [
+    {
+      "name": "coferlandia-skills",
+      "source": "./",
+      "description": "Las 14 skills de Coferlandia (engineering + meta)."
+    }
+  ]
+}

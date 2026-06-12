@@ -1,0 +1,11 @@
+{
+  "name": "coferlandia-skills",
+  "version": "1.0.0",
+  "description": "Skills de Coferlandia: proceso de desarrollo controlado, suite de observabilidad orientada a agentes (agent-friendly logging) y skills meta para crear, auditar y mantener repos de skills.",
+  "author": { "name": "Coferlandia" },
+  "homepage": "https://github.com/diegocofre/coferlandia-skills",
+  "repository": "https://github.com/diegocofre/coferlandia-skills",
+  "license": "MIT",
+  "keywords": ["logging", "observability", "agents", "engineering", "skills", "meta"],
+  "skills": ["./skills/engineering", "./skills/meta"]
+}
