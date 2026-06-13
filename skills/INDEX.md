@@ -68,8 +68,8 @@ Convierte el logging tradicional en observabilidad comprensible por agentes. `ag
 
 | Skill | Descripción | Status |
 |-------|-------------|--------|
-| *(próximamente)* | | |
+| [sr-de-la-nata](./ops/sr-de-la-nata/) | Dirección privada de proyectos: abre expediente, investiga, evalúa con honestidad brutal, planifica y empuja la ejecución con bitácoras y registros vivos | active |
 
 ---
 
-*Última actualización: 2026-06-12*
+*Última actualización: 2026-06-13*
