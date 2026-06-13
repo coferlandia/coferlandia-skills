@@ -20,7 +20,7 @@ Skills sobre skills y sobre el repositorio — para crear, auditar y estructurar
 | [build-agentic-repo](./meta/build-agentic-repo/) | Diseñar/auditar repos agénticos autoritativos: una fuente de verdad, sin duplicación ni contradicciones | active |
 | [coferlandia-skill-testing](./meta/coferlandia-skill-testing/) | Auditar y probar skills contra agentskills.io y los invariantes locales del repositorio | active |
 | [skill-factory](./meta/skill-factory/) | Crear nuevas skills en este repositorio siguiendo el protocolo completo | active |
-| [skill-auditor](./meta/skill-auditor/) | Revisar y mejorar skills existentes — calidad, descriptions, gotchas | draft |
+| [skill-auditor](./meta/skill-auditor/) | Auditar y modificar skills existentes sin romperlas — gate de proporcionalidad, modo auditoría y modo cirugía | active |
 
 ---
 
