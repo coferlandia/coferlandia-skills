@@ -1,0 +1,1 @@
+{"positive":["Organiza la documentacion dispersa de este proyecto, actualiza README/HISTORY/TODO/DECISIONS/RUNBOOK, archiva las notas procesadas y deja trazabilidad en docs/catalog/."],"negative":["Escribe una nueva feature en el backend y modifica el codigo para soportar webhooks."]}

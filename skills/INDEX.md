@@ -1,75 +1,75 @@
-# Skills Index — coferlandia-skills
+﻿# Skills Index â€” coferlandia-skills
 
-> **Fuente de verdad única del inventario de skills.** Este es el único archivo que lista qué
-> skills existen y su estado. El protocolo de contribución manda actualizar SOLO este archivo;
-> no hay catálogos espejo que sincronizar a mano (las vistas del `vault/` son derivadas).
+> **Fuente de verdad Ãºnica del inventario de skills.** Este es el Ãºnico archivo que lista quÃ©
+> skills existen y su estado. El protocolo de contribuciÃ³n manda actualizar SOLO este archivo;
+> no hay catÃ¡logos espejo que sincronizar a mano (las vistas del `vault/` son derivadas).
 >
-> **Formato de fila (definido aquí, no se repite en otro lado):**
-> `| [nombre-skill](./{categoria}/{nombre-skill}/) | Descripción breve en una línea | {status} |`
-> donde `status` ∈ `draft | active | deprecated`. La ruta del link es relativa a este archivo
+> **Formato de fila (definido aquÃ­, no se repite en otro lado):**
+> `| [nombre-skill](./{categoria}/{nombre-skill}/) | DescripciÃ³n breve en una lÃ­nea | {status} |`
+> donde `status` âˆˆ `draft | active | deprecated`. La ruta del link es relativa a este archivo
 > (que vive dentro de `skills/`), por eso empieza con `./{categoria}/`.
 
 ---
 
 ## Meta
 
-Skills sobre skills y sobre el repositorio — para crear, auditar y estructurar.
+Skills sobre skills y sobre el repositorio â€” para crear, auditar y estructurar.
 
-| Skill | Descripción | Status |
+| Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
-| [build-agentic-repo](./meta/build-agentic-repo/) | Diseñar/auditar repos agénticos autoritativos: una fuente de verdad, sin duplicación ni contradicciones | active |
+| [build-agentic-repo](./meta/build-agentic-repo/) | DiseÃ±ar/auditar repos agÃ©nticos autoritativos: una fuente de verdad, sin duplicaciÃ³n ni contradicciones | active |
 | [coferlandia-skill-testing](./meta/coferlandia-skill-testing/) | Auditar y probar skills contra agentskills.io y los invariantes locales del repositorio | active |
 | [skill-factory](./meta/skill-factory/) | Crear nuevas skills en este repositorio siguiendo el protocolo completo | active |
-| [skill-auditor](./meta/skill-auditor/) | Auditar y modificar skills existentes sin romperlas — gate de proporcionalidad, modo auditoría y modo cirugía | active |
+| [skill-auditor](./meta/skill-auditor/) | Auditar y modificar skills existentes sin romperlas â€” gate de proporcionalidad, modo auditorÃ­a y modo cirugÃ­a | active |
 
 ---
 
 ## Engineering
 
-| Skill | Descripción | Status |
+| Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
-| [coferlandia-software-dev](./engineering/coferlandia-software-dev/) | Proceso de control para tareas de desarrollo: estudio previo, plan aprobado, implementación, code review obligatoria y preparación de commit | active |
+| [coferlandia-software-dev](./engineering/coferlandia-software-dev/) | Proceso de control para tareas de desarrollo: estudio previo, plan aprobado, implementaciÃ³n, code review obligatoria y preparaciÃ³n de commit | active |
 
-### Suite — Logging orientado a agentes
+### Suite â€” Logging orientado a agentes
 
-Convierte el logging tradicional en observabilidad comprensible por agentes. `agent-friendly-logging` es el punto de entrada (formato canónico + ciclo de mejora); las otras ocho son los roles del ciclo.
+Convierte el logging tradicional en observabilidad comprensible por agentes. `agent-friendly-logging` es el punto de entrada (formato canÃ³nico + ciclo de mejora); las otras ocho son los roles del ciclo.
 
-| Skill | Descripción | Status |
+| Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
-| [agent-friendly-logging](./engineering/agent-friendly-logging/) | Orquesta la suite: formato canónico (header explicativo + eventos NDJSON), niveles de profundidad y ciclo de mejora; enruta a los ocho roles | active |
-| [logging-designer](./engineering/logging-designer/) | Estudia el sistema y define el modelo de observación: qué estados, decisiones y variables registrar | active |
-| [logging-instrumenter](./engineering/logging-instrumenter/) | Implementa/adapta el logging según el diseño, en NDJSON, sin alterar el comportamiento funcional | active |
-| [logging-analyst](./engineering/logging-analyst/) | Lee logs, reconstruye ejecuciones, detecta anomalías y compara corridas; separa hechos de hipótesis | active |
-| [logging-distiller](./engineering/logging-distiller/) | Compacta un período (hora/día/semana/mes) en un resumen factual, completo y trazable; destilación jerárquica | active |
+| [agent-friendly-logging](./engineering/agent-friendly-logging/) | Orquesta la suite: formato canÃ³nico (header explicativo + eventos NDJSON), niveles de profundidad y ciclo de mejora; enruta a los ocho roles | active |
+| [logging-designer](./engineering/logging-designer/) | Estudia el sistema y define el modelo de observaciÃ³n: quÃ© estados, decisiones y variables registrar | active |
+| [logging-instrumenter](./engineering/logging-instrumenter/) | Implementa/adapta el logging segÃºn el diseÃ±o, en NDJSON, sin alterar el comportamiento funcional | active |
+| [logging-analyst](./engineering/logging-analyst/) | Lee logs, reconstruye ejecuciones, detecta anomalÃ­as y compara corridas; separa hechos de hipÃ³tesis | active |
+| [logging-distiller](./engineering/logging-distiller/) | Compacta un perÃ­odo (hora/dÃ­a/semana/mes) en un resumen factual, completo y trazable; destilaciÃ³n jerÃ¡rquica | active |
 | [logging-fidelity-checker](./engineering/logging-fidelity-checker/) | Verifica que un resumen represente fielmente sus fuentes (cobertura, conteos, trazabilidad) y emite un veredicto | active |
-| [logging-philosopher](./engineering/logging-philosopher/) | Pensamiento profundo sobre resúmenes validados: causas, tendencias, riesgos, oportunidades; separa hechos/inferencias/hipótesis | active |
-| [logging-critic](./engineering/logging-critic/) | Evalúa si el log es realmente comprensible: gaps, variables ambiguas, redundancias; audita NDJSON | active |
-| [logging-curator](./engineering/logging-curator/) | Decide qué sugerencias incorporar sin inflar el log y mantiene la base de conocimiento acumulado | active |
+| [logging-philosopher](./engineering/logging-philosopher/) | Pensamiento profundo sobre resÃºmenes validados: causas, tendencias, riesgos, oportunidades; separa hechos/inferencias/hipÃ³tesis | active |
+| [logging-critic](./engineering/logging-critic/) | EvalÃºa si el log es realmente comprensible: gaps, variables ambiguas, redundancias; audita NDJSON | active |
+| [logging-curator](./engineering/logging-curator/) | Decide quÃ© sugerencias incorporar sin inflar el log y mantiene la base de conocimiento acumulado | active |
 
 ## Data
 
-| Skill | Descripción | Status |
+| Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
-| *(próximamente)* | | |
+| *(prÃ³ximamente)* | | |
 
 ## Content
 
-| Skill | Descripción | Status |
+| Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
-| *(próximamente)* | | |
+| [project-documentation-archivist](./content/project-documentation-archivist/) | Catalogar, normalizar y archivar memoria documental del proyecto con trazabilidad, conflictos y sesiones | active |
 
 ## Design
 
-| Skill | Descripción | Status |
+| Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
-| *(próximamente)* | | |
+| *(prÃ³ximamente)* | | |
 
 ## Ops
 
-| Skill | Descripción | Status |
+| Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
-| [sr-de-la-nata](./ops/sr-de-la-nata/) | Dirección privada de proyectos: abre expediente, investiga, evalúa con honestidad brutal, planifica y empuja la ejecución con bitácoras y registros vivos | active |
+| [sr-de-la-nata](./ops/sr-de-la-nata/) | DirecciÃ³n privada de proyectos: abre expediente, investiga, evalÃºa con honestidad brutal, planifica y empuja la ejecuciÃ³n con bitÃ¡coras y registros vivos | active |
 
 ---
 
-*Última actualización: 2026-06-13*
+*Ãšltima actualizaciÃ³n: 2026-06-24*
