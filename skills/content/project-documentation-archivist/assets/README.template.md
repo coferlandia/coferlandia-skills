@@ -60,7 +60,7 @@ State the confirmed current state. Keep this section focused on the present.
 
 ## Further Reading
 
-- [HISTORY.md](./HISTORY.md)
-- [TODO.md](./TODO.md)
-- [DECISIONS.md](./DECISIONS.md)
-- [RUNBOOK.md](./RUNBOOK.md)
+- `HISTORY.md`
+- `TODO.md`
+- `DECISIONS.md`
+- `RUNBOOK.md`
