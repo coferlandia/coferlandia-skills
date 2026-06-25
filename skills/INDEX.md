@@ -57,6 +57,7 @@ Convierte el logging tradicional en observabilidad comprensible por agentes. `ag
 | Skill | DescripciÃ³n | Status |
 |-------|-------------|--------|
 | [project-documentation-archivist](./content/project-documentation-archivist/) | Catalogar, normalizar y archivar memoria documental del proyecto con trazabilidad, conflictos y sesiones | active |
+| [sagan-scientific-debunker](./content/sagan-scientific-debunker/) | Evaluar afirmaciones y noticias con rigor cientifico, mapa de evidencia y conclusiones trazables a papers y fuentes primarias | active |
 
 ## Design
 
@@ -72,4 +73,4 @@ Convierte el logging tradicional en observabilidad comprensible por agentes. `ag
 
 ---
 
-*Ãšltima actualizaciÃ³n: 2026-06-24*
+*Ãšltima actualizaciÃ³n: 2026-06-25*
