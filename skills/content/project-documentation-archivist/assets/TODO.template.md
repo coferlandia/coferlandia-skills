@@ -7,6 +7,9 @@
 Estado: pending | in-progress | blocked | done
 Prioridad: low | medium | high
 Detectado: YYYY-MM-DD
+GitHub issue:
+GitHub state:
+Last sync:
 Origen:
 - [[docs/archive/YYYY/document.md]]
 

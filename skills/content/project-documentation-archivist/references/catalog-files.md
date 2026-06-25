@@ -46,6 +46,9 @@ Always include dated entries with source evidence for:
 
 Every entry must answer: "Where did this come from?"
 
+When an entry originates from a closed GitHub issue, also include the canonical issue
+reference in `Relaciones` and enough evidence in `Fuentes` to trace the closure event.
+
 ## TODO.md
 
 Treat `TODO.md` as actionable future work.
@@ -60,6 +63,12 @@ Every task must include:
 - context
 - acceptance criteria when known
 - dependencies when known
+
+When GitHub sync mode is used, synchronized tasks must also include:
+
+- GitHub issue reference in `owner/repo#123` form
+- GitHub state
+- last sync timestamp
 
 Use it for pending work, roadmap items, known bugs, future improvements, validation
 tasks, documentation work, risks needing action, and valuable ideas.

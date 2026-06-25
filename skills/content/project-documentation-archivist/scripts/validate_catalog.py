@@ -40,6 +40,10 @@ SOURCE_INDEX_ARCHIVED_RE = re.compile(
     r"^\|\s*archived\s*\|\s*([^|]+)\|\s*([^|]+)\|",
     re.IGNORECASE,
 )
+TODO_GITHUB_ISSUE_RE = re.compile(r"(?mi)^GitHub issue:\s*(.+?)\s*$")
+TODO_GITHUB_STATE_RE = re.compile(r"(?mi)^GitHub state:\s*(.+?)\s*$")
+HISTORY_ISSUE_RE = re.compile(r"(?mi)^- Issue:\s*(.+?)\s*$")
+CANONICAL_GITHUB_ISSUE_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#\d+$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -136,6 +140,37 @@ def validate_source_index_vs_inbox(root: Path, failures: list[str]) -> None:
             )
 
 
+def validate_github_issue_references(root: Path, failures: list[str]) -> None:
+    todo_path = root / "TODO.md"
+    if todo_path.exists():
+        todo_text = todo_path.read_text(encoding="utf-8")
+        for raw_value in TODO_GITHUB_ISSUE_RE.findall(todo_text):
+            value = raw_value.strip()
+            if value and not CANONICAL_GITHUB_ISSUE_RE.fullmatch(value):
+                failures.append(
+                    "TODO.md has non-canonical GitHub issue reference: "
+                    f"{value} (expected owner/repo#123)"
+                )
+        for raw_state in TODO_GITHUB_STATE_RE.findall(todo_text):
+            state = raw_state.strip().lower()
+            if state and state not in {"open", "closed"}:
+                failures.append(
+                    "TODO.md has invalid GitHub state: "
+                    f"{raw_state.strip()} (expected open or closed)"
+                )
+
+    history_path = root / "HISTORY.md"
+    if history_path.exists():
+        history_text = history_path.read_text(encoding="utf-8")
+        for raw_value in HISTORY_ISSUE_RE.findall(history_text):
+            value = raw_value.strip()
+            if value and not CANONICAL_GITHUB_ISSUE_RE.fullmatch(value):
+                failures.append(
+                    "HISTORY.md has non-canonical issue reference: "
+                    f"{value} (expected owner/repo#123)"
+                )
+
+
 def main() -> int:
     args = parse_args()
     root = Path(args.project_root).resolve()
@@ -150,6 +185,7 @@ def main() -> int:
     validate_archive_frontmatter(root, failures)
     validate_archive_links(root, failures)
     validate_source_index_vs_inbox(root, failures)
+    validate_github_issue_references(root, failures)
 
     if failures:
         print("Documentation catalog validation failed:")

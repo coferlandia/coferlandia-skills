@@ -181,3 +181,16 @@ python scripts/validate_catalog.py --project-root .
 ```
 
 Register the validation result in `docs/catalog/PROCESSING_RUNS.md`.
+
+## Optional GitHub Sync Extension
+
+Run this extension only when the user explicitly requests issue synchronization.
+
+1. Read `references/github-sync.md`.
+2. Confirm connector access and target repository.
+3. Backfill local TODO tasks without issue references.
+4. Import unmatched open issues into `TODO.md`.
+5. Move linked closed issues into `HISTORY.md`.
+6. Restore reopened issues into `TODO.md`.
+7. Record conflicts instead of forcing ambiguous links.
+8. Re-run validation and register the sync run in `docs/catalog/PROCESSING_RUNS.md`.

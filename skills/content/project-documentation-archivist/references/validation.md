@@ -32,6 +32,8 @@ Also verify manually:
 - `README.md` stays focused on present state
 - `HISTORY.md` entries have evidence
 - `TODO.md` avoids duplicate tasks
+- synchronized GitHub issue references in `TODO.md` use canonical `owner/repo#123` form
+- synchronized closed issues moved into `HISTORY.md` still keep evidence and issue references
 - `DECISIONS.md` explains reasons
 - `RUNBOOK.md` does not expose secret values
 - `SOURCE_INDEX.md` rows match the files actually processed

@@ -5,18 +5,20 @@ description: >
   TODO, DECISIONS, RUNBOOK, and traceable Obsidian-style project catalog files. Use
   when a user asks to organize project docs, process documentation inboxes, update
   project memory, archive notes, resolve documentation conflicts, keep project
-  documentation synchronized with source notes and Git history, or maintain
-  documentation catalogs for Git and non-Git technical projects.
+  documentation synchronized with source notes and Git history, maintain
+  documentation catalogs for Git and non-Git technical projects, or explicitly
+  synchronize TODO.md and HISTORY.md with GitHub issues.
 license: Apache-2.0
 compatibility: >
   Requires read/write access to the target project, shell access for file moves, and
-  Python 3.11+ to run scripts/validate_catalog.py.
+  Python 3.11+ to run scripts/validate_catalog.py. GitHub sync mode additionally
+  requires GitHub connector access with repository issue permissions.
 metadata:
   author: dc-sistemas
-  version: "1.0.0"
+  version: "1.1.0"
   category: content
   status: active
-  tested: "2026-06-24 - validated with _protocol/scripts/validate_skill.py and repo skill tests."
+  tested: "2026-06-25 - validated with _protocol/scripts/validate_skill.py and repo skill tests after adding GitHub sync mode guidance and templates."
 ---
 
 ## Context
@@ -36,6 +38,8 @@ continue.
 - Detect whether the project uses Git before moving archived files.
 - Create missing catalog files from `assets/` before processing sources.
 - Read reference files only when the phase requires extra detail.
+- Detect GitHub availability only when the user explicitly requests issue sync or when
+  the task clearly depends on GitHub issues as the active work registry.
 
 ## Modes
 
@@ -45,6 +49,10 @@ continue.
   run. Present changes only after processing finishes.
 - **Resolution mode:** Read active conflicts and open questions, apply supplied
   resolutions, update catalog files, move items to `Resolved`, and register the run.
+- **GitHub sync mode:** Optional and explicit. Reconcile `TODO.md` with open GitHub
+  issues, reconcile `HISTORY.md` with closed GitHub issues, backfill missing issue
+  links for local tasks, and register unresolved ambiguities in
+  `docs/catalog/CONFLICTS.md`.
 
 ## Workflow
 
@@ -100,6 +108,32 @@ continue.
 5. Change item state to `resolved`, append date and evidence, move the item to
    `Resolved`, and register the run in `docs/catalog/PROCESSING_RUNS.md`.
 
+## GitHub Sync Mode
+
+1. Read `references/github-sync.md` before touching `TODO.md`, `HISTORY.md`, or GitHub.
+2. Detect whether GitHub connector access is available. If not, do not fail the whole
+   catalog run: register the limitation and stop the sync subflow safely.
+3. Identify the target repository and fetch the relevant issues.
+4. Run **backfill** first:
+   - For each actionable task in `TODO.md` without `GitHub issue`, search for an
+     equivalent open issue.
+   - If one clearly matches, link it.
+   - If none clearly matches, create a new issue, then write the canonical reference
+     back into `TODO.md`.
+5. Run **sync** second:
+   - Open issues must appear in `TODO.md`.
+   - Closed issues must leave `TODO.md` and create or update a verified entry in
+     `HISTORY.md`.
+   - Reopened issues return to `TODO.md` without deleting the prior historical record.
+6. Before starting substantive work on a task, verify whether it already has a linked
+   GitHub issue. If not, try to link an equivalent one or create it before the task
+   enters active execution.
+7. When local and remote states diverge semantically and the match is not clear, do not
+   guess. Record the ambiguity in `docs/catalog/CONFLICTS.md` and finish with a warning.
+8. Re-run validation and finish with a factual sync summary: linked tasks, created
+   issues, imported open issues, exported closed issues, reopened issues, conflicts, and
+   connector limitations if any.
+
 ## Gotchas
 
 - **Do not promote uncertain notes into `README.md`:** Keep doubtful or conflicting
@@ -115,6 +149,13 @@ continue.
   clones.
 - **Do not ask questions mid-run:** Register uncertainty and continue. Ask only during
   the separate resolution phase if the session is interactive.
+- **Do not create GitHub issues during ordinary catalog processing:** Issue creation
+  belongs only to the explicit GitHub sync subflow or to the preflight check before work
+  starts on a tracked task.
+- **Do not auto-merge ambiguous local and remote tasks:** Similar titles are not enough.
+  If equivalence is unclear, record a conflict instead of forcing a link.
+- **Do not treat GitHub as available by assumption:** Detect connector access before
+  reading or mutating issues, and degrade gracefully when unavailable.
 
 ## Output Expected
 
@@ -156,6 +197,24 @@ Suggested commit:
 docs: resolve documentation catalog conflicts
 ```
 
+Use this completion format after GitHub sync mode:
+
+```text
+Mode: github-sync
+Repository: <owner/repo>
+Linked existing issues: <count>
+Created new issues from local TODOs: <count>
+Imported open issues into TODO.md: <count>
+Exported closed issues into HISTORY.md: <count>
+Reopened issues restored to TODO.md: <count>
+Conflicts recorded: <count>
+Connector availability: available | unavailable
+Validations:
+- python scripts/validate_catalog.py --project-root .
+Suggested commit:
+docs: sync todo and history with github issues
+```
+
 ## Scripts Available
 
 - **`scripts/validate_catalog.py`** - Validate required catalog files, archive
@@ -177,6 +236,8 @@ python skills/content/project-documentation-archivist/scripts/validate_catalog.p
 - Read `references/frontmatter.md` when inserting or merging source frontmatter.
 - Read `references/conflict-resolution.md` when recording contradictions, open
   questions, or applying a later resolution.
+- Read `references/github-sync.md` when the user explicitly requests synchronization
+  with GitHub issues or when a task must be linked to an issue before work starts.
 - Read `references/git-behavior.md` when the project has Git or when move operations
   need fallbacks.
 - Read `references/validation.md` when running validation or diagnosing failures.
