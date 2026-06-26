@@ -60,6 +60,7 @@ State the confirmed current state. Keep this section focused on the present.
 
 ## Further Reading
 
+- `AGENTS.md`
 - `HISTORY.md`
 - `TODO.md`
 - `DECISIONS.md`

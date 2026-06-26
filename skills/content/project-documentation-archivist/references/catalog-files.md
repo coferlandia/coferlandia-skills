@@ -21,9 +21,36 @@ Always include:
 - relevant folder map
 - links to extended documentation
 - confirmed limitations
-- links to `HISTORY.md`, `TODO.md`, `DECISIONS.md`, and `RUNBOOK.md`
+- links to `AGENTS.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, and `RUNBOOK.md`
 
 Never turn `README.md` into a diary. Never present speculation as current fact.
+
+## AGENTS.md
+
+Treat `AGENTS.md` as the minimum reliable entrypoint for agents before they change the
+project.
+
+Always include:
+
+- short critical instructions for agents
+- essential architecture summary
+- non-obvious conventions
+- sensitive areas
+- confirmed validation commands
+- a documentation index with relative links
+- maintenance notes for preserving and updating the file
+
+Never use `AGENTS.md` as a dump of full project history, long design discussions, or
+deep operational detail that belongs in `README.md`, `RUNBOOK.md`, `HISTORY.md`, or
+`DECISIONS.md`.
+
+If `AGENTS.md` already exists:
+
+- preserve semantic content
+- reorganize without silent deletion
+- summarize carefully
+- move bulky detail downward or into linked docs
+- keep a `Legacy / Existing Notes` section when material cannot be integrated cleanly
 
 ## HISTORY.md
 

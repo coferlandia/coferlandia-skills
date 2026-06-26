@@ -17,6 +17,7 @@ location, replace the script path with the installed absolute or relative path t
 ## What the Validator Checks
 
 - required files exist
+- `AGENTS.md` exists
 - `docs/catalog/` exists
 - `CONFLICTS.md` contains `Open`, `Resolved`, and `Archived`
 - `OPEN_QUESTIONS.md` contains `Open`, `Resolved`, and `Archived`
@@ -30,6 +31,8 @@ location, replace the script path with the installed absolute or relative path t
 Also verify manually:
 
 - `README.md` stays focused on present state
+- `AGENTS.md` stays agent-oriented, concise at the top, and uses relative links
+- existing semantic content in `AGENTS.md` was preserved or explicitly quarantined in a legacy section
 - `HISTORY.md` entries have evidence
 - `TODO.md` avoids duplicate tasks
 - synchronized GitHub issue references in `TODO.md` use canonical `owner/repo#123` form

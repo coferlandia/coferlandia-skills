@@ -12,6 +12,7 @@ from pathlib import Path
 
 REQUIRED_FILES = [
     "README.md",
+    "AGENTS.md",
     "HISTORY.md",
     "TODO.md",
     "DECISIONS.md",
@@ -121,6 +122,23 @@ def validate_archive_links(root: Path, failures: list[str]) -> None:
                 failures.append(f"Broken archive link in {rel_path}: {target}")
 
 
+def validate_agents_file(root: Path, failures: list[str]) -> None:
+    agents_path = root / "AGENTS.md"
+    if not agents_path.exists():
+        return
+
+    text = agents_path.read_text(encoding="utf-8")
+    required_headers = [
+        "## Critical Instructions for Agents",
+        "## Project Essentials",
+        "## Documentation Index",
+        "## Maintenance Notes",
+    ]
+    for header in required_headers:
+        if header not in text:
+            failures.append(f"Missing required section '{header}' in AGENTS.md")
+
+
 def validate_source_index_vs_inbox(root: Path, failures: list[str]) -> None:
     source_index = root / "docs/catalog/SOURCE_INDEX.md"
     if not source_index.exists():
@@ -184,6 +202,7 @@ def main() -> int:
     validate_required_sections(root, failures)
     validate_archive_frontmatter(root, failures)
     validate_archive_links(root, failures)
+    validate_agents_file(root, failures)
     validate_source_index_vs_inbox(root, failures)
     validate_github_issue_references(root, failures)
 

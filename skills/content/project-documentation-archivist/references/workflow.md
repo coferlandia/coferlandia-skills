@@ -10,7 +10,7 @@ Execute the documentation catalog process in fixed phases. Do not skip ordering.
 4. Detect the current commit when Git exists.
 5. Detect whether the working tree already contains changes.
 6. Locate existing canonical files:
-   `README.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, `RUNBOOK.md`,
+   `README.md`, `AGENTS.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, `RUNBOOK.md`,
    `docs/catalog/SOURCE_INDEX.md`, `docs/catalog/CONFLICTS.md`,
    `docs/catalog/OPEN_QUESTIONS.md`, `docs/catalog/PROCESSING_RUNS.md`.
 7. Create missing canonical files from the templates in `assets/`.
@@ -56,6 +56,10 @@ Read the full source. Extract:
 
 - one concise summary
 - confirmed present facts
+- agent-critical instructions
+- non-obvious conventions
+- sensitive areas
+- validation commands
 - historical events
 - future tasks
 - decision records
@@ -74,6 +78,7 @@ the first useful paragraph.
 Route extracted information strictly by role:
 
 - confirmed present state -> `README.md`
+- minimum agent orientation -> `AGENTS.md`
 - verified past events -> `HISTORY.md`
 - actionable future work -> `TODO.md`
 - rationale and choice records -> `DECISIONS.md`
@@ -95,10 +100,11 @@ Update files in this exact order:
 3. `TODO.md`
 4. `RUNBOOK.md`
 5. `README.md`
-6. `docs/catalog/CONFLICTS.md`
-7. `docs/catalog/OPEN_QUESTIONS.md`
-8. `docs/catalog/SOURCE_INDEX.md`
-9. `docs/catalog/PROCESSING_RUNS.md`
+6. `AGENTS.md`
+7. `docs/catalog/CONFLICTS.md`
+8. `docs/catalog/OPEN_QUESTIONS.md`
+9. `docs/catalog/SOURCE_INDEX.md`
+10. `docs/catalog/PROCESSING_RUNS.md`
 
 Preserve existing human content. Use managed blocks only when the skill must control
 one section repeatedly:
@@ -111,6 +117,15 @@ one section repeatedly:
 
 Do not overwrite human content outside managed blocks unless the change is required to
 keep the file coherent. If that happens, explain it in `PROCESSING_RUNS.md`.
+
+For `AGENTS.md`, apply stricter preservation:
+
+- read the full existing file before editing
+- preserve semantic content
+- reorganize instead of replacing
+- use a `Legacy / Existing Notes` section when uncertain
+- record contradictions in `docs/catalog/CONFLICTS.md`
+- record missing confirmations in `docs/catalog/OPEN_QUESTIONS.md`
 
 ## Phase 6 - Source Marking
 
@@ -164,10 +179,13 @@ move and register the fallback in the processing run.
 Validate:
 
 - required catalog files exist
+- `AGENTS.md` exists
 - archived processed sources contain frontmatter
 - source index is updated
 - conflict and question files keep required sections
 - processing runs are recorded
+- `AGENTS.md` stays brief at the top and navigable below
+- `AGENTS.md` does not silently delete preserved instructions
 - no obvious duplicates were introduced into `HISTORY.md` or `TODO.md`
 - `README.md` stays present-focused
 - `DECISIONS.md` records reasons, not just events
