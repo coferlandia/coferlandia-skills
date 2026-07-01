@@ -1,380 +1,423 @@
 ---
 name: coferlandia-software-dev
 description: >
-  Define el proceso de control para desarrollo en Coferlandia: estudio previo, plan aprobado,
-  implementacion, code review, tests y preparacion de commit, con roles operativos developer y
-  debugger bajo autoridad de control activa. Usar cuando una tarea agregue o modifique codigo,
-  corrija bugs o refactorice, aunque el usuario no pida explicitamente un proceso. Combinar con
-  skills tecnicos; no usar para preguntas conceptuales sin cambios.
-license: MIT
+  Use when a task adds or modifies code, fixes a bug, or refactors, even if the user
+  doesn't explicitly ask for a process. Not for conceptual questions with no code
+  changes; combine with the technical skill that provides the specific how-to.
+license: Apache-2.0
 compatibility: >
-  Requiere acceso de lectura/escritura al repositorio de trabajo y git. Asume que el agente
-  puede correr la suite de tests del proyecto.
+  Requires read/write access to the working repository and git. Assumes the agent can
+  run the project's test suite. When available in the environment, integrates with
+  superpowers:test-driven-development, superpowers:systematic-debugging, and
+  superpowers:verification-before-completion.
 metadata:
   author: coferlandia
-  version: "1.2"
+  version: "2.0.0"
   category: engineering
   status: active
-  tested: "2026-06-25 - revalidada con _protocol/scripts/validate_skill.py (codigo 0) tras incorporar autoridad de control activa y roles developer/debugger."
+  tested: "2026-06-30 - translated to English, merged overlapping Gotchas, folded the
+    approval-record template into the closing template, compressed the per-role
+    success criteria, and wired in required superpowers skill integration; pending
+    re-validation with _protocol/scripts/validate_skill.py."
 ---
 
-## Contexto
+## Context
 
-Esta skill define la **forma de trabajo** para tareas de desarrollo de software en Coferlandia y
-los **roles operativos** que ejecutan ese trabajo bajo supervision. Es generica, simple y
-consistente: el mismo flujo rector sirve para implementar funcionalidades nuevas y para investigar
-y corregir errores.
+This skill defines the **way of working** for software development tasks at
+Coferlandia, and the **operational roles** that execute that work under supervision.
+It's generic, simple, and consistent: the same governing flow serves both building new
+features and investigating and fixing bugs.
 
-No reemplaza a los skills tecnicos especializados ni dice como programar una tecnologia concreta.
-Su funcion es definir **el proceso** que esos skills deben seguir durante cualquier tarea de
-desarrollo. Cuando aplican varios roles o skills a la vez, este manda el orden y los puntos de
-control; los especializados aportan el como tecnico.
+It doesn't replace specialized technical skills or tell you how to code a specific
+technology. Its job is to define **the process** those skills operate inside. When
+several roles or skills apply at once, this one sets the order and the control
+checkpoints; the specialized skills supply the technical how-to.
 
-El principio rector: **toda tarea atraviesa cuatro instancias de control** - estudio previo,
-aprobacion del plan, revision antes del commit, y verificacion final de tests y documentacion - de
-modo que ningun cambio improvisado llegue al commit y toda decision relevante quede aprobada por
-una **autoridad de control externa al agente ejecutor**.
+The governing principle: **every task passes through four control checkpoints** —
+prior study, plan approval, review before commit, and a final check of tests and
+documentation — so no improvised change reaches a commit, and every relevant decision
+is approved by a **control authority external to the executing agent**.
 
-## Roles operativos
+## Operational Roles
 
-Los roles operativos de esta skill trabajan siempre sobre un **issue o tarea identificable**:
-puede venir de GitHub Issues, `TODO.md`, otro artefacto del proyecto o una instruccion explicita
-de la autoridad de control activa.
+The operational roles always work against an **identifiable issue or task**: it can
+come from GitHub Issues, `TODO.md`, another project artifact, or an explicit
+instruction from the active control authority.
 
-- `developer` - para features, mejoras funcionales, implementacion nueva o refactor aprobado.
-- `debugger` - para bugs, regresiones, tests fallidos, excepciones o comportamientos incorrectos.
+- `developer` - for features, functional improvements, new implementation, or
+  approved refactors.
+- `debugger` - for bugs, regressions, failing tests, exceptions, or incorrect
+  behavior.
 
-Si el issue esta bien definido, el rol ejecutor debe seguirlo cuidadosamente. Si esta incompleto,
-ambiguo o contradictorio, debe registrar dudas, riesgos o contradicciones en el plan y pedir
-resolucion a la autoridad de control activa antes de implementar.
+If the issue is well defined, the executing role follows it closely. If it's
+incomplete, ambiguous, or contradictory, the role logs doubts, risks, or
+contradictions in the plan and asks the active control authority to resolve them
+before implementing.
 
-### Reglas comunes para developer y debugger
+### Rules Shared by `developer` and `debugger`
 
-Ambos roles deben:
+Both roles must:
 
-- Respetar siempre el proceso rector de esta skill.
-- Trabajar con un issue o tarea identificable.
-- Estudiar primero arquitectura, documentacion, convenciones, patrones y tests relacionados.
-- Seguir los lineamientos generales del proyecto.
-- No modificar archivos durante el estudio previo.
-- No implementar sin plan aprobado por la autoridad de control activa.
-- No ampliar alcance sin nueva aprobacion.
-- Revisar tests y documentacion que puedan haber sido afectados por el cambio.
-- Ejecutar o proponer los tests relevantes segun el contexto del proyecto.
-- Realizar code review sobre el diff antes del cierre.
-- Informar hallazgos, riesgos y limitaciones al supervisor.
-- Sugerir un nombre claro de commit en el mensaje final a la autoridad de control.
+- Always follow this skill's governing process.
+- Work against an identifiable issue or task.
+- Study architecture, documentation, conventions, patterns, and related tests first.
+- Follow the project's general guidelines.
+- Not modify files during prior study.
+- Not implement without a plan approved by the active control authority.
+- Not expand scope without new approval.
+- Review any tests and documentation the change may affect.
+- Run or propose the relevant tests for the project's context.
+- Review the diff before closing.
+- Report findings, risks, and limitations to the supervisor.
+- Suggest a clear commit message in the final report to the control authority.
 
-## Integracion condicional con project-documentation-archivist
+## Superpowers Integration
 
-Si el repositorio esta inicializado o estructurado segun `project-documentation-archivist`, los
-roles operativos deben respetar esa estructura y actualizar solo los artefactos que correspondan
-al cambio. Si no lo esta, no deben inicializar archivist completo ni replicar su trabajo; solo
-deben crear los artefactos minimos necesarios para dejar trazabilidad cuando corresponda.
+When these skills are available in the environment, the operational roles **must**
+use them — they aren't optional extras:
 
-Antes de cerrar una tarea:
+- **REQUIRED for `developer`:** superpowers:test-driven-development, before writing
+  implementation code.
+- **REQUIRED for `debugger`:** superpowers:systematic-debugging, before proposing a
+  fix.
+- **REQUIRED for both roles:** superpowers:verification-before-completion, before
+  treating step 5 (commit prep) as done.
 
-- Verificar si existen artefactos tipicos de archivist.
-- Si existen, respetar su estructura y actualizar solo lo que corresponda al cambio.
-- Si no existen, no ejecutar ni replicar el trabajo de archivist.
-- Si hace falta trazabilidad minima, crear solo el artefacto necesario, por ejemplo `HISTORY.md`.
+If a listed skill isn't available in the environment, follow the steps below as
+written — nothing in this skill is blocked by its absence.
 
-Artefactos tipicos que podrian actualizarse si existen y aplica:
+## Conditional Integration with project-documentation-archivist
 
-- `TODO.md`, si el issue se completa, cambia de estado o genera tareas posteriores.
-- `HISTORY.md`, para registrar el cambio terminado.
-- `DECISIONS.md`, si se tomo una decision tecnica relevante.
-- `RUNBOOK.md`, si cambian comandos, despliegue, operacion, diagnostico o mantenimiento.
-- `AGENTS.md`, si el cambio deja una convencion importante para futuros agentes.
+If the repository is initialized or structured per `project-documentation-archivist`,
+the operational roles must respect that structure and update only the artifacts the
+change touches. If it isn't, they must not initialize a full archivist setup or
+replicate its work — only create the minimum artifacts needed for traceability when
+that applies.
 
-## Modos de control
+Before closing a task:
 
-- `humano-interactivo` - la autoridad de control activa es el usuario humano.
-- `agentico-supervisado` - la autoridad de control activa es un agente supervisor explicitamente
-  designado.
+- Check whether archivist-style artifacts exist.
+- If they do, respect their structure and update only what the change touches.
+- If they don't, don't run or replicate archivist's work.
+- If minimal traceability is needed, create only the necessary artifact, e.g.
+  `HISTORY.md`.
 
-Si no hay usuario humano disponible ni agente supervisor designado, el agente ejecutor puede
-llegar solo hasta estudio previo y plan recomendado. En ese caso debe dejar documentado que
-recomienda hacer, pero **no puede modificar archivos, ampliar alcance ni preparar/realizar
+Typical artifacts that might be updated, if present and relevant:
+
+- `TODO.md`, if the issue completes, changes state, or spawns follow-up tasks.
+- `HISTORY.md`, to record the finished change.
+- `DECISIONS.md`, if a meaningful technical decision was made.
+- `RUNBOOK.md`, if commands, deployment, operations, diagnostics, or maintenance
+  change.
+- `AGENTS.md`, if the change leaves an important convention for future agents.
+
+## Control Modes
+
+- `human-interactive` - the active control authority is the human user.
+- `agentic-supervised` - the active control authority is an explicitly designated
+  supervisor agent.
+
+If neither a human user nor a designated supervisor agent is available, the executing
+agent can only reach prior study and a recommended plan. In that case it must document
+its recommendation but **cannot modify files, expand scope, or prepare/perform
 commits**.
 
-## Rol: Supervisor agentico / humano
+## Role: Agentic/Human Supervisor
 
-La **autoridad de control activa** puede ser el usuario humano o un agente supervisor designado.
-Ese rol:
+The **active control authority** can be the human user or a designated supervisor
+agent. That role:
 
-- Aprueba o rechaza el plan antes de modificar archivos.
-- Aprueba cualquier desvio significativo del alcance.
-- Evalua los hallazgos de la code review.
-- Decide si los hallazgos se corrigen ahora, se documentan o se escalan.
-- Aprueba la preparacion del commit.
-- Mantiene el foco en el objetivo original de la tarea.
-- Evita expansion silenciosa de alcance.
-- Puede escalar al usuario humano cuando la decision excede el marco tecnico o el mandato
-  recibido.
+- Approves or rejects the plan before files are modified.
+- Approves any significant deviation from scope.
+- Evaluates the code review findings.
+- Decides whether findings get fixed now, documented, or escalated.
+- Approves commit preparation.
+- Keeps focus on the task's original objective.
+- Prevents silent scope expansion.
+- Can escalate to the human user when a decision exceeds the technical frame or the
+  mandate received.
 
-El agente implementador o ejecutor **nunca puede autoaprobar** su propio plan, sus desvios, sus
-hallazgos ni su commit. En modo agentico, el supervisor existe para controlar foco, coherencia,
-riesgo y avance; no para implementar codigo.
+The implementing/executing agent **can never self-approve** its own plan, deviations,
+findings, or commit. In agentic mode, the supervisor exists to control focus,
+coherence, risk, and progress — not to implement code.
 
-## Rol: developer
+## Role: developer
 
-El rol `developer` se usa cuando el issue corresponde a una feature, mejora funcional,
-implementacion nueva o refactor aprobado. Su objetivo es convertir el issue en una implementacion
-completa, coherente con la arquitectura del proyecto y mantenible.
+Use `developer` when the issue is a feature, functional improvement, new
+implementation, or an approved refactor. The goal is to turn the issue into a
+complete implementation that's coherent with the project's architecture and
+maintainable.
 
-Metodologia esperada:
+**REQUIRED:** Use superpowers:test-driven-development when available (see Superpowers
+Integration above).
 
-1. Leer cuidadosamente el issue y determinar el comportamiento esperado.
-2. Identificar modulos, servicios, entidades, interfaces, tests y documentacion relacionados.
-3. Buscar codigo reutilizable antes de crear logica nueva.
-4. Evitar duplicacion de logica, patrones paralelos o soluciones ad hoc.
-5. Seguir principios SOLID, separacion de responsabilidades y buenas practicas del stack usado.
-6. Mantener la implementacion acotada al issue aprobado.
-7. Agregar o actualizar tests cuando el cambio lo requiera.
-8. Actualizar documentacion y artefactos de trazabilidad relacionados.
-9. Preparar un cierre para la autoridad de control con resumen, tests, documentacion, riesgos
-   remanentes y nombre sugerido de commit.
+Expected methodology:
 
-Criterios de buen resultado para `developer`:
+1. Read the issue carefully and determine the expected behavior.
+2. Identify related modules, services, entities, interfaces, tests, and
+   documentation.
+3. Look for reusable code before writing new logic.
+4. Avoid duplicated logic, parallel patterns, or ad hoc solutions.
+5. Follow SOLID principles, separation of concerns, and the stack's good practices.
+6. Keep the implementation scoped to the approved issue.
+7. Add or update tests when the change requires it.
+8. Update documentation and related traceability artifacts.
+9. Prepare a closing report for the control authority with summary, tests,
+   documentation, remaining risks, and a suggested commit message.
 
-- La feature queda integrada al diseno existente.
-- No se duplica logica innecesariamente.
-- El cambio es testeable y mantenible.
-- La solucion no introduce arquitectura paralela.
-- El alcance implementado coincide con el issue aprobado.
-- Las decisiones relevantes quedan documentadas cuando aplica.
+Good result for `developer`: the feature is integrated into the existing design
+without unnecessary duplication or a parallel architecture, the change is testable and
+maintainable, the implemented scope matches the approved issue, and any decisions that
+mattered are documented.
 
-## Rol: debugger
+## Role: debugger
 
-El rol `debugger` se usa cuando el issue corresponde a un bug, regresion, error reportado, test
-fallido, excepcion, inconsistencia de datos o comportamiento inesperado. Su objetivo es encontrar
-la causa raiz y aplicar una correccion concreta, minima y verificable.
+Use `debugger` when the issue is a bug, regression, reported error, failing test,
+exception, data inconsistency, or unexpected behavior. The goal is to find the root
+cause and apply a concrete, minimal, verifiable fix.
 
-Si esta disponible en el entorno, debe usar o apoyarse en el skill
-`superpowers/systematic-debugging`.
+**REQUIRED:** Use superpowers:systematic-debugging when available (see Superpowers
+Integration above).
 
-Metodologia esperada:
+Expected methodology:
 
-1. Leer cuidadosamente el issue de bug.
-2. Separar hechos observados, sintomas, hipotesis y datos faltantes.
-3. Buscar pasos de reproduccion, logs, tests fallidos, stack traces o evidencia disponible.
-4. Revisar `HISTORY.md` si existe, especialmente para detectar si el bug puede ser una regresion
-   causada por un cambio reciente.
-5. Estudiar el area afectada sin modificar archivos.
-6. Formular hipotesis explicitas sobre la causa.
-7. Intentar reproducir el problema o identificar el punto exacto de falla.
-8. Aplicar un fix enfocado en la causa raiz.
-9. Agregar o actualizar tests de regresion cuando sea posible.
-10. Verificar que el bug queda corregido y que no se rompen comportamientos relacionados.
-11. Actualizar documentacion o artefactos de trazabilidad si el bug revela una convencion, riesgo
-    o decision importante.
-12. Preparar un cierre para la autoridad de control con causa raiz, fix aplicado, evidencia de
-    verificacion, tests, riesgos remanentes y nombre sugerido de commit.
+1. Read the bug issue carefully.
+2. Separate observed facts, symptoms, hypotheses, and missing data.
+3. Look for reproduction steps, logs, failing tests, stack traces, or other evidence.
+4. Check `HISTORY.md` if it exists, especially to see whether the bug could be a
+   regression from a recent change.
+5. Study the affected area without modifying files.
+6. Form explicit hypotheses about the cause.
+7. Try to reproduce the problem or pinpoint the exact failure point.
+8. Apply a fix focused on the root cause.
+9. Add or update regression tests when possible.
+10. Verify the bug is fixed and no related behavior broke.
+11. Update documentation or traceability artifacts if the bug reveals an important
+    convention, risk, or decision.
+12. Prepare a closing report for the control authority with root cause, fix applied,
+    verification evidence, tests, remaining risks, and a suggested commit message.
 
-Criterios de buen resultado para `debugger`:
+Good result for `debugger`: the root cause is identified, or the degree of certainty
+is stated clearly; the fix targets the reported problem and includes regression tests
+where applicable; project history was checked when regression was a possibility; and
+the closing report explains what was failing, why, and why the change fixes it.
 
-- La causa raiz queda identificada o se explicita claramente el grado de certeza.
-- El fix esta enfocado en el problema reportado.
-- Se agregan tests de regresion cuando aplica.
-- Se revisa la historia del proyecto cuando hay indicios de regresion.
-- El cierre explica que fallaba, por que fallaba y por que el cambio lo corrige.
+## Prerequisites
 
-## Prerequisitos
+- Read/write access to the task's repository and to `git`.
+- Ability to run the project's test suite.
+- An **active control authority** designated before implementing: human user or
+  supervisor agent.
 
-- Acceso de lectura/escritura al repositorio de la tarea y a `git`.
-- Posibilidad de correr la suite de tests del proyecto.
-- Una **autoridad de control activa** designada antes de implementar: usuario humano o agente
-  supervisor.
+## Steps
 
-## Pasos
+`developer` and `debugger` follow this exact same flow. The specific analysis and
+implementation methodology changes; the control gates don't.
 
-Los roles `developer` y `debugger` siguen exactamente este mismo flujo. Cambia la metodologia
-especifica de analisis e implementacion, pero no cambian los gates de control.
+### 1. Prior study of the system
 
-### 1. Estudio previo del sistema
+Before proposing changes, study the system to understand:
 
-Antes de proponer cambios, estudiar el sistema para comprender:
+- Its structure and basic architecture.
+- The modules related to the task.
+- Available Markdown files and documentation.
+- The project's conventions and patterns.
+- Existing tests in the affected area.
 
-- Su estructura y arquitectura basica.
-- Los modulos relacionados con la tarea.
-- Los archivos Markdown y la documentacion disponible.
-- Las convenciones y patrones del proyecto.
-- Los tests existentes del area afectada.
+If outdated documentation, contradictions between docs and code, or other relevant
+inconsistencies surface, **report them to the active control authority at this
+stage**. During study, **nothing gets fixed and no file gets modified**: findings are
+surfaced first so they can be factored into the plan.
 
-Si aparecen documentacion desactualizada, contradicciones entre documentos y codigo, o
-inconsistencias relevantes, **informarlas a la autoridad de control activa en esta etapa**.
-Durante el estudio **no se corrige nada ni se modifica ningun archivo**: primero se expone lo
-encontrado para que pueda considerarse al armar el plan.
+### 2. Planning and approval
 
-### 2. Planificacion y aprobacion
+Prepare a plan **before modifying code**. It should be concise but enough to explain:
 
-Preparar un plan **antes de modificar codigo**. Debe ser conciso pero suficiente para explicar:
+- Which issue or task is the source.
+- What will be investigated or modified.
+- Which parts of the system might be affected.
+- How the change will be implemented.
+- How it will be verified.
+- What risks, doubts, or relevant decisions exist.
+- Whether the inconsistencies found in step 1 affect the task.
 
-- Que issue o tarea se esta tomando como fuente.
-- Que se investigara o modificara.
-- Que partes del sistema podrian verse afectadas.
-- Como se implementara el cambio.
-- Como se verificara su funcionamiento.
-- Que riesgos, dudas o decisiones relevantes existen.
-- Si las inconsistencias detectadas en el paso 1 afectan la tarea.
+Present the plan to the active control authority, discuss it if needed, and **ask for
+explicit approval** before implementing. This applies equally to building features and
+to diagnosing and fixing bugs. Don't move to implementation without a clear "yes" from
+an authority external to the implementing agent.
 
-Presentar el plan a la autoridad de control activa, discutirlo si hace falta y **pedir su
-aprobacion explicita** antes de implementar. Esta regla aplica por igual al desarrollo de
-funcionalidades y al diagnostico y correccion de errores. No avanzar a implementacion sin un "si"
-claro de una autoridad externa al agente implementador.
+### 3. Implementation
 
-### 3. Implementacion
+With the plan approved, make the agreed changes, respecting the conventions found in
+step 1.
 
-Con el plan aprobado, realizar los cambios acordados, respetando las convenciones detectadas en el
-paso 1.
+If the need to **deviate significantly** from the plan comes up during implementation
+(scope changes, unforeseen files or modules appear, something outside the agreed scope
+needs touching), stop, explain the situation, and **ask the active control authority
+for new approval** before expanding or changing scope.
 
-Si durante la implementacion surge la necesidad de **desviarse significativamente** del plan
-(cambia el alcance, aparecen archivos o modulos no previstos, hay que tocar algo fuera de lo
-acordado), detenerse, explicar la situacion y **pedir una nueva aprobacion a la autoridad de
-control activa** antes de ampliar o modificar el alcance.
+### 4. Mandatory code review
 
-### 4. Code review obligatoria
+Once implementation is done, **before the final commit**, review the modified code
+(ideally over the `git diff`). Focus on:
 
-Cuando la implementacion este terminada, **pero antes del commit final**, revisar el codigo
-modificado (idealmente sobre el `git diff`). Concentrarse en:
+- Possible errors or regressions.
+- Security or performance issues.
+- Uncovered edge cases.
+- Coherence with existing architecture and conventions.
+- Code quality and clarity.
+- Missing or insufficient tests.
+- Documentation that needs updating.
 
-- Errores o regresiones posibles.
-- Problemas de seguridad o de rendimiento.
-- Casos limite no contemplados.
-- Coherencia con la arquitectura y las convenciones existentes.
-- Calidad y claridad del codigo.
-- Pruebas faltantes o insuficientes.
-- Documentacion que deba actualizarse.
+Present the findings to the active control authority and discuss them. If there are
+relevant issues, the authority decides whether they're **fixed now, documented, or
+escalated**. Don't jump to commit with open findings and no explicit decision.
 
-Presentar los hallazgos a la autoridad de control activa y discutirlos. Si hay problemas
-relevantes, la autoridad decide si **se corrigen ahora, se documentan o se escalan**. No saltar
-al commit con hallazgos abiertos sin esa decision explicita.
+### 5. Commit preparation
 
-### 5. Preparacion del commit
+After findings are reviewed and resolved:
 
-Tras revisar y resolver los hallazgos:
-
-1. Comprobar que los tests asociados al diff existan, sean suficientes y esten actualizados; correrlos.
-2. Revisar la documentacion afectada y agregar, modificar o eliminar contenido para que refleje el funcionamiento final. Este es el momento de corregir las **inconsistencias documentales** detectadas en el paso 1, siempre que esten relacionadas con el cambio y dentro del alcance aprobado. Si el repositorio ya usa `project-documentation-archivist`, actualizar los artefactos correspondientes respetando esa estructura; si no la usa, crear solo la trazabilidad minima necesaria cuando aplique.
-3. Proponer un nombre de commit claro y **pedir aprobacion de la autoridad de control activa** antes de commitear o dejar listo el commit.
+1. Confirm the tests tied to the diff exist, are sufficient, and are up to date; run
+   them.
+2. Review affected documentation and add, change, or remove content so it reflects the
+   final behavior. This is when the **documentation inconsistencies** found in step 1
+   get fixed, as long as they're related to the change and within the approved scope.
+   If the repository already uses `project-documentation-archivist`, update the
+   corresponding artifacts respecting that structure; if not, create only the minimum
+   traceability needed.
+3. Propose a clear commit message and **ask the active control authority for
+   approval** before committing or leaving the commit ready.
 
 ## Gotchas
 
-- **Tocar archivos durante el estudio previo:** en el paso 1 esta prohibido modificar nada, incluso para "arreglar de paso" una inconsistencia obvia. Solo se informa; la correccion se decide en el plan.
-- **Corregir inconsistencias fuera de alcance:** las inconsistencias documentales se arreglan recien en el paso 5, y **solo** si estan ligadas al cambio y fueron incluidas en el plan aprobado. No expandir el alcance de forma silenciosa.
-- **Implementar sin aprobacion explicita:** un plan presentado no es un plan aprobado. Esperar el "si" de la autoridad de control activa antes de escribir codigo (paso 2) y antes de commitear (paso 5).
-- **Desvios silenciosos del plan:** si el alcance real difiere del aprobado, frenar y re-aprobar (paso 3); no estirar el cambio "porque ya que estoy".
-- **Saltarse la code review:** la revision del paso 4 es obligatoria incluso en cambios chicos o en correcciones de un bug aparentemente trivial.
-- **Commitear con hallazgos abiertos o tests rojos:** los hallazgos relevantes y los tests deben quedar resueltos y en verde antes del commit.
-- **Confundir modo agentico con autonomia total:** que la autoridad no sea humana no elimina ninguna aprobacion; solo cambia quien controla el avance.
-- **Confundir rol ejecutor con autoridad de control:** `developer` y `debugger` ejecutan; nunca reemplazan al supervisor humano o agentico ni se autoaprueban.
-- **Autoaprobarse:** el agente implementador nunca puede aprobar su propio plan, sus desvios, sus hallazgos ni su commit.
-- **Avanzar sin autoridad de control designada:** sin usuario humano ni supervisor explicito, el trabajo se detiene en estudio previo y plan recomendado.
-- **Escalar alcance sin nueva aprobacion:** toda ampliacion relevante del cambio requiere nueva aprobacion explicita.
-- **Usar al supervisor como formalidad:** en modo agentico el supervisor debe revisar foco, alcance y riesgo, no solo responder "ok".
-- **Ignorar archivist cuando ya existe:** si el repo ya tiene estructura documental viva, hay que respetarla y actualizar solo los artefactos afectados; no trabajar como si no existiera.
+- **Touching files during prior study:** step 1 forbids modifying anything, even to
+  "fix in passing" an obvious inconsistency. Only report it; the fix is decided in the
+  plan.
+- **Fixing out-of-scope inconsistencies:** documentation inconsistencies get fixed
+  only in step 5, and only if they're tied to the change and were included in the
+  approved plan. Don't expand scope silently.
+- **Implementing without explicit approval:** a submitted plan is not an approved
+  plan. Wait for the active control authority's "yes" before writing code (step 2) and
+  before committing (step 5).
+- **Silent drift from the plan or scope:** if the real scope differs from what was
+  approved, stop and get re-approval (step 3); don't stretch the change because
+  "you're already in there," and don't expand scope without a fresh, explicit
+  approval.
+- **Skipping code review:** step 4's review is mandatory even for small changes or an
+  apparently trivial bugfix.
+- **Committing with open findings or red tests:** relevant findings and tests must be
+  resolved and green before committing.
+- **Confusing agentic mode with full autonomy:** a non-human authority doesn't remove
+  any approval gate — it only changes who controls progress.
+- **Never self-approve:** `developer` and `debugger` execute; they never replace the
+  human or agentic supervisor, and they never approve their own plan, deviations,
+  findings, or commit.
+- **Treating the supervisor as a formality:** in agentic mode the supervisor must
+  review focus, scope, and risk — not just reply "ok."
+- **Ignoring archivist when it already exists:** if the repo already has a live
+  documentation structure, respect it and update only the artifacts the change
+  touches; don't work as if it weren't there.
 
-## Output esperado
+## Expected Output
 
-Durante la tarea, el agente ejecutor produce tres artefactos de comunicacion con la autoridad de
-control activa.
+During the task, the executing agent produces communication artifacts for the active
+control authority.
 
-**Plan (final del paso 2):**
-
-```
-## Plan: {titulo de la tarea}
-
-**Rol ejecutor:** developer | debugger
-**Tipo:** feature | bugfix | refactor
-**Issue trabajado:** {referencia a TODO.md, GitHub Issue u origen}
-**Modo de control:** humano-interactivo | agentico-supervisado
-**Autoridad de control:** {usuario humano | agente supervisor: nombre/rol}
-**Objetivo:** {que se busca lograr}
-
-**Que se modificara / investigara:**
-- {archivo o modulo} - {cambio}
-
-**Partes potencialmente afectadas:** {modulos, integraciones, tests}
-
-**Implementacion:** {enfoque en 2-4 puntos}
-
-**Verificacion:** {como se prueba: tests a correr/agregar, pasos manuales}
-
-**Riesgos / dudas / decisiones:** {lista breve}
-
-**Inconsistencias detectadas (paso 1):** {ninguna | lista, y si afectan la tarea}
-
-> Solicito aprobacion explicita de la autoridad de control activa antes de implementar.
-```
-
-**Resumen de code review (final del paso 4):**
+**Plan (end of step 2):**
 
 ```
-## Code review: {titulo}
+## Plan: {task title}
 
-**Modo de control:** humano-interactivo | agentico-supervisado
-**Autoridad de control:** {usuario humano | agente supervisor: nombre/rol}
-**Diff revisado:** {archivos / n de lineas}
+**Executing role:** developer | debugger
+**Type:** feature | bugfix | refactor
+**Issue worked:** {reference to TODO.md, GitHub Issue, or origin}
+**Control mode:** human-interactive | agentic-supervised
+**Control authority:** {human user | supervisor agent: name/role}
+**Objective:** {what this aims to achieve}
 
-**Hallazgos:**
-- [ ] {severidad} - {archivo}: {problema y propuesta}
+**What will be modified / investigated:**
+- {file or module} - {change}
 
-**Sin hallazgos en:** {areas revisadas y OK}
+**Potentially affected parts:** {modules, integrations, tests}
 
-**Tests:** {estado: suficientes / faltan X}
-**Docs a actualizar:** {lista o "ninguna"}
+**Implementation:** {approach, 2-4 points}
 
-> La autoridad de control activa decide si los hallazgos se corrigen ahora, se documentan o se escalan.
+**Verification:** {how it's tested: tests to run/add, manual steps}
+
+**Risks / doubts / decisions:** {short list}
+
+**Inconsistencies found (step 1):** {none | list, and whether they affect the task}
+
+> Requesting explicit approval from the active control authority before implementing.
 ```
 
-**Cierre de tarea (antes del commit):**
+**Code review summary (end of step 4):**
+
+```
+## Code review: {title}
+
+**Control mode:** human-interactive | agentic-supervised
+**Control authority:** {human user | supervisor agent: name/role}
+**Diff reviewed:** {files / lines}
+
+**Findings:**
+- [ ] {severity} - {file}: {problem and proposal}
+
+**No findings in:** {areas reviewed and OK}
+
+**Tests:** {status: sufficient / missing X}
+**Docs to update:** {list or "none"}
+
+> The active control authority decides whether findings are fixed now, documented, or
+> escalated.
+```
+
+**Task closing (before commit):**
 
 ```md
-## Cierre de tarea: {titulo del issue}
+## Task closing: {issue title}
 
-**Rol ejecutor:** developer | debugger
-**Issue trabajado:** {referencia a TODO.md, GitHub Issue u origen}
-**Modo de control:** humano-interactivo | agentico-supervisado
-**Autoridad de control:** {usuario humano | agente supervisor}
+**Executing role:** developer | debugger
+**Issue worked:** {reference to TODO.md, GitHub Issue, or origin}
+**Control mode:** human-interactive | agentic-supervised
+**Control authority:** {human user | supervisor agent}
 
-**Resumen del cambio:**
-{descripcion breve}
+**Change summary:**
+{brief description}
 
-**Archivos modificados:**
-- {archivo} - {motivo}
+**Files modified:**
+- {file} - {reason}
 
-**Tests revisados / ejecutados:**
-- {comando o test} - {resultado}
+**Tests reviewed / run:**
+- {command or test} - {result}
 
-**Documentacion / archivist:**
-- {artefacto actualizado o "no aplico"}
+**Documentation / archivist:**
+- {artifact updated or "not applicable"}
 
 **Code review:**
-- {sin hallazgos relevantes | hallazgos resueltos | hallazgos pendientes para decision}
+- {no relevant findings | findings resolved | findings pending a decision}
 
-**Riesgos o pendientes:**
-- {ninguno | lista breve}
+**Risks or pending items:**
+- {none | short list}
 
-**Nombre sugerido de commit:**
-`{tipo}: {descripcion breve}`
+**Suggested commit message:**
+`{type}: {brief description}`
 
-> El commit no debe realizarse hasta recibir aprobacion explicita de la autoridad de control activa.
+> The commit must not happen until the active control authority gives explicit
+> approval.
+
+**Approval record (once given):**
+Approved by: {control authority}
+Approved scope: {brief summary}
 ```
 
-**Registro de aprobacion (cuando corresponda):**
+## General Principle
 
-```
-**Aprobado por:** {autoridad de control}
-**Alcance aprobado:** {resumen breve}
-```
-
-## Principio general
-
-Toda tarea atraviesa cuatro instancias de control: (1) estudio previo del sistema y su
-documentacion, (2) aprobacion del plan antes de modificar archivos, (3) revision y discusion de
-los cambios antes del commit, y (4) verificacion final de tests y documentacion. El proposito es
-evitar cambios improvisados, mantener a la autoridad de control activa en las decisiones y
-asegurar que cada implementacion llegue al commit comprendida, revisada, probada y correctamente
-documentada. El usuario humano puede ocupar ese rol directamente o delegarlo en un supervisor
-agentico designado, pero el agente implementador nunca se autoaprueba.
+Every task passes through four control checkpoints: (1) prior study of the system and
+its documentation, (2) plan approval before modifying files, (3) review and discussion
+of the changes before commit, and (4) a final check of tests and documentation. The
+point is to prevent improvised changes, keep the active control authority in the
+decisions, and make sure every implementation reaches its commit understood, reviewed,
+tested, and properly documented. The human user can hold that role directly or
+delegate it to a designated agentic supervisor, but the implementing agent never
+self-approves.

@@ -6,8 +6,8 @@
 - Review `README.md`, `DECISIONS.md`, and `RUNBOOK.md` before structural or high-risk changes.
 - Do not change public contracts, schemas, migrations, integrations, or critical configuration without checking the related documentation first.
 - Run confirmed validation commands before considering a change complete.
-- Register contradictions in `docs/catalog/CONFLICTS.md`.
-- Register missing confirmations and open doubts in `docs/catalog/OPEN_QUESTIONS.md`.
+- Register contradictions, missing confirmations, and open doubts in
+  `docs/catalog/OPEN_QUESTIONS.md`.
 
 ## Project Essentials
 
@@ -65,8 +65,7 @@ If a command is not confirmed, mark it as pending and register the uncertainty i
 
 ### Unresolved Knowledge
 
-- `docs/catalog/OPEN_QUESTIONS.md`: unresolved questions.
-- `docs/catalog/CONFLICTS.md`: contradictions and inconsistencies.
+- `docs/catalog/OPEN_QUESTIONS.md`: unresolved questions and contradictions.
 
 ### Code Map
 
@@ -86,5 +85,4 @@ If a command is not confirmed, mark it as pending and register the uncertainty i
 - Reorganize for clarity before adding length.
 - Move deep detail into specific documentation instead of bloating this file.
 - Keep links relative and verifiable.
-- Register contradictions in `docs/catalog/CONFLICTS.md`.
-- Register missing confirmations in `docs/catalog/OPEN_QUESTIONS.md`.
+- Register contradictions and missing confirmations in `docs/catalog/OPEN_QUESTIONS.md`.

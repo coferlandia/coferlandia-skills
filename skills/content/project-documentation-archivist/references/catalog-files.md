@@ -73,9 +73,6 @@ Always include dated entries with source evidence for:
 
 Every entry must answer: "Where did this come from?"
 
-When an entry originates from a closed GitHub issue, also include the canonical issue
-reference in `Relaciones` and enough evidence in `Fuentes` to trace the closure event.
-
 ## TODO.md
 
 Treat `TODO.md` as actionable future work.
@@ -90,12 +87,6 @@ Every task must include:
 - context
 - acceptance criteria when known
 - dependencies when known
-
-When GitHub sync mode is used, synchronized tasks must also include:
-
-- GitHub issue reference in `owner/repo#123` form
-- GitHub state
-- last sync timestamp
 
 Use it for pending work, roadmap items, known bugs, future improvements, validation
 tasks, documentation work, risks needing action, and valuable ideas.
@@ -154,8 +145,7 @@ Maintain one row per detected source with these fields:
 - detection date
 - hash
 - fed files
-- generated conflicts
-- generated questions
+- generated open items
 - notes
 
 Allowed states:
@@ -167,27 +157,10 @@ Allowed states:
 - `unknown`
 - `archived`
 
-## docs/catalog/CONFLICTS.md
-
-Treat `CONFLICTS.md` as the contradiction register.
-
-Mandatory top-level structure:
-
-```md
-# Conflicts
-
-## Open
-
-## Resolved
-
-## Archived
-```
-
-Record contradictions. Do not resolve them arbitrarily during the processing phase.
-
 ## docs/catalog/OPEN_QUESTIONS.md
 
-Treat `OPEN_QUESTIONS.md` as the uncertainty register.
+Treat `OPEN_QUESTIONS.md` as the register for both contradictions and unresolved
+questions, distinguished by the `Type` field on each entry.
 
 Mandatory top-level structure:
 
@@ -201,7 +174,8 @@ Mandatory top-level structure:
 ## Archived
 ```
 
-Open questions do not block processing.
+Record contradictions rather than resolving them arbitrarily during the processing
+phase. Open questions never block processing.
 
 ## docs/catalog/PROCESSING_RUNS.md
 
@@ -216,8 +190,7 @@ Record one entry per run with:
 - base commit
 - processed documents
 - updated files
-- open conflicts
-- open questions
+- open items
 - validations run
 - factual summary
 - suggested commit

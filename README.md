@@ -1,33 +1,26 @@
 # coferlandia-skills
 
-Repositorio de [Agent Skills](https://agentskills.io) de Coferlandia. La especificación de
-agentskills.io es la fuente canónica del formato; este repo solo define convenciones locales.
+Coferlandia's [Agent Skills](https://agentskills.io) repository. The agentskills.io
+specification is the canonical source for the format; this repo only adds local
+conventions.
 
-## Para agentes de IA
+## For AI agents
 
-Lee [`AGENTS.md`](./AGENTS.md) — contiene todo lo que necesitas para usar y crear skills.
+Read [`AGENTS.md`](./AGENTS.md) — everything needed to use and create skills.
 
-## Para humanos
-
-Lee [`vault/Genesis_Plan.md`](./vault/Genesis_Plan.md) para entender la visión y arquitectura completa.
-
-## Estructura rápida
+## Structure
 
 ```
-skills/          ← Todas las skills organizadas por categoría
-_protocol/       ← Protocolo para crear y mantener skills
-AGENTS.md        ← Entry point para agentes
-vault/           ← Visión, arquitectura y auditorías
+skills/          Skills, organized by category
+_protocol/       Protocol for creating and maintaining skills
+AGENTS.md        Entry point for agents
 ```
 
-## Skills disponibles
+## Available skills
 
-Ver [`skills/INDEX.md`](./skills/INDEX.md).
+See [`skills/INDEX.md`](./skills/INDEX.md).
 
-## Instalación
-
-El repositorio mantiene una sola copia editable de cada skill. El marketplace compartido y las
-junctions locales apuntan al mismo árbol `skills/`.
+## Install
 
 ### Claude Code
 
@@ -43,19 +36,26 @@ copilot plugin marketplace add diegocofre/coferlandia-skills
 copilot plugin install coferlandia-skills@coferlandia
 ```
 
-Claude Code y Copilot CLI comparten el marketplace declarado en `.claude-plugin/`.
+Claude Code and Copilot CLI share the marketplace declared in `.claude-plugin/`.
 
-### Codex y Gemini CLI
+### Codex and Gemini CLI
 
-Codex y Gemini CLI consumen estas skills mediante Agent Skills instaladas en `~/.agents/skills`,
-no mediante plugins o extensiones. Ambos formatos de distribución sólo descubren skills hijas
-inmediatas y no admiten el nivel de categorías canónico de este repo
-(`skills/<categoria>/<skill>`).
+Codex and Gemini CLI consume these skills as Agent Skills installed under
+`~/.agents/skills`, not as plugins or extensions. Both formats only discover immediate
+child skills and don't support this repo's category level
+(`skills/<category>/<skill>`).
 
-En el entorno de desarrollo de Coferlandia, cada skill se instala como junction hacia su directorio
-canónico. Esto preserva edición en vivo y evita copias. No se publica un marketplace Codex ni una
-extensión Gemini mientras hacerlo requiera duplicar o reestructurar el árbol de skills.
+In Coferlandia's dev environment, each skill installs as a junction to its canonical
+directory — live editing, no copies. No Codex marketplace or Gemini extension ships
+while doing so would require duplicating or restructuring the skills tree.
+
+## License
+
+Apache License 2.0 — see [`LICENSE`](./LICENSE). Skills here are provided "as is,"
+without warranty of any kind. They encode process and judgment, not certified
+procedures: read a skill fully and verify its behavior before relying on it for
+anything consequential.
 
 ---
 
-*Construido para agentes. Por agentes.*
+*Built for agents. By agents.*

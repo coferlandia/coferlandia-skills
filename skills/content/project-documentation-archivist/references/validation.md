@@ -19,7 +19,6 @@ location, replace the script path with the installed absolute or relative path t
 - required files exist
 - `AGENTS.md` exists
 - `docs/catalog/` exists
-- `CONFLICTS.md` contains `Open`, `Resolved`, and `Archived`
 - `OPEN_QUESTIONS.md` contains `Open`, `Resolved`, and `Archived`
 - `PROCESSING_RUNS.md` exists and has a title
 - archived processed sources contain frontmatter with `catalog_status: processed`
@@ -35,8 +34,6 @@ Also verify manually:
 - existing semantic content in `AGENTS.md` was preserved or explicitly quarantined in a legacy section
 - `HISTORY.md` entries have evidence
 - `TODO.md` avoids duplicate tasks
-- synchronized GitHub issue references in `TODO.md` use canonical `owner/repo#123` form
-- synchronized closed issues moved into `HISTORY.md` still keep evidence and issue references
 - `DECISIONS.md` explains reasons
 - `RUNBOOK.md` does not expose secret values
 - `SOURCE_INDEX.md` rows match the files actually processed

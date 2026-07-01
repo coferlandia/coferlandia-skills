@@ -1,189 +1,194 @@
 # HOW_TO_CREATE_SKILLS.md
 
-> **Protocolo completo para crear una skill en coferlandia-skills.**  
-> Cualquier agente de IA puede seguir este protocolo de forma autónoma.
+> **Full protocol for creating a skill in coferlandia-skills.**
+> Any AI agent can follow this protocol autonomously.
 
 ---
 
-## Prerrequisitos
+## Prerequisites
 
-Antes de crear una skill, lee:
-- [La especificación canónica de agentskills.io](https://agentskills.io/specification)
-- [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) — reglas de nombre y categoría
-- [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) — template a usar
-- [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — checklist de calidad
-
----
-
-## Paso 1: Definir el scope de la skill
-
-Una buena skill encapsula **una unidad coherente de trabajo**. Pregúntate:
-
-- ¿Qué tarea específica resuelve?
-- ¿Qué conocimiento de Coferlandia necesita un agente para hacerlo bien?
-- ¿Es demasiado estrecha? (forzaría cargar múltiples skills para una tarea)
-- ¿Es demasiado amplia? (difícil de activar con precisión)
-
-**Señales de buen scope:**
-- Una tarea que un agente haría de 2-5 pasos distintos
-- Conocimiento específico de Coferlandia (schemas, APIs internas, convenciones de equipo)
-- Un output format que debe ser consistente
-
-**Señales de mal scope:**
-- "Todo lo relacionado con X" → demasiado amplio
-- Un solo comando bash → demasiado estrecho, úsalo inline
+Before creating a skill, read:
+- [The canonical agentskills.io specification](https://agentskills.io/specification)
+- [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) — naming and category rules
+- [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) — template to use
+- [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — quality checklist
 
 ---
 
-## Paso 2: Elegir nombre y categoría
+## Step 1: Define the skill's scope
 
-1. Consulta [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md)
-2. Elige la categoría correcta: `meta`, `engineering`, `data`, `content`, `design`, `ops`
-3. Define el nombre en `lowercase-con-hyphens` (máximo 64 caracteres)
-4. Verifica que no existe una skill con ese nombre en `skills/INDEX.md`
+A good skill encapsulates **one coherent unit of work**. Ask yourself:
 
-**Formato de ruta:** `skills/{categoria}/{nombre-skill}/`
+- What specific task does it solve?
+- What Coferlandia-specific knowledge does an agent need to do it well?
+- Is it too narrow? (would force loading several skills for one task)
+- Is it too broad? (hard to trigger precisely)
+
+**Signs of good scope:**
+- A task an agent would do in 2-5 distinct steps
+- Coferlandia-specific knowledge (schemas, internal APIs, team conventions)
+- An output format that needs to stay consistent
+
+**Signs of bad scope:**
+- "Everything related to X" → too broad
+- A single bash command → too narrow, inline it instead
 
 ---
 
-## Paso 3: Crear la estructura de carpetas
+## Step 2: Choose a name and category
+
+1. Check [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md).
+2. Pick the right category: `meta`, `engineering`, `data`, `content`, `design`, `ops`.
+3. Define the name as `lowercase-with-hyphens` (64 characters max).
+4. Confirm no skill with that name already exists in `skills/INDEX.md`.
+
+**Path format:** `skills/{category}/{skill-name}/`
+
+---
+
+## Step 3: Create the folder structure
 
 ```bash
-mkdir -p skills/{categoria}/{nombre-skill}
-# Si la skill tiene scripts:
-mkdir -p skills/{categoria}/{nombre-skill}/scripts
-# Si tiene referencias externas largas:
-mkdir -p skills/{categoria}/{nombre-skill}/references
-# Si tiene templates o recursos estáticos:
-mkdir -p skills/{categoria}/{nombre-skill}/assets
+mkdir -p skills/{category}/{skill-name}
+# If the skill has scripts:
+mkdir -p skills/{category}/{skill-name}/scripts
+# If it has long external references:
+mkdir -p skills/{category}/{skill-name}/references
+# If it has templates or static resources:
+mkdir -p skills/{category}/{skill-name}/assets
 ```
 
 ---
 
-## Paso 4: Crear SKILL.md
+## Step 4: Write SKILL.md
 
-Copia el template de [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) y completa cada sección.
+Copy the template from [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) and fill in every
+section.
 
-### Frontmatter (obligatorio)
+### Frontmatter (required)
 
 ```yaml
 ---
-name: {nombre-skill}          # DEBE coincidir con el nombre de la carpeta (ver NAMING_CONVENTIONS.md)
-description: >               # QUÉ hace + CUÁNDO usarla. Campo canónico de triggering.
-  [Qué hace la skill y cuándo activarla, con keywords específicos del dominio.]
-license: MIT
-compatibility: >            # ENTORNO REQUERIDO (binarios, runtime, accesos), no marcas de agentes.
-  Requiere {git / Python 3.11+ / acceso al repo / ...}
+name: {skill-name}          # MUST match the folder name (see NAMING_CONVENTIONS.md)
+description: >              # WHAT it does + WHEN to use it. The canonical triggering field.
+  [What the skill does and when to activate it, with domain-specific keywords.]
+license: Apache-2.0
+compatibility: >            # REQUIRED ENVIRONMENT (binaries, runtime, access), not agent brands.
+  Requires {real dependencies/access}
 metadata:
   author: coferlandia
   version: "1.0"
-  category: {categoria}
+  category: {category}
   status: active
-  tested: "{fecha} — {cómo se probó}"   # obligatorio para status: active
+  tested: "{date} - {how it was tested}"   # required for status: active
 ---
 ```
 
-> **Triggering:** agentskills.io define `description` como el campo que explica qué hace la skill
-> y cuándo usarla. Se carga durante discovery, así que debe ser específica y concisa. El detalle
-> operativo pertenece al cuerpo de `SKILL.md`, no a campos de frontmatter inventados.
+> **Triggering:** agentskills.io defines `description` as the field that explains what
+> the skill does and when to use it. It loads during discovery, so keep it specific and
+> concise. Operational detail belongs in the body of `SKILL.md`, not in invented
+> frontmatter fields.
 
-### Cuerpo de instrucciones
+### Instruction body
 
-Estructura recomendada:
+Recommended structure:
 
 ```markdown
-## Contexto
+## Context
 
-[Qué sabe el agente de Coferlandia gracias a esta skill que no sabría sin ella]
+[What the agent knows about Coferlandia thanks to this skill, that it wouldn't know without it]
 
-## Pasos
+## Steps
 
-1. Paso concreto
-2. Paso concreto
-3. Paso concreto
+1. Concrete step
+2. Concrete step
+3. Concrete step
 
 ## Gotchas
 
-- [Error común 1 y cómo evitarlo]
-- [Error común 2 y cómo evitarlo]
+- [Common error 1 and how to avoid it]
+- [Common error 2 and how to avoid it]
 
-## Output esperado
+## Expected Output
 
-[Template o descripción del formato de salida]
+[Template or description of the output format]
 
-## Scripts disponibles (si aplica)
+## Scripts Available (if applicable)
 
-- **`scripts/nombre.py`** — Qué hace y cuándo ejecutarlo
+- **`scripts/name.py`** - What it does and when to run it
 ```
 
-### Reglas de contenido
+### Content rules
 
-**SÍ incluir:**
-- Convenciones específicas de Coferlandia
-- Gotchas y correcciones a errores típicos
-- Templates de output concretos
-- Checklists para multi-paso
-- Cuándo cargar archivos de `references/` (con condición explícita)
+**Include:**
+- Coferlandia-specific conventions
+- Gotchas and fixes for typical mistakes
+- Concrete output templates
+- Multi-step checklists
+- When to load `references/` files (with an explicit condition)
 
-**NO incluir:**
-- Conocimiento general que cualquier LLM ya tiene
-- Explicaciones de conceptos básicos
-- Todo el edge-case handling (delega al juicio del agente cuando es razonable)
+**Don't include:**
+- General knowledge any LLM already has
+- Explanations of basic concepts
+- Every edge case (delegate to the agent's judgment when reasonable)
 
-**Límite:** Objetivo <5000 tokens; tope duro ~500 líneas en SKILL.md. Material extenso → `references/`
-
----
-
-## Paso 5: Escribir scripts (si aplica)
-
-Si la skill necesita scripts, ponlos en `scripts/`. Requisitos mínimos:
-
-1. **No pueden tener prompts interactivos** — el agente opera en shell no-interactivo
-2. **Deben tener `--help`** documentado
-3. **Mensajes de error descriptivos** — el agente usa el error para corregir su siguiente intento
-4. **Output estructurado** — preferir JSON/CSV sobre texto libre
-5. **Idempotentes** — el agente puede reintentarlos sin consecuencias
-6. **Declarar dependencias inline** — usar PEP 723 para Python (`# /// script`), etc.
+**Limit:** target <5000 tokens; hard cap ~500 lines in SKILL.md. Extensive material →
+`references/`.
 
 ---
 
-## Paso 6: Verificar calidad
+## Step 5: Write scripts (if applicable)
 
-La lista autoritativa está en [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — verifícala
-completa (no se reproduce aquí para no duplicarla). Primero corre el validador mecánico:
+If the skill needs scripts, put them in `scripts/`. Minimum requirements:
+
+1. **No interactive prompts** — the agent runs in a non-interactive shell.
+2. **Must have documented `--help`.**
+3. **Descriptive error messages** — the agent uses the error to fix its next attempt.
+4. **Structured output** — prefer JSON/CSV over free text.
+5. **Idempotent** — the agent can retry them with no side effects.
+6. **Declare dependencies inline** — use PEP 723 for Python (`# /// script`), etc.
+
+---
+
+## Step 6: Verify quality
+
+The authoritative list lives in [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) —
+check it in full (not reproduced here to avoid duplication). First run the mechanical
+validator:
 
 ```bash
-python skills/meta/coferlandia-skill-testing/scripts/test_skills.py .
-# debe salir con código 0 (sin errores)
+python _protocol/scripts/validate_skill.py .
+# must exit with code 0 (no errors)
 ```
 
 ---
 
-## Paso 7: Actualizar el índice
+## Step 7: Update the index
 
-**Obligatorio.** Agrega la skill a `skills/INDEX.md`. El **formato de fila está definido en la
-cabecera de `INDEX.md`** (fuente de verdad única) — úsalo desde ahí, no lo copies aquí. En
-resumen: `| [nombre-skill](./{categoria}/{nombre-skill}/) | Descripción breve | {status} |`.
-
----
-
-## Paso 8: Commitear
-
-Formato de commit:
-
-```
-skill({categoria}/{nombre-skill}): agregar skill de {qué hace}
-```
-
-Ejemplo:
-```
-skill(engineering/code-review): agregar skill de review con estándares Coferlandia
-```
+**Required.** Add the skill to `skills/INDEX.md`. The **row format is defined in the
+header of `INDEX.md`** (single source of truth) — use it from there, don't copy it
+here. In short:
+`| [skill-name](./{category}/{skill-name}/) | Brief description | {status} |`.
 
 ---
 
-## Notas para el agente
+## Step 8: Commit
 
-- Si encuentras un error en una skill existente mientras trabajas, corrígelo y agrega un Gotcha
-- Si el scope de lo que necesitas crear no encaja en ninguna categoría, propón una nueva en `vault/Genesis_Plan.md`
-- La skill `skills/meta/skill-factory/` existe para automatizar este proceso — úsala si está disponible
+Commit format:
+
+```
+skill({category}/{skill-name}): add skill for {what it does}
+```
+
+Example:
+```
+skill(engineering/code-review): add review skill with Coferlandia standards
+```
+
+---
+
+## Notes for the agent
+
+- If you find an error in an existing skill while working, fix it and add a Gotcha.
+- If the scope of what you need to create doesn't fit any category, propose a new one
+  directly in `_protocol/NAMING_CONVENTIONS.md` (add it to the category table).

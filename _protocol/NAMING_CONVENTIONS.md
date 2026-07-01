@@ -1,108 +1,110 @@
 # NAMING_CONVENTIONS.md
 
-> Reglas de naming para skills en coferlandia-skills.
-> **Fuente de verdad única del naming.** Cualquier otro archivo que necesite estas reglas las
-> enlaza a este documento; no las reproduce (evita que las copias se contradigan).
+> Naming rules for skills in coferlandia-skills.
+> **Single source of truth for naming.** Any other file that needs these rules links
+> to this document instead of reproducing it (so copies can't contradict each other).
 
 ---
 
-## Reglas del campo `name`
+## `name` field rules
 
-El campo `name` en el frontmatter de `SKILL.md` debe:
+The `name` field in `SKILL.md` frontmatter must:
 
-- Usar solo: letras minúsculas (`a-z`), números (`0-9`), y guiones (`-`)
-- NO usar: mayúsculas, espacios, underscores, puntos, ni ningún otro carácter especial
-- NO empezar ni terminar con guión
-- NO tener guiones consecutivos (`--`)
-- Tener máximo 64 caracteres
-- **Coincidir exactamente con el nombre de la carpeta que la contiene**
+- Use only: lowercase letters (`a-z`), digits (`0-9`), and hyphens (`-`)
+- NOT use: uppercase, spaces, underscores, periods, or any other special character
+- NOT start or end with a hyphen
+- NOT have consecutive hyphens (`--`)
+- Be at most 64 characters
+- **Match exactly the name of the folder containing it**
 
 ```yaml
-# Válidos
+# Valid
 name: code-review
 name: sql-query
-name: skill-factory
+name: release-notes
 name: deploy-checklist
 
-# Inválidos
-name: Code-Review       # mayúsculas
+# Invalid
+name: Code-Review       # uppercase
 name: sql_query         # underscore
-name: -deploy           # empieza con guión
-name: deploy-           # termina con guión
-name: deploy--checklist # guiones dobles
+name: -deploy           # starts with a hyphen
+name: deploy-           # ends with a hyphen
+name: deploy--checklist # double hyphen
 ```
 
 ---
 
-## Categorías disponibles
+## Available categories
 
-| Categoría | Directorio | Qué va aquí |
+| Category | Directory | What goes here |
 |-----------|------------|-------------|
-| `meta` | `skills/meta/` | Skills sobre skills: crear, auditar, mejorar skills |
-| `engineering` | `skills/engineering/` | Código, infraestructura, arquitectura, debugging |
-| `data` | `skills/data/` | Análisis de datos, pipelines, queries, reportes |
-| `content` | `skills/content/` | Escritura, documentación, comunicación, release notes |
-| `design` | `skills/design/` | UX, producto, diseño visual, copy |
-| `ops` | `skills/ops/` | Operaciones, automatizaciones, incidentes, standups |
+| `meta` | `skills/meta/` | Skills about skills: creating, auditing, improving skills |
+| `engineering` | `skills/engineering/` | Code, infrastructure, architecture, debugging |
+| `data` | `skills/data/` | Data analysis, pipelines, queries, reports |
+| `content` | `skills/content/` | Writing, documentation, communication, release notes |
+| `design` | `skills/design/` | UX, product, visual design, copy |
+| `ops` | `skills/ops/` | Operations, automation, incidents, standups |
 
-Si tu skill no encaja en ninguna categoría, propón una nueva en `vault/Genesis_Plan.md`.
+If your skill doesn't fit any category, propose a new one directly in this file (add
+it to the table above).
 
-### Regla de desempate de categoría
+### Category tie-breaking rule
 
-Si una skill encaja en dos categorías, decide de forma determinista (para que dos agentes
-elijan igual):
+If a skill fits two categories, decide deterministically (so two agents pick the
+same one):
 
-1. **Por el artefacto que produce:** código/infra → `engineering`; texto/comunicación →
-   `content`; análisis o datos tabulares → `data`; UX/visual → `design`; proceso o
-   automatización operacional → `ops`; skills sobre el propio repo o sobre otras skills → `meta`.
-2. **Ante empate persistente:** elige la categoría que aparezca primero en la tabla de arriba.
-
----
-
-## Convención de ruta completa
-
-```
-skills/{categoría}/{nombre-skill}/SKILL.md
-```
-
-Ejemplos:
-```
-skills/meta/skill-factory/SKILL.md
-skills/engineering/code-review/SKILL.md
-skills/data/sql-query/SKILL.md
-skills/content/release-notes/SKILL.md
-```
+1. **By the artifact it produces:** code/infra → `engineering`; text/communication →
+   `content`; analysis or tabular data → `data`; UX/visual → `design`; operational
+   process or automation → `ops`; skills about the repo itself or about other skills →
+   `meta`.
+2. **On a persistent tie:** pick whichever category appears first in the table above.
 
 ---
 
-## Convención de commits
+## Full path convention
 
 ```
-skill({categoría}/{nombre}): descripción corta en imperativo
+skills/{category}/{skill-name}/SKILL.md
 ```
 
-Ejemplos:
+Examples:
 ```
-skill(meta/skill-factory): agregar skill de creación automática de skills
-skill(engineering/code-review): agregar checklist de seguridad
-skill(data/sql-query): corregir gotcha de soft deletes
+skills/meta/using-coferlandia-skills/SKILL.md
+skills/engineering/coferlandia-software-dev/SKILL.md
+skills/content/project-documentation-archivist/SKILL.md
 ```
 
 ---
 
-## Convención de versiones (metadata)
+## Commit convention
+
+```
+skill({category}/{name}): short description in imperative
+```
+
+Examples:
+```
+skill(meta/using-coferlandia-skills): add skill-usage gate
+skill(engineering/code-review): add security checklist
+skill(data/sql-query): fix soft-delete gotcha
+```
+
+---
+
+## Version convention (metadata)
 
 ```yaml
 metadata:
-  version: "1.0"    # primera versión
-  version: "1.1"    # bugfix o mejora menor
-  version: "2.0"    # cambio significativo en instrucciones
+  version: "1.0"    # first version
+  version: "1.1"    # bugfix or minor improvement
+  version: "2.0"    # significant change to instructions
 ```
 
 ---
 
-## Nombres que evitar
+## Names to avoid
 
-- Evitar nombres muy genéricos: `helper`, `utils`, `misc`
-- Evitar nombres que dupliquen la categoría: `engineering-code-review` (la categoría ya implica `engineering`)
-- Evitar abreviaciones poco claras: `cr` en lugar de `code-review`
+- Overly generic names: `helper`, `utils`, `misc`
+- Names that duplicate the category: `engineering-code-review` (the category already
+  implies `engineering`)
+- Unclear abbreviations: `cr` instead of `code-review`

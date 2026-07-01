@@ -1,24 +1,24 @@
 # SKILL_LIFECYCLE.md
 
-> Estados de una skill y cómo transicionar entre ellos.
+> A skill's states and how to transition between them.
 
 ---
 
-## Estados
+## States
 
 ```
 draft ──→ active ──→ deprecated
   ↑           │
-  └───────────┘ (iteración)
+  └───────────┘ (iteration)
 ```
 
-| Estado | Descripción | Cuándo usar |
+| State | Description | When to use |
 |--------|-------------|------------|
-| `draft` | En desarrollo. Puede tener instrucciones incompletas | Al crear una skill nueva |
-| `active` | Probada, completa, lista para producción | Tras pasar el checklist de QUALITY_STANDARDS.md |
-| `deprecated` | Reemplazada o desactualizada | Cuando una skill es superada por otra mejor |
+| `draft` | In development. May have incomplete instructions | When creating a new skill |
+| `active` | Tested, complete, production-ready | After passing the QUALITY_STANDARDS.md checklist |
+| `deprecated` | Replaced or outdated | When a skill is superseded by a better one |
 
-El estado va en el frontmatter de `SKILL.md`:
+The state goes in `SKILL.md`'s frontmatter:
 ```yaml
 metadata:
   status: active
@@ -26,50 +26,50 @@ metadata:
 
 ---
 
-## Ciclo de vida típico
+## Typical Lifecycle
 
-### 1. Creación (`draft`)
+### 1. Creation (`draft`)
 
-- Un agente o humano identifica la necesidad de una skill
-- Se sigue el protocolo en `HOW_TO_CREATE_SKILLS.md`
-- La skill se crea con `status: draft`
-- Se hace commit con mensaje: `skill(category/name): crear skill en draft`
+- An agent or human identifies the need for a skill
+- Follow the protocol in `HOW_TO_CREATE_SKILLS.md`
+- The skill is created with `status: draft`
+- Commit message: `skill(category/name): create skill as draft`
 
-### 2. Activación (`active`)
+### 2. Activation (`active`)
 
-- Se prueba la skill con al menos un caso real
-- Se verifica el checklist completo en `QUALITY_STANDARDS.md`
-- Se actualiza `status: active` en el frontmatter
-- Se actualiza `skills/INDEX.md`
-- Commit: `skill(category/name): activar skill tras verificación`
+- Test the skill with at least one real case
+- Verify the full checklist in `QUALITY_STANDARDS.md`
+- Update `status: active` in the frontmatter
+- Update `skills/INDEX.md`
+- Commit: `skill(category/name): activate skill after verification`
 
-### 3. Iteración
+### 3. Iteration
 
-- Al encontrar un error → agregar Gotcha y hacer commit
-- Al mejorar instrucciones → actualizar `version` en metadata
-- Al agregar scripts → documentar en `SKILL.md`
-- Commit: `skill(category/name): corregir {qué}`
+- On finding an error → add a Gotcha and commit
+- On improving instructions → bump `version` in metadata
+- On adding scripts → document them in `SKILL.md`
+- Commit: `skill(category/name): fix {what}`
 
-### 4. Deprecación (`deprecated`)
+### 4. Deprecation (`deprecated`)
 
-- La skill ya no es relevante, o fue superada por otra
-- Actualizar `status: deprecated`
-- Agregar al inicio del cuerpo de `SKILL.md`:
+- The skill is no longer relevant, or was superseded by another
+- Update `status: deprecated`
+- Add to the top of `SKILL.md`'s body:
   ```
-  > ⚠️ **DEPRECATED** — Usar `skills/{categoria}/{nueva-skill}/` en su lugar.
+  > ⚠️ **DEPRECATED** - Use `skills/{category}/{new-skill}/` instead.
   ```
-- Commit: `skill(category/name): deprecar, reemplazada por {nueva-skill}`
-- Mantener el archivo (no eliminar) para referencia histórica
+- Commit: `skill(category/name): deprecate, replaced by {new-skill}`
+- Keep the file (don't delete it) for historical reference
 
 ---
 
-## Responsabilidad del agente durante iteración
+## Agent Responsibility During Iteration
 
-Cuando un agente usa una skill y encuentra un error o comportamiento inesperado:
+When an agent uses a skill and finds an error or unexpected behavior:
 
-1. **Corregir** el problema en el momento
-2. **Documentar** el error como Gotcha en `SKILL.md`
-3. **Actualizar** la versión minor (e.g., `1.0` → `1.1`)
-4. **Commitear** con el formato: `skill(category/name): agregar gotcha sobre {qué}`
+1. **Fix** the problem on the spot
+2. **Document** the error as a Gotcha in `SKILL.md`
+3. **Bump** the minor version (e.g., `1.0` → `1.1`)
+4. **Commit** with the format: `skill(category/name): add gotcha about {what}`
 
-Esto es parte del ciclo "por agentes" — cada agente que usa una skill contribuye a mejorarla.
+This is part of the "by agents" cycle — every agent that uses a skill helps improve it.

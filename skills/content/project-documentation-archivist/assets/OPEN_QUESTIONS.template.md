@@ -2,27 +2,32 @@
 
 ## Open
 
-## QUESTION-YYYYMMDD-NNN - Short question title
+## QUESTION-YYYYMMDD-NNN - Short title
 
-Estado: open
-Detectado: YYYY-MM-DD
-Detectado en sesion: [[docs/catalog/PROCESSING_RUNS.md#yyyy-mm-dd-hhmm-processing-run]]
+Status: open
+Type: question | conflict
+Detected: YYYY-MM-DD
+Detected in session: [[docs/catalog/PROCESSING_RUNS.md#yyyy-mm-dd-hhmm-processing-run]]
 Area: backend | frontend | infra | product | docs | architecture | operations | unknown
-Prioridad: low | medium | high
+Priority: low | medium | high
 
-Pregunta:
+Question or conflict:
 ...
 
-Contexto:
+Context:
 ...
 
-Fuente:
-- [[docs/archive/YYYY/document-source.md]]
+Sources:
+- [[docs/archive/YYYY/document-a.md]]
+- [[docs/archive/YYYY/document-b.md]] (second source only applies to conflicts)
 
-Impacto:
+Impact:
 ...
 
-Accion requerida:
+Temporary decision (conflicts only):
+...
+
+Action needed:
 ...
 
 ## Resolved

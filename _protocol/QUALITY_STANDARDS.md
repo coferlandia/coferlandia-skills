@@ -1,134 +1,135 @@
 # QUALITY_STANDARDS.md
 
-> Checklist de calidad para skills de coferlandia-skills.  
-> **Fuente de verdad única del checklist de calidad.** Otros archivos enlazan aquí en vez de
-> reproducir la lista. **Todo agente debe verificar estos criterios antes de hacer commit.**
-> Lo mecánico de este checklist está automatizado en `_protocol/scripts/validate_skill.py`.
+> Quality checklist for coferlandia-skills.
+> **Single source of truth for the quality checklist.** Other files link here instead
+> of reproducing the list. **Every agent must verify these criteria before committing.**
+> The mechanical parts of this checklist are automated in `_protocol/scripts/validate_skill.py`.
 
-El formato base pertenece a
-[agentskills.io/specification](https://agentskills.io/specification). Las reglas de este archivo
-son extensiones locales. El runner integral es
-`skills/meta/coferlandia-skill-testing/scripts/test_skills.py`.
+The base format belongs to
+[agentskills.io/specification](https://agentskills.io/specification). The rules in
+this file are local extensions. The mechanical validator is
+`_protocol/scripts/validate_skill.py`.
 
 ---
 
-## ⚠️ Seguridad y Privacidad — CRÍTICO
+## ⚠️ Security and Privacy — CRITICAL
 
-Estas reglas son **no negociables**. Este repositorio es público.
+These rules are **non-negotiable**. This repository is public.
 
-- [ ] **Cero secretos** — La skill NO contiene API keys, tokens, passwords, ni credenciales de ningún tipo
-- [ ] **Cero datos personales** — La skill NO contiene nombres reales de personas, emails, teléfonos, documentos de identidad, ni ningún dato personal identificable (PII)
-- [ ] **Cero datos sensibles de negocio** — La skill NO expone IPs internas, URLs de producción privadas, nombres de bases de datos reales, ni información que no deba ser pública
-- [ ] **Referencias genéricas** — Si la skill menciona sistemas internos, usa placeholders descriptivos (`{DATABASE_URL}`, `{API_ENDPOINT}`) nunca valores reales
-- [ ] **No asumir contexto privado** — Las instrucciones de la skill funcionan sin que el agente tenga acceso a información privada hardcodeada
+- [ ] **Zero secrets** — the skill does NOT contain API keys, tokens, passwords, or any credentials
+- [ ] **Zero personal data** — the skill does NOT contain real names, emails, phone numbers, ID documents, or any personally identifiable information (PII)
+- [ ] **Zero sensitive business data** — the skill does NOT expose internal IPs, private production URLs, real database names, or information that shouldn't be public
+- [ ] **Generic references** — if the skill mentions internal systems, use descriptive placeholders (`{DATABASE_URL}`, `{API_ENDPOINT}`), never real values
+- [ ] **No assumed private context** — the skill's instructions work without the agent having hardcoded private information
 
-> **Regla de oro:** Si no publicarías ese dato en Twitter, no va en la skill.
+> **Golden rule:** if you wouldn't post that data on Twitter, it doesn't go in the skill.
 
-### Cómo manejar referencias a sistemas internos
+### Handling references to internal systems
 
 ```yaml
-# MAL — nunca hacer esto
+# BAD — never do this
 metadata:
   api_endpoint: https://internal.coferlandia.com/api/v2
   db_host: postgres-prod-01.coferlandia.internal
 
-# BIEN — usar placeholders
+# GOOD — use placeholders
 metadata:
   api_endpoint: "{COFERLANDIA_API_ENDPOINT}"
-  # Configurar en variables de entorno o CLAUDE.md del proyecto
+  # Configure via environment variables or the project's CLAUDE.md
 ```
 
-Si la skill necesita datos de configuración privados, instrúyela a leerlos de variables de entorno o de un archivo de configuración local (nunca del repositorio).
+If the skill needs private configuration data, instruct it to read from environment
+variables or a local config file — never from the repository.
 
 ---
 
-## Formato y Estructura
+## Format and Structure
 
-- [ ] El `name` cumple las reglas de [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) y coincide con el nombre de la carpeta
-- [ ] `description` tiene entre 1 y 1024 caracteres
-- [ ] `category` es una de: `meta`, `engineering`, `data`, `content`, `design`, `ops`
-- [ ] `status` es uno de: `draft`, `active`, `deprecated`
-- [ ] `SKILL.md` cumple el límite de tamaño: **objetivo <5000 tokens; tope duro ~500 líneas** (material extenso → `references/`)
-- [ ] La skill vive en `skills/{category}/{name}/SKILL.md`
-
----
-
-## Descripción (Triggering)
-
-- [ ] La `description` incluye keywords explícitos del dominio (herramientas, formatos, verbos de acción)
-- [ ] La `description` indica cuándo usar la skill ("Usa cuando...", "Activar cuando el usuario pide...")
-- [ ] La `description` menciona casos no-obvios donde aplica, aunque el usuario no use los términos exactos
-- [ ] La `description` NO es genérica ("Esta skill ayuda con X") — debe ser específica y accionable
-- [ ] El frontmatter no agrega campos fuera de agentskills.io; triggering vive en `description`
+- [ ] `name` follows the rules in [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) and matches the folder name
+- [ ] `description` is between 1 and 1024 characters
+- [ ] `category` is one of: `meta`, `engineering`, `data`, `content`, `design`, `ops`
+- [ ] `status` is one of: `draft`, `active`, `deprecated`
+- [ ] `SKILL.md` stays within the size limit: **target <5000 tokens; hard cap ~500 lines** (extensive material → `references/`)
+- [ ] The skill lives at `skills/{category}/{name}/SKILL.md`
 
 ---
 
-## Instrucciones
+## Description (Triggering)
 
-- [ ] Las instrucciones son **procedurales** (cómo hacerlo paso a paso), no declarativas (qué producir)
-- [ ] Cada paso es una acción concreta que el agente puede ejecutar
-- [ ] La skill enseña un **método reusable** para una clase de problemas, no una solución puntual
-- [ ] Existe sección `## Gotchas` con al menos 1 entrada real y concreta
-- [ ] Los Gotchas son errores específicos (no consejos genéricos como "maneja errores correctamente")
-- [ ] Si hay un output format esperado, existe un **template concreto** (no solo descripción en prosa)
-- [ ] Las referencias a `references/` o `assets/` especifican **cuándo** cargarlas, no solo que existen
+- [ ] `description` includes explicit domain keywords (tools, formats, action verbs)
+- [ ] `description` states when to use the skill ("Use when...", "Activate when the user asks...")
+- [ ] `description` mentions non-obvious cases where it applies, even if the user doesn't use the exact terms
+- [ ] `description` is NOT generic ("This skill helps with X") — it must be specific and actionable
+- [ ] The frontmatter adds no fields outside agentskills.io; triggering lives in `description`
 
 ---
 
-## Contenido — Qué NO debe estar en la skill
+## Instructions
 
-- [ ] No contiene conocimiento general que cualquier LLM ya tiene
-- [ ] No explica conceptos básicos del dominio (el agente ya los sabe)
-- [ ] No cubre todos los edge cases — delega al juicio del agente cuando es razonable
-- [ ] No tiene instrucciones contradictorias entre sí
-
----
-
-## Scripts (si aplica)
-
-- [ ] Los scripts NO tienen prompts interactivos (preguntas al usuario en runtime)
-- [ ] Los scripts tienen flag `--help` con: descripción, flags disponibles, ejemplos de uso
-- [ ] Los mensajes de error son descriptivos: qué falló + qué se esperaba + qué intentar
-- [ ] El output es estructurado (JSON, CSV, TSV) — no texto libre difícil de parsear
-- [ ] Los datos van a stdout; los diagnósticos/logs van a stderr
-- [ ] Los scripts son idempotentes (pueden reintentarse sin consecuencias)
-- [ ] Las dependencias están declaradas inline (PEP 723 para Python, etc.)
-- [ ] Scripts destructivos tienen flag `--dry-run` o `--confirm`
-- [ ] **Los scripts NO hardcodean secretos, tokens ni datos privados**
+- [ ] Instructions are **procedural** (how to do it, step by step), not declarative (what to produce)
+- [ ] Each step is a concrete action the agent can execute
+- [ ] The skill teaches a **reusable method** for a class of problems, not a one-off solution
+- [ ] A `## Gotchas` section exists with at least 1 real, concrete entry
+- [ ] Gotchas are specific errors (not generic advice like "handle errors correctly")
+- [ ] If an output format is expected, a **concrete template** exists (not just prose description)
+- [ ] References to `references/` or `assets/` specify **when** to load them, not just that they exist
 
 ---
 
-## Índice y Documentación
+## Content — What Should NOT Be in a Skill
 
-- [ ] `skills/INDEX.md` fue actualizado con esta skill
-- [ ] La entrada en INDEX.md incluye: nombre, descripción breve, categoría, status
-- [ ] El commit sigue el formato: `skill({category}/{name}): descripción`
+- [ ] No general knowledge any LLM already has
+- [ ] No explanations of basic domain concepts (the agent already knows them)
+- [ ] Doesn't cover every edge case — delegates to the agent's judgment when reasonable
+- [ ] No instructions that contradict each other
 
 ---
 
-## Test mínimo (verificable)
+## Scripts (if applicable)
 
-Una skill no puede marcarse `active` sin evidencia registrada de prueba. El criterio "fue
-probada" es inverificable si no queda rastro, así que se registra en el frontmatter:
+- [ ] Scripts have NO interactive prompts (runtime questions to the user)
+- [ ] Scripts have a `--help` flag with: description, available flags, usage examples
+- [ ] Error messages are descriptive: what failed + what was expected + what to try
+- [ ] Output is structured (JSON, CSV, TSV) — not hard-to-parse free text
+- [ ] Data goes to stdout; diagnostics/logs go to stderr
+- [ ] Scripts are idempotent (safe to retry)
+- [ ] Dependencies are declared inline (PEP 723 for Python, etc.)
+- [ ] Destructive scripts have a `--dry-run` or `--confirm` flag
+- [ ] **Scripts do NOT hardcode secrets, tokens, or private data**
 
-- [ ] Corrió `_protocol/scripts/validate_skill.py {carpeta}` y salió con código 0
-- [ ] Se activó con un prompt natural (sin nombrar la skill) y el output cumplió el formato
-- [ ] El resultado quedó registrado en `metadata.tested` con fecha y cómo se probó, p. ej.:
+---
+
+## Index and Documentation
+
+- [ ] `skills/INDEX.md` was updated with this skill
+- [ ] The INDEX.md entry includes: name, brief description, category, status
+- [ ] The commit follows the format: `skill({category}/{name}): description`
+
+---
+
+## Minimum Test (Verifiable)
+
+A skill can't be marked `active` without recorded test evidence. "It was tested" is
+unverifiable without a trail, so record it in the frontmatter:
+
+- [ ] Ran `_protocol/scripts/validate_skill.py {folder}` and it exited with code 0
+- [ ] Activated it with a natural prompt (without naming the skill) and the output matched the expected format
+- [ ] The result is recorded in `metadata.tested` with a date and how it was tested, e.g.:
   ```yaml
   metadata:
     status: active
-    tested: "2026-06-11 — validada con validate_skill.py; activada con el prompt '...'"
+    tested: "2026-06-11 - validated with validate_skill.py; activated with the prompt '...'"
   ```
 
-Si una skill `active` no tiene `metadata.tested`, el validador la marca con un warning.
-- [ ] Existe `tests/cases.json` con al menos un prompt positivo y uno negativo
+If an `active` skill has no `metadata.tested`, the validator flags it with a warning.
+- [ ] `tests/cases.json` exists with at least one positive and one negative prompt
 
 ---
 
-## Niveles de status
+## Status Levels
 
-| Status | Significado |
-|--------|-------------|
-| `draft` | En desarrollo, no usar en producción |
-| `active` | Probada y lista para usar |
-| `deprecated` | Reemplazada por otra skill; no usar |
+| Status | Meaning |
+|--------|---------|
+| `draft` | In development, not for production use |
+| `active` | Tested and ready to use |
+| `deprecated` | Replaced by another skill; do not use |

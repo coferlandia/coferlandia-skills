@@ -1,4 +1,4 @@
 # Source Index
 
-| Estado | Documento original | Ruta archivada | Tipo documental | Fecha detectada | Hash | Archivos alimentados | Conflictos generados | Preguntas generadas | Notas |
-|--------|--------------------|----------------|-----------------|-----------------|------|----------------------|----------------------|---------------------|-------|
+| Status | Original document | Archived path | Document type | Detection date | Hash | Fed files | Open items generated | Notes |
+|--------|--------------------|----------------|-----------------|-----------------|------|----------------------|----------------------|-------|

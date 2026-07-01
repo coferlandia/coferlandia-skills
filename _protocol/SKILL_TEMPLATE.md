@@ -1,108 +1,109 @@
 # SKILL_TEMPLATE.md
 
-> Copia este template para crear una nueva skill.  
-> Reemplaza todo lo que está entre `{llaves}` con valores reales.  
-> Elimina las líneas de comentario (`<!-- -->`) antes de guardar.
+> Copy this template to create a new skill.
+> Replace everything between `{braces}` with real values.
+> Remove the comment lines (`<!-- -->`) before saving.
 
 ---
 
-## Template de SKILL.md
+## SKILL.md Template
 
 ```markdown
 ---
-name: {nombre-skill}
-<!-- Reglas de naming: ver _protocol/NAMING_CONVENTIONS.md (fuente de verdad). Coincide con la carpeta. -->
+name: {skill-name}
+<!-- Naming rules: see _protocol/NAMING_CONVENTIONS.md (source of truth). Must match the folder. -->
 description: >
-  {QUÉ hace la skill y CUÁNDO usarla, con keywords específicos del dominio.}
-  {Máximo 1024 caracteres. Mencionar casos no-obvios sin inventar campos adicionales.}
-license: MIT
+  {WHAT the skill does and WHEN to use it, with domain-specific keywords.}
+  {Max 1024 characters. Mention non-obvious cases without inventing extra fields.}
+license: Apache-2.0
 compatibility: >
-  <!-- ENTORNO REQUERIDO, no marcas de agentes. Ej: "Requiere git y Python 3.11+". -->
-  Requiere {dependencias/accesos reales}
+  <!-- REQUIRED ENVIRONMENT, not agent brands. E.g. "Requires git and Python 3.11+". -->
+  Requires {real dependencies/access}
 metadata:
   author: coferlandia
   version: "1.0"
   category: {meta|engineering|data|content|design|ops}
   status: active
-  tested: "{fecha} — {cómo se probó}"   # obligatorio si status: active
+  tested: "{date} - {how it was tested}"   # required if status: active
 ---
 
-## Contexto
+## Context
 
-<!-- Qué sabe el agente gracias a esta skill. Solo lo que no sabría sin ella. -->
-{Descripción del conocimiento específico de Coferlandia que aporta esta skill:
-convenciones del equipo, APIs internas, schemas, patrones establecidos, etc.}
+<!-- What the agent knows thanks to this skill. Only what it wouldn't know without it. -->
+{Description of the Coferlandia-specific knowledge this skill provides:
+team conventions, internal APIs, schemas, established patterns, etc.}
 
-## Prerequisitos
+## Prerequisites
 
-<!-- Eliminar esta sección si no aplica -->
-- {Herramienta o acceso requerido}
-- {Versión mínima si es relevante}
+<!-- Remove this section if not applicable -->
+- {Required tool or access}
+- {Minimum version if relevant}
 
-## Pasos
+## Steps
 
-<!-- Instrucciones procedurales. Cada paso es una acción concreta del agente. -->
+<!-- Procedural instructions. Each step is a concrete action for the agent. -->
 
-1. {Primer paso concreto}
-2. {Segundo paso concreto}
-3. {Tercer paso concreto}
+1. {First concrete step}
+2. {Second concrete step}
+3. {Third concrete step}
 
-<!-- Si hay un workflow con validación intermedia, usar este patrón: -->
+<!-- If there's a workflow with intermediate validation, use this pattern: -->
 <!--
-1. Ejecutar: `scripts/analyze.py {input}`
-2. Revisar output y crear plan en `plan.json`
-3. Validar: `scripts/validate.py plan.json`
-4. Si falla validación: corregir `plan.json` y volver a paso 3
-5. Ejecutar: `scripts/execute.py plan.json`
+1. Run: `scripts/analyze.py {input}`
+2. Review the output and build a plan in `plan.json`
+3. Validate: `scripts/validate.py plan.json`
+4. If validation fails: fix `plan.json` and go back to step 3
+5. Run: `scripts/execute.py plan.json`
 -->
 
 ## Gotchas
 
-<!-- Esta sección es obligatoria. Mínimo 1 entrada. -->
-<!-- Incluir errores reales que un agente cometería sin esta información. -->
+<!-- This section is required. At least 1 entry. -->
+<!-- Include real errors an agent would make without this information. -->
 
-- **{Error común 1}:** {Qué pasa y cómo evitarlo}
-- **{Error común 2}:** {Qué pasa y cómo evitarlo}
+- **{Common error 1}:** {What happens and how to avoid it}
+- **{Common error 2}:** {What happens and how to avoid it}
 
-## Output esperado
+## Expected Output
 
-<!-- Template concreto del output. Más útil que una descripción en prosa. -->
+<!-- Concrete output template. More useful than a prose description. -->
 
-{Si aplica, pegar aquí un template o ejemplo de output:}
+{If applicable, paste a template or example of the output here:}
 
 ```
-{ejemplo de formato de output}
+{example output format}
 ```
 
-## Scripts disponibles
+## Scripts Available
 
-<!-- Eliminar esta sección si la skill no tiene scripts -->
+<!-- Remove this section if the skill has no scripts -->
 
-- **`scripts/{nombre}.py`** — {Qué hace. Ejecutar cuando: condición específica}
+- **`scripts/{name}.py`** - {What it does. Run when: specific condition}
 
-Uso:
+Usage:
 \```bash
-python scripts/{nombre}.py --help
+python scripts/{name}.py --help
 \```
 
-## Referencias
+## References
 
-<!-- Eliminar esta sección si no hay references/ -->
-<!-- Siempre indicar CUÁNDO cargar cada referencia, no solo que existe -->
+<!-- Remove this section if there's no references/ -->
+<!-- Always state WHEN to load each reference, not just that it exists -->
 
-- Leer `references/{archivo}.md` cuando: {condición específica que dispara la carga}
+- Read `references/{file}.md` when: {specific condition that triggers loading it}
 ```
 
 ---
 
-## Checklist antes de guardar
+## Checklist Before Saving
 
-La lista autoritativa está en [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md); no se reproduce
-aquí para no duplicarla. Atajo: corre el validador, que cubre todo lo mecánico —
+The authoritative list is in [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md); it's
+not reproduced here to avoid duplication. Shortcut: run the validator, which covers
+everything mechanical —
 
 ```bash
-python skills/meta/coferlandia-skill-testing/scripts/test_skills.py .   # código 0 = OK
+python _protocol/scripts/validate_skill.py .   # code 0 = OK
 ```
 
-Lo que el validador no puede chequear y debes revisar a mano: que las instrucciones sean
-procedurales, que los Gotchas sean errores reales, y que actualizaste `skills/INDEX.md`.
+What the validator can't check and you must review by hand: that the instructions are
+procedural, that the Gotchas are real errors, and that you updated `skills/INDEX.md`.

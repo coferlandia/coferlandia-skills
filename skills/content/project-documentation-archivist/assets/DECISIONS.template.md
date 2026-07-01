@@ -4,32 +4,32 @@
 
 ## DECISION-YYYYMMDD-NNN - Short decision title
 
-Estado: proposed | accepted | superseded | deprecated
-Fecha: YYYY-MM-DD
+Status: proposed | accepted | superseded | deprecated
+Date: YYYY-MM-DD
 Area: backend | frontend | infra | product | docs | architecture | operations | unknown
 
-Contexto:
+Context:
 ...
 
 Decision:
 ...
 
-Alternativas consideradas:
+Alternatives considered:
 - ...
 
-Razones:
+Reasons:
 - ...
 
-Consecuencias:
+Consequences:
 - ...
 
 Trade-offs:
 - ...
 
-Fuentes:
+Sources:
 - [[docs/archive/YYYY/document.md]]
 
-Relaciones:
+Related:
 - Issue:
 - Commit:
 - PR:

@@ -1,210 +1,170 @@
 ---
 name: project-documentation-archivist
 description: >
-  Catalog, normalize, update, and archive project documentation into README, AGENTS,
-  HISTORY, TODO, DECISIONS, RUNBOOK, and traceable Obsidian-style project catalog
-  files. Use when a user asks to organize project docs, process documentation inboxes,
-  update project memory, create or maintain AGENTS.md for safe agent onboarding,
-  archive notes, resolve documentation conflicts, keep project documentation
-  synchronized with source notes and Git history, maintain documentation catalogs for
-  Git and non-Git technical projects, or explicitly synchronize TODO.md and
-  HISTORY.md with GitHub issues.
+  Use when organizing project docs, processing a documentation inbox, updating
+  project memory, creating or maintaining AGENTS.md for safe agent onboarding,
+  archiving notes, resolving documentation conflicts or open questions, or
+  keeping project documentation synchronized with source notes and Git history.
 license: Apache-2.0
 compatibility: >
-  Requires read/write access to the target project, shell access for file moves, and
-  Python 3.11+ to run scripts/validate_catalog.py. GitHub sync mode additionally
-  requires GitHub connector access with repository issue permissions.
+  Requires read/write access to the target project, shell access for file moves,
+  and Python 3.11+ to run scripts/validate_catalog.py.
 metadata:
   author: dc-sistemas
-  version: "1.2.0"
+  version: "2.0.0"
   category: content
   status: active
-  tested: "2026-06-25 - validated with _protocol/scripts/validate_skill.py and repo skill tests after adding GitHub sync mode and AGENTS.md guidance/templates."
+  tested: "2026-06-30 - removed GitHub sync mode and merged CONFLICTS.md into OPEN_QUESTIONS.md; pending re-validation with _protocol/scripts/validate_skill.py."
 ---
 
 ## Context
 
-Use this skill to turn scattered project documentation into a stable catalog that
-separates present state, agent orientation, verified history, future work, decisions,
-operations, conflicts, open questions, source traceability, and processing sessions.
+This skill turns scattered project documentation into a stable catalog with one file
+per role: present state, agent orientation, verified history, future work, decisions,
+operations, open items, source traceability, and processing sessions.
 
-`AGENTS.md` is a first-class artifact in this skill. It is the minimum reliable entry
-point an agent should read before touching the project. Its role is not to duplicate
-`README.md`, `RUNBOOK.md`, `HISTORY.md`, `DECISIONS.md`, or `TODO.md`, but to distill
-the critical instructions, non-obvious constraints, sensitive areas, safe validation
-commands, and links an agent needs before acting.
+`AGENTS.md` is a first-class artifact. It is the minimum an agent should read before
+touching the project — not a duplicate of `README.md`, `RUNBOOK.md`, `HISTORY.md`,
+`DECISIONS.md`, or `TODO.md`, but a distillation of the instructions, constraints,
+sensitive areas, and commands an agent needs before acting.
 
-This skill works in autonomous mode by default. Do not ask questions while
-processing documentation. Register uncertainty in `docs/catalog/CONFLICTS.md`,
-`docs/catalog/OPEN_QUESTIONS.md`, and `docs/catalog/PROCESSING_RUNS.md`, then
-continue.
+This skill runs autonomously by default. It does not ask questions while processing
+documentation. Uncertainty goes into `docs/catalog/OPEN_QUESTIONS.md` and
+`docs/catalog/PROCESSING_RUNS.md`, and processing continues.
+
+## Catalog Files
+
+| File | Role |
+|---|---|
+| `README.md` | present state |
+| `AGENTS.md` | agent entry point |
+| `HISTORY.md` | verified past events |
+| `TODO.md` | actionable future work |
+| `DECISIONS.md` | rationale and trade-offs |
+| `RUNBOOK.md` | operations |
+| `docs/catalog/SOURCE_INDEX.md` | source inventory |
+| `docs/catalog/OPEN_QUESTIONS.md` | contradictions and open items |
+| `docs/catalog/PROCESSING_RUNS.md` | session log |
+
+See `references/catalog-files.md` for what belongs in each file.
 
 ## Prerequisites
 
-- Work inside the user project root.
+- Work inside the user's project root.
 - Detect whether the project uses Git before moving archived files.
-- Create missing catalog files from `assets/` before processing sources.
-- Read reference files only when the phase requires extra detail.
-- Detect GitHub availability only when the user explicitly requests issue sync or when
-  the task clearly depends on GitHub issues as the active work registry.
-- Preserve semantic content already present in `AGENTS.md`. Reorganize and distill it,
-  but never discard meaning silently.
+- Create any missing catalog file from `assets/` before processing sources.
+- Read reference files only when the current phase needs the extra detail.
+- Preserve semantic content already in `AGENTS.md`. Reorganize and distill it, but
+  never discard meaning silently.
 
 ## Modes
 
-- **Non-interactive mode:** Process, distribute, archive, validate, and finish with a
-  summary plus suggested commit message.
-- **Interactive mode:** Execute the same processing flow without questions during the
-  run. Present changes only after processing finishes.
-- **Resolution mode:** Read active conflicts and open questions, apply supplied
-  resolutions, update catalog files, move items to `Resolved`, and register the run.
-- **GitHub sync mode:** Optional and explicit. Reconcile `TODO.md` with open GitHub
-  issues, reconcile `HISTORY.md` with closed GitHub issues, backfill missing issue
-  links for local tasks, and register unresolved ambiguities in
-  `docs/catalog/CONFLICTS.md`.
+- **Non-interactive mode:** process, distribute, archive, validate, and finish with a
+  summary plus a suggested commit message.
+- **Interactive mode:** same flow, no questions during the run. Present changes only
+  after processing finishes.
+- **Resolution mode:** read open items in `docs/catalog/OPEN_QUESTIONS.md`, apply the
+  supplied resolutions, update catalog files, move items to `Resolved`, and register
+  the run.
 
 ## Workflow
 
-1. Execute Phase 0 preparation. Read `references/workflow.md` before changing files.
-2. Create missing target files from `assets/`:
-   `README.md`, `AGENTS.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, `RUNBOOK.md`,
-   `docs/catalog/SOURCE_INDEX.md`, `docs/catalog/CONFLICTS.md`,
-   `docs/catalog/OPEN_QUESTIONS.md`, and `docs/catalog/PROCESSING_RUNS.md`.
-3. Discover source documents in `docs/inbox/`, `docs/`, `notes/`,
-   `documentation/`, `design/`, `specs/`, `planning/`, `issues/`, and the project
-   root. Exclude `.git/`, `node_modules/`, `vendor/`, `bin/`, `obj/`, `dist/`,
-   `build/`, `.venv/`, `__pycache__/`, binary files, heavy backups, raw logs, and
-   generated artifacts unless the user explicitly asks for them.
-4. Build or update `docs/catalog/SOURCE_INDEX.md`. Record one row per detected
-   document with status, source path, archive path, document type, detection date,
-   hash, fed files, conflicts, questions, and notes.
-5. Classify each processable source as one of:
-   `current-state-doc`, `historical-note`, `implementation-plan`, `bug-analysis`,
-   `roadmap-note`, `decision-record`, `architecture-note`, `setup-guide`,
-   `runbook-note`, `client-communication`, `mixed`, or `unknown`.
-6. Read each source completely. For long files, process by sections and maintain one
-   consolidated synthesis. Extract current facts, historical events, future tasks,
-   decisions, operations data, agent-critical instructions, non-obvious conventions,
-   sensitive areas, validation commands, risks, conflicts, open questions, references,
-   and target catalog files.
-7. Distribute extracted facts in this order:
-   `HISTORY.md`, `DECISIONS.md`, `TODO.md`, `RUNBOOK.md`, `README.md`, `AGENTS.md`,
-   `docs/catalog/CONFLICTS.md`, `docs/catalog/OPEN_QUESTIONS.md`,
+1. Run Phase 0 preparation. Read `references/workflow.md` before changing files.
+2. Create any missing catalog file from `assets/` (see Catalog Files above).
+3. Discover source documents in `docs/inbox/`, `docs/`, `notes/`, `documentation/`,
+   `design/`, `specs/`, `planning/`, `issues/`, and the project root. Skip `.git/`,
+   `node_modules/`, `vendor/`, `bin/`, `obj/`, `dist/`, `build/`, `.venv/`,
+   `__pycache__/`, binaries, backups, raw logs, and generated artifacts unless the
+   user explicitly asks for them.
+4. Build or update `docs/catalog/SOURCE_INDEX.md`: one row per detected document with
+   status, source path, archive path, document type, detection date, hash, fed files,
+   open items, and notes.
+5. Classify each processable source as one of: `current-state-doc`, `historical-note`,
+   `implementation-plan`, `bug-analysis`, `roadmap-note`, `decision-record`,
+   `architecture-note`, `setup-guide`, `runbook-note`, `client-communication`, `mixed`,
+   or `unknown`.
+6. Read each source in full. For long files, process by section and keep one running
+   synthesis. Extract current facts, historical events, future tasks, decisions,
+   operational data, agent-critical instructions, non-obvious conventions, sensitive
+   areas, validation commands, risks, contradictions, open questions, references, and
+   the target catalog files.
+7. Distribute extracted facts in this order: `HISTORY.md`, `DECISIONS.md`, `TODO.md`,
+   `RUNBOOK.md`, `README.md`, `AGENTS.md`, `docs/catalog/OPEN_QUESTIONS.md`,
    `docs/catalog/SOURCE_INDEX.md`, `docs/catalog/PROCESSING_RUNS.md`.
-8. Keep present, past, future, decisions, and operations separated. Read
-   `references/catalog-files.md` when writing or merging any catalog file.
-9. When `AGENTS.md` exists, preserve every semantic idea already present. Reorganize,
-   summarize, deduplicate carefully, move excessive detail downward or into linked
-   documents, and use a `Legacy / Existing Notes` section when content cannot be
-   integrated cleanly without loss.
+8. Keep present, past, future, decisions, and operations in separate files. Read
+   `references/catalog-files.md` before writing or merging any catalog file.
+9. When `AGENTS.md` already exists, preserve every idea in it. Reorganize, summarize,
+   deduplicate, move excess detail downward or into linked docs, and use a
+   `Legacy / Existing Notes` section when content can't be integrated cleanly.
 10. Mark each processed source with merged YAML frontmatter. Read
-   `references/frontmatter.md` before editing a source that already contains
-   frontmatter.
+    `references/frontmatter.md` before editing a source that already has frontmatter.
 11. Archive each processed source under `docs/archive/YYYY/YYYY-MM-DD-name.ext`. Use
-    `git mv` when the project uses Git and the move is possible. Otherwise move the
-    file normally and register the fallback.
-12. Validate the catalog. Execute the validator from the skill directory and point it
-    at the target project root, for example:
+    `git mv` when the project uses Git and the move is possible; otherwise move the
+    file normally and note the fallback.
+12. Validate the catalog:
     `python skills/content/project-documentation-archivist/scripts/validate_catalog.py --project-root .`
-    when the current working directory is the target project root. Read
-    `references/validation.md` if validation fails.
+    Read `references/validation.md` if it fails.
 13. Finish with a factual summary: processed documents, archived documents, updated
-    files, open conflicts, open questions, validations executed, and the suggested
-    commit message.
+    files, open items, validations run, and the suggested commit message.
 
 ## Resolution Mode
 
-1. Read `docs/catalog/CONFLICTS.md` and `docs/catalog/OPEN_QUESTIONS.md`.
+1. Read `docs/catalog/OPEN_QUESTIONS.md`.
 2. Locate active items.
-3. Apply the supplied resolution only to items covered by the user input.
+3. Apply the supplied resolution only to items covered by the user's input.
 4. Update `README.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, or `RUNBOOK.md` when
    the resolution changes project memory.
-5. Change item state to `resolved`, append date and evidence, move the item to
-   `Resolved`, and register the run in `docs/catalog/PROCESSING_RUNS.md`.
-
-## GitHub Sync Mode
-
-1. Read `references/github-sync.md` before touching `TODO.md`, `HISTORY.md`, or GitHub.
-2. Detect whether GitHub connector access is available. If not, do not fail the whole
-   catalog run: register the limitation and stop the sync subflow safely.
-3. Identify the target repository and fetch the relevant issues.
-4. Run **backfill** first:
-   - For each actionable task in `TODO.md` without `GitHub issue`, search for an
-     equivalent open issue.
-   - If one clearly matches, link it.
-   - If none clearly matches, create a new issue, then write the canonical reference
-     back into `TODO.md`.
-5. Run **sync** second:
-   - Open issues must appear in `TODO.md`.
-   - Closed issues must leave `TODO.md` and create or update a verified entry in
-     `HISTORY.md`.
-   - Reopened issues return to `TODO.md` without deleting the prior historical record.
-6. Before starting substantive work on a task, verify whether it already has a linked
-   GitHub issue. If not, try to link an equivalent one or create it before the task
-   enters active execution.
-7. When local and remote states diverge semantically and the match is not clear, do not
-   guess. Record the ambiguity in `docs/catalog/CONFLICTS.md` and finish with a warning.
-8. Re-run validation and finish with a factual sync summary: linked tasks, created
-   issues, imported open issues, exported closed issues, reopened issues, conflicts, and
-   connector limitations if any.
+5. Mark the item resolved, append date and evidence, move it to `Resolved`, and
+   register the run in `docs/catalog/PROCESSING_RUNS.md`.
 
 ## AGENTS.md Curation Rules
 
-1. Read `AGENTS.md` fully when it already exists. Do not overwrite it wholesale.
-2. Preserve semantic content. Never delete an existing instruction only because it
-   looks old, redundant, disordered, or unclear.
+1. Read `AGENTS.md` fully when it already exists. Never overwrite it wholesale.
+2. Preserve semantic content. Never delete an instruction just because it looks old,
+   redundant, disordered, or unclear.
 3. Distill the top of the file into a short `Critical Instructions for Agents`
-   section with high-impact actionable bullets.
-4. Keep `AGENTS.md` brief at the top and navigable below. Move operational detail,
-   history, and deep rationale toward linked artifacts instead of bloating the file.
-5. Build or maintain these sections in order:
-   `Critical Instructions for Agents`, `Project Essentials`, `Documentation Index`,
-   `Maintenance Notes`.
-6. Under `Project Essentials`, maintain concise subsections for `Architecture`,
+   section with high-impact, actionable bullets.
+4. Keep `AGENTS.md` brief at the top and navigable below. Push operational detail,
+   history, and deep rationale into linked artifacts instead of bloating the file.
+5. Maintain these sections, in order: `Critical Instructions for Agents`,
+   `Project Essentials`, `Documentation Index`, `Maintenance Notes`.
+6. Under `Project Essentials`, keep concise subsections for `Architecture`,
    `Main Conventions`, `Sensitive Areas`, and `Validation Commands`.
-7. Under `Documentation Index`, keep relative links only. Point to `README.md`,
-   `AGENTS.md`, `HISTORY.md`, `DECISIONS.md`, `TODO.md`, `RUNBOOK.md`,
-   `OPEN_QUESTIONS.md`, and `CONFLICTS.md` when they exist.
-8. If a command, convention, or sensitive-area claim is not confirmed, mark it as
-   pending in `AGENTS.md` and register the doubt in `docs/catalog/OPEN_QUESTIONS.md`.
-9. If `AGENTS.md` content contradicts other evidence, register the contradiction in
-   `docs/catalog/CONFLICTS.md` and leave a brief note in `AGENTS.md` pointing to the
-   conflict instead of silently choosing a winner.
-10. If existing notes do not fit cleanly into the target structure without losing
-    meaning, preserve them in a `Legacy / Existing Notes` section.
+7. Under `Documentation Index`, use relative links only, pointing to whichever of
+   `README.md`, `AGENTS.md`, `HISTORY.md`, `DECISIONS.md`, `TODO.md`, `RUNBOOK.md`, and
+   `OPEN_QUESTIONS.md` exist.
+8. If a command, convention, or sensitive-area claim isn't confirmed, mark it pending
+   in `AGENTS.md` and log the doubt in `docs/catalog/OPEN_QUESTIONS.md`.
+9. If `AGENTS.md` contradicts other evidence, log the contradiction in
+   `docs/catalog/OPEN_QUESTIONS.md` and leave a brief pointer in `AGENTS.md` instead of
+   silently picking a winner.
+10. If existing notes don't fit the target structure without losing meaning, keep them
+    in a `Legacy / Existing Notes` section.
 
 ## Gotchas
 
-- **Do not promote uncertain notes into `README.md`:** Keep doubtful or conflicting
-  material in `CONFLICTS.md` or `OPEN_QUESTIONS.md`. `README.md` must describe only
-  confirmed present state.
-- **Do not merge history into decisions:** `HISTORY.md` records what happened.
+- **Don't promote uncertain notes into `README.md`:** doubtful or conflicting material
+  stays in `OPEN_QUESTIONS.md`. `README.md` describes only confirmed present state.
+- **Don't merge history into decisions:** `HISTORY.md` records what happened.
   `DECISIONS.md` records why a choice was made, its alternatives, and consequences.
-- **Do not destroy source context when adding frontmatter:** Merge existing
-  frontmatter fields, preserve the original body, and record the archive path plus
-  content hash.
-- **Do not duplicate entries on repeated runs:** Reuse `source_sha256`, stable IDs,
+- **Don't destroy source context when adding frontmatter:** merge existing frontmatter
+  fields, preserve the original body, and record archive path plus content hash.
+- **Don't duplicate entries on repeated runs:** reuse `source_sha256`, stable IDs,
   archived paths, and managed blocks to update existing entries instead of appending
   clones.
-- **Do not ask questions mid-run:** Register uncertainty and continue. Ask only during
-  the separate resolution phase if the session is interactive.
-- **Do not create GitHub issues during ordinary catalog processing:** Issue creation
-  belongs only to the explicit GitHub sync subflow or to the preflight check before work
-  starts on a tracked task.
-- **Do not auto-merge ambiguous local and remote tasks:** Similar titles are not enough.
-  If equivalence is unclear, record a conflict instead of forcing a link.
-- **Do not treat GitHub as available by assumption:** Detect connector access before
-  reading or mutating issues, and degrade gracefully when unavailable.
-- **Do not turn `AGENTS.md` into a README clone:** Keep it focused on agent-critical
-  instructions, non-obvious constraints, sensitive areas, validation commands, and links.
-- **Do not silently erase existing AGENTS notes:** Reorganize, summarize, and quarantine
+- **Don't ask questions mid-run:** log uncertainty and continue. Ask only during a
+  separate resolution phase if the session is interactive.
+- **Don't turn `AGENTS.md` into a README clone:** keep it focused on agent-critical
+  instructions, non-obvious constraints, sensitive areas, validation commands, and
+  links.
+- **Don't silently erase existing AGENTS notes:** reorganize, summarize, and quarantine
   messy material if needed, but preserve semantic content.
-- **Do not invent commands or conventions for `AGENTS.md`:** If build, test, lint, or
-  run commands are not confirmed, mark them pending and register an open question.
+- **Don't invent commands or conventions for `AGENTS.md`:** if build, test, lint, or
+  run commands aren't confirmed, mark them pending and log an open question.
 
 ## Output Expected
 
-Use this completion format after processing:
+After processing:
 
 ```text
 Mode: non-interactive | interactive | resolution
@@ -218,54 +178,32 @@ Updated files:
 - DECISIONS.md
 - RUNBOOK.md
 - docs/catalog/SOURCE_INDEX.md
-- docs/catalog/CONFLICTS.md
 - docs/catalog/OPEN_QUESTIONS.md
 - docs/catalog/PROCESSING_RUNS.md
-Open conflicts: <count>
-Open questions: <count>
+Open items: <count>
 Validations:
 - python scripts/validate_catalog.py --project-root .
 Suggested commit:
 docs: update project documentation catalog
 ```
 
-Use this completion format after resolution mode:
+After resolution mode:
 
 ```text
 Mode: resolution
-Resolved conflicts: <count>
-Resolved questions: <count>
+Resolved items: <count>
 Updated files:
 - <file list>
-Remaining open conflicts: <count>
-Remaining open questions: <count>
+Remaining open items: <count>
 Suggested commit:
-docs: resolve documentation catalog conflicts
-```
-
-Use this completion format after GitHub sync mode:
-
-```text
-Mode: github-sync
-Repository: <owner/repo>
-Linked existing issues: <count>
-Created new issues from local TODOs: <count>
-Imported open issues into TODO.md: <count>
-Exported closed issues into HISTORY.md: <count>
-Reopened issues restored to TODO.md: <count>
-Conflicts recorded: <count>
-Connector availability: available | unavailable
-Validations:
-- python scripts/validate_catalog.py --project-root .
-Suggested commit:
-docs: sync todo and history with github issues
+docs: resolve documentation catalog open items
 ```
 
 ## Scripts Available
 
-- **`scripts/validate_catalog.py`** - Validate required catalog files, archive
-  frontmatter with `catalog_status: processed`, internal links, and obvious
-  processing inconsistencies. Execute after every processing or resolution run.
+- **`scripts/validate_catalog.py`** - validates required catalog files, archive
+  frontmatter with `catalog_status: processed`, internal links, and obvious processing
+  inconsistencies. Run after every processing or resolution run.
 
 Usage:
 
@@ -275,15 +213,13 @@ python skills/content/project-documentation-archivist/scripts/validate_catalog.p
 
 ## References
 
-- Read `references/workflow.md` when starting a processing run or when deciding the
-  next phase.
+- Read `references/workflow.md` when starting a processing run or deciding the next
+  phase.
 - Read `references/catalog-files.md` when updating `README.md`, `HISTORY.md`,
   `TODO.md`, `DECISIONS.md`, `RUNBOOK.md`, `AGENTS.md`, or catalog files.
 - Read `references/frontmatter.md` when inserting or merging source frontmatter.
-- Read `references/conflict-resolution.md` when recording contradictions, open
-  questions, or applying a later resolution.
-- Read `references/github-sync.md` when the user explicitly requests synchronization
-  with GitHub issues or when a task must be linked to an issue before work starts.
+- Read `references/open-questions.md` when logging a contradiction or open question,
+  or applying a later resolution.
 - Read `references/git-behavior.md` when the project has Git or when move operations
   need fallbacks.
 - Read `references/validation.md` when running validation or diagnosing failures.

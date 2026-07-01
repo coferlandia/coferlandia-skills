@@ -1,1 +1,1 @@
-{"positive":["Implementa esta feature y prepara el cambio para review","Investiga este bug reproducible, encontra la causa raiz y deja el fix listo para revision"],"negative":["Explica que es una arquitectura hexagonal"]}
+{"positive":["Implement this feature and prepare the change for review","Investigate this reproducible bug, find the root cause, and get the fix ready for review"],"negative":["Explain what a hexagonal architecture is"]}

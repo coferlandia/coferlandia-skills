@@ -1,44 +1,43 @@
 # AGENTS.md — Coferlandia Skills Repository
 
-> **Si eres un agente de IA, empieza aquí.**
+> **If you're an AI agent, start here.**
 
-Este archivo es tu punto de entrada a `coferlandia-skills`. Léelo completo antes de hacer cualquier cosa.
-
----
-
-## Qué es este repositorio
-
-Un repositorio de **Agent Skills** en formato [agentskills.io](https://agentskills.io), construido para ser usado y mantenido por agentes de IA. Cada skill es un conjunto de instrucciones especializadas que puedes cargar para ejecutar tareas específicas de Coferlandia con mayor precisión.
-
-## Contrato canónico
-
-La [especificación de agentskills.io](https://agentskills.io/specification) es la autoridad sobre
-estructura, frontmatter y progressive disclosure. Ante cualquier duda de formato, consulta ese
-protocolo primero. Este repositorio no duplica la especificación: agrega únicamente convenciones
-locales verificables, como categorías, status, evidencia conductual e índice.
-
-**Filosofía:** Este repo es *para agentes* y *por agentes*. Tienes toda la información necesaria para crear nuevas skills, mejorar las existentes y mantener el índice — sin necesidad de instrucciones adicionales del humano.
+This file is your entry point to `coferlandia-skills`. Read it in full before doing
+anything.
 
 ---
 
-## Mapa del repositorio
+## What this repository is
+
+An **Agent Skills** repository in [agentskills.io](https://agentskills.io) format,
+built to be used and maintained by AI agents. Each skill is a set of specialized
+instructions you can load to execute specific Coferlandia tasks with more precision.
+
+## Canonical contract
+
+The [agentskills.io specification](https://agentskills.io/specification) is the
+authority on structure, frontmatter, and progressive disclosure. When in doubt about
+format, check that spec first. This repo doesn't duplicate the specification — it adds
+only verifiable local conventions: categories, status, behavioral evidence, and the
+index.
+
+**Philosophy:** this repo is *for agents* and *by agents*. You have everything you
+need to create new skills, improve existing ones, and maintain the index — without
+needing extra instructions from a human.
+
+---
+
+## Repository map
 
 ```
 coferlandia-skills/
-├── AGENTS.md              ← Estás aquí
-├── README.md              ← Overview para humanos
-├── vault/Genesis_Plan.md  ← Visión y arquitectura completa del repo
+├── AGENTS.md              ← You are here
+├── README.md              ← Human-facing overview
+├── LICENSE                ← Apache License 2.0
 │
-├── _protocol/             ← Lee esto antes de crear o modificar skills
-│   ├── HOW_TO_CREATE_SKILLS.md   ← Protocolo completo de creación
-│   ├── SKILL_TEMPLATE.md         ← Template listo para copiar
-│   ├── QUALITY_STANDARDS.md      ← Checklist de calidad
-│   ├── NAMING_CONVENTIONS.md     ← Reglas de naming
-│   └── SKILL_LIFECYCLE.md        ← Estados de una skill
-│
-└── skills/                ← Todas las skills
-    ├── INDEX.md           ← Catálogo completo (actualizar siempre)
-    ├── meta/              ← Skills sobre skills
+└── skills/                ← All skills
+    ├── INDEX.md           ← Full catalog (always keep updated)
+    ├── meta/               skills about skills
     ├── engineering/
     ├── data/
     ├── content/
@@ -46,46 +45,58 @@ coferlandia-skills/
     └── ops/
 ```
 
----
-
-## Cómo usar una skill existente
-
-1. Lee `skills/INDEX.md` para descubrir skills disponibles
-2. Navega a la carpeta de la skill relevante
-3. Lee su `SKILL.md` completo
-4. Sigue las instrucciones
+See `skills/INDEX.md` for which of those categories currently have skills in them.
 
 ---
 
-## Cómo crear una skill nueva
+## Before doing anything else
 
-1. Lee `_protocol/HOW_TO_CREATE_SKILLS.md` — contiene el protocolo completo
-2. Usa `_protocol/SKILL_TEMPLATE.md` como punto de partida
-3. Verifica tu skill contra `_protocol/QUALITY_STANDARDS.md` y corre `_protocol/scripts/validate_skill.py`
-4. Actualiza `skills/INDEX.md`
-5. Alternativamente: activa la skill `skills/meta/skill-factory/` que automatiza este proceso
+Check `skills/meta/using-coferlandia-skills/` — it defines when and how to invoke a
+skill (before responding, not after). Follow it for any task in a project where this
+plugin is installed.
 
-Para entender *cómo* está diseñado este repo (y por qué evita duplicar reglas), estudia
-`skills/meta/build-agentic-repo/` — es la skill ejemplar y el repo practica lo que ella enseña.
+## Using an existing skill
 
----
-
-## Fuente de verdad por regla
-
-Cada regla vive en **un solo archivo dueño**. Este entry point y cualquier otro documento
-*enlazan* a ese dueño en lugar de copiar la regla (así una copia no puede contradecir a otra):
-
-| Regla | Dueño |
-|-------|-------|
-| Naming, categorías y desempate | [`_protocol/NAMING_CONVENTIONS.md`](./_protocol/NAMING_CONVENTIONS.md) |
-| Checklist de calidad y seguridad | [`_protocol/QUALITY_STANDARDS.md`](./_protocol/QUALITY_STANDARDS.md) |
-| Formato de SKILL.md y disclosure progresivo | [agentskills.io/specification](https://agentskills.io/specification) |
-| Inventario de skills y formato de su fila | [`skills/INDEX.md`](./skills/INDEX.md) |
-| Estados del ciclo de vida | [`_protocol/SKILL_LIFECYCLE.md`](./_protocol/SKILL_LIFECYCLE.md) |
-| Invariantes mecánicos (ejecutable) | [`skills/meta/coferlandia-skill-testing/`](./skills/meta/coferlandia-skill-testing/) |
+1. Read `skills/INDEX.md` to find available skills.
+2. Go to the relevant skill's folder.
+3. Read its `SKILL.md` in full.
+4. Follow the instructions.
 
 ---
 
-## Índice rápido de skills
+## Creating a new skill
 
-Ver `skills/INDEX.md` para el catálogo completo y actualizado (fuente de verdad única).
+1. Read `_protocol/HOW_TO_CREATE_SKILLS.md` — the full protocol.
+2. Use `_protocol/SKILL_TEMPLATE.md` as your starting point.
+3. Check your skill against `_protocol/QUALITY_STANDARDS.md` and run
+   `_protocol/scripts/validate_skill.py`.
+4. Update `skills/INDEX.md`.
+
+---
+
+## Source of truth per rule
+
+Every rule lives in **exactly one owning file**. This entry point, and any other
+document, *link* to that owner instead of copying the rule, so no copy can contradict
+another:
+
+| Rule | Owner |
+|------|-------|
+| Naming, categories, and tie-breaking | [`_protocol/NAMING_CONVENTIONS.md`](./_protocol/NAMING_CONVENTIONS.md) |
+| Quality and safety checklist | [`_protocol/QUALITY_STANDARDS.md`](./_protocol/QUALITY_STANDARDS.md) |
+| SKILL.md format and progressive disclosure | [agentskills.io/specification](https://agentskills.io/specification) |
+| Skill inventory and row format | [`skills/INDEX.md`](./skills/INDEX.md) |
+| Lifecycle states | [`_protocol/SKILL_LIFECYCLE.md`](./_protocol/SKILL_LIFECYCLE.md) |
+| When and how to invoke a skill | [`skills/meta/using-coferlandia-skills/`](./skills/meta/using-coferlandia-skills/) |
+
+---
+
+## Skills at a glance
+
+See `skills/INDEX.md` for the full, current catalog (the single source of truth).
+
+## License
+
+Apache License 2.0 — see [`LICENSE`](./LICENSE). This repository and the skills in it
+are provided "as is," with no warranty. Verify a skill's behavior before relying on it
+for consequential work.

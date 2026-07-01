@@ -4,20 +4,17 @@
 
 ## TODO-YYYYMMDD-NNN - Task title
 
-Estado: pending | in-progress | blocked | done
-Prioridad: low | medium | high
-Detectado: YYYY-MM-DD
-GitHub issue:
-GitHub state:
-Last sync:
-Origen:
+Status: pending | in-progress | blocked | done
+Priority: low | medium | high
+Detected: YYYY-MM-DD
+Origin:
 - [[docs/archive/YYYY/document.md]]
 
-Contexto:
+Context:
 ...
 
-Criterio de aceptacion:
+Acceptance criteria:
 - ...
 
-Dependencias:
+Dependencies:
 - ...

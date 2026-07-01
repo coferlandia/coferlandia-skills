@@ -11,8 +11,8 @@ Execute the documentation catalog process in fixed phases. Do not skip ordering.
 5. Detect whether the working tree already contains changes.
 6. Locate existing canonical files:
    `README.md`, `AGENTS.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, `RUNBOOK.md`,
-   `docs/catalog/SOURCE_INDEX.md`, `docs/catalog/CONFLICTS.md`,
-   `docs/catalog/OPEN_QUESTIONS.md`, `docs/catalog/PROCESSING_RUNS.md`.
+   `docs/catalog/SOURCE_INDEX.md`, `docs/catalog/OPEN_QUESTIONS.md`,
+   `docs/catalog/PROCESSING_RUNS.md`.
 7. Create missing canonical files from the templates in `assets/`.
 8. Create `docs/catalog/` and `docs/archive/` when missing.
 9. Register pre-existing dirty state in `docs/catalog/PROCESSING_RUNS.md`.
@@ -83,8 +83,7 @@ Route extracted information strictly by role:
 - actionable future work -> `TODO.md`
 - rationale and choice records -> `DECISIONS.md`
 - operational procedures -> `RUNBOOK.md`
-- contradictions -> `docs/catalog/CONFLICTS.md`
-- missing data -> `docs/catalog/OPEN_QUESTIONS.md`
+- contradictions and missing data -> `docs/catalog/OPEN_QUESTIONS.md`
 - source traceability -> `docs/catalog/SOURCE_INDEX.md`
 - run metadata -> `docs/catalog/PROCESSING_RUNS.md`
 
@@ -101,10 +100,9 @@ Update files in this exact order:
 4. `RUNBOOK.md`
 5. `README.md`
 6. `AGENTS.md`
-7. `docs/catalog/CONFLICTS.md`
-8. `docs/catalog/OPEN_QUESTIONS.md`
-9. `docs/catalog/SOURCE_INDEX.md`
-10. `docs/catalog/PROCESSING_RUNS.md`
+7. `docs/catalog/OPEN_QUESTIONS.md`
+8. `docs/catalog/SOURCE_INDEX.md`
+9. `docs/catalog/PROCESSING_RUNS.md`
 
 Preserve existing human content. Use managed blocks only when the skill must control
 one section repeatedly:
@@ -124,8 +122,7 @@ For `AGENTS.md`, apply stricter preservation:
 - preserve semantic content
 - reorganize instead of replacing
 - use a `Legacy / Existing Notes` section when uncertain
-- record contradictions in `docs/catalog/CONFLICTS.md`
-- record missing confirmations in `docs/catalog/OPEN_QUESTIONS.md`
+- record contradictions and missing confirmations in `docs/catalog/OPEN_QUESTIONS.md`
 
 ## Phase 6 - Source Marking
 
@@ -182,7 +179,7 @@ Validate:
 - `AGENTS.md` exists
 - archived processed sources contain frontmatter
 - source index is updated
-- conflict and question files keep required sections
+- the open questions file keeps its required sections
 - processing runs are recorded
 - `AGENTS.md` stays brief at the top and navigable below
 - `AGENTS.md` does not silently delete preserved instructions
@@ -199,16 +196,3 @@ python scripts/validate_catalog.py --project-root .
 ```
 
 Register the validation result in `docs/catalog/PROCESSING_RUNS.md`.
-
-## Optional GitHub Sync Extension
-
-Run this extension only when the user explicitly requests issue synchronization.
-
-1. Read `references/github-sync.md`.
-2. Confirm connector access and target repository.
-3. Backfill local TODO tasks without issue references.
-4. Import unmatched open issues into `TODO.md`.
-5. Move linked closed issues into `HISTORY.md`.
-6. Restore reopened issues into `TODO.md`.
-7. Record conflicts instead of forcing ambiguous links.
-8. Re-run validation and register the sync run in `docs/catalog/PROCESSING_RUNS.md`.

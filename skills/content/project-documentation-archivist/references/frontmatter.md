@@ -57,7 +57,6 @@ Examples:
 - `TODO.md`
 - `DECISIONS.md`
 - `RUNBOOK.md`
-- `docs/catalog/CONFLICTS.md`
 - `docs/catalog/OPEN_QUESTIONS.md`
 
 ## Reference Rules
@@ -77,6 +76,6 @@ Use `catalog_notes` for short factual notes only:
 
 - how the source was classified
 - what catalog files were fed
-- whether conflicts or questions were generated
+- whether an open item was generated
 
 Do not write long summaries into the frontmatter.
