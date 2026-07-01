@@ -12,13 +12,16 @@ compatibility: >
   superpowers:verification-before-completion.
 metadata:
   author: coferlandia
-  version: "2.0.0"
+  version: "2.2.0"
   category: engineering
   status: active
-  tested: "2026-06-30 - translated to English, merged overlapping Gotchas, folded the
-    approval-record template into the closing template, compressed the per-role
-    success criteria, and wired in required superpowers skill integration; pending
-    re-validation with _protocol/scripts/validate_skill.py."
+  tested: "2026-07-01 - commit-message rule (shared rules + step 5.3 + a new Gotcha)
+    now requires inspecting the actual git diff before proposing a message, instead of
+    relying on memory of what changed; validated with
+    _protocol/scripts/validate_skill.py. Earlier evidence (2026-07-01, added the rule
+    to match the target repository's existing code language for new code, with a
+    carve-out for documentation-skill artifacts) still applies to the rest of the
+    skill."
 ---
 
 ## Context
@@ -69,7 +72,14 @@ Both roles must:
 - Run or propose the relevant tests for the project's context.
 - Review the diff before closing.
 - Report findings, risks, and limitations to the supervisor.
-- Suggest a clear commit message in the final report to the control authority.
+- Suggest a clear commit message in the final report to the control authority, based
+  on the actual diff — inspect `git status`/`git diff` rather than guessing from
+  memory what changed.
+- Match the target repository's existing language for code: if functions, variables,
+  and comments in the codebase are in Spanish, write new code in Spanish too — don't
+  impose a different language on someone else's source. This applies to source code
+  only, not to artifacts a documentation skill produces in its own canonical format
+  (see Gotchas).
 
 ## Superpowers Integration
 
@@ -285,8 +295,10 @@ After findings are reviewed and resolved:
    If the repository already uses `project-documentation-archivist`, update the
    corresponding artifacts respecting that structure; if not, create only the minimum
    traceability needed.
-3. Propose a clear commit message and **ask the active control authority for
-   approval** before committing or leaving the commit ready.
+3. Inspect the actual diff (`git status` / `git diff`) rather than guessing from
+   memory what changed, propose a clear commit message that reflects what's actually
+   staged or modified, and **ask the active control authority for approval** before
+   committing or leaving the commit ready.
 
 ## Gotchas
 
@@ -317,6 +329,18 @@ After findings are reviewed and resolved:
 - **Ignoring archivist when it already exists:** if the repo already has a live
   documentation structure, respect it and update only the artifacts the change
   touches; don't work as if it weren't there.
+- **Switching the codebase's language when writing new code:** if the target
+  repository's functions, variables, and comments are in Spanish, keep writing new
+  code in Spanish — match the existing convention instead of defaulting to English.
+  This only governs source code identifiers and comments. It does not apply to
+  artifacts a different skill produces in its own canonical format — for example,
+  `project-documentation-archivist`'s `README.md`, `HISTORY.md`, `DECISIONS.md`, and
+  other catalog files stay in that skill's English format regardless of the target
+  codebase's language.
+- **Writing the commit message from memory instead of the diff:** what you think
+  changed and what's actually staged can drift, especially after several rounds of
+  edits or corrections mid-task. Inspect `git status`/`git diff` before proposing the
+  message in step 5.
 
 ## Expected Output
 

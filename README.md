@@ -20,6 +20,10 @@ AGENTS.md        Entry point for agents
 
 See [`skills/INDEX.md`](./skills/INDEX.md).
 
+## Releases
+
+Current version and changelog: [`RELEASE-NOTES.md`](./RELEASE-NOTES.md).
+
 ## Install
 
 ### Claude Code

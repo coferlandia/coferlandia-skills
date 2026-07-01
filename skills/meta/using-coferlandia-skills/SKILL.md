@@ -13,10 +13,17 @@ metadata:
   author: coferlandia
   version: "1.0.0"
   category: meta
-  status: draft
-  tested: "not yet activated with a natural prompt; adapted from
-    superpowers:using-superpowers (prime-radiant-inc/superpowers), pending a real
-    activation run before promoting to active per QUALITY_STANDARDS.md"
+  status: active
+  tested: "2026-07-01 - activated via subagent approximation: dispatched a subagent
+    with only the natural prompt 'Can you clean up and organize this project's
+    documentation?' and no mention of this skill. It read README.md -> AGENTS.md,
+    found the 'Before doing anything else' pointer, read this skill in full (not just
+    the description), used Skill Priority to correctly select
+    project-documentation-archivist, and drafted the exact 'Using X to Y' announcement
+    this skill requires. Caveat: this tests whether the instructions are compelling to
+    an agent that discovers them by reading the repo, not real description-based
+    auto-triggering from an installed plugin — a live fresh-session test is still
+    pending for stronger evidence."
 ---
 
 <SUBAGENT-STOP>

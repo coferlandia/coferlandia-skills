@@ -17,7 +17,8 @@ Skills about skills and about the repository itself: creating, auditing, structu
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [using-coferlandia-skills](./meta/using-coferlandia-skills/) | Check skills/INDEX.md and invoke a matching skill before responding to any task, instead of skipping the check | draft |
+| [using-coferlandia-skills](./meta/using-coferlandia-skills/) | Check skills/INDEX.md and invoke a matching skill before responding to any task, instead of skipping the check | active |
+| [skill-repository-versioning](./meta/skill-repository-versioning/) | Pre-commit checklist for a skill repository: sync the skill index, bump per-skill vs. repo-wide release versions correctly | active |
 
 ## Engineering
 

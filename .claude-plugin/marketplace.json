@@ -1,12 +1,12 @@
 {
   "name": "coferlandia",
-  "description": "Agent Skills reutilizables de Coferlandia.",
+  "description": "Coferlandia's reusable Agent Skills.",
   "owner": { "name": "Coferlandia" },
   "plugins": [
     {
       "name": "coferlandia-skills",
       "source": "./",
-      "description": "Las 14 skills de Coferlandia (engineering + meta)."
+      "description": "Coferlandia's skills: software-dev control process, documentation cataloging, scientific fact-checking, and skill-usage discipline."
     }
   ]
 }

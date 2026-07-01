@@ -1,0 +1,15 @@
+{
+  "files": [
+    { "path": ".claude-plugin/plugin.json", "field": "version" }
+  ],
+  "audit": {
+    "exclude": [
+      "RELEASE-NOTES.md",
+      ".git",
+      ".version-bump.json",
+      "_protocol/scripts/bump_version.py",
+      "coferlandia-skills.plugin",
+      "skills/"
+    ]
+  }
+}

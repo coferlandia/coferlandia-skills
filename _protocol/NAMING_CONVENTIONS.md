@@ -100,6 +100,12 @@ metadata:
   version: "2.0"    # significant change to instructions
 ```
 
+This is a **per-skill** version — it tracks changes to one skill's own instructions,
+per `_protocol/SKILL_LIFECYCLE.md`. It's a different axis from the **plugin release
+version** in `.claude-plugin/plugin.json`, which tracks the whole repo's releases and
+is checked with `_protocol/scripts/bump_version.py --check` / `--audit`. Changelog
+entries for plugin releases go in `RELEASE-NOTES.md`, not here.
+
 ---
 
 ## Names to avoid

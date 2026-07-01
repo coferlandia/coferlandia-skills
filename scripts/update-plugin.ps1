@@ -28,7 +28,7 @@ Write-Host "`n[2/3] Empaquetando v$version..." -ForegroundColor Yellow
 $TmpDir = [System.IO.Path]::GetTempPath() + "coferlandia-skills-plugin-" + [System.Guid]::NewGuid().ToString("N").Substring(0,8)
 New-Item -ItemType Directory -Path $TmpDir | Out-Null
 
-$include = @(".claude-plugin", "skills", "README.md", "_protocol")
+$include = @(".claude-plugin", "skills", "README.md", "AGENTS.md", "LICENSE", "_protocol")
 foreach ($item in $include) {
     $src = Join-Path $RepoRoot $item
     if (Test-Path $src) {

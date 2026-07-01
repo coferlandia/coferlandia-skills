@@ -34,6 +34,8 @@ coferlandia-skills/
 ├── AGENTS.md              ← You are here
 ├── README.md              ← Human-facing overview
 ├── LICENSE                ← Apache License 2.0
+├── RELEASE-NOTES.md       ← Plugin release changelog
+├── .claude-plugin/        ← plugin.json carries the plugin release version
 │
 └── skills/                ← All skills
     ├── INDEX.md           ← Full catalog (always keep updated)
@@ -88,6 +90,21 @@ another:
 | Skill inventory and row format | [`skills/INDEX.md`](./skills/INDEX.md) |
 | Lifecycle states | [`_protocol/SKILL_LIFECYCLE.md`](./_protocol/SKILL_LIFECYCLE.md) |
 | When and how to invoke a skill | [`skills/meta/using-coferlandia-skills/`](./skills/meta/using-coferlandia-skills/) |
+| Plugin release version and changelog | [`RELEASE-NOTES.md`](./RELEASE-NOTES.md) + [`.claude-plugin/plugin.json`](./.claude-plugin/plugin.json) |
+
+---
+
+## Releasing a version change
+
+The plugin release version (`.claude-plugin/plugin.json`) is a different thing from a
+single skill's `metadata.version` (see `_protocol/NAMING_CONVENTIONS.md`) — it tracks
+the whole repo, not one skill.
+
+1. Run `python _protocol/scripts/bump_version.py --check` to confirm there's no drift.
+2. Bump: `python _protocol/scripts/bump_version.py <new-version>`.
+3. Add an entry to `RELEASE-NOTES.md` describing what changed and why.
+4. Run `python _protocol/scripts/bump_version.py --audit` to catch any manifest file
+   that still needs registering in `.version-bump.json`.
 
 ---
 
