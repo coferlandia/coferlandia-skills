@@ -14,11 +14,11 @@ compatibility: >
   depends on the state of the art, recent news, or shifting scientific evidence.
 metadata:
   author: coferlandia
-  version: "1.1.0"
+  version: "1.2.0"
   category: content
   status: active
-  tested: "2026-06-30 - translated to English and merged the traceability section into
-    the verdict section; pending re-validation with _protocol/scripts/validate_skill.py."
+  tested: "2026-07-06 - added Output Location section (conversation-only, no files).
+    Earlier evidence (2026-06-30, English translation) still applies."
 ---
 
 ## Context
@@ -103,6 +103,11 @@ question, hypothesis, or speculation.
 - **Don't treat philosophical or normative claims as empirical:** if part of the claim
   belongs to ethics, metaphor, or subjective experience, flag that shift instead of
   forcing a false scientific answer.
+
+## Output Location
+
+This skill produces a text report delivered in conversation, not saved as a file.
+The `.coferlandia/` convention does not apply.
 
 ## Expected Output
 
