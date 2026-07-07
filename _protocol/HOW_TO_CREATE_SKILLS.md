@@ -13,6 +13,9 @@ Before creating a skill, read:
 - [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) — template to use
 - [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — quality checklist
 - [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md) — where skills save generated files
+- If available in the environment, invoke `superpowers:writing-skills` before
+  authoring each approved skill; use it to shape the draft, then tighten the
+  result against this protocol and the quality checklist.
 
 ---
 

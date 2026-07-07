@@ -1,5 +1,14 @@
 # Coferlandia Skills Release Notes
 
+## v1.4.0 (2026-07-07)
+
+### Protocol
+
+- `HOW_TO_CREATE_SKILLS.md` â€” added an explicit reference to
+  `superpowers:writing-skills` in the prerequisites for skill authoring, so
+  approved skill drafts follow the dedicated writing workflow when that skill is
+  available.
+
 ## v1.3.0 (2026-07-07)
 
 ### Skills
