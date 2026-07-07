@@ -1,5 +1,38 @@
 # Coferlandia Skills Release Notes
 
+## v1.2.0 (2026-07-06)
+
+### Convention
+
+- **Artifact output convention** — all skills now declare an `## Output Location`
+  section. Generated artifacts default to `.coferlandia/` at the target project's
+  root; standard repo artifacts (README.md, AGENTS.md, LICENSE, RUNBOOK.md) stay at
+  the project root unless the skill explicitly overrides them. The single source of
+  truth lives in `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
+
+### Skills
+
+- **project-documentation-archivist** (`content`) — v2.1.0. Catalog files now go to
+  `.coferlandia/catalog/` and archived sources to `.coferlandia/archive/YYYY/` instead
+  of `docs/catalog/` and `docs/archive/`. Standard repo artifacts (README.md, AGENTS.md,
+  RUNBOOK.md) remain at the project root. HISTORY.md, TODO.md, and DECISIONS.md go to
+  `.coferlandia/`.
+- **coferlandia-software-dev** (`engineering`) — v2.3.0. Documentation artifacts default
+  to `.coferlandia/` when no archivist structure exists in the target repo.
+- **skill-repository-versioning** (`meta`) — v1.1.0. Explicit output location added
+  (in-place repo management, no `.coferlandia/` needed).
+- **using-coferlandia-skills** (`meta`) — v1.1.0. Explicit output location added (no
+  file artifacts generated).
+- **sagan-scientific-debunker** (`content`) — v1.2.0. Explicit output location added
+  (conversation-only, no files).
+
+### Protocol
+
+- `ARTIFACT_OUTPUT_CONVENTIONS.md` — new single source of truth for output paths.
+- `HOW_TO_CREATE_SKILLS.md` — references the new convention in prerequisites and Step 4.
+- `SKILL_TEMPLATE.md` — includes `## Output Location` / `### Output Exceptions` sections.
+- `AGENTS.md` — source-of-truth table updated.
+
 ## v1.1.0 (2026-07-01)
 
 ### Skills
