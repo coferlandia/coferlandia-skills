@@ -19,6 +19,7 @@ Skills about skills and about the repository itself: creating, auditing, structu
 |-------|-------------|--------|
 | [using-coferlandia-skills](./meta/using-coferlandia-skills/) | Check skills/INDEX.md and invoke a matching skill before responding to any task, instead of skipping the check | active |
 | [skill-repository-versioning](./meta/skill-repository-versioning/) | Pre-commit checklist for a skill repository: sync the skill index, bump per-skill vs. repo-wide release versions correctly | active |
+| [coferlandia-project-skill-miner](./meta/coferlandia-project-skill-miner/) | Extract current operational recipes from project documentation and convert approved ones into project-local agent skills | active |
 
 ## Engineering
 
@@ -63,4 +64,5 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-07-06*
+*Last updated: 2026-07-07*
+

@@ -118,3 +118,5 @@ See `skills/INDEX.md` for the full, current catalog (the single source of truth)
 Apache License 2.0 — see [`LICENSE`](./LICENSE). This repository and the skills in it
 are provided "as is," with no warranty. Verify a skill's behavior before relying on it
 for consequential work.
+
+## Imported Claude Cowork project instructions

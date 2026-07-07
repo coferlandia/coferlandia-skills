@@ -1,5 +1,25 @@
 # Coferlandia Skills Release Notes
 
+## v1.3.0 (2026-07-07)
+
+### Skills
+
+- **coferlandia-project-skill-miner** (`meta`) — v1.0.0. Mines a project's
+  documentation for current operational recipes, classifies candidate project-local
+  skills by confidence and staleness, requires explicit approval before generation,
+  and writes approved downstream skills only under the target repository's
+  `.agents/skills/<skill-name>/` path. Integrates with
+  `superpowers:writing-skills` when available before authoring each approved
+  generated skill.
+
+### Repository
+
+- `skills/INDEX.md` — added the new `coferlandia-project-skill-miner` entry and
+  updated the inventory date.
+- Added a fixture-backed activation test set for the new skill, including current,
+  dangerous, ambiguous, and stale documented procedures to verify proposal-vs-approval
+  behavior.
+
 ## v1.2.0 (2026-07-06)
 
 ### Convention
