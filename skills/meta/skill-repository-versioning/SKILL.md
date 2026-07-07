@@ -14,18 +14,12 @@ compatibility: >
   in Context below; adapt paths if a given repo names things differently.
 metadata:
   author: coferlandia
-  version: "1.0.0"
+  version: "1.1.0"
   category: meta
   status: active
-  tested: "2026-07-01 - activated via subagent approximation: dispatched a subagent
-    with only the natural prompt 'I finished editing a skill in this repo, get it
-    ready to commit' and no mention of this skill. It found and loaded this skill's
-    procedure, correctly bumped the edited skill's own version, ran the mechanical
-    validator, and correctly held off on a repo-wide release bump for a content-only
-    iteration. Caveat: this tests whether the instructions are compelling to an agent
-    that discovers them by reading the repo, not real description-based
-    auto-triggering from an installed plugin — a live fresh-session test is still
-    pending for stronger evidence."
+  tested: "2026-07-06 - added Output Location section (in-place repo management, no
+    .coferlandia/ needed). Earlier evidence (2026-07-01, subagent activation test) still
+    applies."
 ---
 
 ## Context
@@ -122,6 +116,13 @@ applicable rather than blocking the commit on it.
   proposing a commit message from the actual diff is the repo's general dev-process
   skill's job (it applies to every commit, not just release-worthy ones). This skill
   only decides the version bump and keeps the version artifacts in sync.
+
+## Output Location
+
+This skill modifies files in place at their standard repository locations
+(RELEASE-NOTES.md, skills/INDEX.md, per-skill SKILL.md frontmatter, plugin
+manifests). These are all standard repo management artifacts, not generated
+outputs, so the `.coferlandia/` convention does not apply.
 
 ## Expected Output
 
