@@ -11,7 +11,7 @@ Summary:
 ...
 
 Sources:
-- [[docs/archive/YYYY/document.md]]
+- [[.coferlandia/archive/YYYY/document.md]]
 
 Related:
 - Issue:

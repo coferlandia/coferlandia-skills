@@ -7,7 +7,7 @@
 - Do not change public contracts, schemas, migrations, integrations, or critical configuration without checking the related documentation first.
 - Run confirmed validation commands before considering a change complete.
 - Register contradictions, missing confirmations, and open doubts in
-  `docs/catalog/OPEN_QUESTIONS.md`.
+  `.coferlandia/catalog/OPEN_QUESTIONS.md`.
 
 ## Project Essentials
 
@@ -44,7 +44,7 @@ Brief agent-oriented summary of the project. Keep only the information needed to
 - Other:
 
 If a command is not confirmed, mark it as pending and register the uncertainty in
-`docs/catalog/OPEN_QUESTIONS.md`.
+`.coferlandia/catalog/OPEN_QUESTIONS.md`.
 
 ## Documentation Index
 
@@ -65,7 +65,7 @@ If a command is not confirmed, mark it as pending and register the uncertainty i
 
 ### Unresolved Knowledge
 
-- `docs/catalog/OPEN_QUESTIONS.md`: unresolved questions and contradictions.
+- `.coferlandia/catalog/OPEN_QUESTIONS.md`: unresolved questions and contradictions.
 
 ### Code Map
 
@@ -85,4 +85,4 @@ If a command is not confirmed, mark it as pending and register the uncertainty i
 - Reorganize for clarity before adding length.
 - Move deep detail into specific documentation instead of bloating this file.
 - Keep links relative and verifiable.
-- Register contradictions and missing confirmations in `docs/catalog/OPEN_QUESTIONS.md`.
+- Register contradictions and missing confirmations in `.coferlandia/catalog/OPEN_QUESTIONS.md`.

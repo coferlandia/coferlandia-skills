@@ -52,7 +52,7 @@ State the confirmed current state. Keep this section focused on the present.
 
 - `src/` - application code
 - `docs/` - extended documentation
-- `docs/catalog/` - documentation catalog
+- `.coferlandia/catalog/` - documentation catalog
 
 ## Confirmed Limitations
 

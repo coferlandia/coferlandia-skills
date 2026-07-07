@@ -15,9 +15,9 @@ Updated files:
 - TODO.md
 - DECISIONS.md
 - RUNBOOK.md
-- docs/catalog/SOURCE_INDEX.md
-- docs/catalog/OPEN_QUESTIONS.md
-- docs/catalog/PROCESSING_RUNS.md
+- .coferlandia/catalog/SOURCE_INDEX.md
+- .coferlandia/catalog/OPEN_QUESTIONS.md
+- .coferlandia/catalog/PROCESSING_RUNS.md
 Open items:
 - QUESTION-YYYYMMDD-NNN
 Validations run:
