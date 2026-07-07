@@ -11,19 +11,11 @@ compatibility: >
   Requires this plugin's skills/INDEX.md to be readable from the working project.
 metadata:
   author: coferlandia
-  version: "1.0.0"
+  version: "1.1.0"
   category: meta
   status: active
-  tested: "2026-07-01 - activated via subagent approximation: dispatched a subagent
-    with only the natural prompt 'Can you clean up and organize this project's
-    documentation?' and no mention of this skill. It read README.md -> AGENTS.md,
-    found the 'Before doing anything else' pointer, read this skill in full (not just
-    the description), used Skill Priority to correctly select
-    project-documentation-archivist, and drafted the exact 'Using X to Y' announcement
-    this skill requires. Caveat: this tests whether the instructions are compelling to
-    an agent that discovers them by reading the repo, not real description-based
-    auto-triggering from an installed plugin — a live fresh-session test is still
-    pending for stronger evidence."
+  tested: "2026-07-06 - added Output Location section (no file artifacts generated).
+    Earlier evidence (2026-07-01, subagent activation test) still applies."
 ---
 
 <SUBAGENT-STOP>
@@ -86,3 +78,8 @@ explicitly said to.
 - **Reading the skill's description instead of its body:** the description tells you
   *when* to invoke; the actual steps live in the skill body. Load and follow the full
   `SKILL.md`, don't infer behavior from the description alone.
+
+## Output Location
+
+This skill does not generate file artifacts. It reads `skills/INDEX.md` and
+invokes other skills. The `.coferlandia/` convention does not apply.
