@@ -12,6 +12,7 @@ Before creating a skill, read:
 - [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) — naming and category rules
 - [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) — template to use
 - [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — quality checklist
+- [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md) — where skills save generated files
 
 ---
 
@@ -134,6 +135,11 @@ Recommended structure:
 
 **Limit:** target <5000 tokens; hard cap ~500 lines in SKILL.md. Extensive material →
 `references/`.
+
+- **Output Location** — declare where the skill's artifacts go, following
+  [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md). Default is
+  `.coferlandia/`. If any artifact targets a standard repo file (README.md, AGENTS.md,
+  LICENSE, RUNBOOK.md), list it under an `### Output Exceptions` subsection.
 
 ---
 
