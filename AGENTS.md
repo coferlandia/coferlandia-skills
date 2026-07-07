@@ -90,6 +90,7 @@ another:
 | Skill inventory and row format | [`skills/INDEX.md`](./skills/INDEX.md) |
 | Lifecycle states | [`_protocol/SKILL_LIFECYCLE.md`](./_protocol/SKILL_LIFECYCLE.md) |
 | When and how to invoke a skill | [`skills/meta/using-coferlandia-skills/`](./skills/meta/using-coferlandia-skills/) |
+| Artifact output paths | [`_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`](./_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md) |
 | Plugin release version and changelog | [`RELEASE-NOTES.md`](./RELEASE-NOTES.md) + [`.claude-plugin/plugin.json`](./.claude-plugin/plugin.json) |
 
 ---
