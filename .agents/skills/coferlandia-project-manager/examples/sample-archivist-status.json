@@ -1,0 +1,20 @@
+{
+  "status": "ok",
+  "projects_detected": 1,
+  "projects": [
+    {
+      "project_slug": "example-project",
+      "repo_path": "/repos/example-project",
+      "archivist_initialized": true,
+      "expected_artifacts": {
+        "README.md": true,
+        "TODO.md": true,
+        "HISTORY.md": true,
+        "DECISIONS.md": true,
+        "RUNBOOK.md": true,
+        "AGENTS.md": true
+      },
+      "missing_artifacts": []
+    }
+  ]
+}

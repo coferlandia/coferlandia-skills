@@ -125,6 +125,66 @@ def make_phase2_portfolio():
         tempdir.cleanup()
 
 
+@contextmanager
+def make_phase4_portfolio():
+    (ROOT / ".test-tmp").mkdir(exist_ok=True)
+    tempdir = tempfile.TemporaryDirectory(dir=ROOT / ".test-tmp")
+    try:
+        base = Path(tempdir.name)
+        repos_root = base / "repos"
+        repos_root.mkdir()
+
+        complete_repo = repos_root / "repo-complete"
+        incomplete_repo = repos_root / "repo-incomplete"
+        complete_repo.mkdir()
+        incomplete_repo.mkdir()
+
+        for repo_path in (complete_repo, incomplete_repo):
+            repo_relative = repo_path.relative_to(ROOT).as_posix()
+            init = subprocess.run(
+                ["bash", "-lc", f"git init '{repo_relative}' >/dev/null"],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if init.returncode != 0:
+                raise RuntimeError(init.stderr)
+
+            checkout = subprocess.run(
+                ["bash", "-lc", f"git -C '{repo_relative}' checkout -b main >/dev/null"],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if checkout.returncode != 0:
+                raise RuntimeError(checkout.stderr)
+
+        for filename in ("README.md", "TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+            (complete_repo / filename).write_text(f"# {filename}\n", encoding="utf-8")
+
+        (incomplete_repo / "README.md").write_text("# README.md\n", encoding="utf-8")
+
+        config = json.loads(
+            (SKILL_ROOT / "examples" / "config.sample.json").read_text(encoding="utf-8")
+        )
+        config["repos_root"] = repos_root.resolve().as_posix()
+
+        config_path = base / "config.json"
+        config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+        relative_config = config_path.relative_to(ROOT).as_posix()
+        yield {
+            "config_path": relative_config,
+            "repos_root": repos_root,
+            "complete_repo": complete_repo,
+            "incomplete_repo": incomplete_repo,
+        }
+    finally:
+        tempdir.cleanup()
+
+
 class Phase1Tests(unittest.TestCase):
     def test_generate_config_apply_copies_template(self) -> None:
         with make_repo_temp_config("config.json") as target:
@@ -476,6 +536,163 @@ class Phase1Tests(unittest.TestCase):
         for script in scripts:
             result = run_script("bash", "-n", str(script.as_posix()))
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_phase4_sample_archivist_status_document_is_valid_json(self) -> None:
+        payload = json.loads(
+            (SKILL_ROOT / "examples" / "sample-archivist-status.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        self.assertIn("projects", payload)
+        self.assertGreaterEqual(len(payload["projects"]), 1)
+        project = payload["projects"][0]
+        self.assertIn("project_slug", project)
+        self.assertIn("archivist_initialized", project)
+        self.assertIn("expected_artifacts", project)
+        self.assertNotIn("maintenance_overdue", project)
+
+    def test_phase4_archivist_check_reports_repo_artifacts(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-check-archivist.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["projects_detected"], 2)
+            projects = {project["project_slug"]: project for project in payload["projects"]}
+            self.assertTrue(projects["repo-complete"]["archivist_initialized"])
+            self.assertFalse(projects["repo-incomplete"]["archivist_initialized"])
+            for project in payload["projects"]:
+                self.assertNotIn("maintenance_overdue", project)
+
+    def test_phase4_sync_from_repos_reports_read_only_summary(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-from-repos.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+                "--dry-run",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["mode"], "dry-run")
+            self.assertEqual(payload["projects_detected"], 2)
+            self.assertEqual(payload["syncable_projects"], 1)
+
+    def test_phase4_conflict_detector_flags_missing_archivist_files(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-detect-conflicts.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertGreaterEqual(payload["conflict_count"], 1)
+            conflict_types = {conflict["type"] for conflict in payload["conflicts"]}
+            self.assertIn("missing_archivist_artifact", conflict_types)
+
+    def test_phase4_weekly_maintenance_reports_due_state(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-weekly-maintenance.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertIn("archivist", payload)
+            self.assertIn("conflicts", payload)
+            self.assertIn("maintenance_due", payload)
+
+    def test_phase4_conflict_example_mentions_required_action(self) -> None:
+        example = (SKILL_ROOT / "examples" / "sample-sync-conflict.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Sync Conflict Example", example)
+        self.assertIn("Required action", example)
+        self.assertIn("`TODO.md` still lists the task as open", example)
+
+    def test_phase4_skill_docs_include_archivist_integration(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("## Archivist Integration", skill_text)
+        self.assertIn("TODO.md", skill_text)
+        self.assertIn("HISTORY.md", skill_text)
+        self.assertIn("## Weekly Maintenance", skill_text)
+        self.assertIn("does not run in the background by itself", skill_text)
+
+    def test_phase4_archivist_scripts_are_syntax_clean(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-check-archivist.sh",
+            SCRIPTS_ROOT / "pm-sync-from-repos.sh",
+            SCRIPTS_ROOT / "pm-detect-conflicts.sh",
+            SCRIPTS_ROOT / "pm-weekly-maintenance.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", "-n", str(script.as_posix()))
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_phase4_archivist_python_module_is_syntax_clean(self) -> None:
+        result = run_script(
+            "python", "-m", "py_compile",
+            str((SCRIPTS_ROOT / "lib" / "archivist.py").as_posix()),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_phase4_sync_script_rejects_apply_until_implemented(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-from-repos.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("not implemented yet", result.stderr.lower())
+
+    def test_phase4_weekly_maintenance_rejects_apply_until_implemented(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-weekly-maintenance.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("not implemented yet", result.stderr.lower())
+
+    def test_phase4_conflict_report_only_advertises_implemented_classes(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        # The two classes the PM actually detects must be documented as a contract.
+        self.assertIn("`repo_path_missing`", skill_text)
+        self.assertIn("`missing_archivist_artifact`", skill_text)
+        # Classes that are not implemented must be framed as future work, not promises.
+        self.assertIn("candidates for later phases", skill_text.lower())
 
 
 if __name__ == "__main__":

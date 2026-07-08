@@ -110,11 +110,58 @@ cancelled
 - Create backups before bulk writes when configured.
 - Log ambiguous merges to `.coferlandia/project-manager/sync-conflicts.md`.
 
+## Archivist Integration
+
+The PM reads:
+- `TODO.md` for active tasks
+- `HISTORY.md` for completed work
+- `DECISIONS.md` for architectural context
+- `RUNBOOK.md` for executable commands
+- `AGENTS.md` for high-priority agent instructions
+
+The PM must not replace `coferlandia-project-archivist`.
+
 ## Phase Boundary
 
-Phase 3 syncs Obsidian PM notes only.
-It does not yet synchronize repository documentation back into PM or execute development work.
+Phase 4 reads repository documentation and reports sync state.
+It does not yet execute development work or write back into PM-managed docs.
 The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain approval-gated placeholders until their write path is implemented.
+
+## Repo Sync Safety
+
+- Preserve manual Obsidian fields.
+- Default to `--dry-run`.
+- Reject `--apply` with an explicit "not implemented yet" error until the write path lands; never report a write that did not happen.
+- Stop when unresolved sync conflicts affect the target project.
+- Do not duplicate archivist responsibilities.
+
+## Weekly Maintenance
+
+Weekly maintenance does not run in the background by itself.
+It only runs when invoked by:
+- user
+- host process
+- scheduler
+- supervising agent
+- explicit PM command
+
+## Conflict Classes
+
+Phase 4 detects two repo-level conflict classes only:
+
+- `repo_path_missing` - a child directory of `repos_root` is not a Git repository
+- `missing_archivist_artifact` - a Git repository lacks one or more expected archivist files
+
+Richer PM-vs-repository conflict detection is future work and intentionally not promised. The following classes are candidates for later phases, not a Phase 4 contract:
+
+- PM task done but TODO still open
+- TODO task not represented in PM
+- duplicate tasks
+- project note pointing to a non-existing repo
+- dirty Git repo with no corresponding HISTORY entry
+- Obsidian task changed manually and TODO changed simultaneously
+- project archived in PM but active in repos_root
+- repo removed but project still active in PM
 
 ## Scripts Available
 
@@ -128,3 +175,7 @@ The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain approv
 - `scripts/pm-detect-projects.sh` - discovers direct child Git repositories under `repos_root`
 - `scripts/pm-scan-repos.sh` - emits read-only portfolio repository state
 - `scripts/pm-git-status-all.sh` - reports Git status for all discovered projects
+- `scripts/pm-check-archivist.sh` - reports archivist artifact coverage and maintenance status
+- `scripts/pm-sync-from-repos.sh` - maps repo documentation into PM state without writing
+- `scripts/pm-detect-conflicts.sh` - identifies sync mismatches that need review
+- `scripts/pm-weekly-maintenance.sh` - runs host-invoked weekly maintenance checks
