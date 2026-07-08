@@ -694,6 +694,113 @@ class Phase1Tests(unittest.TestCase):
         # Classes that are not implemented must be framed as future work, not promises.
         self.assertIn("candidates for later phases", skill_text.lower())
 
+    def test_phase5_report_templates_carry_required_headings(self) -> None:
+        portfolio = (
+            (SKILL_ROOT / "templates" / "portfolio-report.template.md")
+            .read_text(encoding="utf-8")
+        )
+        project = (
+            (SKILL_ROOT / "templates" / "project-report.template.md")
+            .read_text(encoding="utf-8")
+        )
+        task = (
+            (SKILL_ROOT / "templates" / "task-report.template.md")
+            .read_text(encoding="utf-8")
+        )
+
+        for required in (
+            "Active projects:",
+            "Ready-for-agent tasks:",
+            "Repos with uncommitted changes:",
+            "Projects with sync conflicts:",
+        ):
+            self.assertIn(required, portfolio)
+        for required in ("Git status:", "Archivist status:", "Blockers:"):
+            self.assertIn(required, project)
+        for required in ("Review state:", "Verification state:"):
+            self.assertIn(required, task)
+
+    def test_phase5_examples_cover_portfolio_questions(self) -> None:
+        portfolio = (
+            (SKILL_ROOT / "examples" / "sample-portfolio-report.md")
+            .read_text(encoding="utf-8")
+        )
+        project = (
+            (SKILL_ROOT / "examples" / "sample-project-report.md")
+            .read_text(encoding="utf-8")
+        )
+
+        self.assertIn("Ready-for-agent tasks:", portfolio)
+        self.assertIn("Projects with sync conflicts:", portfolio)
+        self.assertIn("Tasks completed this week:", portfolio)
+        self.assertIn("Archivist status:", project)
+
+    def test_phase5_reporting_scripts_advertise_usage(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-portfolio-report.sh",
+            SCRIPTS_ROOT / "pm-project-report.sh",
+            SCRIPTS_ROOT / "pm-task-report.sh",
+            SCRIPTS_ROOT / "pm-health-check.sh",
+            SCRIPTS_ROOT / "pm-clean-worktrees.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", str(script.as_posix()), "--help")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Usage:", result.stdout)
+            self.assertIn("Description:", result.stdout)
+
+    def test_phase5_scripts_are_syntax_clean(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-portfolio-report.sh",
+            SCRIPTS_ROOT / "pm-project-report.sh",
+            SCRIPTS_ROOT / "pm-task-report.sh",
+            SCRIPTS_ROOT / "pm-health-check.sh",
+            SCRIPTS_ROOT / "pm-clean-worktrees.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", "-n", str(script.as_posix()))
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_phase5_entry_points_reject_invocation_until_implemented(self) -> None:
+        config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
+        scripts = [
+            SCRIPTS_ROOT / "pm-portfolio-report.sh",
+            SCRIPTS_ROOT / "pm-project-report.sh",
+            SCRIPTS_ROOT / "pm-task-report.sh",
+            SCRIPTS_ROOT / "pm-health-check.sh",
+            SCRIPTS_ROOT / "pm-clean-worktrees.sh",
+        ]
+
+        for script in scripts:
+            result = run_script(
+                "bash",
+                str(script.as_posix()),
+                "--config",
+                config_path,
+            )
+            self.assertNotEqual(result.returncode, 0, script.name)
+            self.assertIn("not implemented yet", result.stderr.lower())
+
+    def test_phase5_skill_docs_include_reporting_policy(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("## Reporting Output", skill_text)
+        self.assertIn(".coferlandia/project-manager/reports/", skill_text)
+        self.assertIn("## Reporting Questions", skill_text)
+        self.assertIn("which projects have ready-for-agent tasks", skill_text.lower())
+        self.assertIn("which repos have uncommitted changes", skill_text.lower())
+
+    def test_phase5_skill_docs_include_worktree_cleanup_rules(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("## Worktree Cleanup Rules", skill_text)
+        # Conservative guardrails must be explicit.
+        self.assertIn("delete dirty worktrees", skill_text.lower())
+        self.assertIn("force-delete anything", skill_text.lower())
+        self.assertIn("bypass superpowers branch finishing rules", skill_text.lower())
+
 
 if __name__ == "__main__":
     if shutil.which("bash") is None:

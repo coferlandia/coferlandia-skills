@@ -123,8 +123,13 @@ The PM must not replace `coferlandia-project-archivist`.
 
 ## Phase Boundary
 
-Phase 4 reads repository documentation and reports sync state.
-It does not yet execute development work or write back into PM-managed docs.
+Phase 5 defines the reporting and worktree-cleanup CLI surface plus the
+templates, examples, and policy that frame them. The report generators
+(`pm-portfolio-report.sh`, `pm-project-report.sh`, `pm-task-report.sh`,
+`pm-health-check.sh`) and `pm-clean-worktrees.sh` remain approval-gated
+placeholders: they advertise their planned contract via `--help` and reject
+every other invocation as "not implemented yet", consistent with the Phase 3
+entry points. They do not execute development work or write into PM-managed docs.
 The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain approval-gated placeholders until their write path is implemented.
 
 ## Repo Sync Safety
@@ -163,6 +168,48 @@ Richer PM-vs-repository conflict detection is future work and intentionally not 
 - project archived in PM but active in repos_root
 - repo removed but project still active in PM
 
+## Reporting Output
+
+Default report location:
+- `.coferlandia/project-manager/reports/`
+
+Report formats:
+- Markdown for humans
+- JSON for agents
+
+## Reporting Questions
+
+The PM must answer:
+- how many active projects exist
+- which projects are blocked
+- which projects have ready-for-agent tasks
+- which projects are in review
+- which tasks were completed this week
+- which repos have uncommitted changes
+- which repos are ahead or behind remote
+- which repos lack archivist artifacts
+- which projects have sync conflicts
+- which projects have not had recent activity
+- which tasks need brainstorming
+- which tasks are waiting for plan approval
+- which tasks are waiting for code review
+- which projects need weekly maintenance
+
+## Worktree Cleanup Rules
+
+The PM may:
+- list worktrees
+- identify worktrees related to completed tasks
+- identify dirty worktrees
+- suggest cleanup
+
+The PM must not:
+- delete dirty worktrees
+- delete worktrees it cannot associate safely
+- bypass Superpowers branch finishing rules
+- remove branches
+- force-delete anything
+
 ## Scripts Available
 
 - `scripts/pm-onboard.sh` - orchestrates onboarding and readiness checks
@@ -179,3 +226,8 @@ Richer PM-vs-repository conflict detection is future work and intentionally not 
 - `scripts/pm-sync-from-repos.sh` - maps repo documentation into PM state without writing
 - `scripts/pm-detect-conflicts.sh` - identifies sync mismatches that need review
 - `scripts/pm-weekly-maintenance.sh` - runs host-invoked weekly maintenance checks
+- `scripts/pm-portfolio-report.sh` - generates a portfolio-wide report in Markdown or JSON
+- `scripts/pm-project-report.sh` - generates a report for one managed project
+- `scripts/pm-task-report.sh` - generates a report for one managed task
+- `scripts/pm-health-check.sh` - summarizes portfolio health, sync gaps, and maintenance needs
+- `scripts/pm-clean-worktrees.sh` - suggests safe worktree cleanup actions (approval-gated)
