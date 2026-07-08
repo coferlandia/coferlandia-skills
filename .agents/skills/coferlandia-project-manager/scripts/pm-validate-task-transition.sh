@@ -48,7 +48,8 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-[[ -n "${config_path}" ]] || die "Missing required --config <path>"
+config_path="$(pm_resolve_config_path "${config_path}")"
+pm_require_file "${config_path}"
 [[ -n "${task_id}" ]] || die "Missing required --task <task-id>"
 [[ -n "${target_status}" ]] || die "Missing required --target-status <status>"
 

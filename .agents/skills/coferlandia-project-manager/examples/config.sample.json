@@ -2,7 +2,7 @@
   "version": 1,
   "repos_root": "/path/to/repos",
   "obsidian": {
-    "vault_root": "/path/to/vault",
+    "vault_root": "",
     "pm_projects_folder": "Projects",
     "pm_tasks_folder": "Projects/tasks",
     "default_view": "kanban"

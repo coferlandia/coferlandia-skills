@@ -10,7 +10,7 @@ print_help() {
 Usage: pm-generate-config.sh --config <path> [--dry-run] [--apply] [--json]
 Description: Copy the template config into a target path only when explicitly applied.
 Examples:
-  pm-generate-config.sh --config .coferlandia/project-manager/config.json --dry-run
+  pm-generate-config.sh --dry-run
   pm-generate-config.sh --config .coferlandia/project-manager/config.json --apply --json
 EOF
 }
@@ -49,9 +49,8 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-[[ -n "${config_path}" ]] || die "Missing required --config <path>"
-
-template_path="$(pm_config_default_path)"
+config_path="$(pm_resolve_config_path "${config_path}")"
+template_path="$(pm_config_template_path)"
 
 if [[ "${apply_changes}" == true ]]; then
   mkdir -p "$(dirname -- "${config_path}")"

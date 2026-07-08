@@ -4,8 +4,50 @@ config_lib_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./logging.sh
 source "${config_lib_dir}/logging.sh"
 
+pm_skill_root() {
+  cd -- "${config_lib_dir}/../.." >/dev/null 2>&1 && pwd
+}
+
+pm_repo_root() {
+  git rev-parse --show-toplevel 2>/dev/null || pwd
+}
+
+pm_config_template_path() {
+  printf '%s\n' "$(pm_skill_root)/templates/config.template.json"
+}
+
 pm_config_default_path() {
-  printf '%s\n' ".agents/skills/coferlandia-project-manager/templates/config.template.json"
+  pm_config_template_path
+}
+
+pm_config_default_target() {
+  printf '%s\n' "$(pm_repo_root)/.coferlandia/project-manager/config.json"
+}
+
+pm_default_obsidian_vault_root() {
+  printf '%s\n' "$(pm_repo_root)/obsidian"
+}
+
+pm_effective_obsidian_vault_root() {
+  local config_path="$1"
+  local vault_root
+
+  vault_root="$(pm_config_json_value "${config_path}" "obsidian.vault_root")"
+  if [[ -n "${vault_root}" ]]; then
+    pm_normalize_path_for_bash "${vault_root}"
+  else
+    pm_default_obsidian_vault_root
+  fi
+}
+
+pm_resolve_config_path() {
+  local config_path="${1:-}"
+
+  if [[ -n "${config_path}" ]]; then
+    printf '%s\n' "${config_path}"
+  else
+    pm_config_default_target
+  fi
 }
 
 pm_normalize_path_for_bash() {

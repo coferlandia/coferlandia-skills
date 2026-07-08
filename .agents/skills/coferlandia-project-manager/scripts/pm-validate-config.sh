@@ -11,7 +11,7 @@ Usage: pm-validate-config.sh --config <path> [--json]
 Description: Validate that the config file is readable and structurally complete.
 Examples:
   pm-validate-config.sh --config .agents/skills/coferlandia-project-manager/examples/config.sample.json
-  pm-validate-config.sh --config config.json --json
+  pm-validate-config.sh --json
 EOF
 }
 
@@ -39,11 +39,11 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-[[ -n "${config_path}" ]] || die "Missing required --config <path>"
+config_path="$(pm_resolve_config_path "${config_path}")"
 pm_require_file "${config_path}"
 
 python_cmd="$(pm_python_cmd)"
-if "${python_cmd}" - "${config_path}" "$(pm_config_default_path)" "${json_output}" <<'PY'
+if "${python_cmd}" - "${config_path}" "$(pm_config_template_path)" "${json_output}" <<'PY'
 import json
 import sys
 from pathlib import Path

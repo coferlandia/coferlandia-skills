@@ -13,14 +13,21 @@ SKILL_ROOT = ROOT / ".agents" / "skills" / "coferlandia-project-manager"
 SCRIPTS_ROOT = Path(".agents/skills/coferlandia-project-manager/scripts")
 
 
-def run_script(*args: str) -> subprocess.CompletedProcess[str]:
+def run_script(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         list(args),
-        cwd=ROOT,
+        cwd=cwd,
         text=True,
         capture_output=True,
         check=False,
     )
+
+
+def bash_path(path: Path) -> str:
+    resolved = path.resolve().as_posix()
+    if len(resolved) >= 2 and resolved[1] == ":":
+        return f"/mnt/{resolved[0].lower()}{resolved[2:]}"
+    return resolved
 
 
 @contextmanager
@@ -31,6 +38,46 @@ def make_repo_temp_config(name: str):
         path = Path(tempdir.name) / name
         relative_path = path.relative_to(ROOT).as_posix()
         yield relative_path
+    finally:
+        tempdir.cleanup()
+
+
+@contextmanager
+def make_pm_home_repo():
+    (ROOT / ".test-tmp").mkdir(exist_ok=True)
+    tempdir = tempfile.TemporaryDirectory(dir=ROOT / ".test-tmp")
+    try:
+        base = Path(tempdir.name)
+        pm_home = base / "pm-home"
+        repos_root = base / "repos"
+        pm_home.mkdir()
+        repos_root.mkdir()
+
+        pm_home_relative = pm_home.relative_to(ROOT).as_posix()
+        init = subprocess.run(
+            ["bash", "-lc", f"git init '{pm_home_relative}' >/dev/null"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if init.returncode != 0:
+            raise RuntimeError(init.stderr)
+
+        checkout = subprocess.run(
+            ["bash", "-lc", f"git -C '{pm_home_relative}' checkout -b main >/dev/null"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if checkout.returncode != 0:
+            raise RuntimeError(checkout.stderr)
+
+        yield {
+            "pm_home": pm_home,
+            "repos_root": repos_root,
+        }
     finally:
         tempdir.cleanup()
 
@@ -247,9 +294,18 @@ class Phase1Tests(unittest.TestCase):
         result = run_script("bash", "-lc", command)
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(
-            result.stdout.strip(),
-            ".agents/skills/coferlandia-project-manager/templates/config.template.json",
+        self.assertTrue(result.stdout.strip().endswith("/templates/config.template.json"))
+
+    def test_default_config_target_points_to_repo_local_config(self) -> None:
+        command = (
+            "source .agents/skills/coferlandia-project-manager/scripts/lib/config.sh; "
+            "pm_config_default_target"
+        )
+        result = run_script("bash", "-lc", command)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(
+            result.stdout.strip().endswith("/.coferlandia/project-manager/config.json")
         )
 
     def test_config_helpers_read_repos_root_and_default_branch(self) -> None:
@@ -316,7 +372,36 @@ class Phase1Tests(unittest.TestCase):
         self.assertIn("superpowers", payload)
         self.assertIn("git_capabilities", payload)
         self.assertIn("next_approved_action", payload)
+        self.assertIn("effective_vault_root", payload)
         self.assertEqual(payload["config"]["status"], "ok")
+        self.assertEqual(payload["effective_vault_root"], bash_path(ROOT / "obsidian"))
+
+    def test_doctor_uses_configured_vault_root_when_present(self) -> None:
+        with make_repo_temp_config("doctor-configured-vault") as config_path:
+            config_file = ROOT / config_path
+            sample_config = (
+                ROOT
+                / ".agents"
+                / "skills"
+                / "coferlandia-project-manager"
+                / "examples"
+                / "config.sample.json"
+            )
+            config = json.loads(sample_config.read_text(encoding="utf-8"))
+            config["obsidian"]["vault_root"] = "C:/custom/vault"
+            config_file.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-doctor.sh").as_posix()),
+                "--config",
+                config_path,
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["effective_vault_root"], "/mnt/c/custom/vault")
 
     def test_onboard_json_wraps_readiness_report(self) -> None:
         config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
@@ -334,6 +419,53 @@ class Phase1Tests(unittest.TestCase):
         self.assertEqual(payload["status"], "ok")
         self.assertEqual(payload["mode"], "dry-run")
         self.assertIn("readiness", payload)
+        self.assertEqual(payload["config_exists"], True)
+        self.assertEqual(payload["config_preexisting"], True)
+        self.assertIn("config", payload["readiness"])
+        self.assertIn("environment", payload["readiness"])
+        self.assertIn("superpowers", payload["readiness"])
+
+    def test_generate_config_defaults_to_repo_local_path(self) -> None:
+        with make_pm_home_repo() as workspace:
+            result = run_script(
+                "bash",
+                "-lc",
+                f"'{bash_path(ROOT / SCRIPTS_ROOT / 'pm-generate-config.sh')}' --apply --json",
+                cwd=workspace["pm_home"],
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "applied")
+
+            target_path = (
+                workspace["pm_home"] / ".coferlandia" / "project-manager" / "config.json"
+            )
+            self.assertTrue(target_path.exists())
+
+    def test_onboard_can_create_repo_local_config_when_missing(self) -> None:
+        with make_pm_home_repo() as workspace:
+            result = run_script(
+                "bash",
+                "-lc",
+                f"'{bash_path(ROOT / SCRIPTS_ROOT / 'pm-onboard.sh')}' --apply --json",
+                cwd=workspace["pm_home"],
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["config_exists"], True)
+            self.assertEqual(payload["config_preexisting"], False)
+            self.assertEqual(payload["config_generation"]["status"], "applied")
+            self.assertIn("readiness", payload)
+            self.assertIn("config", payload["readiness"])
+            self.assertEqual(payload["readiness"]["config"]["status"], "ok")
+
+            target_path = (
+                workspace["pm_home"] / ".coferlandia" / "project-manager" / "config.json"
+            )
+            self.assertTrue(target_path.exists())
 
     def test_state_template_has_phase2_runtime_shape(self) -> None:
         payload = json.loads(
@@ -1367,6 +1499,38 @@ class Phase6Tests(unittest.TestCase):
             self.assertNotIn("# Portfolio Report", result.stdout)
 
             shutil.rmtree(output_dir, ignore_errors=True)
+
+    def test_phase6_sync_to_obsidian_defaults_to_repo_local_vault(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            config_path = ROOT / portfolio["config_path"]
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["obsidian"]["vault_root"] = ""
+            config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+            for filename in ("HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+                (portfolio["repo_b"] / filename).write_text(f"# {filename}\n", encoding="utf-8")
+
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            vault_root = ROOT / "obsidian"
+            shutil.rmtree(pm_root, ignore_errors=True)
+            shutil.rmtree(vault_root, ignore_errors=True)
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-to-obsidian.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["vault_root"], bash_path(vault_root))
+            self.assertTrue((vault_root / "Projects" / "repo-a.md").exists())
+            self.assertTrue((vault_root / "Projects" / "tasks" / "TASK-002.md").exists())
+
+            shutil.rmtree(vault_root, ignore_errors=True)
 
     def test_phase6_backup_and_sync_to_obsidian_apply_succeeds(self) -> None:
         with make_phase6_portfolio() as portfolio:

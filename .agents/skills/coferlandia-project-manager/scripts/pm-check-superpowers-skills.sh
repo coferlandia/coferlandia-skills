@@ -31,16 +31,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 python_cmd="$(pm_python_cmd)"
-"${python_cmd}" - "${json_output}" <<'PY'
+skill_root="$(pm_skill_root)"
+"${python_cmd}" - "${json_output}" "${skill_root}" <<'PY'
 import json
 import os
 import sys
 from pathlib import Path
 
 json_output = sys.argv[1].lower() == "true"
-repo_root = Path.cwd()
+repo_root = Path(sys.argv[2])
 template = json.loads(
-    (repo_root / ".agents/skills/coferlandia-project-manager/templates/config.template.json").read_text(
+    (repo_root / "templates" / "config.template.json").read_text(
         encoding="utf-8"
     )
 )

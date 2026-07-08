@@ -3,6 +3,7 @@
     "status": "ok",
     "path": ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
   },
+  "effective_vault_root": "/path/to/pm-home/obsidian",
   "environment": {
     "status": "ok",
     "bash": true,

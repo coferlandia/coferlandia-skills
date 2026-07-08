@@ -42,7 +42,8 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-[[ -n "${config_path}" ]] || die "Missing required --config <path>"
+config_path="$(pm_resolve_config_path "${config_path}")"
+pm_require_file "${config_path}"
 
 repos_root="$(pm_config_repos_root "${config_path}")"
 [[ -n "${repos_root}" ]] || die "repos_root is required in config"

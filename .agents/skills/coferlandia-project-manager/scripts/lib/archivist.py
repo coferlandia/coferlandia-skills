@@ -43,9 +43,6 @@ EXPECTED_ARTIFACTS = (
     "AGENTS.md",
 )
 
-RUNTIME_ROOT = Path(".coferlandia/project-manager")
-
-
 def _is_git_repo(path: Path) -> bool:
     result = subprocess.run(
         ["git", "-C", str(path), "rev-parse", "--is-inside-work-tree"],
@@ -54,6 +51,18 @@ def _is_git_repo(path: Path) -> bool:
         check=False,
     )
     return result.returncode == 0
+
+
+def _pm_repo_root() -> Path:
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return Path(result.stdout.strip())
+    return Path.cwd()
 
 
 def iter_projects(repos_root: Path):
@@ -82,7 +91,7 @@ def _write_json(path: Path, payload: dict) -> None:
 
 
 def _runtime_root() -> Path:
-    return RUNTIME_ROOT
+    return _pm_repo_root() / ".coferlandia" / "project-manager"
 
 
 def _normalize_path_text(value: str) -> str:
@@ -115,6 +124,8 @@ def _obsidian_settings(config: dict) -> dict:
     vault_root = _config_value(config, "obsidian", "vault_root", default="")
     if isinstance(vault_root, str):
         vault_root = _normalize_path_text(vault_root)
+    if not vault_root:
+        vault_root = (_pm_repo_root() / "obsidian").as_posix()
     return {
         "vault_root": vault_root,
         "pm_projects_folder": _config_value(

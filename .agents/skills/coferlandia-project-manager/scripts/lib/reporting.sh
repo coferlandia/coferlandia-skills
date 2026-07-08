@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
 reporting_lib_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./config.sh
+source "${reporting_lib_dir}/config.sh"
 # shellcheck source=./logging.sh
 source "${reporting_lib_dir}/logging.sh"
 
 # Resolve the default report output directory relative to the working directory.
 # Creates the directory if it does not exist.
 pm_report_output_dir() {
-  local output_dir="${1:-.coferlandia/project-manager/reports}"
+  local output_dir="${1:-$(pm_repo_root)/.coferlandia/project-manager/reports}"
   mkdir -p "${output_dir}" || die "Failed to create report output directory: ${output_dir}"
   printf '%s\n' "${output_dir}"
 }
