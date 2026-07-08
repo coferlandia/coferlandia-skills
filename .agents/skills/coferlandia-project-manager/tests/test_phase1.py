@@ -847,11 +847,19 @@ def make_phase6_portfolio():
         (repo_a / "TODO.md").write_text(
             "# TODO\n\n"
             "- [x] TASK-001: initial setup\n"
+            "- [x] TASK-007: legacy completed work\n"
             "- [ ] TASK-002: add reporting [status: ready-for-agent]\n"
             "- [ ] TASK-003: fix config bug [status: blocked]\n"
             "- [ ] TASK-004: brainstorm new feature [status: needs-brainstorming]\n"
             "- [ ] TASK-005: write spec [status: planning]\n"
             "- [ ] TASK-006: review code [status: code-review]\n",
+            encoding="utf-8",
+        )
+        (repo_a / "HISTORY.md").write_text(
+            "## 2026-07-07\n\n"
+            "- Completed TASK-001: initial setup\n\n"
+            "## 2026-06-01\n\n"
+            "- Completed TASK-007: legacy completed work\n",
             encoding="utf-8",
         )
 
@@ -1006,6 +1014,19 @@ class Phase6Tests(unittest.TestCase):
             all_tasks = payload.get("tasks", [])
             self.assertGreaterEqual(len(all_tasks), 6)
 
+    def test_phase6_portfolio_report_counts_only_recent_history_entries_for_weekly_completions(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-portfolio-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["summary"]["tasks_completed_this_week"], 1)
+
     def test_phase6_project_report_validates_slug(self) -> None:
         with make_phase6_portfolio() as portfolio:
             result = run_script(
@@ -1023,6 +1044,20 @@ class Phase6Tests(unittest.TestCase):
             self.assertEqual(payload["project_slug"], "repo-a")
             self.assertIn("git", payload)
             self.assertIn("archivist", payload)
+
+    def test_phase6_project_report_markdown_uses_pm_status_not_git_branch(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-project-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--project",
+                "repo-a",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("- PM status: blocked", result.stdout)
+            self.assertNotIn("- PM status: main", result.stdout)
 
     def test_phase6_project_report_rejects_unknown_slug(self) -> None:
         with make_phase6_portfolio() as portfolio:
@@ -1173,6 +1208,7 @@ class Phase6Tests(unittest.TestCase):
 
             report_files = list(output_dir.glob("portfolio-report-*.md"))
             self.assertGreaterEqual(len(report_files), 1)
+            self.assertNotIn("# Portfolio Report", result.stdout)
 
             shutil.rmtree(output_dir, ignore_errors=True)
 
@@ -1198,10 +1234,89 @@ class Phase6Tests(unittest.TestCase):
         self.assertIn("## Phase Boundary", skill_text)
         self.assertIn("Phase 6", skill_text)
 
+    def test_phase6_skill_docs_include_board_driven_action_rules(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("## Board-Driven Actions", skill_text)
+        self.assertIn("## Actionable States", skill_text)
+        self.assertIn("## Transition Validation Output", skill_text)
+        self.assertIn("## Non-Autonomous Execution Rule", skill_text)
+        self.assertIn("## Action Preflight", skill_text)
+        self.assertIn("## Phase 6 Acceptance", skill_text)
+
     def test_phase6_examples_exist(self) -> None:
-        for name in ("sample-health-check.md", "sample-worktree-cleanup.json"):
+        for name in ("sample-health-check.md", "sample-worktree-cleanup.json", "sample-execution-brief.md"):
             path = SKILL_ROOT / "examples" / name
             self.assertTrue(path.exists(), f"Missing example: {name}")
+
+    def test_phase6_board_action_scripts_advertise_usage(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-validate-task-transition.sh",
+            SCRIPTS_ROOT / "pm-generate-execution-brief.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", str(script.as_posix()), "--help")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Usage:", result.stdout)
+            self.assertIn("Description:", result.stdout)
+
+    def test_phase6_validate_task_transition_reports_authorized_ready_for_agent_state(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-validate-task-transition.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--task",
+                "TASK-002",
+                "--target-status",
+                "ready-for-agent",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["authorized"])
+            self.assertEqual(payload["task_id"], "TASK-002")
+            self.assertEqual(payload["target_status"], "ready-for-agent")
+            self.assertEqual(payload["suggested_next_action"], "prepare an execution brief")
+
+    def test_phase6_validate_task_transition_blocks_projects_with_sync_conflicts(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-validate-task-transition.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--task",
+                "TASK-010",
+                "--target-status",
+                "implementing",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["authorized"])
+            self.assertIn("sync conflict", (payload["blocking_reason"] or "").lower())
+
+    def test_phase6_execution_brief_generation_is_advisory_only(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-generate-execution-brief.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--task",
+                "TASK-002",
+                "--json",
+                "--dry-run",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["task_id"], "TASK-002")
+            self.assertEqual(payload["current_status"], "ready-for-agent")
+            self.assertEqual(payload["required_next_skill"], "superpowers:executing-plans")
+            self.assertFalse(payload["executes_work"])
 
 
 if __name__ == "__main__":

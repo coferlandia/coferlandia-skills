@@ -18,7 +18,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # Canonical archivist artifacts — mirrors archivist.py.
@@ -198,6 +198,7 @@ _HISTORY_ENTRY_RE = re.compile(
     r"^\s*[-*]\s+(?P<line>.+)",
     re.MULTILINE,
 )
+_HISTORY_DATE_HEADING_RE = re.compile(r"^\s*##\s+(?P<date>\d{4}-\d{2}-\d{2})\b", re.MULTILINE)
 
 
 def parse_history_entries(history_path: Path, since_days: int = 7) -> list:
@@ -207,12 +208,44 @@ def parse_history_entries(history_path: Path, since_days: int = 7) -> list:
     text = history_path.read_text(encoding="utf-8")
     entries = []
     now = datetime.now(timezone.utc)
-    for m in _HISTORY_ENTRY_RE.finditer(text):
-        line = m.group("line").strip()
-        if not line:
+    cutoff = now - timedelta(days=since_days)
+    headings = list(_HISTORY_DATE_HEADING_RE.finditer(text))
+
+    if not headings:
+        for m in _HISTORY_ENTRY_RE.finditer(text):
+            line = m.group("line").strip()
+            if not line:
+                continue
+            entries.append({"line": line})
+        return entries
+
+    for index, heading in enumerate(headings):
+        section_start = heading.end()
+        section_end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        section_text = text[section_start:section_end]
+        section_date = datetime.fromisoformat(heading.group("date")).replace(tzinfo=timezone.utc)
+        if section_date < cutoff:
             continue
-        entries.append({"line": line})
+        for match in _HISTORY_ENTRY_RE.finditer(section_text):
+            line = match.group("line").strip()
+            if not line:
+                continue
+            entries.append({"line": line, "date": heading.group("date")})
     return entries
+
+
+def _derive_project_pm_status(tasks: list) -> str:
+    if any(task["status"] == "blocked" for task in tasks):
+        return "blocked"
+    if any(task["status"] in REVIEW_STATUSES for task in tasks):
+        return "in-review"
+    if any(task["status"] == "ready-for-agent" for task in tasks):
+        return "ready-for-agent"
+    if any(task["status"] in ACTIVE_STATUSES for task in tasks):
+        return "active"
+    if tasks:
+        return "done"
+    return "idle"
 
 
 # ---------------------------------------------------------------------------
@@ -381,8 +414,6 @@ def cmd_portfolio_report(args: argparse.Namespace) -> dict:
         # Classify tasks.
         for task in todo_tasks:
             all_tasks.append({**task, "project": slug, "repo_path": project_path.as_posix()})
-            if task["status"] == "done":
-                completed_this_week += 1
             if task["status"] == "blocked":
                 total_blocked += 1
             if task["status"] in REVIEW_STATUSES:
@@ -395,6 +426,8 @@ def cmd_portfolio_report(args: argparse.Namespace) -> dict:
                 waiting_plan_approval += 1
             if task["status"] in CODE_REVIEW_STATUSES:
                 waiting_code_review += 1
+
+        completed_this_week += len(history_entries)
 
         # Active projects: those with at least one non-terminal task.
         has_active = any(t["status"] in ACTIVE_STATUSES for t in todo_tasks)
@@ -475,12 +508,14 @@ def cmd_project_report(args: argparse.Namespace) -> dict:
     blocked_tasks = [t for t in tasks if t["status"] == "blocked"]
     ready_tasks = [t for t in tasks if t["status"] == "ready-for-agent"]
     active_tasks = [t for t in tasks if t["status"] in ACTIVE_STATUSES]
+    pm_status = _derive_project_pm_status(tasks)
 
     return {
         "status": "ok",
         "generated_at": _now_iso(),
         "project_slug": project_slug,
         "repo_path": project_path.as_posix(),
+        "pm_status": pm_status,
         "git": git_state,
         "archivist": {
             "initialized": not missing,
@@ -696,7 +731,7 @@ def _render_project_markdown(payload: dict) -> str:
         f"- Repo path: {payload.get('repo_path', '')}",
         f"- Git status: branch={git.get('branch', '')} dirty={git.get('dirty', False)} untracked={git.get('untracked', False)}",
         f"- Archivist status: {'initialized' if arch.get('initialized') else 'missing: ' + ', '.join(arch.get('missing_artifacts', []))}",
-        f"- PM status: {git.get('branch', '')}",
+        f"- PM status: {payload.get('pm_status', 'unknown')}",
         f"- Ready tasks: {tasks.get('ready_for_agent', 0)}",
         f"- Blockers: {tasks.get('blocked', 0)}",
         "",

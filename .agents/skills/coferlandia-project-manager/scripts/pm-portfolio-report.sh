@@ -75,11 +75,11 @@ report_output="$("${python_cmd}" "${script_dir}/lib/reporting.py" portfolio-repo
 if [[ "${json_output}" == true ]]; then
   printf '%s\n' "${report_output}"
 else
-  printf '%s\n' "${report_output}"
-
   if [[ -n "${output_dir}" ]]; then
     resolved_dir="$(pm_report_output_dir "${output_dir}")"
     written_path="$(printf '%s\n' "${report_output}" | pm_write_report "${resolved_dir}" "portfolio-report" "md")"
     log_info "Report written to: ${written_path}"
+  else
+    printf '%s\n' "${report_output}"
   fi
 fi

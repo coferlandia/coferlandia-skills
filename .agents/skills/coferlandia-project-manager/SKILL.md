@@ -12,7 +12,7 @@ compatibility: >
   synchronization.
 metadata:
   author: coferlandia
-  version: "0.2.0"
+  version: "0.3.0"
   category: ops
   status: draft
 ---
@@ -123,16 +123,19 @@ The PM must not replace `coferlandia-project-archivist`.
 
 ## Phase Boundary
 
-Phase 6 implements the reporting and observation surface. The five Phase 5
-placeholder scripts (`pm-portfolio-report.sh`, `pm-project-report.sh`,
-`pm-task-report.sh`, `pm-health-check.sh`, `pm-clean-worktrees.sh`) are now
-functional read-only report generators backed by `scripts/lib/reporting.py`.
-They aggregate data from the existing scan/conflict/archivist infrastructure,
-parse TODO.md for task-level data, and answer all 14 Reporting Questions.
-Reports may be printed to stdout (JSON or Markdown) or written to a report
-output directory via `--output-dir`. All write-path operations remain gated.
+The reporting surface remains available through the five read-only report
+generators (`pm-portfolio-report.sh`, `pm-project-report.sh`,
+`pm-task-report.sh`, `pm-health-check.sh`, `pm-clean-worktrees.sh`) backed by
+`scripts/lib/reporting.py`.
+
+Phase 6 adds board-driven action validation and execution-brief generation:
+- `pm-validate-task-transition.sh`
+- `pm-generate-execution-brief.sh`
+
+These Phase 6 actions prepare guidance only. They do not start development,
+create branches or worktrees, or write into repositories automatically.
 The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain
-approval-gated placeholders — their write path is future work.
+approval-gated placeholders - their write path is future work.
 
 ## Repo Sync Safety
 
@@ -182,7 +185,7 @@ Report formats:
 Report output behavior:
 - With `--json`, reports print to stdout.
 - With `--output-dir <dir>`, reports are written to timestamped files in the
-  specified directory (ignored when `--json` is used).
+  specified directory and are not echoed to stdout (ignored when `--json` is used).
 - Without either flag, reports print Markdown to stdout.
 
 ## Reporting Questions
@@ -218,6 +221,58 @@ The PM must not:
 - remove branches
 - force-delete anything
 
+## Board-Driven Actions
+
+Board changes may become actionable PM events only when:
+- configuration is valid
+- the task state authorizes the action
+- control authority approval exists for write-capable follow-up
+- no unresolved sync conflict affects the target project
+
+## Actionable States
+
+- `needs-brainstorming` -> prepare a brainstorming brief
+- `planning` -> prepare a writing-plans brief
+- `ready-for-agent` -> prepare an execution brief
+- `code-review` -> prepare a review handoff brief
+- `verification` -> prepare a verification checklist
+
+## Transition Validation Output
+
+The validator must report:
+- authorized: true | false
+- blocking_reason: <message or null>
+- required_approval: yes | no
+- suggested_next_action: <brief>
+
+## Non-Autonomous Execution Rule
+
+Board-driven actions may prepare:
+- briefs
+- checklists
+- approvals needed
+- next-step recommendations
+
+They may not:
+- start development automatically
+- create branches or worktrees
+- edit repositories without explicit authority
+
+## Action Preflight
+
+Before generating an actionable brief:
+1. validate config
+2. validate target task state
+3. validate project sync state
+4. validate git cleanliness for any repo-scoped action
+
+## Phase 6 Acceptance
+
+- board status can be validated
+- next action can be described
+- no development work is started automatically
+- all write-capable consequences remain approval-gated
+
 ## Scripts Available
 
 - `scripts/pm-onboard.sh` - orchestrates onboarding and readiness checks
@@ -241,3 +296,6 @@ The PM must not:
 - `scripts/pm-clean-worktrees.sh` - lists and classifies worktrees, suggests safe cleanup (approval-gated)
 - `scripts/lib/reporting.py` - Python module backing all Phase 6 report generators
 - `scripts/lib/reporting.sh` - bash helpers for report output directory and file writing
+- `scripts/pm-validate-task-transition.sh` - validates whether a board state is actionable and safe
+- `scripts/pm-generate-execution-brief.sh` - generates advisory Superpowers handoff briefs without executing work
+- `scripts/lib/board_actions.py` - Python module backing Phase 6 board-action validation and brief generation
