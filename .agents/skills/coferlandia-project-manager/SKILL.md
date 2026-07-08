@@ -82,6 +82,40 @@ The PM must delegate worktree and branch lifecycle actions to:
 - `superpowers:using-git-worktrees`
 - `superpowers:finishing-a-development-branch`
 
+## Required Task Statuses
+
+intake
+needs-brainstorming
+spec-writing
+spec-review
+planning
+plan-review
+ready-for-agent
+worktree-prep
+implementing
+debugging
+code-review
+changes-requested
+verification
+branch-finishing
+syncing-docs
+done
+blocked
+cancelled
+
+## Sync Rules
+
+- Preserve unknown frontmatter fields.
+- Preserve manual user notes below frontmatter.
+- Create backups before bulk writes when configured.
+- Log ambiguous merges to `.coferlandia/project-manager/sync-conflicts.md`.
+
+## Phase Boundary
+
+Phase 3 syncs Obsidian PM notes only.
+It does not yet synchronize repository documentation back into PM or execute development work.
+The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain approval-gated placeholders until their write path is implemented.
+
 ## Scripts Available
 
 - `scripts/pm-onboard.sh` - orchestrates onboarding and readiness checks

@@ -390,6 +390,93 @@ class Phase1Tests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
 
+    def test_phase3_obsidian_templates_include_required_fields(self) -> None:
+        project_template = (SKILL_ROOT / "templates" / "obsidian-project.template.md").read_text(
+            encoding="utf-8"
+        )
+        task_template = (SKILL_ROOT / "templates" / "obsidian-task.template.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("pm-project: true", project_template)
+        self.assertIn("coferlandia-project-id: \"\"", project_template)
+        self.assertIn("tags: [\"coferlandia\", \"repo\", \"agentic-dev\"]", project_template)
+        self.assertIn("pm-task: true", task_template)
+        self.assertIn("execution_policy: supervised_agentic", task_template)
+        self.assertIn("requires_archivist_sync: true", task_template)
+
+    def test_phase3_obsidian_helper_returns_expected_paths(self) -> None:
+        command = (
+            "source .agents/skills/coferlandia-project-manager/scripts/lib/obsidian-pm.sh; "
+            "pm_obsidian_project_path /vault Projects demo-project && "
+            "pm_obsidian_task_path /vault Tasks task-001"
+        )
+        result = run_script("bash", "-lc", command)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout.strip().splitlines(),
+            ["/vault/Projects/demo-project.md", "/vault/Tasks/task-001.md"],
+        )
+
+    def test_phase3_entry_points_advertise_usage(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-backup-pm-db.sh",
+            SCRIPTS_ROOT / "pm-sync-to-obsidian.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", str(script.as_posix()), "--help")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Usage:", result.stdout)
+            self.assertIn("Description:", result.stdout)
+
+    def test_phase3_entry_points_reject_non_help_invocation_until_implemented(self) -> None:
+        config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
+        scripts = [
+            SCRIPTS_ROOT / "pm-backup-pm-db.sh",
+            SCRIPTS_ROOT / "pm-sync-to-obsidian.sh",
+        ]
+
+        for script in scripts:
+            result = run_script(
+                "bash",
+                str(script.as_posix()),
+                "--config",
+                config_path,
+                "--dry-run",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("not implemented yet", result.stderr.lower())
+
+    def test_phase3_examples_and_skill_docs_include_sync_vocabulary(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        project_note = (SKILL_ROOT / "examples" / "sample-project-note.md").read_text(
+            encoding="utf-8"
+        )
+        task_note = (SKILL_ROOT / "examples" / "sample-task-note.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("## Required Task Statuses", skill_text)
+        self.assertIn("## Sync Rules", skill_text)
+        self.assertIn("## Phase Boundary", skill_text)
+        self.assertIn("entry points remain approval-gated placeholders", skill_text.lower())
+        self.assertIn("preserve unknown frontmatter fields", skill_text.lower())
+        self.assertIn("status: active", project_note)
+        self.assertIn("status: planning", task_note)
+
+    def test_phase3_shell_scripts_are_syntax_clean(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-backup-pm-db.sh",
+            SCRIPTS_ROOT / "pm-sync-to-obsidian.sh",
+            SCRIPTS_ROOT / "lib" / "obsidian-pm.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", "-n", str(script.as_posix()))
+            self.assertEqual(result.returncode, 0, result.stderr)
+
 
 if __name__ == "__main__":
     if shutil.which("bash") is None:
