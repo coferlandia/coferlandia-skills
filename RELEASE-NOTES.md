@@ -1,5 +1,19 @@
 # Coferlandia Skills Release Notes
 
+## v1.5.0 (2026-07-08)
+
+### Skills
+
+- **coferlandia-project-manager** (`meta`) - v1.0.0. Added a new project-local
+  skill for operating a repo-scoped project manager home, with repo-local
+  defaults for runtime artifacts, Obsidian vault output, onboarding, and
+  readiness checks.
+
+### Repository
+
+- `coferlandia-skills` - bumped the repo-wide release version to include the new
+  skill and its packaging surface.
+
 ## v1.4.0 (2026-07-07)
 
 ### Protocol
