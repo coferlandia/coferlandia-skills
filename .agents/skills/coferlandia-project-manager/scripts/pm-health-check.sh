@@ -1,51 +1,98 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./lib/config.sh
+source "${script_dir}/lib/config.sh"
+# shellcheck source=./lib/reporting.sh
+source "${script_dir}/lib/reporting.sh"
+
 print_help() {
   cat <<'EOF'
-Usage: pm-health-check.sh --config <path> [--json]
+Usage: pm-health-check.sh --config <path> [--json] [--output-dir <dir>] [--stale-days <n>]
 Description: Summarize portfolio health, sync gaps, and maintenance needs.
+
+Options:
+  --config <path>      Required path to the PM config.json.
+  --json               Emit machine-readable JSON instead of Markdown.
+  --output-dir <dir>   Write report to this directory (default: .coferlandia/project-manager/reports/).
+                        Ignored when --json is used (prints to stdout).
+  --stale-days <n>     Consider repos stale if no commit in this many days (default: 30).
+  -h, --help           Show this help and exit.
 
 Output location:
   Default: .coferlandia/project-manager/reports/
 EOF
 }
 
-reject_placeholder_invocation() {
-  printf '%s\n' "Phase 5 entry point placeholder: health checks are not implemented yet." >&2
-  printf '%s\n' "Use --help to inspect the planned CLI contract." >&2
-  exit 1
-}
-
-received_non_help_args=false
+config_path=""
+json_output=false
+output_dir=""
+stale_days=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --config)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --config"
+      config_path="$1"
+      ;;
+    --json)
+      json_output=true
+      ;;
+    --output-dir)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --output-dir"
+      output_dir="$1"
+      ;;
+    --stale-days)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --stale-days"
+      stale_days="$1"
+      ;;
     --help|-h)
       print_help
       exit 0
       ;;
-    --config)
-      shift
-      [[ $# -gt 0 ]] || {
-        printf 'Missing value for --config\n' >&2
-        exit 1
-      }
-      received_non_help_args=true
-      ;;
-    --json)
-      received_non_help_args=true
-      ;;
     *)
-      printf 'Unknown argument: %s\n' "$1" >&2
-      exit 1
+      die "Unknown argument: $1"
       ;;
   esac
   shift
 done
 
-if [[ "${received_non_help_args}" == "true" ]]; then
-  reject_placeholder_invocation
+[[ -n "${config_path}" ]] || die "Missing required --config <path>"
+repos_root="$(pm_config_repos_root "${config_path}")"
+[[ -n "${repos_root}" ]] || die "repos_root is required in config"
+[[ -d "${repos_root}" ]] || die "repos_root does not exist: ${repos_root}"
+
+default_branch="$(pm_config_default_branch "${config_path}")"
+[[ -n "${default_branch}" ]] || default_branch="main"
+
+format_flag="json"
+[[ "${json_output}" == false ]] && format_flag="markdown"
+
+reporting_args=(
+  --repos-root "${repos_root}"
+  --format "${format_flag}"
+  --default-branch "${default_branch}"
+)
+
+if [[ -n "${stale_days}" ]]; then
+  reporting_args+=(--stale-days "${stale_days}")
 fi
 
-print_help
+python_cmd="$(pm_python_cmd)"
+report_output="$("${python_cmd}" "${script_dir}/lib/reporting.py" health-check "${reporting_args[@]}")"
+
+if [[ "${json_output}" == true ]]; then
+  printf '%s\n' "${report_output}"
+else
+  printf '%s\n' "${report_output}"
+
+  if [[ -n "${output_dir}" ]]; then
+    resolved_dir="$(pm_report_output_dir "${output_dir}")"
+    written_path="$(printf '%s\n' "${report_output}" | pm_write_report "${resolved_dir}" "health-check" "md")"
+    log_info "Report written to: ${written_path}"
+  fi
+fi

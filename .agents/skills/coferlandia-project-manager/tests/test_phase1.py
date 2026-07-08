@@ -521,7 +521,7 @@ class Phase1Tests(unittest.TestCase):
         self.assertIn("## Required Task Statuses", skill_text)
         self.assertIn("## Sync Rules", skill_text)
         self.assertIn("## Phase Boundary", skill_text)
-        self.assertIn("entry points remain approval-gated placeholders", skill_text.lower())
+        self.assertIn("approval-gated placeholders", skill_text.lower())
         self.assertIn("preserve unknown frontmatter fields", skill_text.lower())
         self.assertIn("status: active", project_note)
         self.assertIn("status: planning", task_note)
@@ -763,25 +763,26 @@ class Phase1Tests(unittest.TestCase):
             result = run_script("bash", "-n", str(script.as_posix()))
             self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_phase5_entry_points_reject_invocation_until_implemented(self) -> None:
-        config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
-        scripts = [
-            SCRIPTS_ROOT / "pm-portfolio-report.sh",
-            SCRIPTS_ROOT / "pm-project-report.sh",
-            SCRIPTS_ROOT / "pm-task-report.sh",
-            SCRIPTS_ROOT / "pm-health-check.sh",
-            SCRIPTS_ROOT / "pm-clean-worktrees.sh",
-        ]
+    def test_phase5_entry_points_no_longer_reject_invocation(self) -> None:
+        """Phase 6 implemented these scripts — they now accept non-help invocation."""
+        with make_phase4_portfolio() as portfolio:
+            scripts_no_apply = [
+                (SCRIPTS_ROOT / "pm-portfolio-report.sh", []),
+                (SCRIPTS_ROOT / "pm-project-report.sh", ["--project", "repo-complete"]),
+                (SCRIPTS_ROOT / "pm-task-report.sh", ["--task", "anything"]),
+                (SCRIPTS_ROOT / "pm-health-check.sh", []),
+                (SCRIPTS_ROOT / "pm-clean-worktrees.sh", []),
+            ]
 
-        for script in scripts:
-            result = run_script(
-                "bash",
-                str(script.as_posix()),
-                "--config",
-                config_path,
-            )
-            self.assertNotEqual(result.returncode, 0, script.name)
-            self.assertIn("not implemented yet", result.stderr.lower())
+            for script, extra_args in scripts_no_apply:
+                result = run_script(
+                    "bash",
+                    str(script.as_posix()),
+                    "--config",
+                    portfolio["config_path"],
+                    *extra_args,
+                )
+                self.assertEqual(result.returncode, 0, f"{script.name} rejected invocation: {result.stderr}")
 
     def test_phase5_skill_docs_include_reporting_policy(self) -> None:
         skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -800,6 +801,407 @@ class Phase1Tests(unittest.TestCase):
         self.assertIn("delete dirty worktrees", skill_text.lower())
         self.assertIn("force-delete anything", skill_text.lower())
         self.assertIn("bypass superpowers branch finishing rules", skill_text.lower())
+
+
+@contextmanager
+def make_phase6_portfolio():
+    """Create a portfolio with TODO.md tasks and archivist artifacts for reporting tests."""
+    (ROOT / ".test-tmp").mkdir(exist_ok=True)
+    tempdir = tempfile.TemporaryDirectory(dir=ROOT / ".test-tmp")
+    try:
+        base = Path(tempdir.name)
+        repos_root = base / "repos"
+        repos_root.mkdir()
+
+        repo_a = repos_root / "repo-a"
+        repo_b = repos_root / "repo-b"
+        repo_a.mkdir()
+        repo_b.mkdir()
+
+        for repo_path in (repo_a, repo_b):
+            repo_relative = repo_path.relative_to(ROOT).as_posix()
+            init = subprocess.run(
+                ["bash", "-lc", f"git init '{repo_relative}' >/dev/null"],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if init.returncode != 0:
+                raise RuntimeError(init.stderr)
+
+            checkout = subprocess.run(
+                ["bash", "-lc", f"git -C '{repo_relative}' checkout -b main >/dev/null"],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if checkout.returncode != 0:
+                raise RuntimeError(checkout.stderr)
+
+        # repo-a: fully initialized archivist + TODO with varied tasks.
+        for filename in ("README.md", "TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+            (repo_a / filename).write_text(f"# {filename}\n", encoding="utf-8")
+
+        (repo_a / "TODO.md").write_text(
+            "# TODO\n\n"
+            "- [x] TASK-001: initial setup\n"
+            "- [ ] TASK-002: add reporting [status: ready-for-agent]\n"
+            "- [ ] TASK-003: fix config bug [status: blocked]\n"
+            "- [ ] TASK-004: brainstorm new feature [status: needs-brainstorming]\n"
+            "- [ ] TASK-005: write spec [status: planning]\n"
+            "- [ ] TASK-006: review code [status: code-review]\n",
+            encoding="utf-8",
+        )
+
+        # Make a commit so repo-a is clean.
+        (repo_a / "tracked.txt").write_text("content\n", encoding="utf-8")
+        repo_a_relative = repo_a.relative_to(ROOT).as_posix()
+        subprocess.run(
+            ["bash", "-lc", f"git -C '{repo_a_relative}' add tracked.txt && "
+             f"git -C '{repo_a_relative}' -c user.name=Test -c user.email=test@example.com "
+             f"commit -m init >/dev/null"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        # repo-b: incomplete archivist, dirty repo.
+        for filename in ("README.md", "TODO.md"):
+            (repo_b / filename).write_text(f"# {filename}\n", encoding="utf-8")
+        (repo_b / "TODO.md").write_text(
+            "# TODO\n\n"
+            "- [ ] TASK-010: set up archivist [status: implementing]\n",
+            encoding="utf-8",
+        )
+        (repo_b / "untracked.txt").write_text("dirty\n", encoding="utf-8")
+
+        config = json.loads(
+            (SKILL_ROOT / "examples" / "config.sample.json").read_text(encoding="utf-8")
+        )
+        config["repos_root"] = repos_root.resolve().as_posix()
+
+        config_path = base / "config.json"
+        config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+        relative_config = config_path.relative_to(ROOT).as_posix()
+        yield {
+            "config_path": relative_config,
+            "repos_root": repos_root,
+            "repo_a": repo_a,
+            "repo_b": repo_b,
+        }
+    finally:
+        tempdir.cleanup()
+
+
+class Phase6Tests(unittest.TestCase):
+    def test_phase6_reporting_scripts_advertise_usage(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-portfolio-report.sh",
+            SCRIPTS_ROOT / "pm-project-report.sh",
+            SCRIPTS_ROOT / "pm-task-report.sh",
+            SCRIPTS_ROOT / "pm-health-check.sh",
+            SCRIPTS_ROOT / "pm-clean-worktrees.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", str(script.as_posix()), "--help")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Usage:", result.stdout)
+            self.assertIn("Description:", result.stdout)
+
+    def test_phase6_scripts_are_syntax_clean(self) -> None:
+        scripts = [
+            SCRIPTS_ROOT / "pm-portfolio-report.sh",
+            SCRIPTS_ROOT / "pm-project-report.sh",
+            SCRIPTS_ROOT / "pm-task-report.sh",
+            SCRIPTS_ROOT / "pm-health-check.sh",
+            SCRIPTS_ROOT / "pm-clean-worktrees.sh",
+            SCRIPTS_ROOT / "lib" / "reporting.sh",
+        ]
+
+        for script in scripts:
+            result = run_script("bash", "-n", str(script.as_posix()))
+            self.assertEqual(result.returncode, 0, f"{script.name} has syntax errors: {result.stderr}")
+
+    def test_phase6_reporting_python_module_is_syntax_clean(self) -> None:
+        result = run_script(
+            "python", "-m", "py_compile",
+            str((SCRIPTS_ROOT / "lib" / "reporting.py").as_posix()),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_phase6_portfolio_report_generates_valid_json(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-portfolio-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertIn("summary", payload)
+            self.assertIn("projects", payload)
+            self.assertEqual(len(payload["projects"]), 2)
+
+    def test_phase6_portfolio_report_answers_all_reporting_questions(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-portfolio-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            s = payload["summary"]
+
+            # All 14 reporting questions must be present in the summary.
+            self.assertIn("active_projects", s)
+            self.assertIn("blocked_projects", s)
+            self.assertIn("ready_for_agent_tasks", s)
+            self.assertIn("projects_in_review", s)
+            self.assertIn("tasks_completed_this_week", s)
+            self.assertIn("repos_with_uncommitted_changes", s)
+            self.assertIn("repos_ahead_or_behind_remote", s)
+            self.assertIn("projects_lacking_archivist_artifacts", s)
+            self.assertIn("projects_with_sync_conflicts", s)
+            self.assertIn("projects_without_recent_activity", s)
+            self.assertIn("tasks_needing_brainstorming", s)
+            self.assertIn("tasks_waiting_for_plan_approval", s)
+            self.assertIn("tasks_waiting_for_code_review", s)
+            self.assertIn("projects_needing_maintenance", s)
+
+    def test_phase6_portfolio_report_generates_markdown(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-portfolio-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("# Portfolio Report", result.stdout)
+            self.assertIn("Active projects:", result.stdout)
+            self.assertIn("Ready-for-agent tasks:", result.stdout)
+
+    def test_phase6_portfolio_report_tasks_detected_across_repos(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-portfolio-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            all_tasks = payload.get("tasks", [])
+            self.assertGreaterEqual(len(all_tasks), 6)
+
+    def test_phase6_project_report_validates_slug(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-project-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--project",
+                "repo-a",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["project_slug"], "repo-a")
+            self.assertIn("git", payload)
+            self.assertIn("archivist", payload)
+
+    def test_phase6_project_report_rejects_unknown_slug(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-project-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--project",
+                "nonexistent",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "error")
+
+    def test_phase6_task_report_finds_task_in_todo(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-task-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--task",
+                "TASK-002",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["task"]["task_id"], "TASK-002")
+            self.assertEqual(payload["task"]["status"], "ready-for-agent")
+
+    def test_phase6_task_report_rejects_unknown_task(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-task-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--task",
+                "TASK-999",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "error")
+
+    def test_phase6_health_check_generates_valid_json(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-health-check.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertIn("summary", payload)
+            self.assertIn("projects", payload)
+            self.assertIn("issues", payload)
+            self.assertIn("maintenance_due", payload["summary"])
+
+    def test_phase6_health_check_generates_markdown(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-health-check.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("# Health Check Report", result.stdout)
+            self.assertIn("Total projects:", result.stdout)
+            self.assertIn("Maintenance due:", result.stdout)
+
+    def test_phase6_worktree_cleanup_generates_valid_json(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-clean-worktrees.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertIn("summary", payload)
+            self.assertIn("worktrees", payload)
+            self.assertEqual(payload["mode"], "dry-run")
+
+    def test_phase6_worktree_cleanup_still_rejects_apply(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-clean-worktrees.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("not implemented yet", result.stderr.lower())
+
+    def test_phase6_entry_points_no_longer_reject_invocation(self) -> None:
+        """Unlike Phase 5, these scripts should now accept non-help invocation."""
+        with make_phase6_portfolio() as portfolio:
+            scripts_no_apply = [
+                (SCRIPTS_ROOT / "pm-portfolio-report.sh", []),
+                (SCRIPTS_ROOT / "pm-project-report.sh", ["--project", "repo-a"]),
+                (SCRIPTS_ROOT / "pm-task-report.sh", ["--task", "TASK-001"]),
+                (SCRIPTS_ROOT / "pm-health-check.sh", []),
+                (SCRIPTS_ROOT / "pm-clean-worktrees.sh", []),
+            ]
+
+            for script, extra_args in scripts_no_apply:
+                result = run_script(
+                    "bash",
+                    str(script.as_posix()),
+                    "--config",
+                    portfolio["config_path"],
+                    *extra_args,
+                )
+                self.assertEqual(result.returncode, 0, f"{script.name} rejected invocation: {result.stderr}")
+
+    def test_phase6_report_output_dir_is_created(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            # Use a relative path from cwd so Git Bash and Python agree on location.
+            # Absolute paths with drive letters cause C:/ vs /c/ mismatches on Windows.
+            output_dir_relative = ".test-tmp/phase6-report-output-dir"
+            output_dir = ROOT / output_dir_relative
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+            self.assertFalse(output_dir.exists())
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-portfolio-report.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--output-dir",
+                output_dir_relative,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(output_dir.exists())
+
+            report_files = list(output_dir.glob("portfolio-report-*.md"))
+            self.assertGreaterEqual(len(report_files), 1)
+
+            shutil.rmtree(output_dir, ignore_errors=True)
+
+    def test_phase6_backup_and_sync_to_obsidian_still_placeholders(self) -> None:
+        """Phase 3 write-path placeholders remain unchanged."""
+        with make_phase6_portfolio() as portfolio:
+            for script in (
+                SCRIPTS_ROOT / "pm-backup-pm-db.sh",
+                SCRIPTS_ROOT / "pm-sync-to-obsidian.sh",
+            ):
+                result = run_script(
+                    "bash",
+                    str(script.as_posix()),
+                    "--config",
+                    portfolio["config_path"],
+                    "--dry-run",
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("not implemented yet", result.stderr.lower())
+
+    def test_phase6_skill_docs_include_phase_boundary(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("## Phase Boundary", skill_text)
+        self.assertIn("Phase 6", skill_text)
+
+    def test_phase6_examples_exist(self) -> None:
+        for name in ("sample-health-check.md", "sample-worktree-cleanup.json"):
+            path = SKILL_ROOT / "examples" / name
+            self.assertTrue(path.exists(), f"Missing example: {name}")
 
 
 if __name__ == "__main__":

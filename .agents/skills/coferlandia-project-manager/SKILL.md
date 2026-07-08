@@ -12,7 +12,7 @@ compatibility: >
   synchronization.
 metadata:
   author: coferlandia
-  version: "0.1.0"
+  version: "0.2.0"
   category: ops
   status: draft
 ---
@@ -123,14 +123,16 @@ The PM must not replace `coferlandia-project-archivist`.
 
 ## Phase Boundary
 
-Phase 5 defines the reporting and worktree-cleanup CLI surface plus the
-templates, examples, and policy that frame them. The report generators
-(`pm-portfolio-report.sh`, `pm-project-report.sh`, `pm-task-report.sh`,
-`pm-health-check.sh`) and `pm-clean-worktrees.sh` remain approval-gated
-placeholders: they advertise their planned contract via `--help` and reject
-every other invocation as "not implemented yet", consistent with the Phase 3
-entry points. They do not execute development work or write into PM-managed docs.
-The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain approval-gated placeholders until their write path is implemented.
+Phase 6 implements the reporting and observation surface. The five Phase 5
+placeholder scripts (`pm-portfolio-report.sh`, `pm-project-report.sh`,
+`pm-task-report.sh`, `pm-health-check.sh`, `pm-clean-worktrees.sh`) are now
+functional read-only report generators backed by `scripts/lib/reporting.py`.
+They aggregate data from the existing scan/conflict/archivist infrastructure,
+parse TODO.md for task-level data, and answer all 14 Reporting Questions.
+Reports may be printed to stdout (JSON or Markdown) or written to a report
+output directory via `--output-dir`. All write-path operations remain gated.
+The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain
+approval-gated placeholders — their write path is future work.
 
 ## Repo Sync Safety
 
@@ -174,8 +176,14 @@ Default report location:
 - `.coferlandia/project-manager/reports/`
 
 Report formats:
-- Markdown for humans
-- JSON for agents
+- Markdown for humans (default)
+- JSON for agents (`--json` flag)
+
+Report output behavior:
+- With `--json`, reports print to stdout.
+- With `--output-dir <dir>`, reports are written to timestamped files in the
+  specified directory (ignored when `--json` is used).
+- Without either flag, reports print Markdown to stdout.
 
 ## Reporting Questions
 
@@ -230,4 +238,6 @@ The PM must not:
 - `scripts/pm-project-report.sh` - generates a report for one managed project
 - `scripts/pm-task-report.sh` - generates a report for one managed task
 - `scripts/pm-health-check.sh` - summarizes portfolio health, sync gaps, and maintenance needs
-- `scripts/pm-clean-worktrees.sh` - suggests safe worktree cleanup actions (approval-gated)
+- `scripts/pm-clean-worktrees.sh` - lists and classifies worktrees, suggests safe cleanup (approval-gated)
+- `scripts/lib/reporting.py` - Python module backing all Phase 6 report generators
+- `scripts/lib/reporting.sh` - bash helpers for report output directory and file writing
