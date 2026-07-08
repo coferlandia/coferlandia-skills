@@ -1243,6 +1243,88 @@ class Phase6Tests(unittest.TestCase):
         self.assertIn("## Action Preflight", skill_text)
         self.assertIn("## Phase 6 Acceptance", skill_text)
 
+    def test_phase7_skill_docs_include_dependency_matrix_and_pipelines(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        for heading in (
+            "## Superpowers Dependency Matrix",
+            "## Feature Pipeline",
+            "## Bug Pipeline",
+            "## Review Pipeline",
+            "## Git Delegation Policy",
+            "## PM Role Boundary",
+            "## Phase 7 Acceptance",
+        ):
+            self.assertIn(heading, skill_text)
+
+        for skill_name in (
+            "brainstorming",
+            "writing-plans",
+            "executing-plans",
+            "using-git-worktrees",
+            "finishing-a-development-branch",
+            "test-driven-development",
+            "systematic-debugging",
+            "verification-before-completion",
+            "subagent-driven-development",
+            "dispatching-parallel-agents",
+            "requesting-code-review",
+            "receiving-code-review",
+            "writing-skills",
+            "preserving-productive-tensions",
+        ):
+            self.assertIn(skill_name, skill_text)
+
+        self.assertNotIn("In Phase 1 it only defines onboarding, configuration, and diagnostics.", skill_text)
+        self.assertNotIn("Stop after reporting readiness; do not execute development workflows in Phase 1.", skill_text)
+
+        self.assertLess(
+            skill_text.index("5. If requirements are unclear, invoke brainstorming."),
+            skill_text.index("6. Invoke writing-plans."),
+        )
+        self.assertLess(
+            skill_text.index("6. Invoke writing-plans."),
+            skill_text.index("7. Wait for plan approval from control authority."),
+        )
+        self.assertLess(
+            skill_text.index("7. Wait for plan approval from control authority."),
+            skill_text.index("8. Invoke using-git-worktrees."),
+        )
+        self.assertLess(
+            skill_text.index("11. Request code review."),
+            skill_text.index("13. Run verification-before-completion."),
+        )
+        self.assertLess(
+            skill_text.index("5. Invoke systematic-debugging."),
+            skill_text.index("7. Create a failing regression test."),
+        )
+        self.assertLess(
+            skill_text.index("11. Request code review."),
+            skill_text.index("12. Process review feedback with receiving-code-review."),
+        )
+        self.assertLess(
+            skill_text.index("12. Process review feedback with receiving-code-review."),
+            skill_text.index("13. Invoke finishing-a-development-branch."),
+        )
+
+    def test_phase7_review_pipeline_requires_review_feedback_before_reverification(self) -> None:
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        review_start = skill_text.index("## Review Pipeline")
+        review_body = skill_text[review_start:skill_text.index("## Git Delegation Policy")]
+
+        self.assertIn("requesting code review", review_body)
+        self.assertIn("processing review feedback", review_body)
+        self.assertIn("re-running verification-before-completion", review_body)
+        self.assertLess(
+            review_body.index("requesting code review"),
+            review_body.index("processing review feedback"),
+        )
+        self.assertLess(
+            review_body.index("processing review feedback"),
+            review_body.index("re-running verification-before-completion"),
+        )
+
     def test_phase6_examples_exist(self) -> None:
         for name in ("sample-health-check.md", "sample-worktree-cleanup.json", "sample-execution-brief.md"):
             path = SKILL_ROOT / "examples" / name

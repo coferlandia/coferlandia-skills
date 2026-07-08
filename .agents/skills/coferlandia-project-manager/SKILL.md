@@ -20,8 +20,13 @@ metadata:
 ## Context
 
 This is a project-local skill for conservative portfolio management across multiple
-repositories. In Phase 1 it only defines onboarding, configuration, and diagnostics.
-It does not execute development workflows.
+repositories. It has evolved through the current implementation phases from
+onboarding and diagnostics into approval-gated orchestration for planning,
+implementation handoff, review, verification, and documentation sync.
+
+The PM coordinates development workflows through explicit briefs, delegated
+Superpowers skills, and approval gates. It does not replace the implementing roles
+or execute repository changes autonomously.
 
 ## Prerequisites
 
@@ -33,8 +38,10 @@ It does not execute development workflows.
 ## Steps
 
 1. Read or generate `config.json` from `templates/config.template.json`.
-2. Validate the environment with the diagnostic scripts in `scripts/`.
-3. Stop after reporting readiness; do not execute development workflows in Phase 1.
+2. Validate the environment and portfolio state with the diagnostic and reporting scripts in `scripts/`.
+3. Determine the next approved action from PM board state, repo state, and sync state.
+4. Delegate planning, implementation, review, verification, and branch lifecycle work through the documented Superpowers pipelines.
+5. Keep all write-capable consequences approval-gated and advisory until the delegated role executes them.
 
 ## Gotchas
 
@@ -42,18 +49,22 @@ It does not execute development workflows.
   require explicit authority.
 - **Do not claim background execution:** weekly or scheduled checks only run when
   explicitly invoked.
-- **Do not treat this as the execution layer:** Phase 1 is only the skill skeleton
-  plus readiness diagnostics.
+- **Do not treat coordination as implementation:** the PM may prepare briefs,
+  validations, and sync actions, but it does not replace the developer, debugger,
+  reviewer, or branch-finisher roles.
+- **Do not follow obsolete phase text:** later sections define the current
+  orchestration behavior; Phase 1 readiness is only one entry point, not the whole
+  skill contract.
 
 ## Expected Output
 
 ```text
-Phase 1 readiness report:
-- config status
-- environment status
-- superpowers status
-- git capability status
+PM coordination output:
+- config and environment status
+- portfolio or project status
+- sync or conflict status
 - next approved action
+- required delegated skill or approval gate
 ```
 
 ## Output Location
@@ -272,6 +283,91 @@ Before generating an actionable brief:
 - next action can be described
 - no development work is started automatically
 - all write-capable consequences remain approval-gated
+
+## Superpowers Dependency Matrix
+
+- `brainstorming` - required when requirements or options are unclear
+- `writing-plans` - mandatory before implementation planning
+- `executing-plans` - used for inline approved plan execution
+- `using-git-worktrees` - required before branch/worktree implementation setup
+- `finishing-a-development-branch` - required after verified implementation
+- `test-driven-development` - mandatory for features, fixes, and refactors
+- `systematic-debugging` - mandatory for bugs, regressions, and unexplained behavior
+- `verification-before-completion` - mandatory before marking work verified or done
+- `subagent-driven-development` - used for independent approved implementation tasks
+- `dispatching-parallel-agents` - used for independent read-only or isolated streams
+- `requesting-code-review` - mandatory before merge or task closure
+- `receiving-code-review` - mandatory when review feedback exists
+- `writing-skills` - mandatory for skill design and skill implementation work
+- `preserving-productive-tensions` - optional for architectural decisions with competing valid paths
+
+## Feature Pipeline
+
+1. Detect task from PM board.
+2. Validate config and environment.
+3. Generate project report.
+4. Read AGENTS.md, RUNBOOK.md, TODO.md, HISTORY.md and DECISIONS.md.
+5. If requirements are unclear, invoke brainstorming.
+6. Invoke writing-plans.
+7. Wait for plan approval from control authority.
+8. Invoke using-git-worktrees.
+9. Execute with executing-plans or subagent-driven-development.
+10. Enforce test-driven-development.
+11. Request code review.
+12. Receive and process code review feedback.
+13. Run verification-before-completion.
+14. Invoke finishing-a-development-branch.
+15. Update archivist-managed documentation.
+16. Sync Obsidian PM.
+17. Generate execution record and final report.
+
+## Bug Pipeline
+
+1. Detect bug task from PM board.
+2. Validate config and environment.
+3. Read HISTORY.md for possible regressions.
+4. Read AGENTS.md and RUNBOOK.md.
+5. Invoke systematic-debugging.
+6. Reproduce the bug.
+7. Create a failing regression test.
+8. Apply the smallest correct fix.
+9. Enforce test-driven-development.
+10. Run verification-before-completion.
+11. Request code review.
+12. Process review feedback with receiving-code-review.
+13. Invoke finishing-a-development-branch.
+14. Update HISTORY.md and TODO.md through archivist conventions.
+15. Sync Obsidian PM.
+16. Generate final report.
+
+## Review Pipeline
+
+No meaningful code change may be closed without:
+- requesting code review
+- processing review feedback
+- re-running verification-before-completion
+
+## Git Delegation Policy
+
+The Project Manager may inspect Git state directly.
+The Project Manager must not manage development branches manually.
+The Project Manager must delegate branch/worktree creation to `superpowers:using-git-worktrees`.
+The Project Manager must delegate branch completion, merge, PR or cleanup to `superpowers:finishing-a-development-branch`.
+The Project Manager must not force-push, rewrite history, delete branches or delete dirty worktrees.
+
+## PM Role Boundary
+
+The PM coordinates work selection, reporting, approvals, and artifact synchronization.
+It does not replace the developer, debugger, reviewer, or branch finisher roles.
+
+## Phase 7 Acceptance
+
+- Superpowers usage matrix is documented
+- feature pipeline is documented
+- bug pipeline is documented
+- review pipeline is documented
+- Git delegation policy is explicit
+- PM role boundaries are explicit
 
 ## Scripts Available
 
