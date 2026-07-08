@@ -7,22 +7,21 @@ source "${script_dir}/lib/config.sh"
 
 print_help() {
   cat <<'EOF'
-Usage: pm-sync-from-repos.sh --config <path> [--json] [--dry-run]
-Description: Map repo documentation into PM state without writing (read-only).
-
-The write path is not implemented yet. `--apply` is rejected as an
-approval-gated placeholder, consistent with the Phase 3 entry points.
+Usage: pm-sync-from-repos.sh --config <path> [--json] [--dry-run] [--apply]
+Description: Map repo documentation into PM state and persist the PM runtime artifacts.
 
 Options:
   --config <path>   Required path to the PM config.json.
   --json            Emit machine-readable JSON instead of human-readable text.
   --dry-run         Explicit dry-run (default; accepted for clarity).
+  --apply           Persist the PM runtime artifacts.
   -h, --help        Show this help and exit.
 EOF
 }
 
 config_path=""
 json_output=false
+apply=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,7 +36,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run)
       ;;
     --apply)
-      die "--apply is not implemented yet. The repo-to-PM write path remains approval-gated."
+      apply=true
       ;;
     --help|-h)
       print_help
@@ -59,6 +58,15 @@ format_flag="text"
 [[ "${json_output}" == true ]] && format_flag="json"
 
 python_cmd="$(pm_python_cmd)"
-exec "${python_cmd}" "${script_dir}/lib/archivist.py" sync-plan \
-  --repos-root "${repos_root}" \
+args=(
+  "${script_dir}/lib/archivist.py"
+  sync-from-repos
+  --repos-root "${repos_root}"
+  --config "${config_path}"
   --format "${format_flag}"
+)
+if [[ "${apply}" == true ]]; then
+  args+=(--apply)
+fi
+
+exec "${python_cmd}" "${args[@]}"

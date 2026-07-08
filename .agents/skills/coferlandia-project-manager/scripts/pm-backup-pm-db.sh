@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./lib/config.sh
+source "${script_dir}/lib/config.sh"
+
 print_help() {
   cat <<'EOF'
 Usage: pm-backup-pm-db.sh --config <path> [--json] [--dry-run] [--apply]
-Description: Create a backup of managed Obsidian PM files before bulk writes.
+Description: Create a backup of managed PM runtime files before bulk writes.
 EOF
 }
 
-reject_placeholder_invocation() {
-  printf '%s\n' "Phase 3 entry point placeholder: backup execution is not implemented yet." >&2
-  printf '%s\n' "Use --help to inspect the planned CLI contract." >&2
-  exit 1
-}
-
-received_non_help_args=false
+config_path=""
+json_output=false
+apply=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -24,25 +24,43 @@ while [[ $# -gt 0 ]]; do
       ;;
     --config)
       shift
-      [[ $# -gt 0 ]] || {
-        printf 'Missing value for --config\n' >&2
-        exit 1
-      }
-      received_non_help_args=true
+      [[ $# -gt 0 ]] || die "Missing value for --config"
+      config_path="$1"
       ;;
-    --json|--dry-run|--apply)
-      received_non_help_args=true
+    --json)
+      json_output=true
+      ;;
+    --dry-run)
+      ;;
+    --apply)
+      apply=true
       ;;
     *)
-      printf 'Unknown argument: %s\n' "$1" >&2
-      exit 1
+      die "Unknown argument: $1"
       ;;
   esac
   shift
 done
 
-if [[ "${received_non_help_args}" == "true" ]]; then
-  reject_placeholder_invocation
+[[ -n "${config_path}" ]] || die "Missing required --config <path>"
+
+repos_root="$(pm_config_repos_root "${config_path}")"
+[[ -n "${repos_root}" ]] || die "repos_root is required in config"
+
+python_cmd="$(pm_python_cmd)"
+args=(
+  "${script_dir}/lib/archivist.py"
+  backup
+  --repos-root "${repos_root}"
+  --config "${config_path}"
+)
+if [[ "${apply}" == true ]]; then
+  args+=(--apply)
+fi
+if [[ "${json_output}" == true ]]; then
+  args+=(--format json)
+else
+  args+=(--format text)
 fi
 
-print_help
+exec "${python_cmd}" "${args[@]}"

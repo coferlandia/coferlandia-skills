@@ -12,9 +12,9 @@ compatibility: >
   synchronization.
 metadata:
   author: coferlandia
-  version: "0.3.0"
+  version: "0.4.0"
   category: ops
-  status: draft
+  status: active
 ---
 
 ## Context
@@ -145,14 +145,14 @@ Phase 6 adds board-driven action validation and execution-brief generation:
 
 These Phase 6 actions prepare guidance only. They do not start development,
 create branches or worktrees, or write into repositories automatically.
-The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points remain
-approval-gated placeholders - their write path is future work.
+The `pm-backup-pm-db.sh` and `pm-sync-to-obsidian.sh` entry points now carry
+approval-gated write paths for PM backups and Obsidian note sync.
 
 ## Repo Sync Safety
 
 - Preserve manual Obsidian fields.
 - Default to `--dry-run`.
-- Reject `--apply` with an explicit "not implemented yet" error until the write path lands; never report a write that did not happen.
+- Reject `--apply` unless the active control authority approved the write; never report a write that did not happen.
 - Stop when unresolved sync conflicts affect the target project.
 - Do not duplicate archivist responsibilities.
 

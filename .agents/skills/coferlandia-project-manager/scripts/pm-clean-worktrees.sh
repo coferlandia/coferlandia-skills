@@ -9,7 +9,7 @@ source "${script_dir}/lib/reporting.sh"
 
 print_help() {
   cat <<'EOF'
-Usage: pm-clean-worktrees.sh --config <path> [--json] [--dry-run] [--output-dir <dir>]
+Usage: pm-clean-worktrees.sh --config <path> [--json] [--dry-run] [--apply] [--output-dir <dir>]
 Description: List worktrees, classify them, and suggest safe cleanup actions.
 
 Cleanup stays suggestion-first and approval-gated. The PM never deletes dirty
@@ -20,6 +20,7 @@ Options:
   --config <path>    Required path to the PM config.json.
   --json             Emit machine-readable JSON instead of Markdown.
   --dry-run          Explicit dry-run (default; accepted for clarity).
+  --apply            Rejected. Cleanup remains advisory-only and delegated to Superpowers.
   --output-dir <dir> Write report to this directory (default: .coferlandia/project-manager/reports/).
                      Ignored when --json is used (prints to stdout).
   -h, --help         Show this help and exit.
@@ -32,6 +33,7 @@ EOF
 config_path=""
 json_output=false
 output_dir=""
+apply=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -46,7 +48,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run)
       ;;
     --apply)
-      die "--apply is not implemented yet. Worktree cleanup requires manual approval per project policy."
+      apply=true
       ;;
     --output-dir)
       shift
@@ -76,12 +78,19 @@ format_flag="json"
 [[ "${json_output}" == false ]] && format_flag="markdown"
 
 python_cmd="$(pm_python_cmd)"
-report_output="$("${python_cmd}" "${script_dir}/lib/reporting.py" worktree-cleanup \
-  --repos-root "${repos_root}" \
-  --format "${format_flag}" \
-  --default-branch "${default_branch}" \
-  --mode dry-run \
-)"
+args=(
+  "${script_dir}/lib/reporting.py"
+  worktree-cleanup
+  --repos-root "${repos_root}"
+  --format "${format_flag}"
+  --default-branch "${default_branch}"
+  --mode dry-run
+)
+if [[ "${apply}" == true ]]; then
+  die "pm-clean-worktrees.sh is advisory-only; apply mode is disabled and cleanup stays delegated to Superpowers"
+fi
+
+report_output="$("${python_cmd}" "${args[@]}")"
 
 if [[ "${json_output}" == true ]]; then
   printf '%s\n' "${report_output}"

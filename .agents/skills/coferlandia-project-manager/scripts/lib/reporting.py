@@ -637,6 +637,12 @@ def cmd_health_check(args: argparse.Namespace) -> dict:
 
 def cmd_worktree_cleanup(args: argparse.Namespace) -> dict:
     """Enumerate worktrees, classify them, and suggest safe removals."""
+    if args.apply:
+        raise SystemExit(
+            "worktree-cleanup is advisory only; apply mode is disabled because worktree "
+            "lifecycle remains delegated to Superpowers."
+        )
+
     repos_root = args.repos_root
     suggestions = []
 
@@ -672,6 +678,7 @@ def cmd_worktree_cleanup(args: argparse.Namespace) -> dict:
         "worktrees": suggestions,
         "clean_removable": clean_removable,
         "dirty_caution": dirty_caution,
+        "removed_worktrees": [],
     }
 
 
@@ -859,6 +866,7 @@ def _build_parser() -> argparse.ArgumentParser:
         p.add_argument("--format", choices=("json", "markdown"), default="markdown")
         p.add_argument("--default-branch", default="main")
         p.add_argument("--stale-days", type=int, default=30)
+        p.add_argument("--apply", action="store_true")
 
     # portfolio-report
     p = sub.add_parser("portfolio-report", help=cmd_portfolio_report.__doc__)

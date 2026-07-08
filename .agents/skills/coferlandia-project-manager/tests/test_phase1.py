@@ -491,23 +491,56 @@ class Phase1Tests(unittest.TestCase):
             self.assertIn("Usage:", result.stdout)
             self.assertIn("Description:", result.stdout)
 
-    def test_phase3_entry_points_reject_non_help_invocation_until_implemented(self) -> None:
-        config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
-        scripts = [
-            SCRIPTS_ROOT / "pm-backup-pm-db.sh",
-            SCRIPTS_ROOT / "pm-sync-to-obsidian.sh",
-        ]
+    def test_phase3_entry_points_apply_write_paths(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            config_path = ROOT / portfolio["config_path"]
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            for filename in ("HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+                (portfolio["repo_b"] / filename).write_text(f"# {filename}\n", encoding="utf-8")
 
-        for script in scripts:
-            result = run_script(
+            vault_root = portfolio["repos_root"].parent / "vault"
+            config["obsidian"]["vault_root"] = vault_root.resolve().as_posix()
+            config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+            backup_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(backup_root, ignore_errors=True)
+            shutil.rmtree(vault_root, ignore_errors=True)
+
+            backup = run_script(
                 "bash",
-                str(script.as_posix()),
+                str((SCRIPTS_ROOT / "pm-backup-pm-db.sh").as_posix()),
                 "--config",
-                config_path,
-                "--dry-run",
+                portfolio["config_path"],
+                "--apply",
+                "--json",
             )
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("not implemented yet", result.stderr.lower())
+            self.assertEqual(backup.returncode, 0, backup.stderr)
+            backup_payload = json.loads(backup.stdout)
+            self.assertEqual(backup_payload["status"], "ok")
+            self.assertEqual(backup_payload["mode"], "apply")
+            self.assertTrue((backup_root / "backups").exists())
+
+            sync = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-to-obsidian.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+                "--json",
+            )
+            self.assertEqual(sync.returncode, 0, sync.stderr)
+            sync_payload = json.loads(sync.stdout)
+            self.assertEqual(sync_payload["status"], "ok")
+            self.assertEqual(sync_payload["mode"], "apply")
+            self.assertGreaterEqual(sync_payload["projects_written"], 2)
+            self.assertGreaterEqual(sync_payload["tasks_written"], 6)
+
+            project_note = vault_root / "Projects" / "repo-a.md"
+            task_note = vault_root / "Projects" / "tasks" / "TASK-002.md"
+            self.assertTrue(project_note.exists())
+            self.assertTrue(task_note.exists())
+            self.assertIn("pm-project: true", project_note.read_text(encoding="utf-8"))
+            self.assertIn("pm-task: true", task_note.read_text(encoding="utf-8"))
 
     def test_phase3_examples_and_skill_docs_include_sync_vocabulary(self) -> None:
         skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -521,7 +554,7 @@ class Phase1Tests(unittest.TestCase):
         self.assertIn("## Required Task Statuses", skill_text)
         self.assertIn("## Sync Rules", skill_text)
         self.assertIn("## Phase Boundary", skill_text)
-        self.assertIn("approval-gated placeholders", skill_text.lower())
+        self.assertIn("approval-gated write paths", skill_text.lower())
         self.assertIn("preserve unknown frontmatter fields", skill_text.lower())
         self.assertIn("status: active", project_note)
         self.assertIn("status: planning", task_note)
@@ -590,6 +623,32 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(payload["projects_detected"], 2)
             self.assertEqual(payload["syncable_projects"], 1)
 
+    def test_phase4_sync_from_repos_apply_writes_pm_state(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(pm_root, ignore_errors=True)
+            for filename in ("TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+                (portfolio["incomplete_repo"] / filename).write_text(f"# {filename}\n", encoding="utf-8")
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-from-repos.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+                "--apply",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["mode"], "apply")
+            self.assertTrue((pm_root / "state.json").exists())
+            self.assertTrue((pm_root / "project-map.json").exists())
+
+            state = json.loads((pm_root / "state.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["projects_detected"], 2)
+
     def test_phase4_conflict_detector_flags_missing_archivist_files(self) -> None:
         with make_phase4_portfolio() as portfolio:
             result = run_script(
@@ -623,6 +682,103 @@ class Phase1Tests(unittest.TestCase):
             self.assertIn("archivist", payload)
             self.assertIn("conflicts", payload)
             self.assertIn("maintenance_due", payload)
+
+    def test_phase4_weekly_maintenance_apply_updates_state_checkpoint(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(pm_root, ignore_errors=True)
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-weekly-maintenance.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+                "--apply",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["mode"], "apply")
+            self.assertTrue((pm_root / "state.json").exists())
+            state = json.loads((pm_root / "state.json").read_text(encoding="utf-8"))
+            self.assertIn("maintenance", state)
+            self.assertIsNotNone(state["maintenance"]["last_run_at"])
+
+    def test_phase4_sync_from_repos_apply_blocks_when_conflicts_exist(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(pm_root, ignore_errors=True)
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-from-repos.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+                "--apply",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("sync conflict", (result.stderr or result.stdout).lower())
+            self.assertFalse((pm_root / "state.json").exists())
+
+    def test_phase4_sync_from_repos_apply_preserves_maintenance_checkpoint(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(pm_root, ignore_errors=True)
+            for filename in ("TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+                (portfolio["incomplete_repo"] / filename).write_text(f"# {filename}\n", encoding="utf-8")
+
+            maintenance = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-weekly-maintenance.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+                "--apply",
+            )
+            self.assertEqual(maintenance.returncode, 0, maintenance.stderr)
+            initial_state = json.loads((pm_root / "state.json").read_text(encoding="utf-8"))
+            initial_last_run_at = initial_state["maintenance"]["last_run_at"]
+            initial_next_due_at = initial_state["maintenance"]["next_due_at"]
+
+            sync = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-from-repos.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+                "--apply",
+            )
+            self.assertEqual(sync.returncode, 0, sync.stderr)
+            state = json.loads((pm_root / "state.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["maintenance"]["last_run_at"], initial_last_run_at)
+            self.assertEqual(state["maintenance"]["next_due_at"], initial_next_due_at)
+
+    def test_phase4_sync_from_repos_apply_creates_backup_when_enabled(self) -> None:
+        with make_phase4_portfolio() as portfolio:
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(pm_root, ignore_errors=True)
+            for filename in ("TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+                (portfolio["incomplete_repo"] / filename).write_text(f"# {filename}\n", encoding="utf-8")
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-from-repos.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--json",
+                "--apply",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            backup_root = pm_root / "backups"
+            manifests = sorted(backup_root.glob("*/backup-manifest.json"))
+            self.assertGreaterEqual(len(manifests), 1)
+            manifest = json.loads(manifests[-1].read_text(encoding="utf-8"))
+            self.assertEqual(manifest["status"], "ok")
 
     def test_phase4_conflict_example_mentions_required_action(self) -> None:
         example = (SKILL_ROOT / "examples" / "sample-sync-conflict.md").read_text(
@@ -661,8 +817,10 @@ class Phase1Tests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_phase4_sync_script_rejects_apply_until_implemented(self) -> None:
+    def test_phase4_sync_script_apply_is_supported(self) -> None:
         with make_phase4_portfolio() as portfolio:
+            for filename in ("TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+                (portfolio["incomplete_repo"] / filename).write_text(f"# {filename}\n", encoding="utf-8")
             result = run_script(
                 "bash",
                 str((SCRIPTS_ROOT / "pm-sync-from-repos.sh").as_posix()),
@@ -670,10 +828,9 @@ class Phase1Tests(unittest.TestCase):
                 portfolio["config_path"],
                 "--apply",
             )
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("not implemented yet", result.stderr.lower())
+            self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_phase4_weekly_maintenance_rejects_apply_until_implemented(self) -> None:
+    def test_phase4_weekly_maintenance_apply_is_supported(self) -> None:
         with make_phase4_portfolio() as portfolio:
             result = run_script(
                 "bash",
@@ -682,8 +839,7 @@ class Phase1Tests(unittest.TestCase):
                 portfolio["config_path"],
                 "--apply",
             )
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("not implemented yet", result.stderr.lower())
+            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_phase4_conflict_report_only_advertises_implemented_classes(self) -> None:
         skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -1152,7 +1308,7 @@ class Phase6Tests(unittest.TestCase):
             self.assertIn("worktrees", payload)
             self.assertEqual(payload["mode"], "dry-run")
 
-    def test_phase6_worktree_cleanup_still_rejects_apply(self) -> None:
+    def test_phase6_worktree_cleanup_apply_is_rejected(self) -> None:
         with make_phase6_portfolio() as portfolio:
             result = run_script(
                 "bash",
@@ -1162,7 +1318,7 @@ class Phase6Tests(unittest.TestCase):
                 "--apply",
             )
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("not implemented yet", result.stderr.lower())
+            self.assertIn("advisory", (result.stderr or result.stdout).lower())
 
     def test_phase6_entry_points_no_longer_reject_invocation(self) -> None:
         """Unlike Phase 5, these scripts should now accept non-help invocation."""
@@ -1212,22 +1368,72 @@ class Phase6Tests(unittest.TestCase):
 
             shutil.rmtree(output_dir, ignore_errors=True)
 
-    def test_phase6_backup_and_sync_to_obsidian_still_placeholders(self) -> None:
-        """Phase 3 write-path placeholders remain unchanged."""
+    def test_phase6_backup_and_sync_to_obsidian_apply_succeeds(self) -> None:
         with make_phase6_portfolio() as portfolio:
-            for script in (
-                SCRIPTS_ROOT / "pm-backup-pm-db.sh",
-                SCRIPTS_ROOT / "pm-sync-to-obsidian.sh",
-            ):
-                result = run_script(
-                    "bash",
-                    str(script.as_posix()),
-                    "--config",
-                    portfolio["config_path"],
-                    "--dry-run",
-                )
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn("not implemented yet", result.stderr.lower())
+            config_path = ROOT / portfolio["config_path"]
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            for filename in ("HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
+                (portfolio["repo_b"] / filename).write_text(f"# {filename}\n", encoding="utf-8")
+            vault_root = portfolio["repos_root"].parent / "vault"
+            config["obsidian"]["vault_root"] = vault_root.resolve().as_posix()
+            config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(pm_root, ignore_errors=True)
+            shutil.rmtree(vault_root, ignore_errors=True)
+
+            sync = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-to-obsidian.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+                "--json",
+            )
+            self.assertEqual(sync.returncode, 0, sync.stderr)
+            sync_payload = json.loads(sync.stdout)
+            self.assertEqual(sync_payload["status"], "ok")
+            self.assertGreaterEqual(sync_payload["projects_written"], 2)
+
+            backup = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-backup-pm-db.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+                "--json",
+            )
+            self.assertEqual(backup.returncode, 0, backup.stderr)
+            backup_payload = json.loads(backup.stdout)
+            self.assertEqual(backup_payload["status"], "ok")
+            self.assertTrue((pm_root / "backups").exists())
+            self.assertTrue((vault_root / "Projects" / "repo-a.md").exists())
+            self.assertTrue((vault_root / "Projects" / "tasks" / "TASK-002.md").exists())
+
+    def test_phase6_sync_to_obsidian_apply_blocks_when_conflicts_exist(self) -> None:
+        with make_phase6_portfolio() as portfolio:
+            config_path = ROOT / portfolio["config_path"]
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            vault_root = portfolio["repos_root"].parent / "vault"
+            config["obsidian"]["vault_root"] = vault_root.resolve().as_posix()
+            config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+            pm_root = ROOT / ".coferlandia" / "project-manager"
+            shutil.rmtree(pm_root, ignore_errors=True)
+            shutil.rmtree(vault_root, ignore_errors=True)
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-sync-to-obsidian.sh").as_posix()),
+                "--config",
+                portfolio["config_path"],
+                "--apply",
+                "--json",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("sync conflict", (result.stderr or result.stdout).lower())
+            self.assertFalse((vault_root / "Projects" / "repo-a.md").exists())
 
     def test_phase6_skill_docs_include_phase_boundary(self) -> None:
         skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
