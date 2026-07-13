@@ -10,10 +10,10 @@ compatibility: >
   commands. Falls back without worktree isolation only when the target is not a Git repository.
 metadata:
   author: coferlandia
-  version: "3.2.0"
+  version: "3.3.0"
   category: engineering
   status: active
-  tested: "2026-07-12 - role-routing, worktree, traceability, and reviewer-gate pressure scenarios; validated with validate_skill.py."
+  tested: "2026-07-12 - RED/GREEN role-routing, worktree, mandatory-TDD, and mandatory-debugging pressure scenarios; validated with validate_skill.py."
 ---
 
 ## Context
@@ -86,7 +86,10 @@ refactor that is not already a detailed executable plan.
    without modifying files. Report material inconsistencies to the control authority.
 2. Prepare a concise plan covering scope, affected areas, implementation, validation,
    risks, and documentation. Obtain explicit approval from the active control authority.
-3. Create the isolated worktree, then implement the approved scope. Reuse existing
+3. Create the isolated worktree, then implement the approved scope. **REQUIRED:** use
+   `superpowers:test-driven-development` before writing implementation code when it is
+   available. If it is unavailable, still follow its RED-GREEN-REFACTOR discipline and
+   record that the Superpowers skill was unavailable in the handoff. Reuse existing
    patterns, avoid duplication and unrelated refactors, and match the repository's
    source-code language.
 4. Run relevant tests and validation; update only documentation and traceability
@@ -104,6 +107,10 @@ unexpected behavior.
    missing evidence; inspect reproduction steps, logs, failing tests, and `HISTORY.md`
    when it exists.
 2. Prepare a root-cause plan and obtain explicit approval from the control authority.
+   **REQUIRED:** use `superpowers:systematic-debugging` before proposing a fix when it
+   is available. If it is unavailable, still separate facts from hypotheses, reproduce
+   or pinpoint the failure, and identify the root cause before proposing a correction;
+   record the unavailable skill in the handoff.
 3. Create the isolated worktree. Reproduce or pinpoint the failure, make the smallest
    approved correction, add or update regression tests, and verify related behavior.
    If the required correction materially deviates from the approved scope or plan, stop
@@ -123,7 +130,10 @@ implementation plan. A separate statement that the plan is approved is unnecessa
 2. Create and record the isolated worktree before modifying code. Ask only when the
    plan has a material contradiction, omits a required decision, or the repository
    state makes it unsafe or impossible to execute as written.
-3. Implement the plan in its specified order and keep every change within its scope.
+3. **REQUIRED:** use `superpowers:test-driven-development` before writing
+   implementation code when it is available. If it is unavailable, follow its
+   RED-GREEN-REFACTOR discipline and record the unavailable skill in the handoff.
+   Implement the plan in its specified order and keep every change within its scope.
    Run all relevant tests, linters, static checks, and validation commands. Update
    documentation and project-history artifacts when the plan or repository requires it.
 4. Leave the implementation uncommitted in `awaiting_review` state and provide the
@@ -231,6 +241,13 @@ affected existing artifacts. Otherwise place minimal new traceability artifacts 
 
 - **Treating a detailed plan as merely a proposal:** route it to `coding-agent`; do
   not require a duplicate planning or approval phase.
+- **Writing implementation code before TDD:** `developer` and `coding-agent` must use
+  `superpowers:test-driven-development` when it is available. Its absence permits the
+  RED-GREEN-REFACTOR fallback, not tests written after implementation.
+- **Proposing a debugger fix without systematic investigation:** `debugger` must use
+  `superpowers:systematic-debugging` when it is available. Its absence permits only
+  the explicit evidence, reproduction, and root-cause fallback; it does not permit a
+  guess-and-patch fix.
 - **Reviewing or committing as the implementation role:** implementation roles finish
   uncommitted in `awaiting_review`; a reviewer distinct from the implementation agent
   owns corrections, commit, and local integration.
@@ -246,6 +263,12 @@ affected existing artifacts. Otherwise place minimal new traceability artifacts 
 
 ## References
 
+- **REQUIRED for `developer` and `coding-agent`:** use
+  `superpowers:test-driven-development` before implementation code when it is
+  available; otherwise follow RED-GREEN-REFACTOR and disclose the unavailable skill.
+- **REQUIRED for `debugger`:** use `superpowers:systematic-debugging` before
+  proposing a fix when it is available; otherwise follow the evidence, reproduction,
+  and root-cause fallback and disclose the unavailable skill.
 - Use `superpowers:verification-before-completion` before any completion, commit, or
   integration claim when it is available.
 - Use `superpowers:using-git-worktrees` when setting up the required isolated

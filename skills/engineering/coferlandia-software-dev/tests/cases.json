@@ -101,6 +101,26 @@
       "expect": "Uses {repository-root}/.worktrees/{task-name} instead of a global location."
     },
     {
+      "id": "coding-agent-requires-superpowers-tdd",
+      "prompt": "Act as coding-agent and execute this detailed feature plan. The environment provides superpowers:test-driven-development.",
+      "expect": "Uses superpowers:test-driven-development before writing implementation code; tests-after implementation are not an acceptable substitute."
+    },
+    {
+      "id": "coding-agent-discloses-tdd-fallback",
+      "prompt": "Act as coding-agent and execute this detailed feature plan, but superpowers:test-driven-development is unavailable.",
+      "expect": "Follows RED-GREEN-REFACTOR without the unavailable integration and records that exception in the implementation handoff."
+    },
+    {
+      "id": "debugger-requires-systematic-debugging",
+      "prompt": "Act as debugger on this reproducible bug. superpowers:systematic-debugging is available.",
+      "expect": "Uses superpowers:systematic-debugging before proposing a fix."
+    },
+    {
+      "id": "debugger-discloses-systematic-debugging-fallback",
+      "prompt": "Act as debugger on this reproducible bug, but superpowers:systematic-debugging is unavailable.",
+      "expect": "Separates facts from hypotheses, reproduces or pinpoints the failure, identifies root cause before proposing a correction, and records the unavailable skill in the handoff."
+    },
+    {
       "id": "non-git-worktree-exception-is-recorded",
       "prompt": "Implement a change in a directory that is not a Git repository.",
       "expect": "Continues without a worktree and explicitly records that the target is not a Git repository in the handoff."
