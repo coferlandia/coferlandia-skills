@@ -27,7 +27,7 @@ Code, infrastructure, architecture, debugging.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [coferlandia-software-dev](./engineering/coferlandia-software-dev/) | Control process for development tasks: active authority, developer/debugger roles, prior study, approved plan, implementation, review, and commit | active |
+| [coferlandia-software-dev](./engineering/coferlandia-software-dev/) | Routes developer, debugger, coding-agent, and code-reviewer work through isolated worktrees, validation, review, and local integration | active |
 
 ## Data
 
@@ -64,5 +64,5 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-07-07*
+*Last updated: 2026-07-12*
 
