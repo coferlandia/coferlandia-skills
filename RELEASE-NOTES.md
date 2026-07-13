@@ -1,5 +1,27 @@
 # Coferlandia Skills Release Notes
 
+## v1.7.0 (2026-07-13)
+
+### Skills
+
+- **coferlandia-skill-toolsmith** (`meta`) — v1.0.0. Explicit-invocation-only
+  meta skill that analyzes a target agent skill, classifies its deterministic
+  vs. semantic behavior, and consolidates the deterministic parts behind one
+  unified Python CLI (`scripts/<skill-name>-cli.py`) following a stable output
+  envelope, documented exit codes, and mandatory `--help` / `version` /
+  `self-check` / `capabilities` commands. It then rewires the target `SKILL.md`
+  to call that single public interface, preserving all semantic rules and
+  decision criteria. Activation is gated to explicit requests only and enforced
+  with an anti-rationalization table and red-flags list; it never self-activates
+  on similarity, token inefficiency, or refactor opportunities. Ships with
+  fixture-backed activation tests (`tests/test_activation.py`) and a walk-through
+  target (`tests/fixtures/sample-target-skill/`).
+
+### Repository
+
+- `coferlandia-skills` — bumped the repo-wide release version to include the new
+  meta skill and its test/fixture surface.
+
 ## v1.6.0 (2026-07-12)
 
 ### Skills
