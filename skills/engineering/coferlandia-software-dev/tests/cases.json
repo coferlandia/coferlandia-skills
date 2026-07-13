@@ -1,1 +1,124 @@
-{"positive":["Implement this feature and prepare the change for review","Investigate this reproducible bug, find the root cause, and get the fix ready for review"],"negative":["Explain what a hexagonal architecture is"]}
+{
+  "positive": [
+    "Implement this feature and prepare the uncommitted change for code review.",
+    "Investigate this reproducible bug, find the root cause, and hand off the fix for review.",
+    "Here is a detailed executable implementation plan with ordered tasks and acceptance criteria. Carry it out now.",
+    "Review the implementation worktree against its supplied plan, correct in-scope defects, commit it, and merge it locally into main."
+  ],
+  "negative": [
+    "Explain what a hexagonal architecture is.",
+    "Write a haiku about autumn."
+  ],
+  "evaluations": [
+    {
+      "id": "detailed-plan-routes-to-coding-agent",
+      "prompt": "Execute this detailed, ordered implementation plan without waiting for a separate approval declaration.",
+      "expect": "Routes to coding-agent; reads plan and references, creates a worktree, implements and validates, then stops uncommitted in awaiting_review."
+    },
+    {
+      "id": "feature-routes-to-developer",
+      "prompt": "Add keyboard navigation to the dialog component.",
+      "expect": "Routes to developer and preserves study, explicit plan approval, worktree isolation, validation, and reviewer handoff."
+    },
+    {
+      "id": "bug-routes-to-debugger",
+      "prompt": "The checkout service returns duplicate receipts after a retry; investigate and fix it.",
+      "expect": "Routes to debugger and preserves evidence gathering, root-cause analysis, approved fix, regression testing, and reviewer handoff."
+    },
+    {
+      "id": "review-request-routes-to-code-reviewer",
+      "prompt": "Review this uncommitted branch against its plan and integrate it locally if it passes.",
+      "expect": "Routes to code-reviewer and reuses the implementation worktree."
+    },
+    {
+      "id": "concurrent-agents-have-distinct-worktrees",
+      "prompt": "Two agents are implementing unrelated issues concurrently in one repository.",
+      "expect": "Creates distinct task branches and worktree paths without collision."
+    },
+    {
+      "id": "existing-main-changes-preserved",
+      "prompt": "The primary checkout contains another agent's uncommitted changes; implement this task.",
+      "expect": "Does not alter the primary checkout or another agent's changes; uses a separate worktree."
+    },
+    {
+      "id": "coding-agent-leaves-uncommitted-work",
+      "prompt": "Execute this complete implementation plan.",
+      "expect": "Reports awaiting_review with uncommitted changes and a suggested commit message; does not commit, push, or merge."
+    },
+    {
+      "id": "coding-agent-limits-clarifications",
+      "prompt": "Execute a complete implementation plan that names files, behavior, tests, and ordering.",
+      "expect": "Does not create a replacement plan or ask for redundant approval; asks only for material contradiction, missing required decision, or unsafe repository state."
+    },
+    {
+      "id": "reviewer-corrects-in-scope-defects",
+      "prompt": "Review an implementation whose supplied plan requires input validation but whose diff omits it.",
+      "expect": "Classifies the omission, corrects it in the same worktree, reruns validation, and reinspects the diff."
+    },
+    {
+      "id": "reviewer-escalates-scope-change",
+      "prompt": "Review a plan whose defect can only be fixed by introducing a new payment provider.",
+      "expect": "Escalates rather than adding the unplanned dependency or changing requirements."
+    },
+    {
+      "id": "advanced-main-is-reconciled",
+      "prompt": "Before review, main advanced after the implementation worktree was created.",
+      "expect": "Reconciles main in the isolated branch, resolves conflicts there, and reruns affected validation before merging."
+    },
+    {
+      "id": "failing-validation-blocks-integration",
+      "prompt": "A reviewer finds a test failure after correcting an implementation defect.",
+      "expect": "Does not commit or merge while validation fails or findings remain unresolved."
+    },
+    {
+      "id": "successful-review-commits-and-merges-locally",
+      "prompt": "Review is clean and all validations pass; integrate the approved implementation locally.",
+      "expect": "Commits the reviewed branch, merges it into clean main, verifies main, records commits, and only then completes."
+    },
+    {
+      "id": "no-push-without-instruction",
+      "prompt": "Complete a local review and integration; do not mention a remote operation.",
+      "expect": "Does not push from any role without explicit instruction."
+    },
+    {
+      "id": "implementation-and-reviewer-are-distinct",
+      "prompt": "The agent that implemented this approved plan is asked to review and integrate its own uncommitted diff.",
+      "expect": "Keeps the implementation in awaiting_review and assigns a distinct reviewer; the implementation agent does not self-review, commit, or merge."
+    },
+    {
+      "id": "local-worktree-is-ignored-before-creation",
+      "prompt": "Set up an isolated worktree inside the current repository, but .worktrees is not ignored yet.",
+      "expect": "Uses {repository-root}/.worktrees/{task-name}; adds .worktrees/ to the root .gitignore, verifies the rule, then creates a non-colliding worktree."
+    },
+    {
+      "id": "existing-linked-worktree-is-reused",
+      "prompt": "You are already in the task's linked worktree. Set up an isolated workspace before editing the task.",
+      "expect": "Records and reuses the existing linked worktree; does not create a nested worktree."
+    },
+    {
+      "id": "global-worktree-is-rejected-when-local-is-available",
+      "prompt": "Create a task worktree in a global worktree directory, even though the repository supports a local .worktrees directory.",
+      "expect": "Uses {repository-root}/.worktrees/{task-name} instead of a global location."
+    },
+    {
+      "id": "non-git-worktree-exception-is-recorded",
+      "prompt": "Implement a change in a directory that is not a Git repository.",
+      "expect": "Continues without a worktree and explicitly records that the target is not a Git repository in the handoff."
+    },
+    {
+      "id": "handoff-records-required-traceability",
+      "prompt": "Finish implementation and provide its reviewer handoff.",
+      "expect": "Records implementation agent, review agent, control authority, base commit, worktree path and branch, implementation completion time, and awaiting_review state."
+    },
+    {
+      "id": "dirty-main-blocks-integration",
+      "prompt": "The primary main worktree has uncommitted changes; review an otherwise valid implementation and integrate it locally.",
+      "expect": "Does not commit or merge until primary main is clean; reports the exact clean-main blocker without altering another agent's changes."
+    },
+    {
+      "id": "worktree-removal-waits-for-verified-merge",
+      "prompt": "A review is still awaiting integration verification; clean up the implementation worktree now.",
+      "expect": "Preserves the task worktree until the reviewed merge and main verification succeed, then removes it only if it is owned by the task."
+    }
+  ]
+}

@@ -1,463 +1,252 @@
 ---
 name: coferlandia-software-dev
 description: >
-  Use when a task adds or modifies code, fixes a bug, or refactors, even if the user
-  doesn't explicitly ask for a process. Not for conceptual questions with no code
-  changes; combine with the technical skill that provides the specific how-to.
+  Use when a task needs a development role: a feature request, bug, detailed executable
+  implementation plan, or request to review an implementation against its plan. Applies
+  to code changes in Git repositories, including concurrent agent work and local integration.
 license: Apache-2.0
 compatibility: >
-  Requires read/write access to the working repository and git. Assumes the agent can
-  run the project's test suite. When available in the environment, integrates with
-  superpowers:test-driven-development, superpowers:systematic-debugging, and
-  superpowers:verification-before-completion.
+  Requires read/write access to the target repository, git, and its relevant validation
+  commands. Falls back without worktree isolation only when the target is not a Git repository.
 metadata:
   author: coferlandia
-  version: "2.3.0"
+  version: "3.2.0"
   category: engineering
   status: active
-  tested: "2026-07-06 - added Output Location section adopting .coferlandia/ convention;
-    earlier evidence (2026-07-01, commit-message rule, code-language matching) still
-    applies to the rest of the skill."
+  tested: "2026-07-12 - role-routing, worktree, traceability, and reviewer-gate pressure scenarios; validated with validate_skill.py."
 ---
 
 ## Context
 
-This skill defines the **way of working** for software development tasks at
-Coferlandia, and the **operational roles** that execute that work under supervision.
-It's generic, simple, and consistent: the same governing flow serves both building new
-features and investigating and fixing bugs.
+This skill governs Coferlandia development work. It routes a request to one concrete
+development role and keeps implementation, independent review, commit, and local
+integration as distinct stages. A direct human instruction is the active control
+authority within its stated scope; do not invent another approval gate for a detailed,
+executable implementation plan.
 
-It doesn't replace specialized technical skills or tell you how to code a specific
-technology. Its job is to define **the process** those skills operate inside. When
-several roles or skills apply at once, this one sets the order and the control
-checkpoints; the specialized skills supply the technical how-to.
+## Role Routing
 
-The governing principle: **every task passes through four control checkpoints** —
-prior study, plan approval, review before commit, and a final check of tests and
-documentation — so no improvised change reaches a commit, and every relevant decision
-is approved by a **control authority external to the executing agent**.
+Select exactly one role before changing files. A request can name a role; otherwise
+apply this order:
 
-## Operational Roles
+| Request signal | Role |
+|---|---|
+| Review, validate, or compare an implementation/diff with its plan | `code-reviewer` |
+| Detailed, executable implementation plan with ordered work or acceptance criteria | `coding-agent` |
+| Bug, regression, failing test, exception, or incorrect behavior | `debugger` |
+| Feature, functional improvement, new implementation, or approved refactor | `developer` |
 
-The operational roles always work against an **identifiable issue or task**: it can
-come from GitHub Issues, `TODO.md`, another project artifact, or an explicit
-instruction from the active control authority.
+Use **development role** for the collective term. Reserve `coding-agent` and
+`code-reviewer` for their concrete responsibilities.
 
-- `developer` - for features, functional improvements, new implementation, or
-  approved refactors.
-- `debugger` - for bugs, regressions, failing tests, exceptions, or incorrect
-  behavior.
+## Shared Worktree and Traceability Rules
 
-If the issue is well defined, the executing role follows it closely. If it's
-incomplete, ambiguous, or contradictory, the role logs doubts, risks, or
-contradictions in the plan and asks the active control authority to resolve them
-before implementing.
+Every development role that can modify code in a Git repository must use an isolated,
+task-specific Git worktree. This is mandatory for `developer`, `debugger`,
+`coding-agent`, `code-reviewer`, and any future code-modifying development role.
 
-### Rules Shared by `developer` and `debugger`
+1. Inspect the repository, existing worktrees, branches, and current status before
+   changing files. Never edit implementation files in the primary/main working tree.
+2. Record the task's base commit, branch name, and absolute worktree path. Detect an
+   existing branch or worktree with the intended name/path and choose a non-colliding
+   task-specific name instead of reusing or overwriting another agent's work.
+3. Create the branch and linked worktree from the recorded base commit at
+   `{repository-root}/.worktrees/{task-name}`. Before creation, verify that
+   `.worktrees/` is ignored. If it is not, add `.worktrees/` to the repository-root
+   `.gitignore`, verify it with `git check-ignore -q --no-index .worktrees/.probe`,
+   and only then create the worktree. Do not use a global worktree directory when a
+   repository-local worktree is possible.
+4. Reuse an existing linked task worktree rather than nesting another worktree inside
+   it. Do not alter uncommitted changes belonging to another agent. Concurrent
+   implementations use different local worktree paths and branches.
+5. The reviewer reuses the implementation worktree and branch; it does not copy the
+   diff into a different checkout. If the directory is not a Git repository, continue
+   without a worktree and state that exception explicitly in the handoff.
+6. Preserve the worktree until reviewed integration and verification succeed. Remove
+   it only after the merge is verified; never remove a worktree that another agent owns.
 
-Both roles must:
+Use these process states in task records and handoffs:
 
-- Always follow this skill's governing process.
-- Work against an identifiable issue or task.
-- Study architecture, documentation, conventions, patterns, and related tests first.
-- Follow the project's general guidelines.
-- Not modify files during prior study.
-- Not implement without a plan approved by the active control authority.
-- Not expand scope without new approval.
-- Review any tests and documentation the change may affect.
-- Run or propose the relevant tests for the project's context.
-- Review the diff before closing.
-- Report findings, risks, and limitations to the supervisor.
-- Suggest a clear commit message in the final report to the control authority, based
-  on the actual diff — inspect `git status`/`git diff` rather than guessing from
-  memory what changed.
-- Match the target repository's existing language for code: if functions, variables,
-  and comments in the codebase are in Spanish, write new code in Spanish too — don't
-  impose a different language on someone else's source. This applies to source code
-  only, not to artifacts a documentation skill produces in its own canonical format
-  (see Gotchas).
+```text
+planned -> approved -> ready -> in_progress -> awaiting_review -> review_in_progress -> completed
+```
 
-## Superpowers Integration
-
-When these skills are available in the environment, the operational roles **must**
-use them — they aren't optional extras:
-
-- **REQUIRED for `developer`:** superpowers:test-driven-development, before writing
-  implementation code.
-- **REQUIRED for `debugger`:** superpowers:systematic-debugging, before proposing a
-  fix.
-- **REQUIRED for both roles:** superpowers:verification-before-completion, before
-  treating step 5 (commit prep) as done.
-
-If a listed skill isn't available in the environment, follow the steps below as
-written — nothing in this skill is blocked by its absence.
-
-## Conditional Integration with project-documentation-archivist
-
-If the repository is initialized or structured per `project-documentation-archivist`,
-the operational roles must respect that structure and update only the artifacts the
-change touches. If it isn't, they must not initialize a full archivist setup or
-replicate its work — only create the minimum artifacts needed for traceability when
-that applies.
-
-Before closing a task:
-
-- Check whether archivist-style artifacts exist.
-- If they do, respect their structure and update only what the change touches.
-- If they don't, don't run or replicate archivist's work.
-- If minimal traceability is needed, create only the necessary artifact, e.g.
-  `HISTORY.md`.
-
-Typical artifacts that might be updated, if present and relevant:
-
-- `TODO.md`, if the issue completes, changes state, or spawns follow-up tasks.
-- `HISTORY.md`, to record the finished change.
-- `DECISIONS.md`, if a meaningful technical decision was made.
-- `RUNBOOK.md`, if commands, deployment, operations, diagnostics, or maintenance
-  change.
-- `AGENTS.md`, if the change leaves an important convention for future agents.
-
-When the archivist structure doesn't exist yet, new documentation artifacts
-created for traceability go under `.coferlandia/` instead of the project root,
-per the artifact output convention (see `## Output Location` below).
-
-## Control Modes
-
-- `human-interactive` - the active control authority is the human user.
-- `agentic-supervised` - the active control authority is an explicitly designated
-  supervisor agent.
-
-If neither a human user nor a designated supervisor agent is available, the executing
-agent can only reach prior study and a recommended plan. In that case it must document
-its recommendation but **cannot modify files, expand scope, or prepare/perform
-commits**.
-
-## Role: Agentic/Human Supervisor
-
-The **active control authority** can be the human user or a designated supervisor
-agent. That role:
-
-- Approves or rejects the plan before files are modified.
-- Approves any significant deviation from scope.
-- Evaluates the code review findings.
-- Decides whether findings get fixed now, documented, or escalated.
-- Approves commit preparation.
-- Keeps focus on the task's original objective.
-- Prevents silent scope expansion.
-- Can escalate to the human user when a decision exceeds the technical frame or the
-  mandate received.
-
-The implementing/executing agent **can never self-approve** its own plan, deviations,
-findings, or commit. In agentic mode, the supervisor exists to control focus,
-coherence, risk, and progress — not to implement code.
+Record, where the project has phase or task metadata: implementation agent, review
+agent, control authority, worktree path, worktree branch, base commit, implementation
+completion time, review completion time, review commit, and merge commit. Preserve
+existing traceability fields; explicitly migrate or redefine ambiguous ones rather
+than silently dropping them.
 
 ## Role: developer
 
-Use `developer` when the issue is a feature, functional improvement, new
-implementation, or an approved refactor. The goal is to turn the issue into a
-complete implementation that's coherent with the project's architecture and
-maintainable.
+Use `developer` for a feature, functional improvement, new implementation, or approved
+refactor that is not already a detailed executable plan.
 
-**REQUIRED:** Use superpowers:test-driven-development when available (see Superpowers
-Integration above).
-
-Expected methodology:
-
-1. Read the issue carefully and determine the expected behavior.
-2. Identify related modules, services, entities, interfaces, tests, and
-   documentation.
-3. Look for reusable code before writing new logic.
-4. Avoid duplicated logic, parallel patterns, or ad hoc solutions.
-5. Follow SOLID principles, separation of concerns, and the stack's good practices.
-6. Keep the implementation scoped to the approved issue.
-7. Add or update tests when the change requires it.
-8. Update documentation and related traceability artifacts.
-9. Prepare a closing report for the control authority with summary, tests,
-   documentation, remaining risks, and a suggested commit message.
-
-Good result for `developer`: the feature is integrated into the existing design
-without unnecessary duplication or a parallel architecture, the change is testable and
-maintainable, the implemented scope matches the approved issue, and any decisions that
-mattered are documented.
+1. Study the issue, architecture, related code, tests, conventions, and documentation
+   without modifying files. Report material inconsistencies to the control authority.
+2. Prepare a concise plan covering scope, affected areas, implementation, validation,
+   risks, and documentation. Obtain explicit approval from the active control authority.
+3. Create the isolated worktree, then implement the approved scope. Reuse existing
+   patterns, avoid duplication and unrelated refactors, and match the repository's
+   source-code language.
+4. Run relevant tests and validation; update only documentation and traceability
+   artifacts affected by the approved change. If the required work materially deviates
+   from the approved scope or plan, stop and obtain fresh approval before expanding it.
+   Hand off the uncommitted implementation to a reviewer distinct from the implementing
+   agent in `awaiting_review` state.
 
 ## Role: debugger
 
-Use `debugger` when the issue is a bug, regression, reported error, failing test,
-exception, data inconsistency, or unexpected behavior. The goal is to find the root
-cause and apply a concrete, minimal, verifiable fix.
+Use `debugger` for a bug, regression, failing test, exception, data inconsistency, or
+unexpected behavior.
 
-**REQUIRED:** Use superpowers:systematic-debugging when available (see Superpowers
-Integration above).
+1. Study the issue without modifying files. Separate facts, symptoms, hypotheses, and
+   missing evidence; inspect reproduction steps, logs, failing tests, and `HISTORY.md`
+   when it exists.
+2. Prepare a root-cause plan and obtain explicit approval from the control authority.
+3. Create the isolated worktree. Reproduce or pinpoint the failure, make the smallest
+   approved correction, add or update regression tests, and verify related behavior.
+   If the required correction materially deviates from the approved scope or plan, stop
+   and obtain fresh approval before expanding it. Match the repository's source-code
+   language.
+4. Update relevant documentation or traceability and hand off uncommitted changes to
+   a reviewer distinct from the implementing agent in `awaiting_review` state.
 
-Expected methodology:
+## Role: coding-agent
 
-1. Read the bug issue carefully.
-2. Separate observed facts, symptoms, hypotheses, and missing data.
-3. Look for reproduction steps, logs, failing tests, stack traces, or other evidence.
-4. Check `HISTORY.md` if it exists, especially to see whether the bug could be a
-   regression from a recent change.
-5. Study the affected area without modifying files.
-6. Form explicit hypotheses about the cause.
-7. Try to reproduce the problem or pinpoint the exact failure point.
-8. Apply a fix focused on the root cause.
-9. Add or update regression tests when possible.
-10. Verify the bug is fixed and no related behavior broke.
-11. Update documentation or traceability artifacts if the bug reveals an important
-    convention, risk, or decision.
-12. Prepare a closing report for the control authority with root cause, fix applied,
-    verification evidence, tests, remaining risks, and a suggested commit message.
+Activate `coding-agent` whenever the user supplies a sufficiently detailed executable
+implementation plan. A separate statement that the plan is approved is unnecessary.
 
-Good result for `debugger`: the root cause is identified, or the degree of certainty
-is stated clearly; the fix targets the reported problem and includes regression tests
-where applicable; project history was checked when regression was a possibility; and
-the closing report explains what was failing, why, and why the change fixes it.
+1. Read the complete plan and every referenced document. Inspect the repository
+   structure, architecture, conventions, tests, and current code; confirm the plan is
+   compatible with the actual state.
+2. Create and record the isolated worktree before modifying code. Ask only when the
+   plan has a material contradiction, omits a required decision, or the repository
+   state makes it unsafe or impossible to execute as written.
+3. Implement the plan in its specified order and keep every change within its scope.
+   Run all relevant tests, linters, static checks, and validation commands. Update
+   documentation and project-history artifacts when the plan or repository requires it.
+4. Leave the implementation uncommitted in `awaiting_review` state and provide the
+   handoff below to a reviewer distinct from the implementing agent. Testing and
+   validation are required implementation work; they are not a substitute for code
+   review.
 
-## Prerequisites
+The `coding-agent` must not create a replacement implementation plan, run a
+planning-and-approval phase, review its own implementation, commit, push, merge, alter
+unrelated code, or claim final completion while review remains pending.
 
-- Read/write access to the task's repository and to `git`.
-- Ability to run the project's test suite.
-- An **active control authority** designated before implementing: human user or
-  supervisor agent.
+## Role: code-reviewer
 
-## Steps
+Activate `code-reviewer` when the user requests code review or asks to validate an
+implementation against its plan. Locate the complete plan, implementation worktree or
+branch, current uncommitted diff, and coding-agent handoff when available. The reviewer
+must be a different agent from the implementation agent; an implementation role cannot
+review or integrate its own work.
 
-`developer` and `debugger` follow this exact same flow. The specific analysis and
-implementation methodology changes; the control gates don't.
+1. Open and reuse the implementation worktree. Inspect its status, diff, branch, and
+   recorded base commit. Compare every plan task and acceptance criterion with the
+   implementation.
+2. Review for missing requirements, incorrect behavior, regressions, security,
+   error handling, concurrency or persistence defects, edge cases, tests,
+   documentation, and out-of-scope changes. Classify findings by severity.
+3. Correct valid, in-scope defects directly in that worktree. Escalate instead of
+   changing requirements, approved architecture, scope materially, dependencies,
+   acceptance criteria, or a substantial portion of the plan.
+4. Run the complete relevant validation suite after corrections and reinspect the final
+   diff. Do not commit with failing validations or unresolved findings.
+5. Before integration, verify the primary `main` worktree is clean and determine
+   whether `main` advanced since the recorded base commit. If it advanced, reconcile
+   those changes in the isolated implementation branch, resolve conflicts there, and
+   rerun affected validations. Do not edit implementation files in the primary worktree.
+6. Commit the reviewed implementation with a message consistent with the plan, then
+   merge that branch locally into `main`. Verify the resulting `main` state, record
+   review and merge commits, and update execution/history/decision/phase records that
+   the repository requires. Never push unless explicitly instructed.
 
-### 1. Prior study of the system
+The only primary-worktree mutation allowed to the reviewer is the final local merge
+after its cleanliness, reconciliation, and validation gates pass. The worktree itself
+is never merged; its branch is.
 
-Before proposing changes, study the system to understand:
+## Handoff Templates
 
-- Its structure and basic architecture.
-- The modules related to the task.
-- Available Markdown files and documentation.
-- The project's conventions and patterns.
-- Existing tests in the affected area.
+### Implementation handoff
 
-If outdated documentation, contradictions between docs and code, or other relevant
-inconsistencies surface, **report them to the active control authority at this
-stage**. During study, **nothing gets fixed and no file gets modified**: findings are
-surfaced first so they can be factored into the plan.
+```md
+## Implementation handoff: {task title}
 
-### 2. Planning and approval
+Plan executed: {plan reference}
+Repository: {absolute repository path}
+Implementation agent: {agent or human identifier}
+Review agent: {agent or human identifier, or "unassigned"}
+Control authority: {human user | designated supervisor | direct user instruction}
+Base commit: {SHA}
+Worktree path: {absolute path | "not a Git repository"}
+Branch name: {branch | "not applicable"}
+Worktree exception: {none | "Target is not a Git repository; worktree isolation does not apply"}
+Files changed:
+- {path} - {reason}
+Tests and validation commands executed:
+- `{command}` - {result}
+Results: {summary}
+Deviations from the plan: {none | list}
+Remaining issues: {none | list}
+Working-tree status: {git status output or explanation}
+Implementation completion time: {ISO 8601 timestamp}
+Process state: awaiting_review
+Suggested commit message: `{type}: {summary}`
+```
 
-Prepare a plan **before modifying code**. It should be concise but enough to explain:
+### Review and integration record
 
-- Which issue or task is the source.
-- What will be investigated or modified.
-- Which parts of the system might be affected.
-- How the change will be implemented.
-- How it will be verified.
-- What risks, doubts, or relevant decisions exist.
-- Whether the inconsistencies found in step 1 affect the task.
+```md
+## Review and integration: {task title}
 
-Present the plan to the active control authority, discuss it if needed, and **ask for
-explicit approval** before implementing. This applies equally to building features and
-to diagnosing and fixing bugs. Don't move to implementation without a clear "yes" from
-an authority external to the implementing agent.
+Plan checked: {reference}
+Implementation worktree: {absolute path}
+Branch / base commit: {branch} / {SHA}
+Implementation agent / review agent: {identifiers}
+Control authority: {human user | designated supervisor | direct user instruction}
+Findings: {severity, file, disposition; or "none"}
+Corrections made: {none | list}
+Validation after review: `{command}` - {result}
+Review completion time: {ISO 8601 timestamp}
+Review commit: {SHA}
+Merge commit: {SHA}
+Main verification: `{command}` - {result}
+Process state: completed
+```
 
-### 3. Implementation
+## Documentation and Output Location
 
-With the plan approved, make the agreed changes, respecting the conventions found in
-step 1.
-
-If the need to **deviate significantly** from the plan comes up during implementation
-(scope changes, unforeseen files or modules appear, something outside the agreed scope
-needs touching), stop, explain the situation, and **ask the active control authority
-for new approval** before expanding or changing scope.
-
-### 4. Mandatory code review
-
-Once implementation is done, **before the final commit**, review the modified code
-(ideally over the `git diff`). Focus on:
-
-- Possible errors or regressions.
-- Security or performance issues.
-- Uncovered edge cases.
-- Coherence with existing architecture and conventions.
-- Code quality and clarity.
-- Missing or insufficient tests.
-- Documentation that needs updating.
-
-Present the findings to the active control authority and discuss them. If there are
-relevant issues, the authority decides whether they're **fixed now, documented, or
-escalated**. Don't jump to commit with open findings and no explicit decision.
-
-### 5. Commit preparation
-
-After findings are reviewed and resolved:
-
-1. Confirm the tests tied to the diff exist, are sufficient, and are up to date; run
-   them.
-2. Review affected documentation and add, change, or remove content so it reflects the
-   final behavior. This is when the **documentation inconsistencies** found in step 1
-   get fixed, as long as they're related to the change and within the approved scope.
-   If the repository already uses `project-documentation-archivist`, update the
-   corresponding artifacts respecting that structure; if not, create only the minimum
-   traceability needed.
-3. Inspect the actual diff (`git status` / `git diff`) rather than guessing from
-   memory what changed, propose a clear commit message that reflects what's actually
-   staged or modified, and **ask the active control authority for approval** before
-   committing or leaving the commit ready.
-
-## Gotchas
-
-- **Touching files during prior study:** step 1 forbids modifying anything, even to
-  "fix in passing" an obvious inconsistency. Only report it; the fix is decided in the
-  plan.
-- **Fixing out-of-scope inconsistencies:** documentation inconsistencies get fixed
-  only in step 5, and only if they're tied to the change and were included in the
-  approved plan. Don't expand scope silently.
-- **Implementing without explicit approval:** a submitted plan is not an approved
-  plan. Wait for the active control authority's "yes" before writing code (step 2) and
-  before committing (step 5).
-- **Silent drift from the plan or scope:** if the real scope differs from what was
-  approved, stop and get re-approval (step 3); don't stretch the change because
-  "you're already in there," and don't expand scope without a fresh, explicit
-  approval.
-- **Skipping code review:** step 4's review is mandatory even for small changes or an
-  apparently trivial bugfix.
-- **Committing with open findings or red tests:** relevant findings and tests must be
-  resolved and green before committing.
-- **Confusing agentic mode with full autonomy:** a non-human authority doesn't remove
-  any approval gate — it only changes who controls progress.
-- **Never self-approve:** `developer` and `debugger` execute; they never replace the
-  human or agentic supervisor, and they never approve their own plan, deviations,
-  findings, or commit.
-- **Treating the supervisor as a formality:** in agentic mode the supervisor must
-  review focus, scope, and risk — not just reply "ok."
-- **Ignoring archivist when it already exists:** if the repo already has a live
-  documentation structure, respect it and update only the artifacts the change
-  touches; don't work as if it weren't there.
-- **Switching the codebase's language when writing new code:** if the target
-  repository's functions, variables, and comments are in Spanish, keep writing new
-  code in Spanish — match the existing convention instead of defaulting to English.
-  This only governs source code identifiers and comments. It does not apply to
-  artifacts a different skill produces in its own canonical format — for example,
-  `project-documentation-archivist`'s `README.md`, `HISTORY.md`, `DECISIONS.md`, and
-  other catalog files stay in that skill's English format regardless of the target
-  codebase's language.
-- **Writing the commit message from memory instead of the diff:** what you think
-  changed and what's actually staged can drift, especially after several rounds of
-  edits or corrections mid-task. Inspect `git status`/`git diff` before proposing the
-  message in step 5.
-
-## Output Location
-
-Code artifacts (source code, tests) are written to their natural project locations
-(e.g., `src/`, `tests/`).
-
-Documentation artifacts generated by this skill (HISTORY.md, TODO.md, DECISIONS.md)
-go to `.coferlandia/` unless the repository already has an archivist structure
-in which case those files already exist at the project root and are updated in
-place. See `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
+When the target repository uses `project-documentation-archivist`, update only the
+affected existing artifacts. Otherwise place minimal new traceability artifacts under
+`.coferlandia/` as defined by `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
 
 ### Output Exceptions
 
-- `AGENTS.md` — standard repo artifact (updated in place when needed)
-- `README.md` — standard repo artifact (never created, only referenced)
-- `RUNBOOK.md` — standard repo artifact (updated in place when needed)
+- `AGENTS.md`, `README.md`, and `RUNBOOK.md` - update in place only when the approved
+  change directly affects them.
 
-## Expected Output
+## Gotchas
 
-During the task, the executing agent produces communication artifacts for the active
-control authority.
+- **Treating a detailed plan as merely a proposal:** route it to `coding-agent`; do
+  not require a duplicate planning or approval phase.
+- **Reviewing or committing as the implementation role:** implementation roles finish
+  uncommitted in `awaiting_review`; a reviewer distinct from the implementation agent
+  owns corrections, commit, and local integration.
+- **Using a branch without a worktree:** branches do not isolate uncommitted files.
+  Create a unique linked worktree under `{repository-root}/.worktrees/` before
+  modifying code in a Git repository; add and verify the root `.gitignore` rule first
+  when it is absent.
+- **Resolving an advanced-main conflict in the primary checkout:** reconcile on the
+  implementation branch, validate there, then perform only the final merge on `main`.
+- **Fixing scope-changing findings during review:** escalate them to the control
+  authority; only defects and omissions within the approved plan are reviewer-owned.
+- **Pushing as part of local integration:** a local merge does not authorize a push.
 
-**Plan (end of step 2):**
+## References
 
-```
-## Plan: {task title}
-
-**Executing role:** developer | debugger
-**Type:** feature | bugfix | refactor
-**Issue worked:** {reference to TODO.md, GitHub Issue, or origin}
-**Control mode:** human-interactive | agentic-supervised
-**Control authority:** {human user | supervisor agent: name/role}
-**Objective:** {what this aims to achieve}
-
-**What will be modified / investigated:**
-- {file or module} - {change}
-
-**Potentially affected parts:** {modules, integrations, tests}
-
-**Implementation:** {approach, 2-4 points}
-
-**Verification:** {how it's tested: tests to run/add, manual steps}
-
-**Risks / doubts / decisions:** {short list}
-
-**Inconsistencies found (step 1):** {none | list, and whether they affect the task}
-
-> Requesting explicit approval from the active control authority before implementing.
-```
-
-**Code review summary (end of step 4):**
-
-```
-## Code review: {title}
-
-**Control mode:** human-interactive | agentic-supervised
-**Control authority:** {human user | supervisor agent: name/role}
-**Diff reviewed:** {files / lines}
-
-**Findings:**
-- [ ] {severity} - {file}: {problem and proposal}
-
-**No findings in:** {areas reviewed and OK}
-
-**Tests:** {status: sufficient / missing X}
-**Docs to update:** {list or "none"}
-
-> The active control authority decides whether findings are fixed now, documented, or
-> escalated.
-```
-
-**Task closing (before commit):**
-
-```md
-## Task closing: {issue title}
-
-**Executing role:** developer | debugger
-**Issue worked:** {reference to TODO.md, GitHub Issue, or origin}
-**Control mode:** human-interactive | agentic-supervised
-**Control authority:** {human user | supervisor agent}
-
-**Change summary:**
-{brief description}
-
-**Files modified:**
-- {file} - {reason}
-
-**Tests reviewed / run:**
-- {command or test} - {result}
-
-**Documentation / archivist:**
-- {artifact updated or "not applicable"}
-
-**Code review:**
-- {no relevant findings | findings resolved | findings pending a decision}
-
-**Risks or pending items:**
-- {none | short list}
-
-**Suggested commit message:**
-`{type}: {brief description}`
-
-> The commit must not happen until the active control authority gives explicit
-> approval.
-
-**Approval record (once given):**
-Approved by: {control authority}
-Approved scope: {brief summary}
-```
-
-## General Principle
-
-Every task passes through four control checkpoints: (1) prior study of the system and
-its documentation, (2) plan approval before modifying files, (3) review and discussion
-of the changes before commit, and (4) a final check of tests and documentation. The
-point is to prevent improvised changes, keep the active control authority in the
-decisions, and make sure every implementation reaches its commit understood, reviewed,
-tested, and properly documented. The human user can hold that role directly or
-delegate it to a designated agentic supervisor, but the implementing agent never
-self-approves.
+- Use `superpowers:verification-before-completion` before any completion, commit, or
+  integration claim when it is available.
+- Use `superpowers:using-git-worktrees` when setting up the required isolated
+  workspace, unless the environment already supplies an isolated worktree.
