@@ -1,5 +1,20 @@
 # Coferlandia Skills Release Notes
 
+## v1.6.0 (2026-07-12)
+
+### Skills
+
+- **coferlandia-software-dev** (`engineering`) — v3.3.0. Adds distinct
+  `coding-agent` and `code-reviewer` roles, repository-local isolated-worktree
+  controls, reviewer reconciliation and local-integration gates, traceability
+  handoffs, and fixture-backed REQUIRED TDD/systematic-debugging disciplines with
+  explicit fallbacks.
+
+### Repository
+
+- `coferlandia-skills` — bumped the repo-wide release version for the updated
+  development-control surface.
+
 ## v1.5.0 (2026-07-08)
 
 ### Skills
