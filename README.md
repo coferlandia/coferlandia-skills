@@ -1,12 +1,12 @@
 # coferlandia-skills
 
-Coferlandia's [Agent Skills](https://agentskills.io) repository. The agentskills.io
+Portable [Agent Skills](https://agentskills.io) repository. The agentskills.io
 specification is the canonical source for the format; this repo only adds local
 conventions.
 
 ## For AI agents
 
-Read [`AGENTS.md`](./AGENTS.md) — everything needed to use and create skills.
+Read [`AGENTS.md`](./AGENTS.md) â€” everything needed to use and create skills.
 
 ## Structure
 
@@ -42,20 +42,25 @@ copilot plugin install coferlandia-skills@coferlandia
 
 Claude Code and Copilot CLI share the marketplace declared in `.claude-plugin/`.
 
-### Codex and Gemini CLI
+### Global Agent Skills
 
-Codex and Gemini CLI consume these skills as Agent Skills installed under
-`~/.agents/skills`, not as plugins or extensions. Both formats only discover immediate
-child skills and don't support this repo's category level
-(`skills/<category>/<skill>`).
+Codex, Gemini CLI, and other Agent Skill runtimes consume these skills as immediate
+children of a global skills directory. The repository keeps its category organization,
+then flattens it during installation.
 
-In Coferlandia's dev environment, each skill installs as a junction to its canonical
-directory — live editing, no copies. No Codex marketplace or Gemini extension ships
-while doing so would require duplicating or restructuring the skills tree.
+Run the installer from the repository root to overwrite the current user's global
+installations. It removes the old Coferlandia-branded names and does not retain backups:
+
+```powershell
+python _protocol/scripts/install_global_skills.py
+```
+
+Use `--dry-run` to inspect removals and copies first, or `--destination PATH` to target
+one runtime explicitly. Repeat `--destination` to update more than one runtime.
 
 ## License
 
-Apache License 2.0 — see [`LICENSE`](./LICENSE). Skills here are provided "as is,"
+Apache License 2.0 â€” see [`LICENSE`](./LICENSE). Skills here are provided "as is,"
 without warranty of any kind. They encode process and judgment, not certified
 procedures: read a skill fully and verify its behavior before relying on it for
 anything consequential.

@@ -9,10 +9,10 @@
 
 Before creating a skill, read:
 - [The canonical agentskills.io specification](https://agentskills.io/specification)
-- [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) — naming and category rules
-- [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) — template to use
-- [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — quality checklist
-- [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md) — where skills save generated files
+- [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) â€” naming and category rules
+- [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) â€” template to use
+- [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) â€” quality checklist
+- [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md) â€” where skills save generated files
 - If available in the environment, invoke `superpowers:writing-skills` before
   authoring each approved skill; use it to shape the draft, then tighten the
   result against this protocol and the quality checklist.
@@ -34,8 +34,8 @@ A good skill encapsulates **one coherent unit of work**. Ask yourself:
 - An output format that needs to stay consistent
 
 **Signs of bad scope:**
-- "Everything related to X" → too broad
-- A single bash command → too narrow, inline it instead
+- "Everything related to X" â†’ too broad
+- A single bash command â†’ too narrow, inline it instead
 
 ---
 
@@ -80,7 +80,7 @@ license: Apache-2.0
 compatibility: >            # REQUIRED ENVIRONMENT (binaries, runtime, access), not agent brands.
   Requires {real dependencies/access}
 metadata:
-  author: coferlandia
+  author: community
   version: "1.0"
   category: {category}
   status: active
@@ -136,12 +136,12 @@ Recommended structure:
 - Explanations of basic concepts
 - Every edge case (delegate to the agent's judgment when reasonable)
 
-**Limit:** target <5000 tokens; hard cap ~500 lines in SKILL.md. Extensive material →
+**Limit:** target <5000 tokens; hard cap ~500 lines in SKILL.md. Extensive material â†’
 `references/`.
 
-- **Output Location** — declare where the skill's artifacts go, following
+- **Output Location** â€” declare where the skill's artifacts go, following
   [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md). Default is
-  `.coferlandia/`. If any artifact targets a standard repo file (README.md, AGENTS.md,
+  `.agent/`. If any artifact targets a standard repo file (README.md, AGENTS.md,
   LICENSE, RUNBOOK.md), list it under an `### Output Exceptions` subsection.
 
 ---
@@ -150,18 +150,18 @@ Recommended structure:
 
 If the skill needs scripts, put them in `scripts/`. Minimum requirements:
 
-1. **No interactive prompts** — the agent runs in a non-interactive shell.
+1. **No interactive prompts** â€” the agent runs in a non-interactive shell.
 2. **Must have documented `--help`.**
-3. **Descriptive error messages** — the agent uses the error to fix its next attempt.
-4. **Structured output** — prefer JSON/CSV over free text.
-5. **Idempotent** — the agent can retry them with no side effects.
-6. **Declare dependencies inline** — use PEP 723 for Python (`# /// script`), etc.
+3. **Descriptive error messages** â€” the agent uses the error to fix its next attempt.
+4. **Structured output** â€” prefer JSON/CSV over free text.
+5. **Idempotent** â€” the agent can retry them with no side effects.
+6. **Declare dependencies inline** â€” use PEP 723 for Python (`# /// script`), etc.
 
 ---
 
 ## Step 6: Verify quality
 
-The authoritative list lives in [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) —
+The authoritative list lives in [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) â€”
 check it in full (not reproduced here to avoid duplication). First run the mechanical
 validator:
 
@@ -175,7 +175,7 @@ python _protocol/scripts/validate_skill.py .
 ## Step 7: Update the index
 
 **Required.** Add the skill to `skills/INDEX.md`. The **row format is defined in the
-header of `INDEX.md`** (single source of truth) — use it from there, don't copy it
+header of `INDEX.md`** (single source of truth) â€” use it from there, don't copy it
 here. In short:
 `| [skill-name](./{category}/{skill-name}/) | Brief description | {status} |`.
 

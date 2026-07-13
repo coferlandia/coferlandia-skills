@@ -29,12 +29,12 @@ These rules are **non-negotiable**. This repository is public.
 ```yaml
 # BAD — never do this
 metadata:
-  api_endpoint: https://internal.coferlandia.com/api/v2
-  db_host: postgres-prod-01.coferlandia.internal
+  api_endpoint: https://internal.example.invalid/api/v2
+  db_host: postgres-prod-01.internal.example.invalid
 
 # GOOD — use placeholders
 metadata:
-  api_endpoint: "{COFERLANDIA_API_ENDPOINT}"
+  api_endpoint: "{API_ENDPOINT}"
   # Configure via environment variables or the project's CLAUDE.md
 ```
 

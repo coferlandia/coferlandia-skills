@@ -1,5 +1,5 @@
 ---
-name: coferlandia-project-skill-miner
+name: project-skill-miner
 description: >
   Use when the user asks to convert project documentation into local agent skills,
   mine a repository's docs for reusable agent workflows, extract operational recipes
@@ -15,7 +15,7 @@ compatibility: >
   generation. When available in the environment, requires superpowers:writing-skills
   before authoring each approved generated skill, and follows its methodology.
 metadata:
-  author: coferlandia
+  author: community
   version: "1.0.0"
   category: meta
   status: active
@@ -43,7 +43,7 @@ This skill is conservative on authority and safety:
 - It never upgrades stale, contradictory, or speculative notes into a skill without
   warning and explicit supervisor approval.
 
-If the target project already uses `coferlandia-project-archivist`-style documents,
+If the target project already uses documentation-archivist-style documents,
 use them. If documentation is fragmented or contradictory, recommend archivist as a
 preparatory step, but do not do archivist's full job here.
 
@@ -66,7 +66,7 @@ preparatory step, but do not do archivist's full job here.
 2. Detect whether archivist-style docs exist. Check first for `README.md`,
    `AGENTS.md`, `RUNBOOK.md`, `DECISIONS.md`, `HISTORY.md`, `TODO.md`,
    `OPEN_QUESTIONS.md`, and `CONFLICTS.md`. If those files are fragmented, missing, or
-   contradictory, note that `coferlandia-project-archivist` would improve future
+  contradictory, note that a documentation archivist would improve future
    mining, but continue with the docs that exist.
 3. Read docs in authority order. Start with `AGENTS.md` and `RUNBOOK.md`, then
    `DECISIONS.md`, `README.md`, `TODO.md`, `HISTORY.md`, `OPEN_QUESTIONS.md`,

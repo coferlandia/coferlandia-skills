@@ -14,7 +14,7 @@ metadata:
   version: "2.1.0"
   category: content
   status: active
-  tested: "2026-07-06 - adopted .coferlandia/ output convention for catalog and archive
+  tested: "2026-07-06 - adopted .agent/ output convention for catalog and archive
     paths; standard repo artifacts (README, AGENTS, RUNBOOK) stay at project root.
     Pending validation with _protocol/scripts/validate_skill.py."
 ---
@@ -26,13 +26,13 @@ per role: present state, agent orientation, verified history, future work, decis
 operations, open items, source traceability, and processing sessions.
 
 `AGENTS.md` is a first-class artifact. It is the minimum an agent should read before
-touching the project — not a duplicate of `README.md`, `RUNBOOK.md`, `HISTORY.md`,
+touching the project â€” not a duplicate of `README.md`, `RUNBOOK.md`, `HISTORY.md`,
 `DECISIONS.md`, or `TODO.md`, but a distillation of the instructions, constraints,
 sensitive areas, and commands an agent needs before acting.
 
 This skill runs autonomously by default. It does not ask questions while processing
-documentation. Uncertainty goes into `.coferlandia/catalog/OPEN_QUESTIONS.md` and
-`.coferlandia/catalog/PROCESSING_RUNS.md`, and processing continues.
+documentation. Uncertainty goes into `.agent/catalog/OPEN_QUESTIONS.md` and
+`.agent/catalog/PROCESSING_RUNS.md`, and processing continues.
 
 ## Catalog Files
 
@@ -44,9 +44,9 @@ documentation. Uncertainty goes into `.coferlandia/catalog/OPEN_QUESTIONS.md` an
 | `TODO.md` | actionable future work |
 | `DECISIONS.md` | rationale and trade-offs |
 | `RUNBOOK.md` | operations |
-| `.coferlandia/catalog/SOURCE_INDEX.md` | source inventory |
-| `.coferlandia/catalog/OPEN_QUESTIONS.md` | contradictions and open items |
-| `.coferlandia/catalog/PROCESSING_RUNS.md` | session log |
+| `.agent/catalog/SOURCE_INDEX.md` | source inventory |
+| `.agent/catalog/OPEN_QUESTIONS.md` | contradictions and open items |
+| `.agent/catalog/PROCESSING_RUNS.md` | session log |
 
 See `references/catalog-files.md` for what belongs in each file.
 
@@ -78,7 +78,7 @@ See `references/catalog-files.md` for what belongs in each file.
    `node_modules/`, `vendor/`, `bin/`, `obj/`, `dist/`, `build/`, `.venv/`,
    `__pycache__/`, binaries, backups, raw logs, and generated artifacts unless the
    user explicitly asks for them.
-4. Build or update `.coferlandia/catalog/SOURCE_INDEX.md`: one row per detected document
+4. Build or update `.agent/catalog/SOURCE_INDEX.md`: one row per detected document
    with status, source path, archive path, document type, detection date, hash, fed
    files, open items, and notes.
 5. Classify each processable source as one of: `current-state-doc`, `historical-note`,
@@ -91,8 +91,8 @@ See `references/catalog-files.md` for what belongs in each file.
    areas, validation commands, risks, contradictions, open questions, references, and
    the target catalog files.
 7. Distribute extracted facts in this order: `HISTORY.md`, `DECISIONS.md`, `TODO.md`,
-   `RUNBOOK.md`, `README.md`, `AGENTS.md`, `.coferlandia/catalog/OPEN_QUESTIONS.md`,
-   `.coferlandia/catalog/SOURCE_INDEX.md`, `.coferlandia/catalog/PROCESSING_RUNS.md`.
+   `RUNBOOK.md`, `README.md`, `AGENTS.md`, `.agent/catalog/OPEN_QUESTIONS.md`,
+   `.agent/catalog/SOURCE_INDEX.md`, `.agent/catalog/PROCESSING_RUNS.md`.
 8. Keep present, past, future, decisions, and operations in separate files. Read
    `references/catalog-files.md` before writing or merging any catalog file.
 9. When `AGENTS.md` already exists, preserve every idea in it. Reorganize, summarize,
@@ -100,7 +100,7 @@ See `references/catalog-files.md` for what belongs in each file.
    `Legacy / Existing Notes` section when content can't be integrated cleanly.
 10. Mark each processed source with merged YAML frontmatter. Read
     `references/frontmatter.md` before editing a source that already has frontmatter.
-11. Archive each processed source under `.coferlandia/archive/YYYY/YYYY-MM-DD-name.ext`. Use
+11. Archive each processed source under `.agent/archive/YYYY/YYYY-MM-DD-name.ext`. Use
     `git mv` when the project uses Git and the move is possible; otherwise move the
     file normally and note the fallback.
 12. Validate the catalog:
@@ -111,13 +111,13 @@ See `references/catalog-files.md` for what belongs in each file.
 
 ## Resolution Mode
 
-1. Read `.coferlandia/catalog/OPEN_QUESTIONS.md`.
+1. Read `.agent/catalog/OPEN_QUESTIONS.md`.
 2. Locate active items.
 3. Apply the supplied resolution only to items covered by the user's input.
 4. Update `README.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, or `RUNBOOK.md` when
    the resolution changes project memory.
 5. Mark the item resolved, append date and evidence, move it to `Resolved`, and
-   register the run in `.coferlandia/catalog/PROCESSING_RUNS.md`.
+   register the run in `.agent/catalog/PROCESSING_RUNS.md`.
 
 ## AGENTS.md Curation Rules
 
@@ -136,9 +136,9 @@ See `references/catalog-files.md` for what belongs in each file.
    `README.md`, `AGENTS.md`, `HISTORY.md`, `DECISIONS.md`, `TODO.md`, `RUNBOOK.md`, and
    `OPEN_QUESTIONS.md` exist.
 8. If a command, convention, or sensitive-area claim isn't confirmed, mark it pending
-   in `AGENTS.md` and log the doubt in `.coferlandia/catalog/OPEN_QUESTIONS.md`.
+   in `AGENTS.md` and log the doubt in `.agent/catalog/OPEN_QUESTIONS.md`.
 9. If `AGENTS.md` contradicts other evidence, log the contradiction in
-   `.coferlandia/catalog/OPEN_QUESTIONS.md` and leave a brief pointer in `AGENTS.md` instead of
+   `.agent/catalog/OPEN_QUESTIONS.md` and leave a brief pointer in `AGENTS.md` instead of
    silently picking a winner.
 10. If existing notes don't fit the target structure without losing meaning, keep them
     in a `Legacy / Existing Notes` section.
@@ -166,16 +166,16 @@ See `references/catalog-files.md` for what belongs in each file.
 
 ## Output Location
 
-Generated catalog files go to `.coferlandia/catalog/`.
-Generated archive files go to `.coferlandia/archive/YYYY/`.
-Documentation artifacts that are not standard repo files go to `.coferlandia/`.
+Generated catalog files go to `.agent/catalog/`.
+Generated archive files go to `.agent/archive/YYYY/`.
+Documentation artifacts that are not standard repo files go to `.agent/`.
 See `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
 
 ### Output Exceptions
 
-- `README.md` — standard repo artifact (stays at project root)
-- `AGENTS.md` — standard repo artifact (stays at project root)
-- `RUNBOOK.md` — standard repo artifact (stays at project root)
+- `README.md` â€” standard repo artifact (stays at project root)
+- `AGENTS.md` â€” standard repo artifact (stays at project root)
+- `RUNBOOK.md` â€” standard repo artifact (stays at project root)
 
 ## Output Expected
 
@@ -192,9 +192,9 @@ Updated files:
 - TODO.md
 - DECISIONS.md
 - RUNBOOK.md
-- .coferlandia/catalog/SOURCE_INDEX.md
-- .coferlandia/catalog/OPEN_QUESTIONS.md
-- .coferlandia/catalog/PROCESSING_RUNS.md
+- .agent/catalog/SOURCE_INDEX.md
+- .agent/catalog/OPEN_QUESTIONS.md
+- .agent/catalog/PROCESSING_RUNS.md
 Open items: <count>
 Validations:
 - python scripts/validate_catalog.py --project-root .

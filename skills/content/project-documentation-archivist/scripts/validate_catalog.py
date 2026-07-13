@@ -17,23 +17,23 @@ REQUIRED_FILES = [
     "TODO.md",
     "DECISIONS.md",
     "RUNBOOK.md",
-    ".coferlandia/catalog/SOURCE_INDEX.md",
-    ".coferlandia/catalog/OPEN_QUESTIONS.md",
-    ".coferlandia/catalog/PROCESSING_RUNS.md",
+    ".agent/catalog/SOURCE_INDEX.md",
+    ".agent/catalog/OPEN_QUESTIONS.md",
+    ".agent/catalog/PROCESSING_RUNS.md",
 ]
 
 REQUIRED_SECTIONS = {
-    ".coferlandia/catalog/OPEN_QUESTIONS.md": [
+    ".agent/catalog/OPEN_QUESTIONS.md": [
         "# Open Questions",
         "## Open",
         "## Resolved",
         "## Archived",
     ],
-    ".coferlandia/catalog/PROCESSING_RUNS.md": ["# Processing Runs"],
+    ".agent/catalog/PROCESSING_RUNS.md": ["# Processing Runs"],
 }
 
 ARCHIVE_LINK_RE = re.compile(
-    r"\[\[(.coferlandia/archive/[^\]]+)\]\]|\[[^\]]+\]\((.coferlandia/archive/[^)]+)\)"
+    r"\[\[(.agent/archive/[^\]]+)\]\]|\[[^\]]+\]\((.agent/archive/[^)]+)\)"
 )
 SOURCE_INDEX_ARCHIVED_RE = re.compile(
     r"^\|\s*archived\s*\|\s*([^|]+)\|\s*([^|]+)\|",
@@ -86,7 +86,7 @@ def validate_required_sections(root: Path, failures: list[str]) -> None:
 
 
 def validate_archive_frontmatter(root: Path, failures: list[str]) -> None:
-    archive_root = root / ".coferlandia/archive"
+    archive_root = root / ".agent/archive"
     if not archive_root.exists():
         return
     for path in archive_root.rglob("*"):
@@ -134,7 +134,7 @@ def validate_agents_file(root: Path, failures: list[str]) -> None:
 
 
 def validate_source_index_vs_inbox(root: Path, failures: list[str]) -> None:
-    source_index = root / ".coferlandia/catalog/SOURCE_INDEX.md"
+    source_index = root / ".agent/catalog/SOURCE_INDEX.md"
     if not source_index.exists():
         return
     inbox = root / "docs/inbox"

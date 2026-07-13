@@ -132,7 +132,7 @@ Always include:
 
 Never store secret values. Reference secret locations safely.
 
-## .coferlandia/catalog/SOURCE_INDEX.md
+## .agent/catalog/SOURCE_INDEX.md
 
 Treat `SOURCE_INDEX.md` as the document inventory.
 
@@ -157,7 +157,7 @@ Allowed states:
 - `unknown`
 - `archived`
 
-## .coferlandia/catalog/OPEN_QUESTIONS.md
+## .agent/catalog/OPEN_QUESTIONS.md
 
 Treat `OPEN_QUESTIONS.md` as the register for both contradictions and unresolved
 questions, distinguished by the `Type` field on each entry.
@@ -177,7 +177,7 @@ Mandatory top-level structure:
 Record contradictions rather than resolving them arbitrarily during the processing
 phase. Open questions never block processing.
 
-## .coferlandia/catalog/PROCESSING_RUNS.md
+## .agent/catalog/PROCESSING_RUNS.md
 
 Treat `PROCESSING_RUNS.md` as the session log.
 

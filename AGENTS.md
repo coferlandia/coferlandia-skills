@@ -1,4 +1,4 @@
-# AGENTS.md — Coferlandia Skills Repository
+# AGENTS.md — Agent Skills Repository
 
 > **If you're an AI agent, start here.**
 
@@ -17,12 +17,12 @@ instructions you can load to execute specific Coferlandia tasks with more precis
 
 The [agentskills.io specification](https://agentskills.io/specification) is the
 authority on structure, frontmatter, and progressive disclosure. When in doubt about
-format, check that spec first. This repo doesn't duplicate the specification — it adds
+format, check that spec first. This repo doesn't duplicate the specification â€” it adds
 only verifiable local conventions: categories, status, behavioral evidence, and the
 index.
 
 **Philosophy:** this repo is *for agents* and *by agents*. You have everything you
-need to create new skills, improve existing ones, and maintain the index — without
+need to create new skills, improve existing ones, and maintain the index â€” without
 needing extra instructions from a human.
 
 ---
@@ -31,20 +31,20 @@ needing extra instructions from a human.
 
 ```
 coferlandia-skills/
-├── AGENTS.md              ← You are here
-├── README.md              ← Human-facing overview
-├── LICENSE                ← Apache License 2.0
-├── RELEASE-NOTES.md       ← Plugin release changelog
-├── .claude-plugin/        ← plugin.json carries the plugin release version
-│
-└── skills/                ← All skills
-    ├── INDEX.md           ← Full catalog (always keep updated)
-    ├── meta/               skills about skills
-    ├── engineering/
-    ├── data/
-    ├── content/
-    ├── design/
-    └── ops/
+â”œâ”€â”€ AGENTS.md              â† You are here
+â”œâ”€â”€ README.md              â† Human-facing overview
+â”œâ”€â”€ LICENSE                â† Apache License 2.0
+â”œâ”€â”€ RELEASE-NOTES.md       â† Plugin release changelog
+â”œâ”€â”€ .claude-plugin/        â† plugin.json carries the plugin release version
+â”‚
+â””â”€â”€ skills/                â† All skills
+    â”œâ”€â”€ INDEX.md           â† Full catalog (always keep updated)
+    â”œâ”€â”€ meta/               skills about skills
+    â”œâ”€â”€ engineering/
+    â”œâ”€â”€ data/
+    â”œâ”€â”€ content/
+    â”œâ”€â”€ design/
+    â””â”€â”€ ops/
 ```
 
 See `skills/INDEX.md` for which of those categories currently have skills in them.
@@ -53,7 +53,7 @@ See `skills/INDEX.md` for which of those categories currently have skills in the
 
 ## Before doing anything else
 
-Check `skills/meta/using-coferlandia-skills/` — it defines when and how to invoke a
+Check `skills/meta/using-project-skills/` â€” it defines when and how to invoke a
 skill (before responding, not after). Follow it for any task in a project where this
 plugin is installed.
 
@@ -68,7 +68,7 @@ plugin is installed.
 
 ## Creating a new skill
 
-1. Read `_protocol/HOW_TO_CREATE_SKILLS.md` — the full protocol.
+1. Read `_protocol/HOW_TO_CREATE_SKILLS.md` â€” the full protocol.
 2. Use `_protocol/SKILL_TEMPLATE.md` as your starting point.
 3. Check your skill against `_protocol/QUALITY_STANDARDS.md` and run
    `_protocol/scripts/validate_skill.py`.
@@ -89,7 +89,7 @@ another:
 | SKILL.md format and progressive disclosure | [agentskills.io/specification](https://agentskills.io/specification) |
 | Skill inventory and row format | [`skills/INDEX.md`](./skills/INDEX.md) |
 | Lifecycle states | [`_protocol/SKILL_LIFECYCLE.md`](./_protocol/SKILL_LIFECYCLE.md) |
-| When and how to invoke a skill | [`skills/meta/using-coferlandia-skills/`](./skills/meta/using-coferlandia-skills/) |
+| When and how to invoke a skill | [`skills/meta/using-project-skills/`](./skills/meta/using-project-skills/) |
 | Artifact output paths | [`_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`](./_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md) |
 | Plugin release version and changelog | [`RELEASE-NOTES.md`](./RELEASE-NOTES.md) + [`.claude-plugin/plugin.json`](./.claude-plugin/plugin.json) |
 
@@ -98,7 +98,7 @@ another:
 ## Releasing a version change
 
 The plugin release version (`.claude-plugin/plugin.json`) is a different thing from a
-single skill's `metadata.version` (see `_protocol/NAMING_CONVENTIONS.md`) — it tracks
+single skill's `metadata.version` (see `_protocol/NAMING_CONVENTIONS.md`) â€” it tracks
 the whole repo, not one skill.
 
 1. Run `python _protocol/scripts/bump_version.py --check` to confirm there's no drift.
@@ -115,7 +115,7 @@ See `skills/INDEX.md` for the full, current catalog (the single source of truth)
 
 ## License
 
-Apache License 2.0 — see [`LICENSE`](./LICENSE). This repository and the skills in it
+Apache License 2.0 â€” see [`LICENSE`](./LICENSE). This repository and the skills in it
 are provided "as is," with no warranty. Verify a skill's behavior before relying on it
 for consequential work.
 

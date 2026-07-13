@@ -69,8 +69,8 @@ skills/{category}/{skill-name}/SKILL.md
 
 Examples:
 ```
-skills/meta/using-coferlandia-skills/SKILL.md
-skills/engineering/coferlandia-software-dev/SKILL.md
+skills/meta/using-project-skills/SKILL.md
+skills/engineering/software-development/SKILL.md
 skills/content/project-documentation-archivist/SKILL.md
 ```
 
@@ -84,7 +84,7 @@ skill({category}/{name}): short description in imperative
 
 Examples:
 ```
-skill(meta/using-coferlandia-skills): add skill-usage gate
+skill(meta/using-project-skills): add skill-usage gate
 skill(engineering/code-review): add security checklist
 skill(data/sql-query): fix soft-delete gotcha
 ```

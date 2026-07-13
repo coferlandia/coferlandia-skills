@@ -1,8 +1,8 @@
-# Skills Index — coferlandia-skills
+# Skills Index â€” coferlandia-skills
 
 > **Single source of truth for the skill inventory.** This is the only file that lists
 > which skills exist and their status. Update only this file when adding, removing, or
-> changing a skill — there are no mirror catalogs to sync by hand.
+> changing a skill â€” there are no mirror catalogs to sync by hand.
 >
 > **Row format (defined here, not repeated elsewhere):**
 > `| [skill-name](./{category}/{skill-name}/) | One-line description | {status} |`
@@ -17,9 +17,9 @@ Skills about skills and about the repository itself: creating, auditing, structu
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [using-coferlandia-skills](./meta/using-coferlandia-skills/) | Check skills/INDEX.md and invoke a matching skill before responding to any task, instead of skipping the check | active |
+| [using-project-skills](./meta/using-project-skills/) | Check skills/INDEX.md and invoke a matching skill before responding to any task, instead of skipping the check | active |
 | [skill-repository-versioning](./meta/skill-repository-versioning/) | Pre-commit checklist for a skill repository: sync the skill index, bump per-skill vs. repo-wide release versions correctly | active |
-| [coferlandia-project-skill-miner](./meta/coferlandia-project-skill-miner/) | Extract current operational recipes from project documentation and convert approved ones into project-local agent skills | active |
+| [project-skill-miner](./meta/project-skill-miner/) | Extract current operational recipes from project documentation and convert approved ones into project-local agent skills | active |
 
 ## Engineering
 
@@ -27,7 +27,7 @@ Code, infrastructure, architecture, debugging.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [coferlandia-software-dev](./engineering/coferlandia-software-dev/) | Routes developer, debugger, coding-agent, and code-reviewer work through isolated worktrees, validation, review, and local integration | active |
+| [software-development](./engineering/software-development/) | Routes developer, debugger, coding-agent, and code-reviewer work through isolated worktrees, validation, review, and local integration | active |
 
 ## Data
 
@@ -65,4 +65,3 @@ Operations, automation, incidents, standups.
 ---
 
 *Last updated: 2026-07-12*
-

@@ -1,11 +1,11 @@
 ---
 name: skill-repository-versioning
 description: >
-  Use before a commit that changes what a skill repository ships — a skill added,
+  Use before a commit that changes what a skill repository ships â€” a skill added,
   removed, renamed, or deprecated, or a plugin manifest, skill index, or protocol doc
-  changed — in a repository that tracks a repo-wide release version separately from
+  changed â€” in a repository that tracks a repo-wide release version separately from
   each skill's own metadata.version. This is what tells clients a new version is worth
-  reimporting. Not for a routine content edit to a single skill's own instructions —
+  reimporting. Not for a routine content edit to a single skill's own instructions â€”
   that's covered by the repo's general dev-process skill, not this one.
 license: Apache-2.0
 compatibility: >
@@ -13,12 +13,12 @@ compatibility: >
   validator and version-bump scripts. Assumes the repo follows the layout described
   in Context below; adapt paths if a given repo names things differently.
 metadata:
-  author: coferlandia
+  author: community
   version: "1.1.0"
   category: meta
   status: active
   tested: "2026-07-06 - added Output Location section (in-place repo management, no
-    .coferlandia/ needed). Earlier evidence (2026-07-01, subagent activation test) still
+    .agent/ needed). Earlier evidence (2026-07-01, subagent activation test) still
     applies."
 ---
 
@@ -26,13 +26,13 @@ metadata:
 
 Skill repositories that track versions well tend to use two independent axes: **each
 skill's own version** (that skill's instructions changed) and a **repo-wide release
-version** (the installable surface changed — a skill was added or removed, packaging
+version** (the installable surface changed â€” a skill was added or removed, packaging
 changed). Committing without checking both is how they drift apart, and how a skill
 index quietly stops matching what's actually in the repo.
 
 This skill governs only the second axis: the repo-wide release version, and the
 version-tracking artifacts that go with it. A single skill's own `metadata.version`
-is the concern of the repo's general dev-process skill, not this one — this skill
+is the concern of the repo's general dev-process skill, not this one â€” this skill
 exists specifically for the moments a client needs to know "there's a new version
 worth reimporting," not for every ordinary content edit.
 
@@ -66,11 +66,11 @@ applicable rather than blocking the commit on it.
 2. **Bump the skill's own version, if its instructions changed.** If a skill's body or
    triggering description changed behavior (not just a typo fix), bump that skill's
    own version field following the repo's naming convention, and update its "tested"
-   evidence honestly — don't claim a test that didn't happen.
+   evidence honestly â€” don't claim a test that didn't happen.
 
 3. **Update the skill index if the inventory changed.** Required whenever a skill was
    added, removed, renamed, or its status changed. Use the row format the index itself
-   defines — don't invent a different one.
+   defines â€” don't invent a different one.
 
 4. **Run the mechanical skill validator** across all skills. Fix any failure before
    continuing.
@@ -82,7 +82,7 @@ applicable rather than blocking the commit on it.
    - a protocol/shared doc changed in a way that affects every skill, not just one
 
    Don't bump for a content-only iteration on a single existing skill (a Gotcha added,
-   wording tightened, a bug fixed) — that's covered by step 2 alone.
+   wording tightened, a bug fixed) â€” that's covered by step 2 alone.
 
 6. **If a release bump is needed:** run the repo's version-check command first to
    confirm there's no pre-existing drift, then bump to a new version chosen by semver
@@ -100,7 +100,7 @@ applicable rather than blocking the commit on it.
   skill's own version field covers ordinary iteration.
 - **Forgetting the skill index after adding or removing a skill:** the mechanical
   validator checks each skill's own frontmatter, not whether the index matches
-  reality — that check is manual, and it's step 3, not optional.
+  reality â€” that check is manual, and it's step 3, not optional.
 - **Editing a skill's instructions without touching its version or tested evidence:**
   leaves a false "tested" claim attached to changed behavior.
 - **Running the bump command without checking for drift first:** papers over drift
@@ -110,9 +110,9 @@ applicable rather than blocking the commit on it.
 - **Trusting a file was written correctly just because the write call succeeded:**
   on at least one repo using this convention, the working copy silently truncated or
   null-padded JSON/Markdown files mid-write. After editing anything the validator or
-  bump script reads — especially JSON manifests and the version-bump config —
+  bump script reads â€” especially JSON manifests and the version-bump config â€”
   re-parse it before trusting the result (e.g. load it back with a JSON parser).
-- **Treating this skill as the place to write the commit message:** it isn't —
+- **Treating this skill as the place to write the commit message:** it isn't â€”
   proposing a commit message from the actual diff is the repo's general dev-process
   skill's job (it applies to every commit, not just release-worthy ones). This skill
   only decides the version bump and keeps the version artifacts in sync.
@@ -122,7 +122,7 @@ applicable rather than blocking the commit on it.
 This skill modifies files in place at their standard repository locations
 (RELEASE-NOTES.md, skills/INDEX.md, per-skill SKILL.md frontmatter, plugin
 manifests). These are all standard repo management artifacts, not generated
-outputs, so the `.coferlandia/` convention does not apply.
+outputs, so the `.agent/` convention does not apply.
 
 ## Expected Output
 
@@ -143,7 +143,7 @@ Ready to commit: yes | no
 ## References
 
 - In coferlandia-skills specifically: `_protocol/NAMING_CONVENTIONS.md` (per-skill
-  version convention and commit format), `_protocol/SKILL_LIFECYCLE.md` (draft →
-  active → deprecated), `_protocol/QUALITY_STANDARDS.md` (what "tested" evidence must
+  version convention and commit format), `_protocol/SKILL_LIFECYCLE.md` (draft â†’
+  active â†’ deprecated), `_protocol/QUALITY_STANDARDS.md` (what "tested" evidence must
   look like), `_protocol/scripts/validate_skill.py`, `_protocol/scripts/bump_version.py`,
   `.version-bump.json`, and `RELEASE-NOTES.md`.

@@ -8,7 +8,7 @@ Status: pending | in-progress | blocked | done
 Priority: low | medium | high
 Detected: YYYY-MM-DD
 Origin:
-- [[.coferlandia/archive/YYYY/document.md]]
+- [[.agent/archive/YYYY/document.md]]
 
 Context:
 ...

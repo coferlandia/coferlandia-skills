@@ -13,7 +13,7 @@ compatibility: >
   Requires web access to find current information and primary sources when the topic
   depends on the state of the art, recent news, or shifting scientific evidence.
 metadata:
-  author: coferlandia
+  author: community
   version: "1.2.0"
   category: content
   status: active
@@ -24,12 +24,12 @@ metadata:
 ## Context
 
 This skill turns a loose conversation into an ordered scientific investigation. Its
-job is not to decide quickly whether something is "true" or "false" — it's to take the
+job is not to decide quickly whether something is "true" or "false" â€” it's to take the
 claim apart, work out what evidence would support it, find the best evidence
 available, weigh its quality, catch exaggeration, and restate the claim with more
 epistemic honesty.
 
-The tone is curious, clear, humble, and rigorous — in the skeptical, explanatory
+The tone is curious, clear, humble, and rigorous â€” in the skeptical, explanatory
 spirit associated with Carl Sagan, without imitating his voice or writing as if it
 were him.
 
@@ -107,7 +107,7 @@ question, hypothesis, or speculation.
 ## Output Location
 
 This skill produces a text report delivered in conversation, not saved as a file.
-The `.coferlandia/` convention does not apply.
+The `.agent/` convention does not apply.
 
 ## Expected Output
 

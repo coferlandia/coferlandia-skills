@@ -7,7 +7,7 @@
 Status: open
 Type: question | conflict
 Detected: YYYY-MM-DD
-Detected in session: [[.coferlandia/catalog/PROCESSING_RUNS.md#yyyy-mm-dd-hhmm-processing-run]]
+Detected in session: [[.agent/catalog/PROCESSING_RUNS.md#yyyy-mm-dd-hhmm-processing-run]]
 Area: backend | frontend | infra | product | docs | architecture | operations | unknown
 Priority: low | medium | high
 
@@ -18,8 +18,8 @@ Context:
 ...
 
 Sources:
-- [[.coferlandia/archive/YYYY/document-a.md]]
-- [[.coferlandia/archive/YYYY/document-b.md]] (second source only applies to conflicts)
+- [[.agent/archive/YYYY/document-a.md]]
+- [[.agent/archive/YYYY/document-b.md]] (second source only applies to conflicts)
 
 Impact:
 ...

@@ -1,5 +1,5 @@
 ---
-name: coferlandia-software-dev
+name: software-development
 description: >
   Use when a task needs a development role: a feature request, bug, detailed executable
   implementation plan, or request to review an implementation against its plan. Applies
@@ -9,7 +9,7 @@ compatibility: >
   Requires read/write access to the target repository, git, and its relevant validation
   commands. Falls back without worktree isolation only when the target is not a Git repository.
 metadata:
-  author: coferlandia
+  author: community
   version: "3.3.0"
   category: engineering
   status: active
@@ -18,7 +18,7 @@ metadata:
 
 ## Context
 
-This skill governs Coferlandia development work. It routes a request to one concrete
+This skill governs development work in any Git repository. It routes a request to one concrete
 development role and keeps implementation, independent review, commit, and local
 integration as distinct stages. A direct human instruction is the active control
 authority within its stated scope; do not invent another approval gate for a detailed,
@@ -230,7 +230,7 @@ Process state: completed
 
 When the target repository uses `project-documentation-archivist`, update only the
 affected existing artifacts. Otherwise place minimal new traceability artifacts under
-`.coferlandia/` as defined by `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
+`.agent/` as defined by `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
 
 ### Output Exceptions
 

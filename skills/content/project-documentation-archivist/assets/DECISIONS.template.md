@@ -27,7 +27,7 @@ Trade-offs:
 - ...
 
 Sources:
-- [[.coferlandia/archive/YYYY/document.md]]
+- [[.agent/archive/YYYY/document.md]]
 
 Related:
 - Issue:

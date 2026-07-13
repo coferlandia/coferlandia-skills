@@ -1,6 +1,6 @@
 # Open Questions
 
-Track every unresolved item — questions and conflicts alike — in one register:
+Track every unresolved item â€” questions and conflicts alike â€” in one register:
 `docs/catalog/OPEN_QUESTIONS.md`. Use the `Type` field to tell them apart.
 
 ## When to Open One
