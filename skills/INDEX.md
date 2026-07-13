@@ -20,6 +20,7 @@ Skills about skills and about the repository itself: creating, auditing, structu
 | [using-project-skills](./meta/using-project-skills/) | Check skills/INDEX.md and invoke a matching skill before responding to any task, instead of skipping the check | active |
 | [skill-repository-versioning](./meta/skill-repository-versioning/) | Pre-commit checklist for a skill repository: sync the skill index, bump per-skill vs. repo-wide release versions correctly | active |
 | [project-skill-miner](./meta/project-skill-miner/) | Extract current operational recipes from project documentation and convert approved ones into project-local agent skills | active |
+| [coferlandia-skill-toolsmith](./meta/coferlandia-skill-toolsmith/) | Explicit-invocation-only skill that analyzes a target skill, consolidates its deterministic behavior behind one unified Python CLI (scripts/<name>-cli.py), and rewires the skill to use it | active |
 
 ## Engineering
 
@@ -64,4 +65,4 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-07-12*
+*Last updated: 2026-07-13*
