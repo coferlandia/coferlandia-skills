@@ -10,7 +10,7 @@ print_help() {
 Usage: pm-validate-config.sh --config <path> [--json]
 Description: Validate that the config file is readable and structurally complete.
 Examples:
-  pm-validate-config.sh --config .agents/skills/coferlandia-project-manager/examples/config.sample.json
+  pm-validate-config.sh --config skills/ops/coferlandia-project-manager/examples/config.sample.json
   pm-validate-config.sh --json
 EOF
 }

@@ -9,8 +9,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[4]
-SKILL_ROOT = ROOT / ".agents" / "skills" / "coferlandia-project-manager"
-SCRIPTS_ROOT = Path(".agents/skills/coferlandia-project-manager/scripts")
+SKILL_ROOT = ROOT / "skills" / "ops" / "coferlandia-project-manager"
+SCRIPTS_ROOT = Path("skills/ops/coferlandia-project-manager/scripts")
 
 
 def run_script(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
@@ -288,7 +288,7 @@ class Phase1Tests(unittest.TestCase):
 
     def test_default_config_path_points_to_template(self) -> None:
         command = (
-            "source .agents/skills/coferlandia-project-manager/scripts/lib/config.sh; "
+            "source skills/ops/coferlandia-project-manager/scripts/lib/config.sh; "
             "pm_config_default_path"
         )
         result = run_script("bash", "-lc", command)
@@ -298,7 +298,7 @@ class Phase1Tests(unittest.TestCase):
 
     def test_default_config_target_points_to_repo_local_config(self) -> None:
         command = (
-            "source .agents/skills/coferlandia-project-manager/scripts/lib/config.sh; "
+            "source skills/ops/coferlandia-project-manager/scripts/lib/config.sh; "
             "pm_config_default_target"
         )
         result = run_script("bash", "-lc", command)
@@ -309,9 +309,9 @@ class Phase1Tests(unittest.TestCase):
         )
 
     def test_config_helpers_read_repos_root_and_default_branch(self) -> None:
-        config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
+        config_path = "skills/ops/coferlandia-project-manager/examples/config.sample.json"
         command = (
-            "source .agents/skills/coferlandia-project-manager/scripts/lib/config.sh; "
+            "source skills/ops/coferlandia-project-manager/scripts/lib/config.sh; "
             f"pm_config_repos_root '{config_path}' && "
             f"pm_config_default_branch '{config_path}'"
         )
@@ -325,7 +325,7 @@ class Phase1Tests(unittest.TestCase):
     def test_config_helper_normalizes_windows_style_repos_root_for_bash(self) -> None:
         with make_phase2_portfolio() as portfolio:
             command = (
-                "source .agents/skills/coferlandia-project-manager/scripts/lib/config.sh; "
+                "source skills/ops/coferlandia-project-manager/scripts/lib/config.sh; "
                 f"pm_config_repos_root '{portfolio['config_path']}'"
             )
             result = run_script("bash", "-lc", command)
@@ -346,7 +346,7 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(result_init.returncode, 0, result_init.stderr)
 
             command = (
-                "source .agents/skills/coferlandia-project-manager/scripts/lib/git.sh; "
+                "source skills/ops/coferlandia-project-manager/scripts/lib/git.sh; "
                 f"pm_git_is_repo '{tempdir_posix}' && "
                 f"pm_git_current_branch '{tempdir_posix}'"
             )
@@ -356,7 +356,7 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(result.stdout.strip().splitlines()[-1], "main")
 
     def test_doctor_json_reports_real_sections(self) -> None:
-        config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
+        config_path = "skills/ops/coferlandia-project-manager/examples/config.sample.json"
         result = run_script(
             "bash",
             str((SCRIPTS_ROOT / "pm-doctor.sh").as_posix()),
@@ -404,7 +404,7 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(payload["effective_vault_root"], "/mnt/c/custom/vault")
 
     def test_onboard_json_wraps_readiness_report(self) -> None:
-        config_path = ".agents/skills/coferlandia-project-manager/examples/config.sample.json"
+        config_path = "skills/ops/coferlandia-project-manager/examples/config.sample.json"
         result = run_script(
             "bash",
             str((SCRIPTS_ROOT / "pm-onboard.sh").as_posix()),
@@ -599,7 +599,7 @@ class Phase1Tests(unittest.TestCase):
 
     def test_phase3_obsidian_helper_returns_expected_paths(self) -> None:
         command = (
-            "source .agents/skills/coferlandia-project-manager/scripts/lib/obsidian-pm.sh; "
+            "source skills/ops/coferlandia-project-manager/scripts/lib/obsidian-pm.sh; "
             "pm_obsidian_project_path /vault Projects demo-project && "
             "pm_obsidian_task_path /vault Tasks task-001"
         )

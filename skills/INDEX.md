@@ -61,7 +61,7 @@ Operations, automation, incidents, standups.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| *(none yet)* | | |
+| [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Set up the current repository as a project-manager home that tracks an explicit list of projects, reports portfolio health, and coordinates approval-gated multi-project execution | active |
 
 ---
 

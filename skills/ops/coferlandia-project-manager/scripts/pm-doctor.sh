@@ -10,7 +10,7 @@ print_help() {
 Usage: pm-doctor.sh --config <path> [--json]
 Description: Report environment readiness for the project manager skill.
 Examples:
-  pm-doctor.sh --config .agents/skills/coferlandia-project-manager/examples/config.sample.json
+  pm-doctor.sh --config skills/ops/coferlandia-project-manager/examples/config.sample.json
   pm-doctor.sh --json
 EOF
 }

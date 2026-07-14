@@ -4,7 +4,7 @@ description: >
   Use when creating or operating a project-local portfolio manager skill that
   discovers repositories, manages Obsidian PM metadata, coordinates archivist sync,
   and governs approval-gated multi-project execution from
-  `.agents/skills/coferlandia-project-manager/`.
+  `skills/ops/coferlandia-project-manager/`.
 license: Apache-2.0
 compatibility: >
   Requires Bash, git, and Python 3.11+ for validation. Write access is allowed only
