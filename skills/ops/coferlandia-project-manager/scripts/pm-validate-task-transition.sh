@@ -53,13 +53,13 @@ pm_require_file "${config_path}"
 [[ -n "${task_id}" ]] || die "Missing required --task <task-id>"
 [[ -n "${target_status}" ]] || die "Missing required --target-status <status>"
 
-repos_root="$(pm_config_repos_root "${config_path}")"
-[[ -n "${repos_root}" ]] || die "repos_root is required in config"
-[[ -d "${repos_root}" ]] || die "repos_root does not exist: ${repos_root}"
+projects_file="$(pm_resolve_projects_path "" "${config_path}")"
+[[ -n "${projects_file}" ]] || die "projects_file could not be resolved"
+[[ -f "${projects_file}" ]] || die "projects_file not found: ${projects_file}"
 
 python_cmd="$(pm_python_cmd)"
 payload="$("${python_cmd}" "${script_dir}/lib/board_actions.py" validate-task-transition \
-  --repos-root "${repos_root}" \
+  --projects-file "${projects_file}" \
   --task "${task_id}" \
   --target-status "${target_status}" \
 )"

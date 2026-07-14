@@ -11,7 +11,7 @@ Usage: pm-detect-conflicts.sh --config <path> [--json]
 Description: Identify repo-level coverage gaps that require review (read-only).
 
 Phase 4 detects two conflict classes:
-  - repo_path_missing: a child dir of repos_root is not a git repository.
+  - repo_path_missing: a project listed in projects.json is not a git repository.
   - missing_archivist_artifact: a git repo lacks one or more expected files.
 
 Richer PM-vs-repo conflict detection is future work.
@@ -50,13 +50,13 @@ done
 config_path="$(pm_resolve_config_path "${config_path}")"
 pm_require_file "${config_path}"
 
-repos_root="$(pm_config_repos_root "${config_path}")"
-[[ -n "${repos_root}" ]] || die "repos_root is required in config"
+projects_file="$(pm_resolve_projects_path "" "${config_path}")"
+[[ -n "${projects_file}" ]] || die "projects_file could not be resolved"
 
 format_flag="text"
 [[ "${json_output}" == true ]] && format_flag="json"
 
 python_cmd="$(pm_python_cmd)"
 exec "${python_cmd}" "${script_dir}/lib/archivist.py" conflicts \
-  --repos-root "${repos_root}" \
+  --projects-file "${projects_file}" \
   --format "${format_flag}"

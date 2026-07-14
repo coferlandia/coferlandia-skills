@@ -7,12 +7,13 @@ source "${script_dir}/lib/discovery.sh"
 
 print_help() {
   cat <<'EOF'
-Usage: pm-scan-repos.sh --config <path> [--json] [--include-dirty] [--include-remotes]
-Description: Scan repos_root and emit portfolio repository state.
+Usage: pm-scan-repos.sh --config <path> [--projects-file <path>] [--json] [--include-dirty] [--include-remotes]
+Description: Scan the projects listed in projects.json and emit portfolio repository state.
 EOF
 }
 
 config_path=""
+projects_file_arg=""
 json_output=false
 include_dirty=false
 include_remotes=false
@@ -23,6 +24,11 @@ while [[ $# -gt 0 ]]; do
       shift
       [[ $# -gt 0 ]] || die "Missing value for --config"
       config_path="$1"
+      ;;
+    --projects-file)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --projects-file"
+      projects_file_arg="$1"
       ;;
     --json)
       json_output=true
@@ -46,22 +52,21 @@ done
 
 config_path="$(pm_resolve_config_path "${config_path}")"
 pm_require_file "${config_path}"
-repos_root="$(pm_config_repos_root "${config_path}")"
+projects_file="$(pm_resolve_projects_path "${projects_file_arg}" "${config_path}")"
 default_branch="$(pm_config_default_branch "${config_path}")"
-[[ -n "${repos_root}" ]] || die "repos_root is required in config"
-[[ -d "${repos_root}" ]] || die "repos_root does not exist: ${repos_root}"
+[[ -f "${projects_file}" ]] || die "projects_file not found: ${projects_file}"
 [[ -n "${default_branch}" ]] || default_branch="main"
 
-mapfile -t project_paths < <(pm_discover_project_paths "${repos_root}")
+mapfile -t project_paths < <(pm_projects_paths "${projects_file}")
 
 python_cmd="$(pm_python_cmd)"
-scan_payload="$("${python_cmd}" - "${repos_root}" "${default_branch}" "${include_dirty}" "${include_remotes}" "${project_paths[@]}" <<'PY'
+scan_payload="$("${python_cmd}" - "${projects_file}" "${default_branch}" "${include_dirty}" "${include_remotes}" "${project_paths[@]}" <<'PY'
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-repos_root = sys.argv[1]
+projects_file = sys.argv[1]
 default_branch = sys.argv[2]
 include_dirty = sys.argv[3].lower() == "true"
 include_remotes = sys.argv[4].lower() == "true"
@@ -118,7 +123,7 @@ for path in project_paths:
 print(json.dumps(
     {
         "status": "ok",
-        "repos_root": repos_root,
+        "projects_file": projects_file,
         "projects_detected": len(projects),
         "projects": projects,
     },
@@ -136,7 +141,7 @@ import sys
 
 payload = json.loads(sys.argv[1])
 print("status: ok")
-print(f"repos_root: {payload['repos_root']}")
+print(f"projects_file: {payload['projects_file']}")
 print(f"projects_detected: {payload['projects_detected']}")
 for project in payload.get("projects", []):
     git = project.get("git", {})

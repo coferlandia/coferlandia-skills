@@ -12,7 +12,7 @@ print_help() {
 Usage: pm-task-report.sh --config <path> --task <task-id> [--json] [--output-dir <dir>]
 Description: Generate a report for one managed task.
 
-Searches all project TODO.md files under repos_root for the given task ID.
+Searches all managed projects' TODO.md files for the given task ID.
 
 Options:
   --config <path>   Required path to the PM config.json.
@@ -66,9 +66,9 @@ done
 config_path="$(pm_resolve_config_path "${config_path}")"
 pm_require_file "${config_path}"
 [[ -n "${task_id}" ]] || die "Missing required --task <task-id>"
-repos_root="$(pm_config_repos_root "${config_path}")"
-[[ -n "${repos_root}" ]] || die "repos_root is required in config"
-[[ -d "${repos_root}" ]] || die "repos_root does not exist: ${repos_root}"
+projects_file="$(pm_resolve_projects_path "" "${config_path}")"
+[[ -n "${projects_file}" ]] || die "projects_file could not be resolved"
+[[ -f "${projects_file}" ]] || die "projects_file not found: ${projects_file}"
 
 default_branch="$(pm_config_default_branch "${config_path}")"
 [[ -n "${default_branch}" ]] || default_branch="main"
@@ -78,7 +78,7 @@ format_flag="json"
 
 python_cmd="$(pm_python_cmd)"
 report_output="$("${python_cmd}" "${script_dir}/lib/reporting.py" task-report \
-  --repos-root "${repos_root}" \
+  --projects-file "${projects_file}" \
   --format "${format_flag}" \
   --default-branch "${default_branch}" \
   --task "${task_id}" \

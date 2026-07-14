@@ -44,13 +44,13 @@ done
 config_path="$(pm_resolve_config_path "${config_path}")"
 pm_require_file "${config_path}"
 
-repos_root="$(pm_config_repos_root "${config_path}")"
-[[ -n "${repos_root}" ]] || die "repos_root is required in config"
+projects_file="$(pm_resolve_projects_path "" "${config_path}")"
+[[ -n "${projects_file}" ]] || die "projects_file could not be resolved"
 
 format_flag="text"
 [[ "${json_output}" == true ]] && format_flag="json"
 
 python_cmd="$(pm_python_cmd)"
 exec "${python_cmd}" "${script_dir}/lib/archivist.py" status \
-  --repos-root "${repos_root}" \
+  --projects-file "${projects_file}" \
   --format "${format_flag}"
