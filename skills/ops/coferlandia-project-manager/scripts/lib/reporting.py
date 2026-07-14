@@ -121,11 +121,29 @@ def _load_projects_file(projects_file: Path) -> list:
     return payload.get("projects", [])
 
 
-def iter_managed_projects(projects_file: Path):
-    """Yield resolved project Paths for active entries from projects.json, sorted.
+def _resolve_project_path(raw_path: str) -> Path:
+    """Resolve a project path from projects.json portably.
 
-    Unlike the legacy filesystem scan, projects come from an explicit list. A
-    listed path that is missing or not a git repo is still yielded so callers
+    projects.json stores absolute paths that may be Windows-style
+    (``C:/Users/.../repo`` or ``C:\\Users\\...\\repo``). When the PM runs under
+    Git Bash / MSYS, Python treats ``C:`` as a relative path segment and
+    wrongly joins it to the cwd. Normalize a Windows drive path to the MSYS
+    ``/mnt/<drive>/...`` form before resolving so the same entry works on both
+    native Windows Python and MSYS Python.
+    """
+    import re
+    cleaned = raw_path.replace("\\", "/")
+    m = re.match(r"^([A-Za-z]):/(.*)$", cleaned)
+    if m:
+        drive = m.group(1).lower()
+        cleaned = f"/mnt/{drive}/{m.group(2)}"
+    return Path(cleaned).resolve()
+
+
+def iter_managed_projects(projects_file: Path):
+    """Yield resolved project Paths for active entries from projects.json.
+
+    A listed path that is missing or not a git repo is still yielded so callers
     can surface it (e.g. as a conflict); callers that only want live repos
     should filter with ``_is_git_repo``.
     """
@@ -136,7 +154,7 @@ def iter_managed_projects(projects_file: Path):
         raw_path = entry.get("path") or ""
         if not raw_path:
             continue
-        resolved = Path(raw_path).resolve()
+        resolved = _resolve_project_path(raw_path)
         key = str(resolved)
         if key in seen:
             continue
@@ -157,7 +175,7 @@ def project_slug_map(projects_file: Path) -> dict:
         raw_path = entry.get("path") or ""
         if not raw_path:
             continue
-        resolved = Path(raw_path).resolve()
+        resolved = _resolve_project_path(raw_path)
         slug = entry.get("slug") or resolved.name
         mapping.setdefault(slug, resolved)
     return mapping
@@ -252,7 +270,9 @@ def parse_history_entries(history_path: Path, since_days: int = 7) -> list:
     text = history_path.read_text(encoding="utf-8")
     entries = []
     now = datetime.now(timezone.utc)
-    cutoff = now - timedelta(days=since_days)
+    # Compare whole calendar days so an entry dated exactly N days ago still
+    # counts as "within the last N days" regardless of the current time of day.
+    cutoff_date = (now - timedelta(days=since_days)).date()
     headings = list(_HISTORY_DATE_HEADING_RE.finditer(text))
 
     if not headings:
@@ -267,8 +287,8 @@ def parse_history_entries(history_path: Path, since_days: int = 7) -> list:
         section_start = heading.end()
         section_end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
         section_text = text[section_start:section_end]
-        section_date = datetime.fromisoformat(heading.group("date")).replace(tzinfo=timezone.utc)
-        if section_date < cutoff:
+        section_date = datetime.fromisoformat(heading.group("date")).date()
+        if section_date < cutoff_date:
             continue
         for match in _HISTORY_ENTRY_RE.finditer(section_text):
             line = match.group("line").strip()

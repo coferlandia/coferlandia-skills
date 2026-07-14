@@ -72,10 +72,45 @@ done
 
 [[ -n "${subcommand}" ]] || { print_help; exit 1; }
 
-# Remaining args belong to the subcommand.
+# Remaining args belong to the subcommand: parse flags (--json/--slug/--config/...)
+# and treat the first non-flag value as the target.
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --config)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --config"
+      config_path="$1"
+      ;;
+    --projects-file)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --projects-file"
+      projects_file_arg="$1"
+      ;;
+    --json)
+      json_output=true
+      ;;
+    --slug)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --slug"
+      slug_arg="$1"
+      ;;
+    --help|-h)
+      print_help
+      exit 0
+      ;;
+    -*)
+      die "Unknown argument: $1"
+      ;;
+    *)
+      [[ -z "${target}" ]] || die "Unexpected extra argument: $1"
+      target="$1"
+      ;;
+  esac
+  shift
+done
+
 if [[ "${subcommand}" == "add" || "${subcommand}" == "remove" ]]; then
-  [[ $# -gt 0 ]] || die "${subcommand} requires a <path> (add) or <slug|path> (remove) argument"
-  target="$1"
+  [[ -n "${target}" ]] || die "${subcommand} requires a <path> (add) or <slug|path> (remove) argument"
 fi
 
 config_path="$(pm_resolve_config_path "${config_path}")"
@@ -92,7 +127,10 @@ ensure_projects_file() {
 
 case "${subcommand}" in
   add)
-    target_path="$(cd -- "${target}" 2>/dev/null && pwd)" || die "Path does not exist: ${target}"
+    # Normalize Windows-style paths (C:\...) to a bash-friendly form so the
+    # cd below works under Git Bash / MSYS.
+    normalized_target="$(pm_normalize_path_for_bash "${target}")"
+    target_path="$(cd -- "${normalized_target}" 2>/dev/null && pwd)" || die "Path does not exist: ${target}"
     pm_git_is_repo "${target_path}" || die "Not a git repository: ${target_path}"
 
     slug="${slug_arg:-$(basename -- "${target_path}")}"

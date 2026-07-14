@@ -27,6 +27,7 @@ from reporting import (
     _build_git_state,
     _derive_project_pm_status,
     _git,
+    _resolve_project_path,
     parse_todo_tasks,
 )
 
@@ -85,10 +86,12 @@ def iter_projects(projects_file: Path):
     """
     seen = set()
     for entry in _load_projects_file(projects_file):
+        if entry.get("status", "active") != "active":
+            continue
         raw_path = entry.get("path") or ""
         if not raw_path:
             continue
-        project_path = Path(raw_path).resolve()
+        project_path = _resolve_project_path(raw_path)
         key = str(project_path)
         if key in seen:
             continue

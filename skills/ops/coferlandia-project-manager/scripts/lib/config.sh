@@ -173,15 +173,18 @@ pm_require_file() {
 }
 
 pm_python_cmd() {
-  if command -v python >/dev/null 2>&1; then
-    printf '%s\n' "python"
-    return 0
-  fi
+  local candidate
 
-  if command -v python3 >/dev/null 2>&1; then
-    printf '%s\n' "python3"
-    return 0
-  fi
+  for candidate in python python3; do
+    command -v "${candidate}" >/dev/null 2>&1 || continue
+    # Reject the Microsoft Store "python" stub on Windows, which prints a
+    # localized "Python not found" message and exits 0 without running Python.
+    # A real interpreter prints a "Python X.Y.Z" version line to stdout.
+    if "${candidate}" --version 2>/dev/null | grep -qi "^Python [0-9]"; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
 
-  die "Python interpreter not found. Expected 'python' or 'python3' in PATH."
+  die "Python interpreter not found. Expected 'python' or 'python3' (a real interpreter, not the Windows Store stub) in PATH."
 }

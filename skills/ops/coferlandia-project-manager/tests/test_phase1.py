@@ -30,6 +30,56 @@ def bash_path(path: Path) -> str:
     return resolved
 
 
+def _init_repo(repo_path: Path) -> None:
+    """Initialize a git repo at the given temp path and switch to the main branch."""
+    repo_relative = repo_path.relative_to(ROOT).as_posix()
+    init = subprocess.run(
+        ["bash", "-lc", f"git init '{repo_relative}' >/dev/null"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if init.returncode != 0:
+        raise RuntimeError(init.stderr)
+
+    checkout = subprocess.run(
+        ["bash", "-lc", f"git -C '{repo_relative}' checkout -b main >/dev/null"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if checkout.returncode != 0:
+        raise RuntimeError(checkout.stderr)
+
+
+def _write_projects_json(
+    config_path: Path, repo_paths: list[Path]
+) -> Path:
+    """Write projects.json next to config_path listing each repo as active.
+
+    Uses ABSOLUTE resolved posix paths for the path field (runtime contract).
+    Returns the projects.json path (absolute).
+    """
+    entries = []
+    for repo_path in repo_paths:
+        entries.append(
+            {
+                "slug": repo_path.name,
+                "path": repo_path.resolve().as_posix(),
+                "added_at": "2026-07-13T12:00:00Z",
+                "status": "active",
+            }
+        )
+    projects_path = config_path.parent / "projects.json"
+    projects_path.write_text(
+        json.dumps({"version": 1, "projects": entries}, indent=2),
+        encoding="utf-8",
+    )
+    return projects_path
+
+
 @contextmanager
 def make_repo_temp_config(name: str):
     (ROOT / ".test-tmp").mkdir(exist_ok=True)
@@ -97,26 +147,7 @@ def make_phase2_portfolio():
         dirty_repo.mkdir()
 
         for repo_path in (clean_repo, dirty_repo):
-            repo_relative = repo_path.relative_to(ROOT).as_posix()
-            init = subprocess.run(
-                ["bash", "-lc", f"git init '{repo_relative}' >/dev/null"],
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            if init.returncode != 0:
-                raise RuntimeError(init.stderr)
-
-            checkout = subprocess.run(
-                ["bash", "-lc", f"git -C '{repo_relative}' checkout -b main >/dev/null"],
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            if checkout.returncode != 0:
-                raise RuntimeError(checkout.stderr)
+            _init_repo(repo_path)
 
         (clean_repo / "tracked.txt").write_text("hello\n", encoding="utf-8")
         clean_relative = clean_repo.relative_to(ROOT).as_posix()
@@ -156,14 +187,16 @@ def make_phase2_portfolio():
         config = json.loads(
             (SKILL_ROOT / "examples" / "config.sample.json").read_text(encoding="utf-8")
         )
-        config["repos_root"] = repos_root.resolve().as_posix()
 
         config_path = base / "config.json"
         config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+        projects_path = _write_projects_json(config_path, [clean_repo, dirty_repo])
 
         relative_config = config_path.relative_to(ROOT).as_posix()
+        relative_projects = projects_path.relative_to(ROOT).as_posix()
         yield {
             "config_path": relative_config,
+            "projects_file": relative_projects,
             "repos_root": repos_root,
             "clean_repo": clean_repo,
             "dirty_repo": dirty_repo,
@@ -187,26 +220,7 @@ def make_phase4_portfolio():
         incomplete_repo.mkdir()
 
         for repo_path in (complete_repo, incomplete_repo):
-            repo_relative = repo_path.relative_to(ROOT).as_posix()
-            init = subprocess.run(
-                ["bash", "-lc", f"git init '{repo_relative}' >/dev/null"],
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            if init.returncode != 0:
-                raise RuntimeError(init.stderr)
-
-            checkout = subprocess.run(
-                ["bash", "-lc", f"git -C '{repo_relative}' checkout -b main >/dev/null"],
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            if checkout.returncode != 0:
-                raise RuntimeError(checkout.stderr)
+            _init_repo(repo_path)
 
         for filename in ("README.md", "TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
             (complete_repo / filename).write_text(f"# {filename}\n", encoding="utf-8")
@@ -216,14 +230,18 @@ def make_phase4_portfolio():
         config = json.loads(
             (SKILL_ROOT / "examples" / "config.sample.json").read_text(encoding="utf-8")
         )
-        config["repos_root"] = repos_root.resolve().as_posix()
 
         config_path = base / "config.json"
         config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+        projects_path = _write_projects_json(
+            config_path, [complete_repo, incomplete_repo]
+        )
 
         relative_config = config_path.relative_to(ROOT).as_posix()
+        relative_projects = projects_path.relative_to(ROOT).as_posix()
         yield {
             "config_path": relative_config,
+            "projects_file": relative_projects,
             "repos_root": repos_root,
             "complete_repo": complete_repo,
             "incomplete_repo": incomplete_repo,
@@ -308,11 +326,11 @@ class Phase1Tests(unittest.TestCase):
             result.stdout.strip().endswith("/.coferlandia/project-manager/config.json")
         )
 
-    def test_config_helpers_read_repos_root_and_default_branch(self) -> None:
+    def test_config_helpers_resolve_projects_path_and_default_branch(self) -> None:
         config_path = "skills/ops/coferlandia-project-manager/examples/config.sample.json"
         command = (
             "source skills/ops/coferlandia-project-manager/scripts/lib/config.sh; "
-            f"pm_config_repos_root '{config_path}' && "
+            f"pm_resolve_projects_path '' '{config_path}' && "
             f"pm_config_default_branch '{config_path}'"
         )
         result = run_script("bash", "-lc", command)
@@ -320,19 +338,25 @@ class Phase1Tests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         lines = [line for line in result.stdout.splitlines() if line.strip()]
         self.assertGreaterEqual(len(lines), 2)
-        self.assertEqual(lines[1], "main")
+        # Default branch still reads from the config.
+        self.assertEqual(lines[-1], "main")
 
-    def test_config_helper_normalizes_windows_style_repos_root_for_bash(self) -> None:
+    def test_config_helper_normalizes_windows_style_project_paths_for_bash(self) -> None:
         with make_phase2_portfolio() as portfolio:
+            # pm_projects_paths prints the bash-normalized form of each active project path.
             command = (
-                "source skills/ops/coferlandia-project-manager/scripts/lib/config.sh; "
-                f"pm_config_repos_root '{portfolio['config_path']}'"
+                "source skills/ops/coferlandia-project-manager/scripts/lib/discovery.sh; "
+                f"pm_projects_paths '{portfolio['projects_file']}'"
             )
             result = run_script("bash", "-lc", command)
 
             self.assertEqual(result.returncode, 0, result.stderr)
-            normalized = result.stdout.strip()
-            self.assertTrue(normalized.startswith("/"))
+            normalized_lines = [
+                line for line in result.stdout.splitlines() if line.strip()
+            ]
+            self.assertEqual(len(normalized_lines), 2)
+            for normalized in normalized_lines:
+                self.assertTrue(normalized.startswith("/"))
 
     def test_git_helpers_detect_repo_and_branch(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".test-tmp") as tempdir_name:
@@ -379,14 +403,7 @@ class Phase1Tests(unittest.TestCase):
     def test_doctor_uses_configured_vault_root_when_present(self) -> None:
         with make_repo_temp_config("doctor-configured-vault") as config_path:
             config_file = ROOT / config_path
-            sample_config = (
-                ROOT
-                / ".agents"
-                / "skills"
-                / "coferlandia-project-manager"
-                / "examples"
-                / "config.sample.json"
-            )
+            sample_config = SKILL_ROOT / "examples" / "config.sample.json"
             config = json.loads(sample_config.read_text(encoding="utf-8"))
             config["obsidian"]["vault_root"] = "C:/custom/vault"
             config_file.write_text(json.dumps(config, indent=2), encoding="utf-8")
@@ -474,7 +491,7 @@ class Phase1Tests(unittest.TestCase):
 
         self.assertEqual(payload["version"], 1)
         self.assertIn("last_scan_at", payload)
-        self.assertIn("repos_root", payload)
+        self.assertIn("projects_file", payload)
         self.assertIn("projects_detected", payload)
         self.assertIn("maintenance", payload)
         self.assertIn("runtime", payload)
@@ -524,7 +541,7 @@ class Phase1Tests(unittest.TestCase):
         skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
 
         self.assertIn("## State Files", skill_text)
-        self.assertIn("## Project Discovery Rules", skill_text)
+        self.assertIn("## Managed Projects Rules", skill_text)
         self.assertIn("## Git Policy", skill_text)
 
     def test_phase2_detect_and_scan_repositories_end_to_end(self) -> None:
@@ -1107,26 +1124,7 @@ def make_phase6_portfolio():
         repo_b.mkdir()
 
         for repo_path in (repo_a, repo_b):
-            repo_relative = repo_path.relative_to(ROOT).as_posix()
-            init = subprocess.run(
-                ["bash", "-lc", f"git init '{repo_relative}' >/dev/null"],
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            if init.returncode != 0:
-                raise RuntimeError(init.stderr)
-
-            checkout = subprocess.run(
-                ["bash", "-lc", f"git -C '{repo_relative}' checkout -b main >/dev/null"],
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            if checkout.returncode != 0:
-                raise RuntimeError(checkout.stderr)
+            _init_repo(repo_path)
 
         # repo-a: fully initialized archivist + TODO with varied tasks.
         for filename in ("README.md", "TODO.md", "HISTORY.md", "DECISIONS.md", "RUNBOOK.md", "AGENTS.md"):
@@ -1177,14 +1175,16 @@ def make_phase6_portfolio():
         config = json.loads(
             (SKILL_ROOT / "examples" / "config.sample.json").read_text(encoding="utf-8")
         )
-        config["repos_root"] = repos_root.resolve().as_posix()
 
         config_path = base / "config.json"
         config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+        projects_path = _write_projects_json(config_path, [repo_a, repo_b])
 
         relative_config = config_path.relative_to(ROOT).as_posix()
+        relative_projects = projects_path.relative_to(ROOT).as_posix()
         yield {
             "config_path": relative_config,
+            "projects_file": relative_projects,
             "repos_root": repos_root,
             "repo_a": repo_a,
             "repo_b": repo_b,
@@ -1769,6 +1769,218 @@ class Phase6Tests(unittest.TestCase):
             self.assertEqual(payload["current_status"], "ready-for-agent")
             self.assertEqual(payload["required_next_skill"], "superpowers:executing-plans")
             self.assertFalse(payload["executes_work"])
+
+
+@contextmanager
+def make_projects_workspace(init_repos: int = 0):
+    """Create a temp PM home with a config.json and (optionally) N git repos.
+
+    Does NOT write projects.json by default: scripts under test seed it on
+    onboarding, or the test adds repos via pm-manage-projects.sh. Yields the
+    config/projects paths as relative-to-ROOT posix strings plus absolute repo
+    paths in the `repos` list.
+    """
+    (ROOT / ".test-tmp").mkdir(exist_ok=True)
+    tempdir = tempfile.TemporaryDirectory(dir=ROOT / ".test-tmp")
+    try:
+        base = Path(tempdir.name)
+        config_path = base / "config.json"
+        config = json.loads(
+            (SKILL_ROOT / "examples" / "config.sample.json").read_text(encoding="utf-8")
+        )
+        config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+        repos: list[Path] = []
+        for index in range(init_repos):
+            repo_path = base / f"repo-{index + 1}"
+            repo_path.mkdir()
+            _init_repo(repo_path)
+            repos.append(repo_path)
+
+        relative_config = config_path.relative_to(ROOT).as_posix()
+        yield {
+            "config_path": relative_config,
+            "config_abs": config_path,
+            "repos": repos,
+        }
+    finally:
+        tempdir.cleanup()
+
+
+class ProjectsJsonTests(unittest.TestCase):
+    def test_pm_manage_projects_add_creates_entry(self) -> None:
+        with make_projects_workspace(init_repos=1) as workspace:
+            repo = workspace["repos"][0]
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-manage-projects.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "add",
+                bash_path(repo),
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["active_count"], 1)
+
+            projects_path = workspace["config_abs"].parent / "projects.json"
+            self.assertTrue(projects_path.exists())
+            on_disk = json.loads(projects_path.read_text(encoding="utf-8"))
+            actives = [
+                e for e in on_disk.get("projects", [])
+                if e.get("status", "active") == "active"
+            ]
+            self.assertEqual(len(actives), 1)
+            entry = actives[0]
+            self.assertEqual(entry["slug"], repo.name)
+            # The stored path may be MSYS-style (/mnt/c/...) or Windows-style
+            # (C:/...) depending on the bash runtime; compare the drive-less
+            # suffix so both forms pass.
+            stored_suffix = entry["path"].replace("\\", "/").split(":/")[-1].split("/mnt/c/")[-1]
+            expected_suffix = repo.resolve().as_posix().replace("\\", "/").split(":/")[-1]
+            self.assertEqual(stored_suffix, expected_suffix)
+            self.assertEqual(entry["status"], "active")
+
+    def test_pm_manage_projects_add_rejects_duplicate(self) -> None:
+        with make_projects_workspace(init_repos=1) as workspace:
+            repo = workspace["repos"][0]
+            first = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-manage-projects.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "add",
+                bash_path(repo),
+                "--json",
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+
+            second = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-manage-projects.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "add",
+                bash_path(repo),
+                "--json",
+            )
+
+            self.assertNotEqual(second.returncode, 0)
+            self.assertIn(
+                "already registered",
+                (second.stderr + second.stdout).lower(),
+            )
+
+    def test_pm_manage_projects_remove_archives(self) -> None:
+        with make_projects_workspace(init_repos=1) as workspace:
+            repo = workspace["repos"][0]
+            add = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-manage-projects.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "add",
+                bash_path(repo),
+                "--json",
+            )
+            self.assertEqual(add.returncode, 0, add.stderr)
+
+            remove = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-manage-projects.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "remove",
+                repo.name,
+                "--json",
+            )
+
+            self.assertEqual(remove.returncode, 0, remove.stderr)
+            payload = json.loads(remove.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["active_count"], 0)
+
+            projects_path = workspace["config_abs"].parent / "projects.json"
+            on_disk = json.loads(projects_path.read_text(encoding="utf-8"))
+            # The entry must remain on disk, but archived (not deleted).
+            matches = [
+                e for e in on_disk.get("projects", [])
+                if e.get("slug") == repo.name
+            ]
+            self.assertEqual(len(matches), 1)
+            self.assertEqual(matches[0]["status"], "archived")
+
+    def test_pm_manage_projects_list_json(self) -> None:
+        with make_projects_workspace(init_repos=2) as workspace:
+            for repo in workspace["repos"]:
+                add = run_script(
+                    "bash",
+                    str((SCRIPTS_ROOT / "pm-manage-projects.sh").as_posix()),
+                    "--config",
+                    workspace["config_path"],
+                    "add",
+                    bash_path(repo),
+                    "--json",
+                )
+                self.assertEqual(add.returncode, 0, add.stderr)
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-manage-projects.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "list",
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["projects_detected"], 2)
+
+    def test_onboard_seeds_empty_projects_json(self) -> None:
+        with make_projects_workspace(init_repos=0) as workspace:
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-onboard.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "--apply",
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["projects_status"], "empty")
+            self.assertEqual(
+                payload["next_approved_action"], "add_first_project"
+            )
+
+            projects_path = workspace["config_abs"].parent / "projects.json"
+            self.assertTrue(projects_path.exists())
+
+    def test_detect_projects_reads_projects_json(self) -> None:
+        with make_projects_workspace(init_repos=1) as workspace:
+            repo = workspace["repos"][0]
+            # Seed projects.json explicitly with one active entry.
+            _write_projects_json(workspace["config_abs"], [repo])
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-detect-projects.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["projects_detected"], 1)
+            self.assertEqual(payload["projects"][0]["project_slug"], repo.name)
 
 
 if __name__ == "__main__":

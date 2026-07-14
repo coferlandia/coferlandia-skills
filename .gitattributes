@@ -1,0 +1,6 @@
+# Normalize line endings to LF for shell and Python sources so they run
+# correctly under Git Bash / MSYS on Windows regardless of core.autocrlf.
+*.sh   text eol=lf
+*.py   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
