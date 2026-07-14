@@ -32,8 +32,11 @@ pm_projects_default_target() {
   printf '%s\n' "$(pm_repo_root)/.coferlandia/project-manager/projects.json"
 }
 
-# Resolve the projects.json path: an explicit --projects-file wins; otherwise an
-# optional config key "projects_file" is honored; finally the repo-local default.
+# Resolve the projects.json path. Precedence:
+#   1. explicit --projects-file argument
+#   2. "projects_file" key in the config
+#   3. sibling of config_path (same directory) when config_path is explicit
+#   4. repo-local default under $(pm_repo_root)
 pm_resolve_projects_path() {
   local projects_file="${1:-}"
   local config_path="${2:-}"
@@ -50,6 +53,9 @@ pm_resolve_projects_path() {
       printf '%s\n' "${configured}"
       return 0
     fi
+    # Default to a sibling of the config file so --config alone locates state.
+    printf '%s\n' "$(dirname -- "${config_path}")/projects.json"
+    return 0
   fi
 
   pm_projects_default_target
