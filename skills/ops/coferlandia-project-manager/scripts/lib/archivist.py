@@ -28,6 +28,7 @@ from reporting import (
     _derive_project_pm_status,
     _git,
     _resolve_project_path,
+    iter_managed_project_entries,
     parse_todo_tasks,
 )
 
@@ -78,25 +79,14 @@ def _load_projects_file(projects_file: Path) -> list:
 
 
 def iter_projects(projects_file: Path):
-    """Yield ``(project_path, is_git_repo)`` for each active project in projects.json.
+    """Yield ``(slug, project_path, is_git_repo)`` for active projects.
 
     A listed path that does not exist or is not a git repo is yielded with
     ``is_git_repo=False`` so callers can surface it (e.g. as a
     ``repo_path_missing`` conflict).
     """
-    seen = set()
-    for entry in _load_projects_file(projects_file):
-        if entry.get("status", "active") != "active":
-            continue
-        raw_path = entry.get("path") or ""
-        if not raw_path:
-            continue
-        project_path = _resolve_project_path(raw_path)
-        key = str(project_path)
-        if key in seen:
-            continue
-        seen.add(key)
-        yield project_path, _is_git_repo(project_path)
+    for slug, project_path in iter_managed_project_entries(projects_file):
+        yield slug, project_path, _is_git_repo(project_path)
 
 
 def missing_artifacts(project_path: Path) -> list:
@@ -404,12 +394,12 @@ def _task_note_order() -> list[str]:
 def _project_snapshots(projects_file: Path, config: dict) -> list[dict]:
     snapshots = []
     default_branch = _config_value(config, "git", "default_branch", default="main")
-    for project_path, is_git in iter_projects(projects_file):
+    for project_slug, project_path, is_git in iter_projects(projects_file):
         if not is_git:
             continue
         tasks = parse_todo_tasks(project_path / "TODO.md")
         snapshot = {
-            "project_slug": project_path.name,
+            "project_slug": project_slug,
             "repo_path": project_path.as_posix(),
             "git": _build_git_state(project_path, default_branch),
             "tasks": tasks,
@@ -708,10 +698,10 @@ def _update_maintenance_state(config_path: Path, projects_file: Path, projects: 
     return payload
 
 
-def _project_entry(project_path: Path) -> dict:
+def _project_entry(project_slug: str, project_path: Path) -> dict:
     missing = missing_artifacts(project_path)
     return {
-        "project_slug": project_path.name,
+        "project_slug": project_slug,
         "repo_path": project_path.as_posix(),
         "archivist_initialized": not missing,
         "expected_artifacts": {
@@ -724,8 +714,8 @@ def _project_entry(project_path: Path) -> dict:
 def cmd_status(args: argparse.Namespace) -> dict:
     """Report archivist artifact presence per project (git repos only)."""
     projects = [
-        _project_entry(project_path)
-        for project_path, is_git in iter_projects(args.projects_file)
+        _project_entry(project_slug, project_path)
+        for project_slug, project_path, is_git in iter_projects(args.projects_file)
         if is_git
     ]
     return {"status": "ok", "projects_detected": len(projects), "projects": projects}
@@ -734,8 +724,8 @@ def cmd_status(args: argparse.Namespace) -> dict:
 def cmd_sync_plan(args: argparse.Namespace) -> dict:
     """Map repo documentation into PM state without writing (dry-run only)."""
     projects = [
-        _project_entry(project_path)
-        for project_path, is_git in iter_projects(args.projects_file)
+        _project_entry(project_slug, project_path)
+        for project_slug, project_path, is_git in iter_projects(args.projects_file)
         if is_git
     ]
     syncable = sum(1 for p in projects if p["archivist_initialized"])
@@ -822,11 +812,11 @@ def cmd_conflicts(args: argparse.Namespace) -> dict:
     edits, archival mismatches) is future work and intentionally not promised.
     """
     conflicts = []
-    for project_path, is_git in iter_projects(args.projects_file):
+    for project_slug, project_path, is_git in iter_projects(args.projects_file):
         if not is_git:
             conflicts.append(
                 {
-                    "project_slug": project_path.name,
+                    "project_slug": project_slug,
                     "repo_path": project_path.as_posix(),
                     "type": "repo_path_missing",
                     "details": "Project path is not a Git repository.",
@@ -837,7 +827,7 @@ def cmd_conflicts(args: argparse.Namespace) -> dict:
         if missing:
             conflicts.append(
                 {
-                    "project_slug": project_path.name,
+                    "project_slug": project_slug,
                     "repo_path": project_path.as_posix(),
                     "type": "missing_archivist_artifact",
                     "missing_artifacts": missing,

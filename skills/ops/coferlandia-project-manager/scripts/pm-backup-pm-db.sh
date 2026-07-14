@@ -47,6 +47,7 @@ pm_require_file "${config_path}"
 
 projects_file="$(pm_resolve_projects_path "" "${config_path}")"
 [[ -n "${projects_file}" ]] || die "projects_file could not be resolved"
+[[ -f "${projects_file}" ]] || die "projects_file not found: ${projects_file}"
 
 python_cmd="$(pm_python_cmd)"
 args=(

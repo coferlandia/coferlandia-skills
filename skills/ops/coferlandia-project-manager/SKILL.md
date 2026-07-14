@@ -16,9 +16,10 @@ compatibility: >
   synchronization.
 metadata:
   author: coferlandia
-  version: "0.5.0"
+  version: "0.5.1"
   category: ops
   status: active
+  tested: "2026-07-14 - ProjectsJsonTests passes: custom slug preservation, projects_file guards, onboarding, and project management lifecycle."
 ---
 
 ## Context

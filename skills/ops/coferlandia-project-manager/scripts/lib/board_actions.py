@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from reporting import VALID_TASK_STATUSES, iter_managed_projects, _is_git_repo, _missing_artifacts, parse_todo_tasks
+from reporting import VALID_TASK_STATUSES, iter_managed_project_entries, _is_git_repo, _missing_artifacts, parse_todo_tasks
 
 
 ACTIONABLE_STATES = {
@@ -36,7 +36,7 @@ ACTIONABLE_STATES = {
 
 def _find_task(projects_file: Path, task_id: str) -> dict | None:
     task_id_lower = task_id.lower()
-    for project_path in iter_managed_projects(projects_file):
+    for project_slug, project_path in iter_managed_project_entries(projects_file):
         if not _is_git_repo(project_path):
             continue
         for task in parse_todo_tasks(project_path / "TODO.md"):
@@ -44,7 +44,7 @@ def _find_task(projects_file: Path, task_id: str) -> dict | None:
             if candidate == task_id_lower:
                 return {
                     **task,
-                    "project_slug": project_path.name,
+                    "project_slug": project_slug,
                     "repo_path": project_path.as_posix(),
                 }
     return None

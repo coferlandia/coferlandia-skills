@@ -6,6 +6,7 @@
     "exclude": [
       "RELEASE-NOTES.md",
       ".git",
+      ".zcode",
       ".version-bump.json",
       "_protocol/scripts/bump_version.py",
       "coferlandia-skills.plugin",

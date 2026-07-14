@@ -1808,6 +1808,90 @@ def make_projects_workspace(init_repos: int = 0):
 
 
 class ProjectsJsonTests(unittest.TestCase):
+    def test_migrated_entry_points_require_projects_file(self) -> None:
+        entry_points = (
+            "pm-backup-pm-db.sh",
+            "pm-check-archivist.sh",
+            "pm-detect-conflicts.sh",
+            "pm-sync-from-repos.sh",
+            "pm-sync-to-obsidian.sh",
+            "pm-weekly-maintenance.sh",
+        )
+        required_check = '[[ -f "${projects_file}" ]]'
+
+        for entry_point in entry_points:
+            script_text = (SCRIPTS_ROOT / entry_point).read_text(encoding="utf-8")
+            self.assertIn(required_check, script_text, entry_point)
+
+    def test_portfolio_preserves_custom_slug_and_projects_count(self) -> None:
+        with make_projects_workspace(init_repos=1) as workspace:
+            repo = workspace["repos"][0]
+            projects_path = workspace["config_abs"].parent / "projects.json"
+            projects_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "projects": [
+                            {
+                                "slug": "customer-api",
+                                "path": repo.resolve().as_posix(),
+                                "added_at": "2026-07-13T12:00:00Z",
+                                "status": "active",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-portfolio-report.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["projects_count"], 1)
+            self.assertEqual(payload["projects"][0]["project_slug"], "customer-api")
+
+    def test_detect_conflicts_reports_non_git_listed_project(self) -> None:
+        with make_projects_workspace() as workspace:
+            missing_repo = workspace["config_abs"].parent / "missing-repo"
+            projects_path = workspace["config_abs"].parent / "projects.json"
+            projects_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "projects": [
+                            {
+                                "slug": "retired-api",
+                                "path": missing_repo.as_posix(),
+                                "added_at": "2026-07-13T12:00:00Z",
+                                "status": "active",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = run_script(
+                "bash",
+                str((SCRIPTS_ROOT / "pm-detect-conflicts.sh").as_posix()),
+                "--config",
+                workspace["config_path"],
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["conflict_count"], 1)
+            self.assertEqual(payload["conflicts"][0]["type"], "repo_path_missing")
+            self.assertEqual(payload["conflicts"][0]["project_slug"], "retired-api")
+
     def test_pm_manage_projects_add_creates_entry(self) -> None:
         with make_projects_workspace(init_repos=1) as workspace:
             repo = workspace["repos"][0]

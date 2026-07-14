@@ -1,5 +1,19 @@
 # Coferlandia Skills Release Notes
 
+## v1.8.0 (2026-07-14)
+
+### Skills
+
+- **coferlandia-project-manager** (`ops`) â€” v0.5.1. Preserves explicit
+  `projects.json` slugs across portfolio, health, archivist, and board outputs;
+  reports `projects_count`; and rejects runtime commands when the managed-project
+  manifest is absent instead of treating it as an empty portfolio.
+
+### Repository
+
+- `coferlandia-skills` â€” ships the `skills/ops` category in the plugin manifest,
+  including `coferlandia-project-manager` at its canonical location.
+
 ## v1.7.0 (2026-07-13)
 
 ### Skills

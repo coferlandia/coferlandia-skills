@@ -140,8 +140,8 @@ def _resolve_project_path(raw_path: str) -> Path:
     return Path(cleaned).resolve()
 
 
-def iter_managed_projects(projects_file: Path):
-    """Yield resolved project Paths for active entries from projects.json.
+def iter_managed_project_entries(projects_file: Path):
+    """Yield ``(slug, resolved_path)`` for active entries in projects.json.
 
     A listed path that is missing or not a git repo is still yielded so callers
     can surface it (e.g. as a conflict); callers that only want live repos
@@ -159,7 +159,13 @@ def iter_managed_projects(projects_file: Path):
         if key in seen:
             continue
         seen.add(key)
-        yield resolved
+        yield entry.get("slug") or resolved.name, resolved
+
+
+def iter_managed_projects(projects_file: Path):
+    """Yield resolved project Paths for callers that do not need the slug."""
+    for _, project_path in iter_managed_project_entries(projects_file):
+        yield project_path
 
 
 def project_slug_map(projects_file: Path) -> dict:
@@ -169,14 +175,7 @@ def project_slug_map(projects_file: Path) -> dict:
     derived from the basename of ``path``.
     """
     mapping: dict[str, Path] = {}
-    for entry in _load_projects_file(projects_file):
-        if entry.get("status", "active") != "active":
-            continue
-        raw_path = entry.get("path") or ""
-        if not raw_path:
-            continue
-        resolved = _resolve_project_path(raw_path)
-        slug = entry.get("slug") or resolved.name
+    for slug, resolved in iter_managed_project_entries(projects_file):
         mapping.setdefault(slug, resolved)
     return mapping
 
@@ -455,10 +454,9 @@ def cmd_portfolio_report(args: argparse.Namespace) -> dict:
     waiting_code_review = 0
     needs_maintenance = 0
 
-    for project_path in iter_managed_projects(projects_file):
+    for slug, project_path in iter_managed_project_entries(projects_file):
         if not _is_git_repo(project_path):
             continue
-        slug = project_path.name
         git_state = _build_git_state(project_path, default_branch)
         missing = _missing_artifacts(project_path)
 
@@ -531,6 +529,7 @@ def cmd_portfolio_report(args: argparse.Namespace) -> dict:
         "status": "ok",
         "generated_at": _now_iso(),
         "projects_file": projects_file.as_posix(),
+        "projects_count": len(projects_data),
         "summary": {
             "active_projects": total_active,
             "blocked_projects": total_blocked,
@@ -604,27 +603,27 @@ def cmd_task_report(args: argparse.Namespace) -> dict:
     task_id = args.task.lower()
 
     found = None
-    for project_path in iter_managed_projects(projects_file):
+    for slug, project_path in iter_managed_project_entries(projects_file):
         if not _is_git_repo(project_path):
             continue
         tasks = parse_todo_tasks(project_path / "TODO.md")
         for task in tasks:
             tid = (task.get("task_id") or "").lower()
             if tid and tid == task_id:
-                found = {**task, "project": project_path.name, "repo_path": project_path.as_posix()}
+                found = {**task, "project": slug, "repo_path": project_path.as_posix()}
                 break
         if found:
             break
 
     if not found:
         # Broaden search: look for task_id as a substring in task titles.
-        for project_path in iter_managed_projects(projects_file):
+        for slug, project_path in iter_managed_project_entries(projects_file):
             if not _is_git_repo(project_path):
                 continue
             tasks = parse_todo_tasks(project_path / "TODO.md")
             for task in tasks:
                 if task_id in task["title"].lower():
-                    found = {**task, "project": project_path.name, "repo_path": project_path.as_posix()}
+                    found = {**task, "project": slug, "repo_path": project_path.as_posix()}
                     break
             if found:
                 break
@@ -653,11 +652,10 @@ def cmd_health_check(args: argparse.Namespace) -> dict:
     total_projects = 0
     healthy_count = 0
 
-    for project_path in iter_managed_projects(projects_file):
+    for slug, project_path in iter_managed_project_entries(projects_file):
         if not _is_git_repo(project_path):
             continue
         total_projects += 1
-        slug = project_path.name
         git_state = _build_git_state(project_path, default_branch)
         missing = _missing_artifacts(project_path)
 
@@ -695,6 +693,7 @@ def cmd_health_check(args: argparse.Namespace) -> dict:
         "status": "ok",
         "generated_at": _now_iso(),
         "projects_file": projects_file.as_posix(),
+        "projects_count": total_projects,
         "summary": {
             "total_projects": total_projects,
             "healthy_projects": healthy_count,
@@ -718,10 +717,11 @@ def cmd_worktree_cleanup(args: argparse.Namespace) -> dict:
     projects_file = args.projects_file
     suggestions = []
 
-    for project_path in iter_managed_projects(projects_file):
+    projects_count = 0
+    for slug, project_path in iter_managed_project_entries(projects_file):
         if not _is_git_repo(project_path):
             continue
-        slug = project_path.name
+        projects_count += 1
         worktrees = _list_worktrees(project_path)
 
         for wt in worktrees:
@@ -741,6 +741,7 @@ def cmd_worktree_cleanup(args: argparse.Namespace) -> dict:
         "status": "ok",
         "generated_at": _now_iso(),
         "projects_file": projects_file.as_posix(),
+        "projects_count": projects_count,
         "mode": args.mode or "dry-run",
         "summary": {
             "total_worktrees": len(suggestions),
