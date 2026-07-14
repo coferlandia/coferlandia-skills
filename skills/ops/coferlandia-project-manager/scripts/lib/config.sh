@@ -24,6 +24,37 @@ pm_config_default_target() {
   printf '%s\n' "$(pm_repo_root)/.coferlandia/project-manager/config.json"
 }
 
+pm_projects_template_path() {
+  printf '%s\n' "$(pm_skill_root)/templates/projects.template.json"
+}
+
+pm_projects_default_target() {
+  printf '%s\n' "$(pm_repo_root)/.coferlandia/project-manager/projects.json"
+}
+
+# Resolve the projects.json path: an explicit --projects-file wins; otherwise an
+# optional config key "projects_file" is honored; finally the repo-local default.
+pm_resolve_projects_path() {
+  local projects_file="${1:-}"
+  local config_path="${2:-}"
+
+  if [[ -n "${projects_file}" ]]; then
+    printf '%s\n' "${projects_file}"
+    return 0
+  fi
+
+  if [[ -n "${config_path}" && -f "${config_path}" ]]; then
+    local configured
+    configured="$(pm_config_json_value "${config_path}" "projects_file" 2>/dev/null || true)"
+    if [[ -n "${configured}" ]]; then
+      printf '%s\n' "${configured}"
+      return 0
+    fi
+  fi
+
+  pm_projects_default_target
+}
+
 pm_default_obsidian_vault_root() {
   printf '%s\n' "$(pm_repo_root)/obsidian"
 }
@@ -99,11 +130,30 @@ else:
 PY
 }
 
-pm_config_repos_root() {
-  local config_path="$1"
-  local repos_root
-  repos_root="$(pm_config_json_value "$config_path" "repos_root")"
-  pm_normalize_path_for_bash "$repos_root"
+pm_load_project_paths() {
+  local projects_file="$1"
+  [[ -f "${projects_file}" ]] || return 0
+  local python_cmd
+  python_cmd="$(pm_python_cmd)"
+
+"${python_cmd}" - "${projects_file}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+projects_file = Path(sys.argv[1])
+try:
+    payload = json.loads(projects_file.read_text(encoding="utf-8"))
+except json.JSONDecodeError as exc:
+    raise SystemExit(f"Invalid JSON in {projects_file}: {exc}") from exc
+
+for entry in payload.get("projects", []):
+    if entry.get("status", "active") != "active":
+        continue
+    path = entry.get("path", "")
+    if path:
+        print(path)
+PY
 }
 
 pm_config_default_branch() {

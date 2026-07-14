@@ -10,14 +10,13 @@ pm_project_slug_from_path() {
   basename -- "$1"
 }
 
-pm_discover_project_paths() {
-  local repos_root="$1"
-  [[ -n "${repos_root}" ]] || return 0
-  [[ -d "${repos_root}" ]] || return 0
+pm_projects_paths() {
+  local projects_file="$1"
+  [[ -n "${projects_file}" ]] || return 0
 
-  find "${repos_root}" -mindepth 1 -maxdepth 1 -type d | sort | while IFS= read -r project_path; do
+  pm_load_project_paths "${projects_file}" | while IFS= read -r project_path; do
     [[ -n "${project_path}" ]] || continue
-    pm_git_is_repo "${project_path}" && printf '%s\n' "${project_path}"
+    pm_normalize_path_for_bash "${project_path}"
   done
 }
 

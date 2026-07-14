@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "generated_at": "2026-07-08T143000Z",
-  "repos_root": "/path/to/repos",
+  "projects_file": "/path/to/pm-home/.coferlandia/project-manager/projects.json",
   "mode": "dry-run",
   "summary": {
     "total_worktrees": 4,

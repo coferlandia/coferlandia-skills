@@ -31,7 +31,7 @@ from reporting import (
 )
 
 # Canonical set of artifacts the project-documentation-archivist manages.
-# Every direct-child git repo under repos_root is expected to contain these.
+# Every active project listed in projects.json is expected to contain these.
 # This tuple is the one source of truth — the bash layer and every PM
 # archivist command read from it.
 EXPECTED_ARTIFACTS = (
@@ -65,11 +65,34 @@ def _pm_repo_root() -> Path:
     return Path.cwd()
 
 
-def iter_projects(repos_root: Path):
-    """Yield ``(project_path, is_git_repo)`` for each direct child dir, sorted."""
-    if not repos_root.is_dir():
-        return
-    for project_path in sorted(p for p in repos_root.iterdir() if p.is_dir()):
+def _load_projects_file(projects_file: Path) -> list:
+    """Read projects.json and return active project entries as raw dicts."""
+    if not projects_file.is_file():
+        return []
+    try:
+        payload = json.loads(projects_file.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+    return [e for e in payload.get("projects", []) if e.get("status", "active") == "active"]
+
+
+def iter_projects(projects_file: Path):
+    """Yield ``(project_path, is_git_repo)`` for each active project in projects.json.
+
+    A listed path that does not exist or is not a git repo is yielded with
+    ``is_git_repo=False`` so callers can surface it (e.g. as a
+    ``repo_path_missing`` conflict).
+    """
+    seen = set()
+    for entry in _load_projects_file(projects_file):
+        raw_path = entry.get("path") or ""
+        if not raw_path:
+            continue
+        project_path = Path(raw_path).resolve()
+        key = str(project_path)
+        if key in seen:
+            continue
+        seen.add(key)
         yield project_path, _is_git_repo(project_path)
 
 
@@ -375,10 +398,10 @@ def _task_note_order() -> list[str]:
     ]
 
 
-def _project_snapshots(repos_root: Path, config: dict) -> list[dict]:
+def _project_snapshots(projects_file: Path, config: dict) -> list[dict]:
     snapshots = []
     default_branch = _config_value(config, "git", "default_branch", default="main")
-    for project_path, is_git in iter_projects(repos_root):
+    for project_path, is_git in iter_projects(projects_file):
         if not is_git:
             continue
         tasks = parse_todo_tasks(project_path / "TODO.md")
@@ -420,13 +443,13 @@ def _read_existing_state(state_path: Path) -> dict:
 
 
 def _runtime_state_payload(
-    repos_root: Path, config_path: Path, projects: list[dict], existing_state: dict | None = None
+    projects_file: Path, config_path: Path, projects: list[dict], existing_state: dict | None = None
 ) -> dict:
     maintenance = (existing_state or {}).get("maintenance") or {}
     return {
         "version": 1,
         "last_scan_at": _now_iso(),
-        "repos_root": repos_root.as_posix(),
+        "projects_file": projects_file.as_posix(),
         "projects_detected": len(projects),
         "maintenance": {
             "last_run_at": maintenance.get("last_run_at"),
@@ -467,7 +490,7 @@ def _project_map_payload(projects: list[dict], config: dict) -> dict:
     return {"version": 1, "projects": mapped_projects}
 
 
-def _write_runtime_artifacts(config_path: Path, repos_root: Path, projects: list[dict], *, apply: bool) -> dict:
+def _write_runtime_artifacts(config_path: Path, projects_file: Path, projects: list[dict], *, apply: bool) -> dict:
     config = _load_config(config_path)
     runtime_root = _runtime_root()
     state_path = runtime_root / "state.json"
@@ -476,7 +499,7 @@ def _write_runtime_artifacts(config_path: Path, repos_root: Path, projects: list
     sync_conflicts_path = runtime_root / "sync-conflicts.md"
 
     existing_state = _read_existing_state(state_path)
-    state_payload = _runtime_state_payload(repos_root, config_path, projects, existing_state)
+    state_payload = _runtime_state_payload(projects_file, config_path, projects, existing_state)
     project_map_payload = _project_map_payload(projects, config)
     conflicts = _sync_conflicts_from_snapshots(projects)
 
@@ -490,7 +513,7 @@ def _write_runtime_artifacts(config_path: Path, repos_root: Path, projects: list
                     "# Sync Log",
                     "",
                     f"- Generated at: {state_payload['last_scan_at']}",
-                    f"- Repos root: {repos_root.as_posix()}",
+                    f"- Projects file: {projects_file.as_posix()}",
                     f"- Projects detected: {len(projects)}",
                     f"- Conflicts detected: {len(conflicts)}",
                     "",
@@ -570,7 +593,7 @@ def _require_conflict_free_apply(projects: list[dict], *, operation: str) -> lis
     return conflicts
 
 
-def _write_obsidian_notes(config_path: Path, repos_root: Path, projects: list[dict], *, apply: bool) -> dict:
+def _write_obsidian_notes(config_path: Path, projects_file: Path, projects: list[dict], *, apply: bool) -> dict:
     config = _load_config(config_path)
     settings = _obsidian_settings(config)
     if not settings["vault_root"]:
@@ -609,7 +632,7 @@ def _write_obsidian_notes(config_path: Path, repos_root: Path, projects: list[di
                 written_tasks += 1
 
     if apply:
-        _write_runtime_artifacts(config_path, repos_root, projects, apply=True)
+        _write_runtime_artifacts(config_path, projects_file, projects, apply=True)
 
     payload = {
         "status": "ok",
@@ -625,7 +648,7 @@ def _write_obsidian_notes(config_path: Path, repos_root: Path, projects: list[di
     return payload
 
 
-def _update_maintenance_state(config_path: Path, repos_root: Path, projects: list[dict], *, apply: bool) -> dict:
+def _update_maintenance_state(config_path: Path, projects_file: Path, projects: list[dict], *, apply: bool) -> dict:
     config = _load_config(config_path)
     runtime_root = _runtime_root()
     state_path = runtime_root / "state.json"
@@ -654,7 +677,7 @@ def _update_maintenance_state(config_path: Path, repos_root: Path, projects: lis
 
     if apply:
         existing_state = _read_existing_state(state_path)
-        state_payload = _runtime_state_payload(repos_root, config_path, projects, existing_state)
+        state_payload = _runtime_state_payload(projects_file, config_path, projects, existing_state)
         state_payload["maintenance"] = {
             "last_run_at": _now_iso(),
             "next_due_at": next_due,
@@ -666,7 +689,7 @@ def _update_maintenance_state(config_path: Path, repos_root: Path, projects: lis
                 [
                     "# Weekly Maintenance Report",
                     "",
-                    f"- Repos root: {repos_root.as_posix()}",
+                    f"- Projects file: {projects_file.as_posix()}",
                     f"- Projects detected: {len(projects)}",
                     f"- Conflicts detected: {len(conflicts)}",
                     f"- Next due at: {next_due}",
@@ -699,7 +722,7 @@ def cmd_status(args: argparse.Namespace) -> dict:
     """Report archivist artifact presence per project (git repos only)."""
     projects = [
         _project_entry(project_path)
-        for project_path, is_git in iter_projects(args.repos_root)
+        for project_path, is_git in iter_projects(args.projects_file)
         if is_git
     ]
     return {"status": "ok", "projects_detected": len(projects), "projects": projects}
@@ -709,7 +732,7 @@ def cmd_sync_plan(args: argparse.Namespace) -> dict:
     """Map repo documentation into PM state without writing (dry-run only)."""
     projects = [
         _project_entry(project_path)
-        for project_path, is_git in iter_projects(args.repos_root)
+        for project_path, is_git in iter_projects(args.projects_file)
         if is_git
     ]
     syncable = sum(1 for p in projects if p["archivist_initialized"])
@@ -729,7 +752,7 @@ def cmd_sync_from_repos(args: argparse.Namespace) -> dict:
     if config_path is None:
         raise SystemExit("Missing required --config <path>")
     config = _load_config(config_path)
-    projects = _project_snapshots(args.repos_root, config)
+    projects = _project_snapshots(args.projects_file, config)
     syncable = sum(1 for p in projects if p["archivist_initialized"])
     payload = {
         "status": "ok",
@@ -751,7 +774,7 @@ def cmd_sync_from_repos(args: argparse.Namespace) -> dict:
         _require_conflict_free_apply(projects, operation="sync PM state from repos")
         if _backup_before_apply_enabled(config):
             payload["backup"] = _backup_runtime_tree(apply=True)
-        artifacts = _write_runtime_artifacts(config_path, args.repos_root, projects, apply=True)
+        artifacts = _write_runtime_artifacts(config_path, args.projects_file, projects, apply=True)
         payload["state_path"] = artifacts["state_path"]
         payload["project_map_path"] = artifacts["project_map_path"]
         payload["sync_log_path"] = artifacts["sync_log_path"]
@@ -766,8 +789,8 @@ def cmd_sync_to_obsidian(args: argparse.Namespace) -> dict:
     if config_path is None:
         raise SystemExit("Missing required --config <path>")
     config = _load_config(config_path)
-    projects = _project_snapshots(args.repos_root, config)
-    payload = _write_obsidian_notes(config_path, args.repos_root, projects, apply=args.apply)
+    projects = _project_snapshots(args.projects_file, config)
+    payload = _write_obsidian_notes(config_path, args.projects_file, projects, apply=args.apply)
     payload["projects_detected"] = len(projects)
     payload["syncable_projects"] = sum(1 for p in projects if p["archivist_initialized"])
     return payload
@@ -788,7 +811,7 @@ def cmd_conflicts(args: argparse.Namespace) -> dict:
     """Identify repo-level coverage gaps that require review.
 
     Phase 4 detects two conflict classes:
-      - ``repo_path_missing``: a child dir of repos_root is not a git repo.
+      - ``repo_path_missing``: a project listed in projects.json is not a git repo.
       - ``missing_archivist_artifact``: a git repo lacks one or more expected
         archivist files.
 
@@ -796,7 +819,7 @@ def cmd_conflicts(args: argparse.Namespace) -> dict:
     edits, archival mismatches) is future work and intentionally not promised.
     """
     conflicts = []
-    for project_path, is_git in iter_projects(args.repos_root):
+    for project_path, is_git in iter_projects(args.projects_file):
         if not is_git:
             conflicts.append(
                 {
@@ -830,8 +853,8 @@ def cmd_maintenance(args: argparse.Namespace) -> dict:
     if config_path is None:
         raise SystemExit("Missing required --config <path>")
     config = _load_config(config_path)
-    projects = _project_snapshots(args.repos_root, config)
-    return _update_maintenance_state(config_path, args.repos_root, projects, apply=args.apply)
+    projects = _project_snapshots(args.projects_file, config)
+    return _update_maintenance_state(config_path, args.projects_file, projects, apply=args.apply)
 
 
 def _render_text(command: str, payload: dict) -> str:
@@ -922,7 +945,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     def add_common(p):
-        p.add_argument("--repos-root", required=True, type=Path)
+        p.add_argument("--projects-file", required=True, type=Path)
         p.add_argument("--config", type=Path)
         p.add_argument("--apply", action="store_true")
         p.add_argument(

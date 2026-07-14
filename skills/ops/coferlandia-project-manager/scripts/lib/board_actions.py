@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from reporting import VALID_TASK_STATUSES, _iter_git_projects, _missing_artifacts, parse_todo_tasks
+from reporting import VALID_TASK_STATUSES, iter_managed_projects, _is_git_repo, _missing_artifacts, parse_todo_tasks
 
 
 ACTIONABLE_STATES = {
@@ -34,9 +34,11 @@ ACTIONABLE_STATES = {
 }
 
 
-def _find_task(repos_root: Path, task_id: str) -> dict | None:
+def _find_task(projects_file: Path, task_id: str) -> dict | None:
     task_id_lower = task_id.lower()
-    for project_path in _iter_git_projects(repos_root):
+    for project_path in iter_managed_projects(projects_file):
+        if not _is_git_repo(project_path):
+            continue
         for task in parse_todo_tasks(project_path / "TODO.md"):
             candidate = (task.get("task_id") or "").lower()
             if candidate == task_id_lower:
@@ -49,12 +51,12 @@ def _find_task(repos_root: Path, task_id: str) -> dict | None:
 
 
 def cmd_validate_task_transition(args: argparse.Namespace) -> dict:
-    task = _find_task(args.repos_root, args.task)
+    task = _find_task(args.projects_file, args.task)
     if task is None:
         return {
             "status": "error",
             "authorized": False,
-            "blocking_reason": f"Task '{args.task}' was not found under repos_root.",
+            "blocking_reason": f"Task '{args.task}' was not found in managed projects.",
         }
 
     target_status = args.target_status.strip().lower()
@@ -122,11 +124,11 @@ def cmd_validate_task_transition(args: argparse.Namespace) -> dict:
 
 
 def cmd_generate_execution_brief(args: argparse.Namespace) -> dict:
-    task = _find_task(args.repos_root, args.task)
+    task = _find_task(args.projects_file, args.task)
     if task is None:
         return {
             "status": "error",
-            "error": f"Task '{args.task}' was not found under repos_root.",
+            "error": f"Task '{args.task}' was not found in managed projects.",
         }
 
     current_status = task["status"]
@@ -140,7 +142,7 @@ def cmd_generate_execution_brief(args: argparse.Namespace) -> dict:
 
     validation = cmd_validate_task_transition(
         argparse.Namespace(
-            repos_root=args.repos_root,
+            projects_file=args.projects_file,
             task=task.get("task_id") or args.task,
             target_status=current_status,
         )
@@ -176,12 +178,12 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     validate = sub.add_parser("validate-task-transition")
-    validate.add_argument("--repos-root", required=True, type=Path)
+    validate.add_argument("--projects-file", required=True, type=Path)
     validate.add_argument("--task", required=True)
     validate.add_argument("--target-status", required=True)
 
     brief = sub.add_parser("generate-execution-brief")
-    brief.add_argument("--repos-root", required=True, type=Path)
+    brief.add_argument("--projects-file", required=True, type=Path)
     brief.add_argument("--task", required=True)
     brief.add_argument("--dry-run", action="store_true")
     brief.add_argument("--current-status-override")

@@ -110,13 +110,57 @@ def _git(path: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def _iter_git_projects(repos_root: Path):
-    """Yield project Paths that are git repos, sorted."""
-    if not repos_root.is_dir():
-        return
-    for p in sorted(p for p in repos_root.iterdir() if p.is_dir()):
-        if _is_git_repo(p):
-            yield p
+def _load_projects_file(projects_file: Path) -> list:
+    """Read projects.json and return the list of project entries (raw dicts)."""
+    if not projects_file.is_file():
+        return []
+    try:
+        payload = json.loads(projects_file.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+    return payload.get("projects", [])
+
+
+def iter_managed_projects(projects_file: Path):
+    """Yield resolved project Paths for active entries from projects.json, sorted.
+
+    Unlike the legacy filesystem scan, projects come from an explicit list. A
+    listed path that is missing or not a git repo is still yielded so callers
+    can surface it (e.g. as a conflict); callers that only want live repos
+    should filter with ``_is_git_repo``.
+    """
+    seen = set()
+    for entry in _load_projects_file(projects_file):
+        if entry.get("status", "active") != "active":
+            continue
+        raw_path = entry.get("path") or ""
+        if not raw_path:
+            continue
+        resolved = Path(raw_path).resolve()
+        key = str(resolved)
+        if key in seen:
+            continue
+        seen.add(key)
+        yield resolved
+
+
+def project_slug_map(projects_file: Path) -> dict:
+    """Return ``{slug: resolved_path}`` for active projects in projects.json.
+
+    The slug is taken from the entry's ``slug`` field when present, otherwise
+    derived from the basename of ``path``.
+    """
+    mapping: dict[str, Path] = {}
+    for entry in _load_projects_file(projects_file):
+        if entry.get("status", "active") != "active":
+            continue
+        raw_path = entry.get("path") or ""
+        if not raw_path:
+            continue
+        resolved = Path(raw_path).resolve()
+        slug = entry.get("slug") or resolved.name
+        mapping.setdefault(slug, resolved)
+    return mapping
 
 
 def _missing_artifacts(project_path: Path) -> list:
@@ -368,7 +412,7 @@ def _classify_worktree(wt: dict, main_path: Path) -> dict:
 
 def cmd_portfolio_report(args: argparse.Namespace) -> dict:
     """Generate a portfolio-wide report answering all 14 Reporting Questions."""
-    repos_root = args.repos_root
+    projects_file = args.projects_file
     default_branch = args.default_branch or "main"
 
     projects_data = []
@@ -391,7 +435,9 @@ def cmd_portfolio_report(args: argparse.Namespace) -> dict:
     waiting_code_review = 0
     needs_maintenance = 0
 
-    for project_path in _iter_git_projects(repos_root):
+    for project_path in iter_managed_projects(projects_file):
+        if not _is_git_repo(project_path):
+            continue
         slug = project_path.name
         git_state = _build_git_state(project_path, default_branch)
         missing = _missing_artifacts(project_path)
@@ -464,7 +510,7 @@ def cmd_portfolio_report(args: argparse.Namespace) -> dict:
     return {
         "status": "ok",
         "generated_at": _now_iso(),
-        "repos_root": repos_root.as_posix(),
+        "projects_file": projects_file.as_posix(),
         "summary": {
             "active_projects": total_active,
             "blocked_projects": total_blocked,
@@ -489,15 +535,15 @@ def cmd_portfolio_report(args: argparse.Namespace) -> dict:
 
 def cmd_project_report(args: argparse.Namespace) -> dict:
     """Generate a report for one managed project."""
-    repos_root = args.repos_root
+    projects_file = args.projects_file
     default_branch = args.default_branch or "main"
     project_slug = args.project
 
-    project_path = repos_root / project_slug
-    if not project_path.is_dir() or not _is_git_repo(project_path):
+    project_path = project_slug_map(projects_file).get(project_slug)
+    if project_path is None or not project_path.is_dir() or not _is_git_repo(project_path):
         return {
             "status": "error",
-            "error": f"Project '{project_slug}' not found or not a Git repository under repos_root.",
+            "error": f"Project '{project_slug}' not found or not a Git repository in projects.json.",
         }
 
     git_state = _build_git_state(project_path, default_branch)
@@ -534,11 +580,13 @@ def cmd_project_report(args: argparse.Namespace) -> dict:
 
 def cmd_task_report(args: argparse.Namespace) -> dict:
     """Generate a report for one managed task."""
-    repos_root = args.repos_root
+    projects_file = args.projects_file
     task_id = args.task.lower()
 
     found = None
-    for project_path in _iter_git_projects(repos_root):
+    for project_path in iter_managed_projects(projects_file):
+        if not _is_git_repo(project_path):
+            continue
         tasks = parse_todo_tasks(project_path / "TODO.md")
         for task in tasks:
             tid = (task.get("task_id") or "").lower()
@@ -550,7 +598,9 @@ def cmd_task_report(args: argparse.Namespace) -> dict:
 
     if not found:
         # Broaden search: look for task_id as a substring in task titles.
-        for project_path in _iter_git_projects(repos_root):
+        for project_path in iter_managed_projects(projects_file):
+            if not _is_git_repo(project_path):
+                continue
             tasks = parse_todo_tasks(project_path / "TODO.md")
             for task in tasks:
                 if task_id in task["title"].lower():
@@ -562,7 +612,7 @@ def cmd_task_report(args: argparse.Namespace) -> dict:
     if not found:
         return {
             "status": "error",
-            "error": f"Task '{args.task}' not found in any project TODO.md under repos_root.",
+            "error": f"Task '{args.task}' not found in any managed project TODO.md.",
         }
 
     return {
@@ -574,7 +624,7 @@ def cmd_task_report(args: argparse.Namespace) -> dict:
 
 def cmd_health_check(args: argparse.Namespace) -> dict:
     """Summarize portfolio health, sync gaps, and maintenance needs."""
-    repos_root = args.repos_root
+    projects_file = args.projects_file
     default_branch = args.default_branch or "main"
     stale_threshold = args.stale_days
 
@@ -583,7 +633,9 @@ def cmd_health_check(args: argparse.Namespace) -> dict:
     total_projects = 0
     healthy_count = 0
 
-    for project_path in _iter_git_projects(repos_root):
+    for project_path in iter_managed_projects(projects_file):
+        if not _is_git_repo(project_path):
+            continue
         total_projects += 1
         slug = project_path.name
         git_state = _build_git_state(project_path, default_branch)
@@ -622,7 +674,7 @@ def cmd_health_check(args: argparse.Namespace) -> dict:
     return {
         "status": "ok",
         "generated_at": _now_iso(),
-        "repos_root": repos_root.as_posix(),
+        "projects_file": projects_file.as_posix(),
         "summary": {
             "total_projects": total_projects,
             "healthy_projects": healthy_count,
@@ -643,10 +695,12 @@ def cmd_worktree_cleanup(args: argparse.Namespace) -> dict:
             "lifecycle remains delegated to Superpowers."
         )
 
-    repos_root = args.repos_root
+    projects_file = args.projects_file
     suggestions = []
 
-    for project_path in _iter_git_projects(repos_root):
+    for project_path in iter_managed_projects(projects_file):
+        if not _is_git_repo(project_path):
+            continue
         slug = project_path.name
         worktrees = _list_worktrees(project_path)
 
@@ -666,7 +720,7 @@ def cmd_worktree_cleanup(args: argparse.Namespace) -> dict:
     return {
         "status": "ok",
         "generated_at": _now_iso(),
-        "repos_root": repos_root.as_posix(),
+        "projects_file": projects_file.as_posix(),
         "mode": args.mode or "dry-run",
         "summary": {
             "total_worktrees": len(suggestions),
@@ -862,7 +916,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     def add_common(p):
-        p.add_argument("--repos-root", required=True, type=Path)
+        p.add_argument("--projects-file", required=True, type=Path)
         p.add_argument("--format", choices=("json", "markdown"), default="markdown")
         p.add_argument("--default-branch", default="main")
         p.add_argument("--stale-days", type=int, default=30)
@@ -875,7 +929,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # project-report
     p = sub.add_parser("project-report", help=cmd_project_report.__doc__)
     add_common(p)
-    p.add_argument("--project", required=True, help="Project slug (directory name under repos_root).")
+    p.add_argument("--project", required=True, help="Project slug (as listed in projects.json).")
 
     # task-report
     p = sub.add_parser("task-report", help=cmd_task_report.__doc__)

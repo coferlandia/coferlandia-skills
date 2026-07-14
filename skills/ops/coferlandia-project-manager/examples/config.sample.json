@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "repos_root": "/path/to/repos",
   "obsidian": {
     "vault_root": "",
     "pm_projects_folder": "Projects",
