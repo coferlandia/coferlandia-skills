@@ -5,3 +5,4 @@ __pycache__/
 .worktrees/
 .zcode/
 .coferlandia/
+.project-orchestrator/auth.json

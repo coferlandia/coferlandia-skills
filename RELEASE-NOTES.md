@@ -1,5 +1,19 @@
 # Coferlandia Skills Release Notes
 
+## v1.9.0 (2026-07-15)
+
+### Skills
+
+- **project-orchestrator** (`ops`) — v1.1. Adds real Codex/OpenCode execution,
+  JSONL/session handling, provider fallbacks, schema-complete result validation,
+  persisted recovery, candidate/review/fix/merge lifecycle controls, reports,
+  doctor diagnostics, and fake-provider integration coverage.
+
+### Repository
+
+- `coferlandia-skills` — bumped the repo-wide release version for the new
+  orchestration skill and its onboarding/configuration surface.
+
 ## v1.8.0 (2026-07-14)
 
 ### Skills

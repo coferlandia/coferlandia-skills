@@ -59,11 +59,20 @@ task-specific Git worktree. This is mandatory for `developer`, `debugger`,
 4. Reuse an existing linked task worktree rather than nesting another worktree inside
    it. Do not alter uncommitted changes belonging to another agent. Concurrent
    implementations use different local worktree paths and branches.
-5. The reviewer reuses the implementation worktree and branch; it does not copy the
-   diff into a different checkout. If the directory is not a Git repository, continue
-   without a worktree and state that exception explicitly in the handoff.
+5. Standalone reviewers reuse the implementation worktree and branch. Orchestrated
+   reviewers use only the explicitly assigned detached review worktree and immutable
+   candidate commit. If the directory is not a Git repository, continue without a
+   worktree and state that exception explicitly in the handoff.
 6. Preserve the worktree until reviewed integration and verification succeed. Remove
    it only after the merge is verified; never remove a worktree that another agent owns.
+
+### Assigned-worktree precedence
+
+An explicitly assigned existing worktree from the user, supervisor, or
+`project-orchestrator` overrides default worktree creation. Before modifying files,
+verify the current directory is inside that assigned worktree and its active branch
+matches the assignment. On either mismatch, stop and report it: do not create/select
+another worktree, change branch, or change working directory as a workaround.
 
 Use these process states in task records and handoffs:
 
@@ -86,7 +95,7 @@ refactor that is not already a detailed executable plan.
    without modifying files. Report material inconsistencies to the control authority.
 2. Prepare a concise plan covering scope, affected areas, implementation, validation,
    risks, and documentation. Obtain explicit approval from the active control authority.
-3. Create the isolated worktree, then implement the approved scope. **REQUIRED:** use
+3. Create the isolated worktree unless one was explicitly assigned, then implement the approved scope. **REQUIRED:** use
    `superpowers:test-driven-development` before writing implementation code when it is
    available. If it is unavailable, still follow its RED-GREEN-REFACTOR discipline and
    record that the Superpowers skill was unavailable in the handoff. Reuse existing
@@ -111,7 +120,7 @@ unexpected behavior.
    is available. If it is unavailable, still separate facts from hypotheses, reproduce
    or pinpoint the failure, and identify the root cause before proposing a correction;
    record the unavailable skill in the handoff.
-3. Create the isolated worktree. Reproduce or pinpoint the failure, make the smallest
+3. Create the isolated worktree unless one was explicitly assigned. Reproduce or pinpoint the failure, make the smallest
    approved correction, add or update regression tests, and verify related behavior.
    If the required correction materially deviates from the approved scope or plan, stop
    and obtain fresh approval before expanding it. Match the repository's source-code
@@ -127,7 +136,8 @@ implementation plan. A separate statement that the plan is approved is unnecessa
 1. Read the complete plan and every referenced document. Inspect the repository
    structure, architecture, conventions, tests, and current code; confirm the plan is
    compatible with the actual state.
-2. Create and record the isolated worktree before modifying code. Ask only when the
+2. Create and record the isolated worktree before modifying code unless one was
+   explicitly assigned. Ask only when the
    plan has a material contradiction, omits a required decision, or the repository
    state makes it unsafe or impossible to execute as written.
 3. **REQUIRED:** use `superpowers:test-driven-development` before writing
@@ -145,6 +155,20 @@ The `coding-agent` must not create a replacement implementation plan, run a
 planning-and-approval phase, review its own implementation, commit, push, merge, alter
 unrelated code, or claim final completion while review remains pending.
 
+When orchestrated, coding-agent may only inspect/modify its assigned implementation
+worktree, test, run static analysis, update docs, and emit protocol output. It must not
+commit, amend, push, merge, rebase, create/remove worktrees, switch Git state, or leave
+that directory.
+
+## Role: fix-agent
+
+Use `fix-agent` for in-scope corrections from independent review. It follows the
+coding-agent implementation rules and creates an isolated worktree only when none is
+assigned. When assigned an implementation worktree and branch, verify both and use
+exactly them. It may modify files, test, update relevant docs, and report evidence, but
+must not commit, amend, push, merge, rebase, create/remove worktrees, switch Git state,
+or change working directory. Escalate scope-changing findings.
+
 ## Role: code-reviewer
 
 Activate `code-reviewer` when the user requests code review or asks to validate an
@@ -153,13 +177,17 @@ branch, current uncommitted diff, and coding-agent handoff when available. The r
 must be a different agent from the implementation agent; an implementation role cannot
 review or integrate its own work.
 
-1. Open and reuse the implementation worktree. Inspect its status, diff, branch, and
+1. Standalone: open/reuse the implementation worktree. Orchestrated: review only the
+   exact assigned immutable candidate commit in its assigned detached review worktree;
+   do not create another worktree, switch Git state/directory, or modify files. Inspect
+   its status, diff, branch, and
    recorded base commit. Compare every plan task and acceptance criterion with the
    implementation.
 2. Review for missing requirements, incorrect behavior, regressions, security,
    error handling, concurrency or persistence defects, edge cases, tests,
    documentation, and out-of-scope changes. Classify findings by severity.
-3. Correct valid, in-scope defects directly in that worktree. Escalate instead of
+3. Standalone reviewers correct valid, in-scope defects directly in that worktree.
+   Orchestrated reviewers are read-only and return findings to the fix-agent. Escalate instead of
    changing requirements, approved architecture, scope materially, dependencies,
    acceptance criteria, or a substantial portion of the plan.
 4. Run the complete relevant validation suite after corrections and reinspect the final
@@ -168,10 +196,12 @@ review or integrate its own work.
    whether `main` advanced since the recorded base commit. If it advanced, reconcile
    those changes in the isolated implementation branch, resolve conflicts there, and
    rerun affected validations. Do not edit implementation files in the primary worktree.
-6. Commit the reviewed implementation with a message consistent with the plan, then
+6. Standalone reviewers commit the reviewed implementation with a message consistent with the plan, then
    merge that branch locally into `main`. Verify the resulting `main` state, record
    review and merge commits, and update execution/history/decision/phase records that
-   the repository requires. Never push unless explicitly instructed.
+   the repository requires. In orchestrated mode, only `project-orchestrator` may
+   stage, commit/amend, merge, rebase, reset, checkout/switch, push, or manage branches
+   and worktrees. Never push unless explicitly instructed.
 
 The only primary-worktree mutation allowed to the reviewer is the final local merge
 after its cleanliness, reconciliation, and validation gates pass. The worktree itself
