@@ -28,7 +28,7 @@ Code, infrastructure, architecture, debugging.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [software-development](./engineering/software-development/) | Routes developer, debugger, coding-agent, and code-reviewer work through isolated worktrees, validation, review, and local integration | active |
+| [software-development](./engineering/software-development/) | Routes developer, debugger, coding-agent, and code-reviewer work through isolated worktrees, validation, review, and supervisor-controlled Git integration | active |
 
 ## Data
 
@@ -66,4 +66,4 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-07-13*
+*Last updated: 2026-07-15*
