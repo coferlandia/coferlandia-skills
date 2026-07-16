@@ -10,10 +10,10 @@ compatibility: >
   commands. Falls back without worktree isolation only when the target is not a Git repository.
 metadata:
   author: community
-  version: "4.0.0"
+  version: "4.1"
   category: engineering
   status: active
-  tested: "2026-07-15 - RED/GREEN handoff-message, human-authority, exact-message approval, scoped commit/merge, no-push, and Git-loophole pressure scenarios; validated with validate_skill.py."
+  tested: "2026-07-16 - validated with validate_skill.py; reviewed the direct-human-supervisor working-location and post-merge cleanup requirements."
 ---
 
 ## Context
@@ -42,31 +42,13 @@ Use **development role** for the collective term. Reserve `coding-agent` and
 
 ## Shared Worktree and Traceability Rules
 
-Every development role that can modify code in a Git repository must use an isolated,
-task-specific Git worktree. This is mandatory for `developer`, `debugger`,
-`coding-agent`, `code-reviewer`, and any future code-modifying development role.
+For a task controlled directly by a human supervisor, the plan must ask and record one working-location choice before files are modified: **an isolated task worktree or the current branch/working tree**. Do not infer the choice. This decision applies only to direct human supervision; `project-orchestrator` retains its mandatory assigned-worktree lifecycle.
 
-1. Inspect the repository, existing worktrees, branches, and current status before
-   changing files. Never edit implementation files in the primary/main working tree.
-2. Record the task's base commit, branch name, and absolute worktree path. Detect an
-   existing branch or worktree with the intended name/path and choose a non-colliding
-   task-specific name instead of reusing or overwriting another agent's work.
-3. Create the branch and linked worktree from the recorded base commit at
-   `{repository-root}/.worktrees/{task-name}`. Before creation, verify that
-   `.worktrees/` is ignored. If it is not, add `.worktrees/` to the repository-root
-   `.gitignore`, verify it with `git check-ignore -q --no-index .worktrees/.probe`,
-   and only then create the worktree. Do not use a global worktree directory when a
-   repository-local worktree is possible.
-4. Reuse an existing linked task worktree rather than nesting another worktree inside
-   it. Do not alter uncommitted changes belonging to another agent. Concurrent
-   implementations use different local worktree paths and branches.
-5. Standalone reviewers reuse the implementation worktree and branch. Orchestrated
-   reviewers use only the explicitly assigned detached review worktree and immutable
-   candidate commit. If the directory is not a Git repository, continue without a
-   worktree and state that exception explicitly in the handoff.
-6. Preserve the worktree while review, message approval, commit, or merge is pending.
-   Remove it only after the authorized merge is verified and the human supervisor or
-   `project-orchestrator` assigns cleanup; never remove a worktree another agent owns.
+1. Inspect the repository, existing worktrees, branches, and current status before changing files. Record the human working-location choice, base commit, branch, and absolute worktree path when one was selected.
+2. When an isolated worktree was selected, detect collisions and create the task-specific branch and linked worktree at `{repository-root}/.worktrees/{task-name}`. Verify `.worktrees/` is ignored first; add and verify the repository-root `.gitignore` rule when absent.
+3. Reuse an existing linked task worktree rather than nesting another. Do not alter uncommitted changes belonging to another agent. Concurrent implementations use different locations and branches.
+4. When the current branch/working tree was selected, modify only that explicitly selected location and preserve unrelated changes; do not create a worktree as a workaround. Standalone reviewers reuse the selected implementation location. Orchestrated reviewers use only the assigned detached review worktree and immutable candidate commit.
+5. Preserve a selected worktree while review, message approval, commit, or merge is pending. After a human-authorized merge succeeds and is verified, remove the task-owned selected worktree before recording `completed`; never remove a worktree another agent owns.
 
 ### Assigned-worktree precedence
 
@@ -96,8 +78,7 @@ human approval or rectification through the protocol below.
 
 ### Git authority and authorization
 
-Development roles may inspect Git and may create the isolated task worktree described
-above. They must not stage, commit, amend, merge, rebase, reset, cherry-pick, or perform
+Development roles may inspect Git and may create a human-selected isolated task worktree. They must not stage, commit, amend, merge, rebase, reset, cherry-pick, or perform
 integration by default, and they must never push. Implementation roles always hand off without Git integration;
 only a standalone `code-reviewer`, after independent review passes, may commit and/or
 merge through this protocol:
@@ -125,10 +106,7 @@ merge through this protocol:
    Development roles never amend, rebase, reset, or cherry-pick. If an otherwise safe,
    authorized merge will create a merge commit, its exact message follows the same
    proposal and human-approval gate before merge execution.
-6. Record the authorizing human, exact authorized operations, proposed and approved
-   messages, commit SHA, merge result, and verification evidence. A commit-only request
-   ends in `committed_awaiting_merge`; only a verified authorized merge reaches
-   `completed` for a Git integration task.
+6. Record the authorizing human, exact authorized operations, proposed and approved messages, commit SHA, merge result, verification evidence, selected location, and cleanup result. A commit-only request ends in `committed_awaiting_merge`; only a verified authorized merge reaches `completed`. If that merge used a task-owned worktree, remove it after verification and record the removal before `completed`.
 
 Use these process states in task records and handoffs:
 
@@ -172,9 +150,8 @@ refactor that is not already a detailed executable plan.
 
 1. Study the issue, architecture, related code, tests, conventions, and documentation
    without modifying files. Report material inconsistencies to the control authority.
-2. Prepare a concise plan covering scope, affected areas, implementation, validation,
-   risks, and documentation. Obtain explicit approval from the active control authority.
-3. Create the isolated worktree unless one was explicitly assigned, then implement the approved scope. **REQUIRED:** use
+2. Prepare a concise plan covering scope, affected areas, implementation, validation, risks, documentation, and the required human-supervised worktree-or-current-branch question. Obtain explicit approval from the active control authority.
+3. Implement in the working location recorded in the approved plan; create an isolated worktree only when the direct human supervisor selected one, unless one was explicitly assigned. **REQUIRED:** use
    `superpowers:test-driven-development` before writing implementation code when it is
    available. If it is unavailable, still follow its RED-GREEN-REFACTOR discipline and
    record that the Superpowers skill was unavailable in the handoff. Reuse existing
@@ -199,7 +176,7 @@ unexpected behavior.
    is available. If it is unavailable, still separate facts from hypotheses, reproduce
    or pinpoint the failure, and identify the root cause before proposing a correction;
    record the unavailable skill in the handoff.
-3. Create the isolated worktree unless one was explicitly assigned. Reproduce or pinpoint the failure, make the smallest
+3. Include the required human-supervised worktree-or-current-branch question in the root-cause plan. Reproduce or pinpoint the failure in the approved location; create an isolated worktree only when selected, unless one was explicitly assigned. Make the smallest
    approved correction, add or update regression tests, and verify related behavior.
    If the required correction materially deviates from the approved scope or plan, stop
    and obtain fresh approval before expanding it. Match the repository's source-code
@@ -215,8 +192,7 @@ implementation plan. A separate statement that the plan is approved is unnecessa
 1. Read the complete plan and every referenced document. Inspect the repository
    structure, architecture, conventions, tests, and current code; confirm the plan is
    compatible with the actual state.
-2. Create and record the isolated worktree before modifying code unless one was
-   explicitly assigned. Ask only when the
+2. Under direct human supervision, verify the plan records the required worktree-or-current-branch choice before modifying code; create and record an isolated worktree only when selected unless one was explicitly assigned. Under orchestration, use only the assigned worktree. Ask only when the
    plan has a material contradiction, omits a required decision, or the repository
    state makes it unsafe or impossible to execute as written.
 3. **REQUIRED:** use `superpowers:test-driven-development` before writing
@@ -303,6 +279,7 @@ Control authority: {direct human supervisor | project-orchestrator controller}
 Base commit: {SHA}
 Worktree path: {absolute path | "not a Git repository"}
 Branch name: {branch | "not applicable"}
+Working location: {human-selected isolated worktree | human-selected current branch/working tree | orchestrator-assigned worktree | "not a Git repository"}
 Worktree exception: {none | "Target is not a Git repository; worktree isolation does not apply"}
 Files changed:
 - {path} - {reason}
@@ -341,6 +318,7 @@ Commit-message approval: {not requested | pending | approved | rectified | not a
 Approved commit message: {exact message | not applicable}
 Commit SHA: {SHA | not executed}
 Merge result: {SHA and strategy | not executed}
+Worktree cleanup after verified merge: {removed path | not applicable | not executed}
 Push: prohibited for development roles
 Verification after authorized Git action: `{command}` - {result | not executed}
 Process state: {awaiting_integration | awaiting_commit_message_approval | committed_awaiting_merge | completed}
@@ -379,10 +357,8 @@ affected existing artifacts. Otherwise place minimal new traceability artifacts 
 - **Self-approving a commit message:** after commit authorization, propose the exact
   repository-conformant message and stop. Only the human supervisor may approve it or
   replace it with the exact final text.
-- **Using a branch without a worktree:** branches do not isolate uncommitted files.
-  Create a unique linked worktree under `{repository-root}/.worktrees/` before
-  modifying code in a Git repository; add and verify the root `.gitignore` rule first
-  when it is absent.
+- **Skipping the human-supervised location decision:** the plan must ask whether to use an isolated worktree or the current branch/working tree. Do not silently default to a worktree or override the selected current branch.
+- **Leaving a merged human-supervised worktree behind:** once the authorized merge is verified, remove the task-owned worktree and record the cleanup before `completed`.
 - **Silently reconciling an advanced base:** report the drift and leave reconciliation
   to the human supervisor or `project-orchestrator`. Development roles never amend,
   rebase, reset, or cherry-pick. An authorized merge commit still requires approval of

@@ -332,6 +332,12 @@ def execute_run(repo: Path, run_id: str, config: dict, *, no_merge: bool = False
                 state=store.transition("PRE_MERGE_VERIFYING")
                 if not git.clean(): state=store.transition("BLOCKED_BY_GIT_STATE",{"reason":"base worktree became dirty before merge"}); break
                 state=store.transition("MERGING"); git.merge_ff_only(sha); state=store.transition("MERGED"); state=store.transition("POST_MERGE_VERIFYING"); state=store.transition("PHASE_COMPLETED")
+                _write_reports(store, state)
+                completed_worktree = Path(state["resources"]["implementation_worktree"])
+                if completed_worktree.exists():
+                    git.remove_worktree(completed_worktree)
+                state.setdefault("cleaned_worktrees", []).append({"path": str(completed_worktree), "phase": state["manifest"]["phases"][state.get("phase_index", 0)]["id"], "cleaned_at": now()})
+                atomic_json(store.state_file, state)
                 phase_index=state.get("phase_index",0)+1
                 if phase_index >= len(state["manifest"]["phases"]): state=store.transition("PROJECT_COMPLETED")
                 else:

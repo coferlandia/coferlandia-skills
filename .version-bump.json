@@ -6,6 +6,7 @@
     "exclude": [
       "RELEASE-NOTES.md",
       ".git",
+      ".worktrees",
       ".zcode",
       ".version-bump.json",
       "_protocol/scripts/bump_version.py",

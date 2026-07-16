@@ -28,6 +28,7 @@ class CliTests(unittest.TestCase):
         subprocess.run(["git", "init", "-b", "main", str(directory)], check=True, capture_output=True)
         subprocess.run(["git", "-C", str(directory), "config", "user.email", "test@example.invalid"], check=True)
         subprocess.run(["git", "-C", str(directory), "config", "user.name", "Test"], check=True)
+        subprocess.run(["git", "-C", str(directory), "config", "core.autocrlf", "false"], check=True)
         (directory / "README.md").write_text("test\n", encoding="utf-8")
         subprocess.run(["git", "-C", str(directory), "add", "README.md"], check=True)
         subprocess.run(["git", "-C", str(directory), "commit", "-m", "initial"], check=True, capture_output=True)
@@ -192,6 +193,12 @@ print(json.dumps(result))
         state = json.loads(result.stdout)["result"]
         self.assertEqual(state["state"], "PROJECT_COMPLETED", result.stdout)
         self.assertTrue((Path(state["state_path"]) / "FINAL-REPORT.md").exists())
+        cleaned_worktrees = state.get("cleaned_worktrees", [])
+        self.assertEqual(len(cleaned_worktrees), 2)
+        self.assertTrue(
+            all(not Path(item["path"]).exists() for item in cleaned_worktrees),
+            "a successful merge must remove every run-owned worktree",
+        )
 
     def test_real_git_rebase_conflict_is_detectable_without_guessing(self) -> None:
         from project_orchestrator_cli.git_service import GitService
@@ -210,7 +217,13 @@ print(json.dumps(result))
             subprocess.run(["git", "-C", str(repo), "-c", "core.hooksPath=/dev/null", "-c", "maintenance.auto=false", "commit", "-m", "base change"], check=True, capture_output=True, env=env)
             with self.assertRaises(Exception):
                 GitService(repo).run("merge", "--no-commit", "main", cwd=worktree)
-            GitService(repo).run("merge", "--abort", cwd=worktree)
+            merge_head = subprocess.run(
+                ["git", "-C", str(worktree), "rev-parse", "--quiet", "--verify", "MERGE_HEAD"],
+                text=True,
+                capture_output=True,
+            )
+            if merge_head.returncode == 0:
+                GitService(repo).run("merge", "--abort", cwd=worktree)
             self.assertEqual(subprocess.run(["git", "-C", str(worktree), "status", "--porcelain"], text=True, capture_output=True).stdout, "")
         finally:
             subprocess.run(["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)], check=False, capture_output=True)

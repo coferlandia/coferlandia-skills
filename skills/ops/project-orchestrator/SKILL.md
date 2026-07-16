@@ -9,10 +9,10 @@ license: Apache-2.0
 compatibility: Requires Python 3.11+, Git with worktree support, and configured Codex and/or OpenCode CLIs in the target repository.
 metadata:
   author: coferlandia
-  version: "1.1"
+  version: "1.3"
   category: ops
   status: active
-  tested: "2026-07-14 - unittest smoke/integration tests, fake-provider lifecycle, schema validation, and compileall."
+  tested: "2026-07-16 - fake-provider lifecycle test confirmed portable Python-provider execution and worktree cleanup after each successful merge; rebase-conflict cleanup and validate_skill.py passed."
 ---
 
 ## Context
@@ -56,7 +56,7 @@ The controller assigns one implementation worktree per phase and a detached immu
 review worktree per candidate. Coding and fix agents must use the assigned
 implementation worktree; reviewers must use the assigned detached worktree. Only the
 controller may perform Git lifecycle operations. It commits only after completion
-checks, amends after validated fixes, and merges only the exact reviewed approved SHA.
+checks, amends after validated fixes, and merges only the exact reviewed approved SHA. After every verified successful merge, it persists the phase report and removes every run-owned worktree used by that phase before advancing or reporting completion. Failed, blocked, and cancelled runs preserve their worktrees.
 
 ## Gotchas
 

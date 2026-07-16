@@ -1,6 +1,6 @@
 """Provider adapters and safe non-interactive process execution."""
 from __future__ import annotations
-import json, os, shutil, signal, subprocess, time
+import json, os, shutil, signal, subprocess, sys, time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -104,12 +104,16 @@ class ProcessRunner:
 class AgentProvider:
     name="base"
     def __init__(self, command: str, runner: ProcessRunner | None = None): self.command,self.runner=command,runner or ProcessRunner()
+    def command_argv(self, *args: str) -> list[str]:
+        if self.command.lower().endswith(".py"):
+            return [sys.executable, self.command, *args]
+        return [self.command, *args]
     def probe(self):
         found=shutil.which(self.command)
         if not found: return ProviderHealth(self.name,False,self.command,"command not found")
         version=""
         try:
-            result=subprocess.run([self.command,"--version"],text=True,capture_output=True,timeout=10,check=False)
+            result=subprocess.run(self.command_argv("--version"),text=True,capture_output=True,timeout=10,check=False)
             version=(result.stdout or result.stderr).strip().splitlines()[0] if (result.stdout or result.stderr) else None
         except (OSError, subprocess.TimeoutExpired): pass
         return ProviderHealth(self.name,True,self.command,"available",version=version)
@@ -134,12 +138,12 @@ class CodexProvider(AgentProvider):
         health=super().probe()
         if health.available:
             try:
-                result=subprocess.run([self.command,"login","status"],text=True,capture_output=True,timeout=10,check=False)
+                result=subprocess.run(self.command_argv("login","status"),text=True,capture_output=True,timeout=10,check=False)
                 health.authenticated=result.returncode == 0 and "logged in" in (result.stdout + result.stderr).lower()
             except (OSError, subprocess.TimeoutExpired): pass
         return health
     def build_command(self, *, worktree, model, prompt_file, role, reasoning=None, session_id=None, output_schema=None):
-        c=[self.command,"exec"] + (["resume",session_id] if session_id else []) + ["--cd",str(worktree),"--model",model,"--json","--output-last-message",str(prompt_file.with_suffix(".last.md"))]
+        c=self.command_argv("exec") + (["resume",session_id] if session_id else []) + ["--cd",str(worktree),"--model",model,"--json","--output-last-message",str(prompt_file.with_suffix(".last.md"))]
         if output_schema: c += ["--output-schema",str(output_schema)]
         if reasoning: c += ["-c",f"model_reasoning_effort={reasoning}"]
         return c + ["--sandbox","workspace-write" if role in {"coding-agent","fix-agent"} else "read-only","-"]
