@@ -3,17 +3,18 @@ name: software-development
 description: >
   Use when a task needs a development role: a feature request, bug, detailed executable
   implementation plan, or request to review an implementation against its plan. Applies
-  to code changes in Git repositories, including concurrent agent work and supervised integration.
+  to code changes in Git repositories, including a retouch, tweak, small adjustment, or
+  tiny change, concurrent agent work, and supervised integration.
 license: Apache-2.0
 compatibility: >
   Requires read/write access to the target repository, git, and its relevant validation
   commands. Falls back without worktree isolation only when the target is not a Git repository.
 metadata:
   author: community
-  version: "4.1"
+  version: "4.3"
   category: engineering
   status: active
-  tested: "2026-07-16 - validated with validate_skill.py; reviewed the direct-human-supervisor working-location and post-merge cleanup requirements."
+  tested: "2026-07-17 - validated with validate_skill.py; exercised multilingual Retouch Mode activation, exclusions, current-branch behavior, and escalation scenarios."
 ---
 
 ## Context
@@ -39,6 +40,58 @@ apply this order:
 
 Use **development role** for the collective term. Reserve `coding-agent` and
 `code-reviewer` for their concrete responsibilities.
+
+## Retouch Mode
+
+Before selecting a development role, check whether the user explicitly requests a
+**retouch**, **tweak**, **small/minor adjustment**, **small/minor detail**,
+**touch-up**, or **tiny change**. Treat semantically equivalent wording in any language
+as an explicit request. Presume Retouch Mode applies unless a concrete mandatory
+exclusion is identified.
+
+Use Retouch Mode only when all of these are true after a brief inspection:
+
+- The requested outcome is unambiguous, direct, localized, and needs no material design decision.
+- It changes no public or shared contract and introduces no dependency, abstraction,
+  command, entity, workflow, subsystem, or other shared behavior.
+- Risk is low, local, reversible, and easy to validate.
+- Only a small number of closely related files are affected. Diff size is supporting
+  evidence only; it never establishes eligibility by itself.
+
+Do not use Retouch Mode if the task affects public APIs, CLI contracts, serialized
+formats, events, shared interfaces, schemas, migrations, persistent data, security
+boundaries, authentication, authorization, secrets, financial or destructive behavior,
+data-loss risk, concurrency, transactions, synchronization, caching, dependencies,
+build systems, CI/CD, shared runtime configuration, cross-cutting architecture, or
+multiple subsystems. Also exclude ambiguous requirements and bugs without an established
+root cause. A small textual edit still follows the standard workflow when its behavioral
+impact is broad.
+
+When eligible, Retouch Mode takes precedence over the standard role workflow:
+
+It supersedes **Role Routing**, **Shared Worktree and Traceability Rules**, and the
+role-specific plan, approval, worktree, reviewer-handoff, and commit-message-suggestion
+requirements for this task. It does not supersede the active operational role's Git
+authority rules when the user separately requests a commit or push.
+
+1. Briefly inspect the relevant implementation, conventions, tests, and Git status.
+2. Work only in the current checkout and current branch. Never create a worktree or
+   branch; preserve unrelated existing changes.
+3. Implement only the requested modification. Do not create a formal plan, request an
+   additional approval checkpoint, or invoke a separately mandatory review workflow
+   unless the user explicitly asks for one.
+4. Inspect the final diff and run the narrowest meaningful validation.
+5. Report the modified files, validation performed, result, and any limitations.
+
+Retouch Mode changes only execution flow. The active operational role's existing rules
+still govern commits and pushes.
+
+If inspection or implementation reveals that Retouch Mode no longer qualifies, stop
+before expanding scope. Preserve safe completed work uncommitted, name the exact newly
+discovered exclusion or failed eligibility condition (for example, a public serialized
+contract, an unresolved root cause, or three independent subsystems), explain its
+impact, and continue only through the standard development workflow. Do not replace this
+with a generic claim that the task is "more complex than expected."
 
 ## Shared Worktree and Traceability Rules
 
@@ -337,6 +390,13 @@ affected existing artifacts. Otherwise place minimal new traceability artifacts 
 
 ## Gotchas
 
+- **Treating small wording as automatic eligibility:** explicit Retouch wording starts
+  the eligibility check; public contracts, security, persistence, cross-cutting impact,
+  ambiguity, and every other listed exclusion still require the standard workflow.
+- **Expanding a retouch silently:** when a concrete exclusion or failed condition is
+  discovered, stop before broadening the change, preserve safe uncommitted work, and
+  state the specific contract, risk, uncertainty, or cross-cutting impact before using
+  the standard workflow.
 - **Treating a detailed plan as merely a proposal:** route it to `coding-agent`; do
   not require a duplicate planning or approval phase.
 - **Writing implementation code before TDD:** `developer` and `coding-agent` must use
