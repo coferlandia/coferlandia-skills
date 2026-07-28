@@ -9,46 +9,30 @@ import re
 import sys
 from pathlib import Path
 
-
-REQUIRED_FILES = [
+REQUIRED_FILES = (
     "README.md",
     "AGENTS.md",
-    "HISTORY.md",
-    "TODO.md",
     "DECISIONS.md",
     "RUNBOOK.md",
     ".agent/catalog/SOURCE_INDEX.md",
-    ".agent/catalog/OPEN_QUESTIONS.md",
     ".agent/catalog/PROCESSING_RUNS.md",
-]
-
-REQUIRED_SECTIONS = {
-    ".agent/catalog/OPEN_QUESTIONS.md": [
-        "# Open Questions",
-        "## Open",
-        "## Resolved",
-        "## Archived",
-    ],
-    ".agent/catalog/PROCESSING_RUNS.md": ["# Processing Runs"],
-}
-
-ARCHIVE_LINK_RE = re.compile(
-    r"\[\[(.agent/archive/[^\]]+)\]\]|\[[^\]]+\]\((.agent/archive/[^)]+)\)"
 )
-SOURCE_INDEX_ARCHIVED_RE = re.compile(
-    r"^\|\s*archived\s*\|\s*([^|]+)\|\s*([^|]+)\|",
-    re.IGNORECASE,
+LEGACY_OPERATIONAL_FILES = (
+    "TODO.md",
+    "HISTORY.md",
+    ".agent/catalog/OPEN_QUESTIONS.md",
 )
+ARCHIVE_LINK_RE = re.compile(r"\[\[(\.agent/archive/[^\]]+)\]\]|\[[^\]]+\]\((\.agent/archive/[^)]+)\)")
+SOURCE_INDEX_ARCHIVED_RE = re.compile(r"^\|\s*archived\s*\|\s*([^|]+)\|\s*([^|]+)\|", re.I)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Validate a project documentation catalog created by project-documentation-archivist."
-    )
+    parser = argparse.ArgumentParser(description="Validate a GitHub-native Archivist catalog.")
+    parser.add_argument("--project-root", default=".")
     parser.add_argument(
-        "--project-root",
-        default=".",
-        help="Path to the target project root. Default: current directory.",
+        "--require-github-native",
+        action="store_true",
+        help="Fail if legacy TODO.md, HISTORY.md, or OPEN_QUESTIONS.md still exist.",
     )
     return parser.parse_args()
 
@@ -64,35 +48,39 @@ def has_catalog_status_processed(text: str) -> bool:
     return re.search(r"(?m)^catalog_status:\s*processed\s*$", header) is not None
 
 
-def normalize_link_target(raw: str) -> str:
-    return raw.split("#", 1)[0].strip()
-
-
 def validate_required_files(root: Path, failures: list[str]) -> None:
-    for rel_path in REQUIRED_FILES:
-        if not (root / rel_path).exists():
-            failures.append(f"Missing required file: {rel_path}")
+    for rel in REQUIRED_FILES:
+        if not (root / rel).is_file():
+            failures.append(f"Missing required file: {rel}")
 
 
-def validate_required_sections(root: Path, failures: list[str]) -> None:
-    for rel_path, headers in REQUIRED_SECTIONS.items():
-        path = root / rel_path
-        if not path.exists():
-            continue
-        text = path.read_text(encoding="utf-8")
-        for header in headers:
-            if header not in text:
-                failures.append(f"Missing required section '{header}' in {rel_path}")
+def validate_agents(root: Path, failures: list[str]) -> None:
+    path = root / "AGENTS.md"
+    if not path.is_file():
+        return
+    text = path.read_text(encoding="utf-8", errors="replace")
+    for header in (
+        "## Critical Instructions for Agents",
+        "## Project Essentials",
+        "## Documentation Index",
+        "## Maintenance Notes",
+    ):
+        if header not in text:
+            failures.append(f"Missing required section '{header}' in AGENTS.md")
+
+
+def validate_processing_runs(root: Path, failures: list[str]) -> None:
+    path = root / ".agent/catalog/PROCESSING_RUNS.md"
+    if path.is_file() and "# Processing Runs" not in path.read_text(encoding="utf-8", errors="replace"):
+        failures.append("Missing '# Processing Runs' title in .agent/catalog/PROCESSING_RUNS.md")
 
 
 def validate_archive_frontmatter(root: Path, failures: list[str]) -> None:
-    archive_root = root / ".agent/archive"
-    if not archive_root.exists():
+    archive = root / ".agent/archive"
+    if not archive.exists():
         return
-    for path in archive_root.rglob("*"):
-        if not path.is_file():
-            continue
-        if path.suffix.lower() not in {".md", ".txt", ".rst", ".adoc"}:
+    for path in archive.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".md", ".txt", ".rst", ".adoc"}:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
         if not has_catalog_status_processed(text):
@@ -103,70 +91,55 @@ def validate_archive_frontmatter(root: Path, failures: list[str]) -> None:
 
 
 def validate_archive_links(root: Path, failures: list[str]) -> None:
-    for rel_path in REQUIRED_FILES:
-        path = root / rel_path
-        if not path.exists():
+    for rel in REQUIRED_FILES:
+        path = root / rel
+        if not path.is_file():
             continue
-        text = path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8", errors="replace")
         for match in ARCHIVE_LINK_RE.finditer(text):
-            target = normalize_link_target(match.group(1) or match.group(2) or "")
-            if not target:
-                continue
-            if not (root / target).exists():
-                failures.append(f"Broken archive link in {rel_path}: {target}")
-
-
-def validate_agents_file(root: Path, failures: list[str]) -> None:
-    agents_path = root / "AGENTS.md"
-    if not agents_path.exists():
-        return
-
-    text = agents_path.read_text(encoding="utf-8")
-    required_headers = [
-        "## Critical Instructions for Agents",
-        "## Project Essentials",
-        "## Documentation Index",
-        "## Maintenance Notes",
-    ]
-    for header in required_headers:
-        if header not in text:
-            failures.append(f"Missing required section '{header}' in AGENTS.md")
+            target = (match.group(1) or match.group(2) or "").split("#", 1)[0].strip()
+            if target and not (root / target).exists():
+                failures.append(f"Broken archive link in {rel}: {target}")
 
 
 def validate_source_index_vs_inbox(root: Path, failures: list[str]) -> None:
-    source_index = root / ".agent/catalog/SOURCE_INDEX.md"
-    if not source_index.exists():
+    path = root / ".agent/catalog/SOURCE_INDEX.md"
+    if not path.is_file():
         return
     inbox = root / "docs/inbox"
-    text = source_index.read_text(encoding="utf-8")
-    for line in text.splitlines():
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         match = SOURCE_INDEX_ARCHIVED_RE.match(line)
         if not match:
             continue
-        original_path = match.group(1).strip().strip("`")
-        archived_path = match.group(2).strip().strip("`")
-        if original_path and (root / original_path).exists() and inbox in (root / original_path).parents:
-            failures.append(
-                "Source marked archived is still present in docs/inbox/: "
-                f"{original_path} -> {archived_path}"
-            )
+        original = match.group(1).strip().strip("`")
+        archived = match.group(2).strip().strip("`")
+        candidate = root / original
+        if original and candidate.exists() and inbox in candidate.parents:
+            failures.append(f"Source marked archived is still present in docs/inbox/: {original} -> {archived}")
+
+
+def legacy_files(root: Path) -> list[str]:
+    return [rel for rel in LEGACY_OPERATIONAL_FILES if (root / rel).exists()]
 
 
 def main() -> int:
     args = parse_args()
     root = Path(args.project_root).resolve()
-    failures: list[str] = []
-
     if not root.exists():
         print(f"Project root does not exist: {root}", file=sys.stderr)
         return 1
 
+    failures: list[str] = []
     validate_required_files(root, failures)
-    validate_required_sections(root, failures)
+    validate_agents(root, failures)
+    validate_processing_runs(root, failures)
     validate_archive_frontmatter(root, failures)
     validate_archive_links(root, failures)
-    validate_agents_file(root, failures)
     validate_source_index_vs_inbox(root, failures)
+
+    legacy = legacy_files(root)
+    if args.require_github_native and legacy:
+        failures.extend(f"Legacy operational artifact still exists: {rel}" for rel in legacy)
 
     if failures:
         print("Documentation catalog validation failed:")
@@ -176,6 +149,12 @@ def main() -> int:
 
     print("Documentation catalog validation passed.")
     print(f"Project root: {root}")
+    if legacy:
+        print("Migration warnings:")
+        for rel in legacy:
+            print(f"- Legacy operational artifact detected: {rel}")
+    else:
+        print("GitHub-native cutover: complete")
     return 0
 
 

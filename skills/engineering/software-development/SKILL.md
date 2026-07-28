@@ -11,10 +11,10 @@ compatibility: >
   commands. Falls back without worktree isolation only when the target is not a Git repository.
 metadata:
   author: community
-  version: "4.3"
+  version: "4.4"
   category: engineering
   status: active
-  tested: "2026-07-17 - validated with validate_skill.py; exercised multilingual Retouch Mode activation, exclusions, current-branch behavior, and escalation scenarios."
+  tested: "2026-07-27 - Retouch Mode retained; GitHub-native Coferlandia traceability replaces TODO/HISTORY dependencies while preserving non-GitHub repository compatibility."
 ---
 
 ## Context
@@ -222,8 +222,9 @@ Use `debugger` for a bug, regression, failing test, exception, data inconsistenc
 unexpected behavior.
 
 1. Study the issue without modifying files. Separate facts, symptoms, hypotheses, and
-   missing evidence; inspect reproduction steps, logs, failing tests, and `HISTORY.md`
-   when it exists.
+   missing evidence. In a GitHub-native Coferlandia repository, inspect the current/related
+   GitHub Issues, linked PRs/commits, `DECISIONS.md`, and `AGENTS.md` as relevant. In other
+   repositories, use the project's own current history/traceability sources when applicable.
 2. Prepare a root-cause plan and obtain explicit approval from the control authority.
    **REQUIRED:** use `superpowers:systematic-debugging` before proposing a fix when it
    is available. If it is unavailable, still separate facts from hypotheses, reproduce
@@ -253,7 +254,9 @@ implementation plan. A separate statement that the plan is approved is unnecessa
    RED-GREEN-REFACTOR discipline and record the unavailable skill in the handoff.
    Implement the plan in its specified order and keep every change within its scope.
    Run all relevant tests, linters, static checks, and validation commands. Update
-   documentation and project-history artifacts when the plan or repository requires it.
+   relevant documentation and work-item traceability when the plan or repository requires
+   it. In a GitHub-native Coferlandia repository, never recreate `TODO.md` or `HISTORY.md`;
+   report any required Issue/Project update through the selected delivery workflow.
 4. Leave the implementation uncommitted in `awaiting_review` state and provide the
    handoff below to a reviewer distinct from the implementing agent. Testing and
    validation are required implementation work; they are not a substitute for code

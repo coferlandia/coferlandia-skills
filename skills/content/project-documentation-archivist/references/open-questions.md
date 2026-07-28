@@ -1,61 +1,11 @@
-# Open Questions
+# Legacy Open Questions Migration
 
-Track every unresolved item â€” questions and conflicts alike â€” in one register:
-`docs/catalog/OPEN_QUESTIONS.md`. Use the `Type` field to tell them apart.
+`.agent/catalog/OPEN_QUESTIONS.md` is no longer a canonical backlog.
 
-## When to Open One
+During migration, inspect every unresolved entry:
 
-- **Type: conflict** - two or more sources make incompatible claims about current
-  architecture, operational procedures, dependency versions, deployment state,
-  ownership, roadmap status, or implementation state.
-- **Type: question** - processing reveals a gap, missing evidence, or an unresolved
-  decision.
+- If it requires future action, human resolution, investigation, or a project decision, create or link a GitHub Issue and preserve the original question/conflict and sources.
+- If it is only a temporary Archivist-processing uncertainty, record it in the current `PROCESSING_RUNS.md` entry.
+- If it has already been resolved, preserve durable outcomes in README/AGENTS/DECISIONS/RUNBOOK as appropriate and rely on existing GitHub/Git evidence for chronology.
 
-## Format
-
-```md
-## QUESTION-YYYYMMDD-NNN - Short title
-
-Status: open
-Type: question | conflict
-Detected: YYYY-MM-DD
-Detected in session: [[docs/catalog/PROCESSING_RUNS.md#yyyy-mm-dd-hhmm-processing-run]]
-Area: backend | frontend | infra | product | docs | architecture | operations | unknown
-Priority: low | medium | high
-
-Question or conflict:
-...
-
-Context:
-...
-
-Sources:
-- [[docs/archive/YYYY/document-a.md]]
-- [[docs/archive/YYYY/document-b.md]] (second source only applies to conflicts)
-
-Impact:
-...
-
-Temporary decision (conflicts only):
-...
-
-Action needed:
-...
-```
-
-For conflicts, apply a conservative temporary decision and keep the uncertain claim
-out of `README.md`. Questions never block processing.
-
-## Resolution Mode
-
-Use resolution mode only after the user supplies answers or chooses a policy.
-
-1. Read active items from `docs/catalog/OPEN_QUESTIONS.md`.
-2. Match the user's input to exact IDs.
-3. Update the relevant catalog files.
-4. Append resolution details with date and source.
-5. Set `Status: resolved`.
-6. Move the item under `## Resolved`.
-7. Register the action in `PROCESSING_RUNS.md`.
-
-Never delete resolved items. Preserve traceability.
+Do not silently discard unresolved entries. Once every entry has a disposition and GitHub-native validation passes, the legacy file may be removed.

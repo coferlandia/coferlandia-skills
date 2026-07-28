@@ -3,7 +3,7 @@ name: project-skill-miner
 description: >
   Use when the user asks to convert project documentation into local agent skills,
   mine a repository's docs for reusable agent workflows, extract operational recipes
-  from README/RUNBOOK/AGENTS/TODO/HISTORY/DECISIONS, discover what project-specific
+  from README/RUNBOOK/AGENTS/DECISIONS plus current GitHub Issues/PRs, discover what project-specific
   skills should exist, or build project-local `.agents/skills/` entries from current
   documented procedures. This skill proposes candidates first, waits for explicit
   approval, and only then authors approved project-local skills under
@@ -16,7 +16,7 @@ compatibility: >
   before authoring each approved generated skill, and follows its methodology.
 metadata:
   author: community
-  version: "1.0.0"
+  version: "1.1.0"
   category: meta
   status: active
   tested: "2026-07-07 - validated with _protocol/scripts/validate_skill.py; exercised
@@ -64,14 +64,16 @@ preparatory step, but do not do archivist's full job here.
 1. Identify the target repository root and confirm you are mining project
    documentation, not being asked to execute the documented operations directly.
 2. Detect whether archivist-style docs exist. Check first for `README.md`,
-   `AGENTS.md`, `RUNBOOK.md`, `DECISIONS.md`, `HISTORY.md`, `TODO.md`,
-   `OPEN_QUESTIONS.md`, and `CONFLICTS.md`. If those files are fragmented, missing, or
-  contradictory, note that a documentation archivist would improve future
-   mining, but continue with the docs that exist.
-3. Read docs in authority order. Start with `AGENTS.md` and `RUNBOOK.md`, then
-   `DECISIONS.md`, `README.md`, `TODO.md`, `HISTORY.md`, `OPEN_QUESTIONS.md`,
-   `CONFLICTS.md`, and finally any project-specific docs or docs folders. Treat
-   scattered notes as supporting evidence only unless nothing stronger exists.
+   `AGENTS.md`, `RUNBOOK.md`, and `DECISIONS.md`. When GitHub is available, also inspect
+   relevant current Issues/PRs as operational evidence. Treat `TODO.md`, `HISTORY.md`, and
+   legacy `OPEN_QUESTIONS.md` only as migration evidence when they still exist. If sources
+   are fragmented, missing, or contradictory, note that a documentation archivist would
+   improve future mining, but continue with the evidence that exists.
+3. Read sources in authority order. Start with `AGENTS.md` and `RUNBOOK.md`, then
+   `DECISIONS.md`, `README.md`, relevant GitHub Issues/PRs and current repository state,
+   and finally project-specific docs or docs folders. Legacy TODO/HISTORY/open-question
+   files and scattered notes are supporting migration evidence only, never a newer
+   authority than GitHub/current implementation state.
 4. Search for operational language and recurring task patterns: `how to`, `run`,
    `deploy`, `debug`, `validate`, `ingest`, `release`, `migrate`, `reconcile`,
    `process`, `generate`, `test`, `rollback`, `configure`, `rotate`, `diagnose`,
@@ -100,9 +102,10 @@ preparatory step, but do not do archivist's full job here.
      default
 8. Detect staleness aggressively. Mark recipes stale when you find old dates
    contradicted by newer docs, references to removed scripts/directories, deprecated
-   commands, superseded decisions, TODOs already completed in history, or language
-   such as `planned`, `future`, `proposal`, `draft`, `legacy`, `deprecated`, or
-   `maybe`.
+   commands, superseded decisions, work already resolved by closed Issues/merged PRs,
+   legacy TODO/HISTORY entries contradicted by GitHub or current repository state, or
+   language such as `planned`, `future`, `proposal`, `draft`, `legacy`, `deprecated`,
+   or `maybe`.
 9. Produce a proposal and stop. For each candidate include proposed skill name, short
    description, operational task covered, why it should or should not be a skill,
    trigger/use cases, required inputs, expected outputs, safety or approval gates,

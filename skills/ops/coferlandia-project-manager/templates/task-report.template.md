@@ -1,9 +1,11 @@
-# Task Report
+# Issue Report
 
-- Task:
 - Project:
-- Source:
-- Status:
-- Owner:
-- Review state:
-- Verification state:
+- Repository:
+- Issue:
+- State:
+- Project status:
+- Parent:
+- Blocked by:
+- Blocking:
+- URL:

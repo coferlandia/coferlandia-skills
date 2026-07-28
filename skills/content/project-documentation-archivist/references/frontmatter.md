@@ -1,22 +1,20 @@
 # Frontmatter
 
-Use frontmatter to mark processed sources without losing original content.
+Use frontmatter only on Archivist-owned local source documents. GitHub entities and workflow-owned files are indexed externally and must not be modified for Archivist bookkeeping.
 
-## Required Header
-
-Every processed archived source must contain this header:
+## Required local-source header
 
 ```yaml
 ---
 catalog_status: processed
-catalog_processed_at: YYYY-MM-DDTHH:mm:ss
+catalog_processed_at: YYYY-MM-DDTHH:mm:ssZ
 catalog_processor: project-documentation-archivist
-source_original_path: "<original-path>"
-source_archived_path: "<archived-path>"
+source_original_path: "<project-relative-path>"
+source_archived_path: "<project-relative-archive-path-or-empty>"
 source_sha256: "<sha256>"
 git_commit_at_processing: "<commit-or-none>"
-document_type: "<document-type>"
-project_area: "<backend|frontend|infra|product|docs|architecture|operations|mixed|unknown>"
+document_type: "<type>"
+project_area: "<area>"
 feeds:
   - README.md
 references_detected:
@@ -29,53 +27,12 @@ catalog_notes:
 ---
 ```
 
-## Merge Rules
+`feeds` may contain only current durable Archivist outputs such as README, AGENTS, DECISIONS, RUNBOOK, SOURCE_INDEX, or PROCESSING_RUNS. Do not add TODO/HISTORY as feeds.
 
-When the source already has frontmatter:
+## Merge rules
 
-1. Parse the existing frontmatter.
-2. Preserve all unrelated keys.
-3. Replace or add the catalog keys above.
-4. Keep the original body unchanged below the merged header.
-5. Normalize list fields to arrays.
-6. Do not duplicate keys with different names.
+Preserve unrelated existing keys and the original body. Replace only Archivist-owned keys. Normalize list fields and do not invent duplicate aliases.
 
-## Path Rules
+## Remote GitHub sources
 
-- `source_original_path` stores the path before archiving.
-- `source_archived_path` stores the final archive path.
-- Use project-relative paths.
-
-## Feed Rules
-
-Record every catalog file touched by the source in `feeds`.
-
-Examples:
-
-- `README.md`
-- `HISTORY.md`
-- `TODO.md`
-- `DECISIONS.md`
-- `RUNBOOK.md`
-- `docs/catalog/OPEN_QUESTIONS.md`
-
-## Reference Rules
-
-Record extracted references in `references_detected`:
-
-- `issues`
-- `commits`
-- `prs`
-- `external_refs`
-
-Store empty arrays when nothing is detected. Do not omit the keys.
-
-## Notes Rules
-
-Use `catalog_notes` for short factual notes only:
-
-- how the source was classified
-- what catalog files were fed
-- whether an open item was generated
-
-Do not write long summaries into the frontmatter.
+Do not add frontmatter. Track them in `SOURCE_INDEX.md` using repository, source type, number/SHA, URL when available, revision (`updatedAt` for Issues/PRs), processing timestamp, feeds, and notes.

@@ -17,7 +17,6 @@ State the confirmed current state. Keep this section focused on the present.
 ## Main Components
 
 - `path/or/module` - purpose
-- `path/or/module` - purpose
 
 ## Installation
 
@@ -34,34 +33,35 @@ State the confirmed current state. Keep this section focused on the present.
 ## Local Run
 
 ```bash
-# add the main local run commands here
+# confirmed local run commands
 ```
 
 ## Common Commands
 
 ```bash
-# add build, test, lint, and maintenance commands here
+# confirmed build/test/lint/maintenance commands
 ```
 
 ## Main Flows
 
 - Flow 1:
-- Flow 2:
 
 ## Relevant Structure
 
 - `src/` - application code
 - `docs/` - extended documentation
-- `.agent/catalog/` - documentation catalog
+- `.agent/catalog/` - Archivist traceability
 
 ## Confirmed Limitations
 
 - Limitation with source reference
 
+## Work Tracking
+
+Project work and history are tracked in GitHub Issues and the repository's associated GitHub Project.
+
 ## Further Reading
 
 - `AGENTS.md`
-- `HISTORY.md`
-- `TODO.md`
 - `DECISIONS.md`
 - `RUNBOOK.md`

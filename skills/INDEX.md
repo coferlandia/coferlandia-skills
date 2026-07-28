@@ -1,8 +1,8 @@
-# Skills Index â€” coferlandia-skills
+# Skills Index — coferlandia-skills
 
 > **Single source of truth for the skill inventory.** This is the only file that lists
 > which skills exist and their status. Update only this file when adding, removing, or
-> changing a skill â€” there are no mirror catalogs to sync by hand.
+> changing a skill — there are no mirror catalogs to sync by hand.
 >
 > **Row format (defined here, not repeated elsewhere):**
 > `| [skill-name](./{category}/{skill-name}/) | One-line description | {status} |`
@@ -19,7 +19,7 @@ Skills about skills and about the repository itself: creating, auditing, structu
 |-------|-------------|--------|
 | [using-project-skills](./meta/using-project-skills/) | Check skills/INDEX.md and invoke a matching skill before responding to any task, instead of skipping the check | active |
 | [skill-repository-versioning](./meta/skill-repository-versioning/) | Pre-commit checklist for a skill repository: sync the skill index, bump per-skill vs. repo-wide release versions correctly | active |
-| [project-skill-miner](./meta/project-skill-miner/) | Extract current operational recipes from project documentation and convert approved ones into project-local agent skills | active |
+| [project-skill-miner](./meta/project-skill-miner/) | Extract current operational recipes from durable project knowledge plus GitHub development evidence and convert approved ones into project-local agent skills | active |
 | [coferlandia-skill-toolsmith](./meta/coferlandia-skill-toolsmith/) | Explicit-invocation-only skill that analyzes a target skill, consolidates its deterministic behavior behind one unified Python CLI (scripts/<name>-cli.py), and rewires the skill to use it | active |
 
 ## Engineering
@@ -44,7 +44,7 @@ Writing, documentation, communication, release notes.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [project-documentation-archivist](./content/project-documentation-archivist/) | Catalog, normalize, and archive a project's documentation memory with traceability and open-item tracking | active |
+| [project-documentation-archivist](./content/project-documentation-archivist/) | Distill durable project knowledge and migrate legacy TODO/HISTORY work tracking into GitHub Issues with traceability | active |
 | [sagan-scientific-debunker](./content/sagan-scientific-debunker/) | Evaluate claims and news with scientific rigor: evidence map, confidence scale, and conclusions traceable to sources | active |
 
 ## Design
@@ -61,9 +61,9 @@ Operations, automation, incidents, standups.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Set up the current repository as a project-manager home that tracks an explicit list of projects, reports portfolio health, and coordinates approval-gated multi-project execution | active |
+| [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Design project initiatives and manage a GitHub Issues/Projects-backed multi-project portfolio with Obsidian projections | active |
 | [project-orchestrator](./ops/project-orchestrator/) | Explicitly execute approved development specifications through deterministic phase, commit, review, and merge orchestration | active |
 
 ---
 
-*Last updated: 2026-07-15*
+*Last updated: 2026-07-27*

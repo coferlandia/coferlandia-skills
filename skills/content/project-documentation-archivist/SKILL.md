@@ -1,240 +1,214 @@
 ---
 name: project-documentation-archivist
 description: >
-  Use when organizing project docs, processing a documentation inbox, updating
-  project memory, creating or maintaining AGENTS.md for safe agent onboarding,
-  archiving notes, resolving documentation conflicts or open questions, or
-  keeping project documentation synchronized with source notes and Git history.
+  Use when organizing project documentation, distilling durable project knowledge,
+  maintaining AGENTS.md, README.md, DECISIONS.md, or RUNBOOK.md, processing documentation
+  sources, migrating legacy TODO.md/HISTORY.md project memory to GitHub Issues, or
+  synchronizing durable knowledge from GitHub Issues, PRs, commits, and local sources.
 license: Apache-2.0
 compatibility: >
-  Requires read/write access to the target project, shell access for file moves,
-  and Python 3.11+ to run scripts/validate_catalog.py.
+  Requires read/write access to the target project, Git when the project is versioned,
+  Python 3.11+, and GitHub CLI (`gh`) with authenticated repository access for GitHub
+  ingestion or migration operations.
 metadata:
   author: dc-sistemas
-  version: "2.1.0"
+  version: "3.0.0"
   category: content
   status: active
-  tested: "2026-07-06 - adopted .agent/ output convention for catalog and archive
-    paths; standard repo artifacts (README, AGENTS, RUNBOOK) stay at project root.
-    Pending validation with _protocol/scripts/validate_skill.py."
+  tested: "2026-07-27 - GitHub-native protocol migration: TODO/HISTORY removed from canonical outputs; GitHub Issues/PRs become operational evidence; migration CLI added."
 ---
 
 ## Context
 
-This skill turns scattered project documentation into a stable catalog with one file
-per role: present state, agent orientation, verified history, future work, decisions,
-operations, open items, source traceability, and processing sessions.
+This skill is the durable knowledge layer for a project.
 
-`AGENTS.md` is a first-class artifact. It is the minimum an agent should read before
-touching the project â€” not a duplicate of `README.md`, `RUNBOOK.md`, `HISTORY.md`,
-`DECISIONS.md`, or `TODO.md`, but a distillation of the instructions, constraints,
-sensitive areas, and commands an agent needs before acting.
+It does **not** own project work state or project history as duplicate Markdown databases.
+For GitHub-hosted repositories, operational work and its lifecycle belong to GitHub Issues,
+GitHub Projects, pull requests, and Git history.
 
-This skill runs autonomously by default. It does not ask questions while processing
-documentation. Uncertainty goes into `.agent/catalog/OPEN_QUESTIONS.md` and
-`.agent/catalog/PROCESSING_RUNS.md`, and processing continues.
+Archivist reads those sources, together with local documentation, and distills only the
+knowledge that must survive outside an individual issue or implementation discussion.
 
-## Catalog Files
+## Source-of-truth boundaries
+
+- **GitHub Issues + GitHub Projects**: planned, active, blocked, and completed work.
+- **Git / repository state**: implementation reality.
+- **Archivist canonical files**: durable project knowledge.
+- **`.agent/catalog/*`**: internal traceability for Archivist processing.
+
+Never recreate GitHub work state in a repository-local TODO or chronological HISTORY file.
+
+## Canonical files
 
 | File | Role |
 |---|---|
-| `README.md` | present state |
-| `AGENTS.md` | agent entry point |
-| `HISTORY.md` | verified past events |
-| `TODO.md` | actionable future work |
-| `DECISIONS.md` | rationale and trade-offs |
-| `RUNBOOK.md` | operations |
-| `.agent/catalog/SOURCE_INDEX.md` | source inventory |
-| `.agent/catalog/OPEN_QUESTIONS.md` | contradictions and open items |
-| `.agent/catalog/PROCESSING_RUNS.md` | session log |
+| `README.md` | confirmed present state |
+| `AGENTS.md` | minimum safe agent entrypoint |
+| `DECISIONS.md` | durable rationale and trade-offs |
+| `RUNBOOK.md` | durable operational procedures |
+| `.agent/catalog/SOURCE_INDEX.md` | local and remote source traceability |
+| `.agent/catalog/PROCESSING_RUNS.md` | processing-session log |
 
-See `references/catalog-files.md` for what belongs in each file.
+`TODO.md` and `HISTORY.md` are legacy migration inputs only. They are not canonical outputs.
+`.agent/catalog/OPEN_QUESTIONS.md` is also legacy. Material unresolved work or decisions that
+need action must be represented by a GitHub Issue; temporary uncertainty may be recorded in
+the current processing run.
+
+Read `references/catalog-files.md` before updating canonical files.
 
 ## Prerequisites
 
-- Work inside the user's project root.
-- Detect whether the project uses Git before moving archived files.
-- Create any missing catalog file from `assets/` before processing sources.
-- Read reference files only when the current phase needs the extra detail.
-- Preserve semantic content already in `AGENTS.md`. Reorganize and distill it, but
-  never discard meaning silently.
+1. Work inside the intended project root.
+2. Inspect Git status before modifying repository files.
+3. For GitHub operations, verify `gh auth status` and resolve the repository with
+   `gh repo view --json nameWithOwner,url,hasIssuesEnabled,hasProjectsEnabled`.
+4. Do not move, rename, archive, or rewrite files owned by another workflow such as CCPM.
+   They may be read as evidence.
+5. Preserve semantic content already present in `AGENTS.md`.
 
-## Modes
+## Normal knowledge-distillation workflow
 
-- **Non-interactive mode:** process, distribute, archive, validate, and finish with a
-  summary plus a suggested commit message.
-- **Interactive mode:** same flow, no questions during the run. Present changes only
-  after processing finishes.
-- **Resolution mode:** read open items in `docs/catalog/OPEN_QUESTIONS.md`, apply the
-  supplied resolutions, update catalog files, move items to `Resolved`, and register
-  the run.
+1. Read `references/workflow.md`.
+2. Inventory local documentation sources and relevant GitHub sources.
+3. Update `.agent/catalog/SOURCE_INDEX.md` incrementally.
+4. Read sources deeply enough to distinguish operational events from durable knowledge.
+5. Route only durable knowledge:
+   - present facts -> `README.md`
+   - agent-critical constraints -> `AGENTS.md`
+   - rationale / trade-offs -> `DECISIONS.md`
+   - repeatable operations -> `RUNBOOK.md`
+6. When a source reveals actionable future work or a material unresolved question, create
+   or link a GitHub Issue rather than adding a local backlog entry.
+7. Mark/archive only local sources that Archivist owns and is allowed to process.
+8. Never add Archivist frontmatter to GitHub entities or workflow-owned files.
+9. Validate with:
+   `python skills/content/project-documentation-archivist/scripts/validate_catalog.py --project-root .`
+10. Finish with the sources inspected, durable files updated, GitHub Issues created/linked,
+    validation evidence, and a suggested commit message.
 
-## Workflow
+## GitHub source processing
 
-1. Run Phase 0 preparation. Read `references/workflow.md` before changing files.
-2. Create any missing catalog file from `assets/` (see Catalog Files above).
-3. Discover source documents in `docs/inbox/`, `docs/`, `notes/`, `documentation/`,
-   `design/`, `specs/`, `planning/`, `issues/`, and the project root. Skip `.git/`,
-   `node_modules/`, `vendor/`, `bin/`, `obj/`, `dist/`, `build/`, `.venv/`,
-   `__pycache__/`, binaries, backups, raw logs, and generated artifacts unless the
-   user explicitly asks for them.
-4. Build or update `.agent/catalog/SOURCE_INDEX.md`: one row per detected document
-   with status, source path, archive path, document type, detection date, hash, fed
-   files, open items, and notes.
-5. Classify each processable source as one of: `current-state-doc`, `historical-note`,
-   `implementation-plan`, `bug-analysis`, `roadmap-note`, `decision-record`,
-   `architecture-note`, `setup-guide`, `runbook-note`, `client-communication`, `mixed`,
-   or `unknown`.
-6. Read each source in full. For long files, process by section and keep one running
-   synthesis. Extract current facts, historical events, future tasks, decisions,
-   operational data, agent-critical instructions, non-obvious conventions, sensitive
-   areas, validation commands, risks, contradictions, open questions, references, and
-   the target catalog files.
-7. Distribute extracted facts in this order: `HISTORY.md`, `DECISIONS.md`, `TODO.md`,
-   `RUNBOOK.md`, `README.md`, `AGENTS.md`, `.agent/catalog/OPEN_QUESTIONS.md`,
-   `.agent/catalog/SOURCE_INDEX.md`, `.agent/catalog/PROCESSING_RUNS.md`.
-8. Keep present, past, future, decisions, and operations in separate files. Read
-   `references/catalog-files.md` before writing or merging any catalog file.
-9. When `AGENTS.md` already exists, preserve every idea in it. Reorganize, summarize,
-   deduplicate, move excess detail downward or into linked docs, and use a
-   `Legacy / Existing Notes` section when content can't be integrated cleanly.
-10. Mark each processed source with merged YAML frontmatter. Read
-    `references/frontmatter.md` before editing a source that already has frontmatter.
-11. Archive each processed source under `.agent/archive/YYYY/YYYY-MM-DD-name.ext`. Use
-    `git mv` when the project uses Git and the move is possible; otherwise move the
-    file normally and note the fallback.
-12. Validate the catalog:
-    `python skills/content/project-documentation-archivist/scripts/validate_catalog.py --project-root .`
-    Read `references/validation.md` if it fails.
-13. Finish with a factual summary: processed documents, archived documents, updated
-    files, open items, validations run, and the suggested commit message.
+Treat GitHub as first-class evidence:
 
-## Resolution Mode
+- Issues and issue comments describe requested work, discussion, blockers, and outcomes.
+- PRs and reviews provide implementation and review evidence.
+- Commits provide implementation evidence.
+- GitHub Projects provide operational workflow state but are not copied into project docs.
 
-1. Read `.agent/catalog/OPEN_QUESTIONS.md`.
-2. Locate active items.
-3. Apply the supplied resolution only to items covered by the user's input.
-4. Update `README.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, or `RUNBOOK.md` when
-   the resolution changes project memory.
-5. Mark the item resolved, append date and evidence, move it to `Resolved`, and
-   register the run in `.agent/catalog/PROCESSING_RUNS.md`.
+`SOURCE_INDEX.md` must retain enough identity and revision data to decide whether a GitHub
+source changed since the last processing run. A practical remote key is repository + entity
+type + number, together with GitHub `updatedAt`.
 
-## AGENTS.md Curation Rules
+If a previously processed Issue/PR changes materially, reevaluate its knowledge impact.
+Do not append duplicate decision/runbook content merely because a source was revisited.
 
-1. Read `AGENTS.md` fully when it already exists. Never overwrite it wholesale.
-2. Preserve semantic content. Never delete an instruction just because it looks old,
-   redundant, disordered, or unclear.
-3. Distill the top of the file into a short `Critical Instructions for Agents`
-   section with high-impact, actionable bullets.
-4. Keep `AGENTS.md` brief at the top and navigable below. Push operational detail,
-   history, and deep rationale into linked artifacts instead of bloating the file.
-5. Maintain these sections, in order: `Critical Instructions for Agents`,
-   `Project Essentials`, `Documentation Index`, `Maintenance Notes`.
-6. Under `Project Essentials`, keep concise subsections for `Architecture`,
-   `Main Conventions`, `Sensitive Areas`, and `Validation Commands`.
-7. Under `Documentation Index`, use relative links only, pointing to whichever of
-   `README.md`, `AGENTS.md`, `HISTORY.md`, `DECISIONS.md`, `TODO.md`, `RUNBOOK.md`, and
-   `OPEN_QUESTIONS.md` exist.
-8. If a command, convention, or sensitive-area claim isn't confirmed, mark it pending
-   in `AGENTS.md` and log the doubt in `.agent/catalog/OPEN_QUESTIONS.md`.
-9. If `AGENTS.md` contradicts other evidence, log the contradiction in
-   `.agent/catalog/OPEN_QUESTIONS.md` and leave a brief pointer in `AGENTS.md` instead of
-   silently picking a winner.
-10. If existing notes don't fit the target structure without losing meaning, keep them
-    in a `Legacy / Existing Notes` section.
+## Material unresolved questions
+
+A material uncertainty that requires a human or future work is operational state and should
+become a GitHub Issue. Preserve source references and the exact uncertainty in the Issue.
+
+Temporary processing uncertainty that does not require future project work may be recorded
+only in `.agent/catalog/PROCESSING_RUNS.md`.
+
+Never silently choose between contradictory authoritative sources.
+
+## Legacy GitHub-native migration mode
+
+Use this mode for repositories that still contain `TODO.md` and/or `HISTORY.md`.
+
+The migration is deliberately split between semantic classification and deterministic GitHub
+mechanics:
+
+1. Run preflight:
+   `python scripts/github_migration.py preflight --project-root .`
+2. Inventory legacy entries:
+   `python scripts/github_migration.py inventory --project-root .`
+3. Read every inventory item and classify it according to
+   `references/github-migration.md`. Archivist performs this semantic step; the script must
+   not guess architectural meaning from keywords.
+4. Write the decisions file generated from the inventory template.
+5. Validate decisions:
+   `python scripts/github_migration.py validate-decisions --project-root . --decisions <file>`
+6. Preview deterministic GitHub mutations:
+   `python scripts/github_migration.py apply --project-root . --decisions <file>`
+7. After explicit write authorization, run the same command with `--apply`.
+8. Run Archivist knowledge distillation again against the migrated GitHub sources and the
+   legacy documents so knowledge-only content reaches README/AGENTS/DECISIONS/RUNBOOK.
+9. Validate cutover:
+   `python scripts/github_migration.py validate-cutover --project-root . --decisions <file>`
+10. Only after validation succeeds, remove `TODO.md` and `HISTORY.md` from the project.
+11. Run `validate_catalog.py --require-github-native` and commit the migration.
+
+Migration commands are dry-run by default. Re-running them must not create duplicate Issues.
+
+## Migration classifications
+
+Allowed dispositions are:
+
+- `EXISTING_ISSUE`
+- `EXISTING_PR`
+- `EXISTING_GIT_EVIDENCE`
+- `CREATE_OPEN_ISSUE`
+- `CREATE_CLOSED_HISTORICAL_ISSUE`
+- `KNOWLEDGE_ONLY`
+- `OBSOLETE`
+- `DUPLICATE`
+- `NEEDS_REVIEW`
+
+`NEEDS_REVIEW` blocks cutover.
+
+Do not manufacture a GitHub Issue for prose that is only a durable decision, current-state
+fact, operational procedure, or agent instruction. Distill that content into the appropriate
+canonical file instead.
+
+## AGENTS.md curation rules
+
+1. Read the full existing file before editing it.
+2. Preserve semantic content; never erase uncertain material silently.
+3. Keep a short `Critical Instructions for Agents` section near the top.
+4. Maintain `Project Essentials`, `Documentation Index`, and `Maintenance Notes`.
+5. Link to README, DECISIONS, RUNBOOK, and relevant GitHub work surfaces rather than TODO/HISTORY.
+6. Confirm build/test/lint/run commands before presenting them as valid.
+7. Put deep operational procedures in RUNBOOK and deep rationale in DECISIONS.
 
 ## Gotchas
 
-- **Don't promote uncertain notes into `README.md`:** doubtful or conflicting material
-  stays in `OPEN_QUESTIONS.md`. `README.md` describes only confirmed present state.
-- **Don't merge history into decisions:** `HISTORY.md` records what happened.
-  `DECISIONS.md` records why a choice was made, its alternatives, and consequences.
-- **Don't destroy source context when adding frontmatter:** merge existing frontmatter
-  fields, preserve the original body, and record archive path plus content hash.
-- **Don't duplicate entries on repeated runs:** reuse `source_sha256`, stable IDs,
-  archived paths, and managed blocks to update existing entries instead of appending
-  clones.
-- **Don't ask questions mid-run:** log uncertainty and continue. Ask only during a
-  separate resolution phase if the session is interactive.
-- **Don't turn `AGENTS.md` into a README clone:** keep it focused on agent-critical
-  instructions, non-obvious constraints, sensitive areas, validation commands, and
-  links.
-- **Don't silently erase existing AGENTS notes:** reorganize, summarize, and quarantine
-  messy material if needed, but preserve semantic content.
-- **Don't invent commands or conventions for `AGENTS.md`:** if build, test, lint, or
-  run commands aren't confirmed, mark them pending and log an open question.
+- Do not treat Issue closure as proof that repository documentation is correct; inspect the
+  merged implementation and current repository when the distinction matters.
+- Do not mirror entire Issues or PR conversations into Markdown.
+- Do not create a second task-state system in `.agent/`.
+- Do not create one historical Issue per commit during migration.
+- Do not delete legacy TODO/HISTORY until every item has a reviewed disposition and cutover
+  validation passes.
+- Do not archive or modify CCPM-owned `.claude/prds/**` or `.claude/epics/**` sources.
+- Do not require CCPM for GitHub ingestion. CCPM is an optional producer of GitHub work state.
+- Do not publish legacy source bodies to GitHub automatically. Migration inventories may contain legacy source text for local semantic review; treat them as potentially sensitive and review before committing/sharing them.
+- Do not store secrets in RUNBOOK.
 
-## Output Location
+## Output location
 
-Generated catalog files go to `.agent/catalog/`.
-Generated archive files go to `.agent/archive/YYYY/`.
-Documentation artifacts that are not standard repo files go to `.agent/`.
-See `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
+- Standard repository files remain at project root.
+- Archivist internal artifacts go under `.agent/catalog/`.
+- Local processed-source archives go under `.agent/archive/YYYY/`.
+- Migration evidence goes under `.agent/migrations/` by default.
 
-### Output Exceptions
+## Scripts
 
-- `README.md` â€” standard repo artifact (stays at project root)
-- `AGENTS.md` â€” standard repo artifact (stays at project root)
-- `RUNBOOK.md` â€” standard repo artifact (stays at project root)
+### `scripts/validate_catalog.py`
 
-## Output Expected
+Validates the GitHub-native Archivist catalog. Use `--require-github-native` after migration
+to reject remaining legacy TODO/HISTORY/OPEN_QUESTIONS artifacts.
 
-After processing:
+### `scripts/github_migration.py`
 
-```text
-Mode: non-interactive | interactive | resolution
-Processed documents: <count>
-Archived documents: <count>
-Updated files:
-- README.md
-- AGENTS.md
-- HISTORY.md
-- TODO.md
-- DECISIONS.md
-- RUNBOOK.md
-- .agent/catalog/SOURCE_INDEX.md
-- .agent/catalog/OPEN_QUESTIONS.md
-- .agent/catalog/PROCESSING_RUNS.md
-Open items: <count>
-Validations:
-- python scripts/validate_catalog.py --project-root .
-Suggested commit:
-docs: update project documentation catalog
-```
-
-After resolution mode:
-
-```text
-Mode: resolution
-Resolved items: <count>
-Updated files:
-- <file list>
-Remaining open items: <count>
-Suggested commit:
-docs: resolve documentation catalog open items
-```
-
-## Scripts Available
-
-- **`scripts/validate_catalog.py`** - validates required catalog files, archive
-  frontmatter with `catalog_status: processed`, internal links, and obvious processing
-  inconsistencies. Run after every processing or resolution run.
-
-Usage:
-
-```bash
-python skills/content/project-documentation-archivist/scripts/validate_catalog.py --help
-```
+Deterministic helper for per-project migration from TODO/HISTORY to GitHub Issues and for
+cutover validation. It never performs GitHub writes unless `--apply` is supplied.
 
 ## References
 
-- Read `references/workflow.md` when starting a processing run or deciding the next
-  phase.
-- Read `references/catalog-files.md` when updating `README.md`, `HISTORY.md`,
-  `TODO.md`, `DECISIONS.md`, `RUNBOOK.md`, `AGENTS.md`, or catalog files.
-- Read `references/frontmatter.md` when inserting or merging source frontmatter.
-- Read `references/open-questions.md` when logging a contradiction or open question,
-  or applying a later resolution.
-- Read `references/git-behavior.md` when the project has Git or when move operations
-  need fallbacks.
-- Read `references/validation.md` when running validation or diagnosing failures.
+- `references/workflow.md` - normal knowledge-distillation workflow.
+- `references/catalog-files.md` - canonical artifact boundaries.
+- `references/frontmatter.md` - local source traceability rules.
+- `references/github-migration.md` - per-project TODO/HISTORY migration procedure.
+- `references/open-questions.md` - legacy OPEN_QUESTIONS migration guidance.
+- `references/validation.md` - validation and cutover rules.

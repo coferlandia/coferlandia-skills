@@ -1,5 +1,24 @@
 # Coferlandia Skills Release Notes
 
+## v2.0.0 (2026-07-27)
+
+### Breaking project protocol change
+
+- **project-documentation-archivist** — v3.0.0. GitHub Issues and GitHub Projects become the operational source of truth. `TODO.md`, `HISTORY.md`, and legacy `OPEN_QUESTIONS.md` are migration inputs only; Archivist now owns durable knowledge (`README.md`, `AGENTS.md`, `DECISIONS.md`, `RUNBOOK.md`) plus traceability metadata and ships a guarded, idempotent per-project migration workflow.
+- **coferlandia-project-manager** — v0.6.0. PM becomes a GitHub-backed architecture and portfolio manager. It keeps design-oriented Superpowers, reads operational state from GitHub, and treats Obsidian as a generated projection rather than a task database.
+- **software-development** — v4.4. Debugging and implementation traceability use GitHub Issues/PRs/commits in GitHub-native Coferlandia repositories instead of depending on local TODO/HISTORY files.
+- **project-skill-miner** — v1.1.0. Current GitHub development evidence joins durable documentation as an authoritative mining source; legacy TODO/HISTORY files are migration evidence only.
+
+### Migration
+
+- Existing projects migrate repository-by-repository with Archivist preflight, inventory, reviewed decisions, idempotent GitHub Issue creation/mapping, knowledge distillation, cutover validation, and only then removal of legacy tracking files.
+- This is a breaking protocol migration; mixed portfolios remain observable through an explicit legacy-migration compatibility mode until each project cuts over.
+
+### Repository
+
+- Bumped the repo-wide plugin version to 2.0.0 because the shared project-management/documentation protocol changes incompatibly.
+- Updated `skills/INDEX.md` descriptions for the GitHub-native ownership model.
+
 ## v1.9.0 (2026-07-15)
 
 ### Skills
@@ -18,14 +37,14 @@
 
 ### Skills
 
-- **coferlandia-project-manager** (`ops`) â€” v0.5.1. Preserves explicit
+- **coferlandia-project-manager** (`ops`) — v0.5.1. Preserves explicit
   `projects.json` slugs across portfolio, health, archivist, and board outputs;
   reports `projects_count`; and rejects runtime commands when the managed-project
   manifest is absent instead of treating it as an empty portfolio.
 
 ### Repository
 
-- `coferlandia-skills` â€” ships the `skills/ops` category in the plugin manifest,
+- `coferlandia-skills` — ships the `skills/ops` category in the plugin manifest,
   including `coferlandia-project-manager` at its canonical location.
 
 ## v1.7.0 (2026-07-13)
@@ -83,7 +102,7 @@
 
 ### Protocol
 
-- `HOW_TO_CREATE_SKILLS.md` â€” added an explicit reference to
+- `HOW_TO_CREATE_SKILLS.md` — added an explicit reference to
   `superpowers:writing-skills` in the prerequisites for skill authoring, so
   approved skill drafts follow the dedicated writing workflow when that skill is
   available.

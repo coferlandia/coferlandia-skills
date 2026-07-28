@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Board-driven action validation for coferlandia-project-manager."""
+"""Compatibility surface for former PM board-driven actions.
+
+Phase 1 removes the PM-owned TODO/status state machine. Operational status now belongs to
+GitHub Issues/Projects. These commands remain so existing wrappers fail safely and provide
+useful GitHub-native guidance instead of silently reading TODO.md.
+"""
 from __future__ import annotations
 
 import argparse
@@ -7,198 +12,93 @@ import json
 import sys
 from pathlib import Path
 
-from reporting import VALID_TASK_STATUSES, iter_managed_project_entries, _is_git_repo, _missing_artifacts, parse_todo_tasks
+from reporting import cmd_task_report
+
+GITHUB_NATIVE_STATUSES = {"backlog", "in-progress", "review", "blocked", "done"}
 
 
-ACTIONABLE_STATES = {
-    "needs-brainstorming": {
-        "suggested_next_action": "prepare a brainstorming brief",
-        "required_next_skill": "superpowers:brainstorming",
-    },
-    "planning": {
-        "suggested_next_action": "prepare a writing-plans brief",
-        "required_next_skill": "superpowers:writing-plans",
-    },
-    "ready-for-agent": {
-        "suggested_next_action": "prepare an execution brief",
-        "required_next_skill": "superpowers:executing-plans",
-    },
-    "code-review": {
-        "suggested_next_action": "prepare a review handoff brief",
-        "required_next_skill": "superpowers:requesting-code-review",
-    },
-    "verification": {
-        "suggested_next_action": "prepare a verification checklist",
-        "required_next_skill": "superpowers:verification-before-completion",
-    },
-}
-
-
-def _find_task(projects_file: Path, task_id: str) -> dict | None:
-    task_id_lower = task_id.lower()
-    for project_slug, project_path in iter_managed_project_entries(projects_file):
-        if not _is_git_repo(project_path):
-            continue
-        for task in parse_todo_tasks(project_path / "TODO.md"):
-            candidate = (task.get("task_id") or "").lower()
-            if candidate == task_id_lower:
-                return {
-                    **task,
-                    "project_slug": project_slug,
-                    "repo_path": project_path.as_posix(),
-                }
-    return None
+def _issue(args: argparse.Namespace) -> dict:
+    report_args = argparse.Namespace(
+        projects_file=args.projects_file,
+        task=args.task,
+        default_branch="main",
+        stale_days=30,
+        apply=False,
+        format="json",
+    )
+    return cmd_task_report(report_args)
 
 
 def cmd_validate_task_transition(args: argparse.Namespace) -> dict:
-    task = _find_task(args.projects_file, args.task)
-    if task is None:
+    issue = _issue(args)
+    if issue.get("status") == "error":
+        return {"status": "error", "authorized": False, "blocking_reason": issue.get("error")}
+    target = args.target_status.strip().lower()
+    if target not in GITHUB_NATIVE_STATUSES:
         return {
             "status": "error",
             "authorized": False,
-            "blocking_reason": f"Task '{args.task}' was not found in managed projects.",
+            "blocking_reason": (
+                f"'{args.target_status}' belongs to the retired PM-local state machine. "
+                "Use GitHub Project status and the normalized categories backlog, in-progress, review, blocked, or done."
+            ),
         }
-
-    target_status = args.target_status.strip().lower()
-    if target_status not in VALID_TASK_STATUSES:
-        return {
-            "status": "error",
-            "authorized": False,
-            "blocking_reason": f"Unknown target status: {args.target_status}",
-        }
-
-    if task["status"] != target_status:
-        return {
-            "status": "ok",
-            "task_id": task.get("task_id"),
-            "project_slug": task["project_slug"],
-            "current_status": task["status"],
-            "target_status": target_status,
-            "authorized": False,
-            "blocking_reason": "Current task status does not match the requested board state.",
-            "required_approval": "no",
-            "suggested_next_action": None,
-        }
-
-    missing = _missing_artifacts(Path(task["repo_path"]))
-    if missing:
-        action = ACTIONABLE_STATES.get(target_status)
-        return {
-            "status": "ok",
-            "task_id": task.get("task_id"),
-            "project_slug": task["project_slug"],
-            "current_status": task["status"],
-            "target_status": target_status,
-            "authorized": False,
-            "blocking_reason": "Unresolved sync conflict blocks board-driven action preparation.",
-            "required_approval": "yes",
-            "suggested_next_action": action["suggested_next_action"] if action else None,
-            "missing_artifacts": missing,
-        }
-
-    action = ACTIONABLE_STATES.get(target_status)
-    if action is None:
-        return {
-            "status": "ok",
-            "task_id": task.get("task_id"),
-            "project_slug": task["project_slug"],
-            "current_status": task["status"],
-            "target_status": target_status,
-            "authorized": False,
-            "blocking_reason": "Target task status is not board-actionable in Phase 6.",
-            "required_approval": "no",
-            "suggested_next_action": None,
-        }
-
     return {
         "status": "ok",
-        "task_id": task.get("task_id"),
-        "project_slug": task["project_slug"],
-        "current_status": task["status"],
-        "target_status": target_status,
-        "authorized": True,
-        "blocking_reason": None,
-        "required_approval": "no",
-        "suggested_next_action": action["suggested_next_action"],
+        "project_slug": issue["project"],
+        "repository": issue["repository"],
+        "issue_number": issue["issue"]["number"],
+        "target_status": target,
+        "authorized": False,
+        "blocking_reason": "PM no longer mutates operational task state. Change the GitHub Project/Issue state through GitHub-native tooling.",
+        "required_approval": "yes for write-capable GitHub mutation",
+        "suggested_next_action": "update the GitHub Project item or Issue through the approved GitHub workflow",
+        "source_of_truth": "github",
     }
 
 
 def cmd_generate_execution_brief(args: argparse.Namespace) -> dict:
-    task = _find_task(args.projects_file, args.task)
-    if task is None:
-        return {
-            "status": "error",
-            "error": f"Task '{args.task}' was not found in managed projects.",
-        }
-
-    current_status = task["status"]
-    actionable = ACTIONABLE_STATES.get(current_status)
-    if actionable is None:
-        return {
-            "status": "error",
-            "task_id": task.get("task_id"),
-            "error": f"Task status '{current_status}' is not board-actionable in Phase 6.",
-        }
-
-    validation = cmd_validate_task_transition(
-        argparse.Namespace(
-            projects_file=args.projects_file,
-            task=task.get("task_id") or args.task,
-            target_status=current_status,
-        )
-    )
-    if not validation.get("authorized"):
-        return {
-            "status": "error",
-            "task_id": task.get("task_id"),
-            "current_status": current_status,
-            "blocking_reason": validation.get("blocking_reason"),
-            "required_approval": validation.get("required_approval", "yes"),
-            "executes_work": False,
-        }
-
+    issue = _issue(args)
+    if issue.get("status") == "error":
+        return issue
+    value = issue["issue"]
     return {
         "status": "ok",
-        "task_id": task.get("task_id"),
-        "project_slug": task["project_slug"],
-        "repo_path": task["repo_path"],
-        "title": task["title"],
-        "current_status": current_status,
-        "required_next_skill": actionable["required_next_skill"],
-        "suggested_next_action": actionable["suggested_next_action"],
-        "required_approval": "plan approval before implementation",
-        "blocking_conflicts": [],
+        "deprecated_command": True,
+        "project_slug": issue["project"],
+        "repository": issue["repository"],
+        "issue_number": value["number"],
+        "title": value["title"],
+        "issue_url": value["url"],
+        "required_next_skill": None,
+        "suggested_next_action": "Use the GitHub Issue as the operational work item. Project architecture/planning remains a PM responsibility; implementation routing belongs to the selected delivery workflow.",
+        "required_approval": "follow the selected delivery workflow",
         "executes_work": False,
-        "mode": "dry-run" if args.dry_run else "describe-only",
+        "mode": "compatibility-only",
+        "source_of_truth": "github",
     }
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Board-driven action tooling.")
+    parser = argparse.ArgumentParser(description="GitHub-native compatibility tooling for former PM board actions.")
     sub = parser.add_subparsers(dest="command", required=True)
-
     validate = sub.add_parser("validate-task-transition")
     validate.add_argument("--projects-file", required=True, type=Path)
-    validate.add_argument("--task", required=True)
+    validate.add_argument("--task", required=True, help="Issue reference, preferably project-slug#number")
     validate.add_argument("--target-status", required=True)
-
     brief = sub.add_parser("generate-execution-brief")
     brief.add_argument("--projects-file", required=True, type=Path)
-    brief.add_argument("--task", required=True)
+    brief.add_argument("--task", required=True, help="Issue reference, preferably project-slug#number")
     brief.add_argument("--dry-run", action="store_true")
     brief.add_argument("--current-status-override")
-
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
-    if args.command == "validate-task-transition":
-        payload = cmd_validate_task_transition(args)
-    else:
-        payload = cmd_generate_execution_brief(args)
-    print(json.dumps(payload, indent=2))
-    return 0
+    payload = cmd_validate_task_transition(args) if args.command == "validate-task-transition" else cmd_generate_execution_brief(args)
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0 if payload.get("status") != "error" else 1
 
 
 if __name__ == "__main__":

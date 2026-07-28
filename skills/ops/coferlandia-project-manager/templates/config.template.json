@@ -3,8 +3,8 @@
   "obsidian": {
     "vault_root": "",
     "pm_projects_folder": "Projects",
-    "pm_tasks_folder": "Projects/tasks",
-    "default_view": "kanban"
+    "pm_tasks_folder": "Projects/issues",
+    "default_view": "portfolio"
   },
   "git": {
     "default_branch": "main",
@@ -15,35 +15,17 @@
     "use_gh_cli_if_available": true,
     "allow_remote_repo_creation": false
   },
-  "execution": {
-    "mode": "supervised_agentic",
-    "dry_run_default": true,
-    "allow_parallel_readonly_agents": true,
-    "allow_parallel_write_agents": false,
-    "require_control_authority_for_merge": true
-  },
   "superpowers": {
     "required": true,
     "harness": "auto",
     "skills_root": "auto",
-    "worktree_policy": "delegate_to_superpowers",
     "required_skills": [
       "brainstorming",
-      "writing-plans",
-      "executing-plans",
-      "using-git-worktrees",
-      "finishing-a-development-branch",
-      "test-driven-development",
-      "systematic-debugging",
-      "verification-before-completion",
-      "subagent-driven-development",
-      "dispatching-parallel-agents",
-      "requesting-code-review",
-      "receiving-code-review",
-      "writing-skills"
+      "writing-plans"
     ],
     "optional_skills": [
-      "preserving-productive-tensions"
+      "preserving-productive-tensions",
+      "writing-skills"
     ]
   },
   "archivist": {
@@ -61,15 +43,5 @@
     "detection": "auto",
     "fallback_profile": "manual-supervised",
     "current_runtime": "auto"
-  },
-  "checkpointing": {
-    "enabled": true,
-    "strategy": "local_commit_per_approved_step",
-    "commit_message_template": "checkpoint({project_slug}): step {step_number} - {description}",
-    "require_clean_step_scope": true,
-    "require_tests_before_commit": true,
-    "require_reviewer_approval_before_commit": true,
-    "allow_push_checkpoint_commits": false,
-    "finalization_strategy": "ask_control_authority"
   }
 }

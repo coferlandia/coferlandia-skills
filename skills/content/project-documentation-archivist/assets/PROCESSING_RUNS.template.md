@@ -1,28 +1,28 @@
 # Processing Runs
 
-## 2026-06-24-1200-processing-run
+## YYYY-MM-DD-HHMM-processing-run
 
-Date: 2026-06-24T12:00:00
-Mode: non-interactive | interactive | resolution
-State: completed | completed-with-open-items | failed
+Date: YYYY-MM-DDTHH:mm:ssZ
+Mode: normal | migration | resolution
+State: completed | completed-with-temporary-uncertainty | failed
 Branch: none
 Base commit: none
-Processed documents:
-- path/to/source.md
+Sources processed:
+- local/path-or-github-reference
+GitHub mutations:
+- none
 Updated files:
 - README.md
-- HISTORY.md
-- TODO.md
+- AGENTS.md
 - DECISIONS.md
 - RUNBOOK.md
 - .agent/catalog/SOURCE_INDEX.md
-- .agent/catalog/OPEN_QUESTIONS.md
 - .agent/catalog/PROCESSING_RUNS.md
-Open items:
-- QUESTION-YYYYMMDD-NNN
+Temporary uncertainties:
+- none
 Validations run:
 - python scripts/validate_catalog.py --project-root .
 Summary:
 - Brief factual summary
 Suggested commit:
-- docs: update project documentation catalog
+- docs: update durable project knowledge

@@ -1,198 +1,113 @@
 # Workflow
 
-Execute the documentation catalog process in fixed phases. Do not skip ordering.
+Execute knowledge distillation in fixed phases. Operational work state belongs to GitHub.
 
 ## Phase 0 - Preparation
 
-1. Identify the project root.
-2. Detect whether `.git/` exists.
-3. Detect the current branch when Git exists.
-4. Detect the current commit when Git exists.
-5. Detect whether the working tree already contains changes.
-6. Locate existing canonical files:
-   `README.md`, `AGENTS.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, `RUNBOOK.md`,
-   `docs/catalog/SOURCE_INDEX.md`, `docs/catalog/OPEN_QUESTIONS.md`,
-   `docs/catalog/PROCESSING_RUNS.md`.
-7. Create missing canonical files from the templates in `assets/`.
-8. Create `docs/catalog/` and `docs/archive/` when missing.
-9. Register pre-existing dirty state in `docs/catalog/PROCESSING_RUNS.md`.
+1. Resolve project root, Git branch, base commit, remote, and dirty state.
+2. Detect canonical files: `README.md`, `AGENTS.md`, `DECISIONS.md`, `RUNBOOK.md`, `.agent/catalog/SOURCE_INDEX.md`, `.agent/catalog/PROCESSING_RUNS.md`.
+3. Create missing canonical files from `assets/`.
+4. Detect legacy `TODO.md`, `HISTORY.md`, and `.agent/catalog/OPEN_QUESTIONS.md`; report them as migration inputs, not canonical outputs.
+5. When GitHub is available, resolve repository identity with `gh repo view` and verify authentication.
+6. Record the run base state in `PROCESSING_RUNS.md`.
 
 ## Phase 1 - Inventory
 
-1. Scan the candidate directories:
-   `docs/inbox/`, `docs/`, `notes/`, `documentation/`, `design/`, `specs/`,
-   `planning/`, `issues/`, and the project root.
-2. Exclude ignored directories and binary files.
-3. Compute a content hash for each processable source.
-4. Detect sources already marked with `catalog_status: processed`.
-5. Detect hashes already present as processed in `docs/catalog/SOURCE_INDEX.md`.
-6. Set status per source:
-   `pending`, `processed`, `skipped`, `unknown`, `conflict`, or `archived`.
-7. Update `docs/catalog/SOURCE_INDEX.md` immediately after classification changes.
+Inventory both local and remote sources.
+
+Local candidates include `docs/inbox/`, `docs/`, `notes/`, `documentation/`, `design/`, `specs/`, `planning/`, `issues/`, and project-root documentation.
+
+GitHub candidates include relevant Issues, issue comments, PRs, reviews, and commits.
+
+Do not inventory GitHub Project item state as documentation to copy. It is operational state.
+
+For every source retain an identity and revision signal:
+
+- local file: path + SHA-256;
+- GitHub Issue/PR: repository + entity type + number + `updatedAt`;
+- commit: repository + SHA.
 
 ## Phase 2 - Classification
 
-Classify each processable source before integration:
+Classify information, not merely files:
 
-- `current-state-doc`
-- `historical-note`
-- `implementation-plan`
-- `bug-analysis`
-- `roadmap-note`
-- `decision-record`
-- `architecture-note`
-- `setup-guide`
-- `runbook-note`
-- `client-communication`
-- `mixed`
-- `unknown`
+- current state;
+- agent-critical instruction;
+- decision/rationale;
+- operational procedure;
+- actionable work;
+- historical operational event;
+- temporary uncertainty;
+- mixed.
 
-Use `mixed` only when one source materially feeds multiple catalog files. Use
-`unknown` only when the source stays unclassifiable after full reading.
+Actionable work and material unresolved questions belong in GitHub Issues. Historical events normally remain represented by existing Issues/PRs/commits. Only durable knowledge is written into Archivist canonical files.
 
-## Phase 3 - Detailed Reading
+## Phase 3 - Detailed reading
 
-Read the full source. Extract:
+Read enough evidence to separate:
 
-- one concise summary
-- confirmed present facts
-- agent-critical instructions
-- non-obvious conventions
-- sensitive areas
-- validation commands
-- historical events
-- future tasks
-- decision records
-- operational procedures
-- risks
-- contradictions
-- open questions
-- references to issues, commits, PRs, and external documents
-- target files to feed
+- requested behavior from implemented behavior;
+- discussion from final decision;
+- historical event from durable rationale;
+- one-off recovery action from repeatable runbook procedure;
+- unresolved work from present-state documentation.
 
-Process long files by sections and maintain one global synthesis. Do not stop after
-the first useful paragraph.
+For completed GitHub work, inspect linked implementation evidence when necessary. Do not assume a closed Issue proves current repository state.
 
 ## Phase 4 - Distribution
 
-Route extracted information strictly by role:
+Route durable knowledge strictly:
 
-- confirmed present state -> `README.md`
-- minimum agent orientation -> `AGENTS.md`
-- verified past events -> `HISTORY.md`
-- actionable future work -> `TODO.md`
-- rationale and choice records -> `DECISIONS.md`
-- operational procedures -> `RUNBOOK.md`
-- contradictions and missing data -> `docs/catalog/OPEN_QUESTIONS.md`
-- source traceability -> `docs/catalog/SOURCE_INDEX.md`
-- run metadata -> `docs/catalog/PROCESSING_RUNS.md`
+- confirmed present state -> `README.md`;
+- minimum agent orientation -> `AGENTS.md`;
+- rationale/trade-offs -> `DECISIONS.md`;
+- repeatable operations -> `RUNBOOK.md`;
+- traceability -> `.agent/catalog/SOURCE_INDEX.md`;
+- run metadata / temporary uncertainty -> `.agent/catalog/PROCESSING_RUNS.md`.
 
-Allow one source to feed multiple files. Never collapse all information into the
-README.
+Route actionable future work and material unresolved questions to GitHub Issues.
 
-## Phase 5 - Catalog Update Order
+Do not create `TODO.md`, `HISTORY.md`, or a new local open-question backlog.
 
-Update files in this exact order:
+## Phase 5 - Update order
 
-1. `HISTORY.md`
-2. `DECISIONS.md`
-3. `TODO.md`
-4. `RUNBOOK.md`
-5. `README.md`
-6. `AGENTS.md`
-7. `docs/catalog/OPEN_QUESTIONS.md`
-8. `docs/catalog/SOURCE_INDEX.md`
-9. `docs/catalog/PROCESSING_RUNS.md`
+1. `DECISIONS.md`
+2. `RUNBOOK.md`
+3. `README.md`
+4. `AGENTS.md`
+5. `.agent/catalog/SOURCE_INDEX.md`
+6. `.agent/catalog/PROCESSING_RUNS.md`
 
-Preserve existing human content. Use managed blocks only when the skill must control
-one section repeatedly:
+Preserve existing human content. Managed blocks may be used when repeated deterministic updates are necessary.
 
-```md
-<!-- DOC-CATALOG:START section="section-name" -->
-...
-<!-- DOC-CATALOG:END -->
-```
+## Phase 6 - Local source marking
 
-Do not overwrite human content outside managed blocks unless the change is required to
-keep the file coherent. If that happens, explain it in `PROCESSING_RUNS.md`.
+Only Archivist-owned local processable sources receive catalog frontmatter. Never inject Archivist frontmatter into GitHub entities or files owned by another workflow.
 
-For `AGENTS.md`, apply stricter preservation:
+Required local-source traceability keys are documented in `frontmatter.md`.
 
-- read the full existing file before editing
-- preserve semantic content
-- reorganize instead of replacing
-- use a `Legacy / Existing Notes` section when uncertain
-- record contradictions and missing confirmations in `docs/catalog/OPEN_QUESTIONS.md`
+## Phase 7 - Local source archiving
 
-## Phase 6 - Source Marking
+Archive only local sources that Archivist owns and that are safe to move under:
 
-Add or merge frontmatter on each processed source. Required keys:
+`.agent/archive/YYYY/YYYY-MM-DD-original-name.ext`
 
-```yaml
----
-catalog_status: processed
-catalog_processed_at: YYYY-MM-DDTHH:mm:ss
-catalog_processor: project-documentation-archivist
-source_original_path: "<original-path>"
-source_archived_path: "<archived-path>"
-source_sha256: "<sha256>"
-git_commit_at_processing: "<commit-or-none>"
-document_type: "<document-type>"
-project_area: "<backend|frontend|infra|product|docs|architecture|operations|mixed|unknown>"
-feeds:
-  - README.md
-references_detected:
-  issues: []
-  commits: []
-  prs: []
-  external_refs: []
-catalog_notes:
-  - "How the source was used."
----
-```
-
-Preserve the original body under the frontmatter. Preserve unrelated existing
-frontmatter keys.
-
-## Phase 7 - Archiving
-
-Move each processed source to:
-
-```text
-docs/archive/YYYY/YYYY-MM-DD-original-name.ext
-```
-
-If the destination exists, generate a unique name:
-
-```text
-YYYY-MM-DD-original-name-2.ext
-```
-
-Use `git mv` when Git exists and the source is tracked. If that fails, use a normal
-move and register the fallback in the processing run.
+Use `git mv` when appropriate. Never archive CCPM-owned or other workflow-owned live artifacts merely because Archivist read them.
 
 ## Phase 8 - Validation
-
-Validate:
-
-- required catalog files exist
-- `AGENTS.md` exists
-- archived processed sources contain frontmatter
-- source index is updated
-- the open questions file keeps its required sections
-- processing runs are recorded
-- `AGENTS.md` stays brief at the top and navigable below
-- `AGENTS.md` does not silently delete preserved instructions
-- no obvious duplicates were introduced into `HISTORY.md` or `TODO.md`
-- `README.md` stays present-focused
-- `DECISIONS.md` records reasons, not just events
-- `RUNBOOK.md` does not contain secrets
-- archived sources are no longer left in `docs/inbox/` after they are marked archived
 
 Run:
 
 ```bash
-python scripts/validate_catalog.py --project-root .
+python skills/content/project-documentation-archivist/scripts/validate_catalog.py --project-root .
 ```
 
-Register the validation result in `docs/catalog/PROCESSING_RUNS.md`.
+After a GitHub-native migration, require the stricter cutover validation:
+
+```bash
+python skills/content/project-documentation-archivist/scripts/validate_catalog.py \
+  --project-root . \
+  --require-github-native
+```
+
+Record validation evidence in `PROCESSING_RUNS.md`.

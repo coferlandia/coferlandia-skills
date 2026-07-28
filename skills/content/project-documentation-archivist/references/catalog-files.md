@@ -1,198 +1,65 @@
 # Catalog Files
 
-Each catalog file has one role. Keep boundaries rigid.
+Archivist stores durable knowledge only. GitHub owns operational work state and historical work records.
 
 ## README.md
 
-Treat `README.md` as the present state of the project.
+Present confirmed project state: purpose, status, architecture, components, setup, configuration, main flows, relevant structure, confirmed limitations, and links to extended documentation.
 
-Always include:
-
-- project purpose
-- current status
-- current architecture
-- main components
-- installation
-- configuration
-- execution
-- relevant environment variables
-- common commands
-- main flows
-- relevant folder map
-- links to extended documentation
-- confirmed limitations
-- links to `AGENTS.md`, `HISTORY.md`, `TODO.md`, `DECISIONS.md`, and `RUNBOOK.md`
-
-Never turn `README.md` into a diary. Never present speculation as current fact.
+Do not turn README into a diary or backlog.
 
 ## AGENTS.md
 
-Treat `AGENTS.md` as the minimum reliable entrypoint for agents before they change the
-project.
+Minimum reliable entrypoint for an agent before changing the project. Preserve critical instructions, architecture boundaries, conventions, sensitive areas, confirmed validation commands, and a concise documentation/work-tracking index.
 
-Always include:
-
-- short critical instructions for agents
-- essential architecture summary
-- non-obvious conventions
-- sensitive areas
-- confirmed validation commands
-- a documentation index with relative links
-- maintenance notes for preserving and updating the file
-
-Never use `AGENTS.md` as a dump of full project history, long design discussions, or
-deep operational detail that belongs in `README.md`, `RUNBOOK.md`, `HISTORY.md`, or
-`DECISIONS.md`.
-
-If `AGENTS.md` already exists:
-
-- preserve semantic content
-- reorganize without silent deletion
-- summarize carefully
-- move bulky detail downward or into linked docs
-- keep a `Legacy / Existing Notes` section when material cannot be integrated cleanly
-
-## HISTORY.md
-
-Treat `HISTORY.md` as verified historical memory.
-
-Always include dated entries with source evidence for:
-
-- implemented changes
-- commits
-- issues
-- PRs
-- incidents
-- migrations
-- refactors
-- deploys
-- dependency changes
-- architecture changes
-- infrastructure changes
-- bug fixes
-
-Every entry must answer: "Where did this come from?"
-
-## TODO.md
-
-Treat `TODO.md` as actionable future work.
-
-Every task must include:
-
-- stable ID
-- status
-- priority
-- origin
-- detection date
-- context
-- acceptance criteria when known
-- dependencies when known
-
-Use it for pending work, roadmap items, known bugs, future improvements, validation
-tasks, documentation work, risks needing action, and valuable ideas.
+Do not duplicate GitHub Issues or deep history here.
 
 ## DECISIONS.md
 
-Treat `DECISIONS.md` as project rationale.
+Durable project rationale. A meaningful decision should capture context, chosen option, alternatives, reasons, consequences/trade-offs, and source references such as related Issues/PRs/commits.
 
-Every decision entry must include:
-
-- decision ID
-- state
-- date
-- area
-- context
-- chosen option
-- alternatives considered
-- reasons
-- consequences
-- trade-offs
-- sources
-- related issue, commit, or PR references
-
-Do not log plain events here. Only log why choices were made.
+Plain implementation events do not belong here.
 
 ## RUNBOOK.md
 
-Treat `RUNBOOK.md` as practical operations memory.
-
-Always include:
-
-- local startup
-- deploy steps
-- health checks
-- relevant logs
-- troubleshooting
-- maintenance tasks
-- backups
-- restoration
-- emergency procedures
-- operational risks
-- links to deeper operational docs
-
-Never store secret values. Reference secret locations safely.
+Repeatable operational knowledge: local startup, deployment, health checks, logs, troubleshooting, maintenance, backups/restoration, emergency procedures, and operational risks. Never store secret values.
 
 ## .agent/catalog/SOURCE_INDEX.md
 
-Treat `SOURCE_INDEX.md` as the document inventory.
+Traceability for local and remote sources.
 
-Maintain one row per detected source with these fields:
+Each record must identify:
 
-- status
-- original document
-- archived path
-- document type
-- detection date
-- hash
-- fed files
-- generated open items
-- notes
+- source type;
+- source identity;
+- revision/hash or GitHub `updatedAt`;
+- processing status;
+- last processed time;
+- canonical files fed;
+- concise notes.
 
-Allowed states:
-
-- `pending`
-- `processed`
-- `skipped`
-- `conflict`
-- `unknown`
-- `archived`
-
-## .agent/catalog/OPEN_QUESTIONS.md
-
-Treat `OPEN_QUESTIONS.md` as the register for both contradictions and unresolved
-questions, distinguished by the `Type` field on each entry.
-
-Mandatory top-level structure:
-
-```md
-# Open Questions
-
-## Open
-
-## Resolved
-
-## Archived
-```
-
-Record contradictions rather than resolving them arbitrarily during the processing
-phase. Open questions never block processing.
+Local and GitHub sources may use different table sections or a structured representation, but remote sources must not be forced into fake filesystem paths.
 
 ## .agent/catalog/PROCESSING_RUNS.md
 
-Treat `PROCESSING_RUNS.md` as the session log.
+Append-only run log containing date/time, mode, Git base, sources processed, GitHub mutations when any, files updated, temporary uncertainties, validation evidence, factual summary, and suggested commit.
 
-Record one entry per run with:
+## GitHub Issues / Projects
 
-- date and time
-- mode
-- state
-- branch
-- base commit
-- processed documents
-- updated files
-- open items
-- validations run
-- factual summary
-- suggested commit
+These are not Archivist files, but they are part of the project-memory contract.
 
-Keep it append-only except for fixing formatting mistakes in the newest entry.
+Use GitHub Issues for:
+
+- pending work;
+- bugs;
+- roadmap work;
+- validation work;
+- documentation work requiring action;
+- material unresolved questions;
+- completed work history when represented by the Issue lifecycle.
+
+Use GitHub Projects for operational workflow state, prioritization, iteration, and portfolio projection.
+
+## Legacy files
+
+`TODO.md`, `HISTORY.md`, and `.agent/catalog/OPEN_QUESTIONS.md` are migration inputs only. Do not create them for newly initialized GitHub-native projects.

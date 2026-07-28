@@ -4,14 +4,12 @@
 
 - Read this file before modifying the project.
 - Review `README.md`, `DECISIONS.md`, and `RUNBOOK.md` before structural or high-risk changes.
-- Do not change public contracts, schemas, migrations, integrations, or critical configuration without checking the related documentation first.
+- Inspect the relevant GitHub Issue/PR and related work before implementing or debugging tracked work.
+- Do not change public contracts, schemas, migrations, integrations, or critical configuration without checking related documentation and decisions first.
 - Run confirmed validation commands before considering a change complete.
-- Register contradictions, missing confirmations, and open doubts in
-  `.agent/catalog/OPEN_QUESTIONS.md`.
+- Material unresolved work belongs in GitHub Issues, not a local TODO file.
 
 ## Project Essentials
-
-Brief agent-oriented summary of the project. Keep only the information needed to act safely.
 
 ### Architecture
 
@@ -43,46 +41,33 @@ Brief agent-oriented summary of the project. Keep only the information needed to
 - Run:
 - Other:
 
-If a command is not confirmed, mark it as pending and register the uncertainty in
-`.agent/catalog/OPEN_QUESTIONS.md`.
+Mark unconfirmed commands as pending rather than inventing them.
 
 ## Documentation Index
 
 ### Start Here
 
-- `README.md`: general project overview for humans.
-- `AGENTS.md`: minimum operational guidance for agents before acting.
+- `README.md`: confirmed current project state.
+- `AGENTS.md`: minimum operational guidance for agents.
 
-### Project Memory
+### Durable Knowledge
 
-- `HISTORY.md`: verified historical changes.
-- `DECISIONS.md`: technical decisions and rationale.
-- `TODO.md`: pending work and next actions.
-
-### Operations
-
+- `DECISIONS.md`: architectural and technical rationale.
 - `RUNBOOK.md`: operations, troubleshooting, and routine procedures.
 
-### Unresolved Knowledge
+### Work Tracking
 
-- `.agent/catalog/OPEN_QUESTIONS.md`: unresolved questions and contradictions.
+- GitHub Issues: planned, active, blocked, and completed work.
+- GitHub Project: operational workflow and prioritization.
 
-### Code Map
+### Archivist Traceability
 
-- `src/`: application code.
-- `tests/`: automated tests.
-- `docs/`: extended documentation.
-- `scripts/`: automation and maintenance helpers.
-
-### External References
-
-- Add only trusted external references that are confirmed and useful for agents.
+- `.agent/catalog/SOURCE_INDEX.md`: processed local/GitHub source index.
+- `.agent/catalog/PROCESSING_RUNS.md`: Archivist run log.
 
 ## Maintenance Notes
 
 - Keep this file brief, operational, and agent-oriented.
-- Add new critical knowledge without deleting existing semantic content.
-- Reorganize for clarity before adding length.
-- Move deep detail into specific documentation instead of bloating this file.
-- Keep links relative and verifiable.
-- Register contradictions and missing confirmations in `.agent/catalog/OPEN_QUESTIONS.md`.
+- Preserve semantic content when reorganizing.
+- Move deep detail into README, DECISIONS, or RUNBOOK.
+- Do not recreate TODO.md or HISTORY.md for Coferlandia work tracking.

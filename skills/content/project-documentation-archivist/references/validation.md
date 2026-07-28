@@ -1,48 +1,42 @@
 # Validation
 
-Run validation at the end of every processing or resolution session.
-
-## Command
-
-Execute:
+## Standard validation
 
 ```bash
 python skills/content/project-documentation-archivist/scripts/validate_catalog.py --project-root .
 ```
 
-Run the command from the target project root. If the skill is installed in another
-location, replace the script path with the installed absolute or relative path to
-`validate_catalog.py`.
+Checks:
 
-## What the Validator Checks
+- README, AGENTS, DECISIONS, RUNBOOK exist;
+- SOURCE_INDEX and PROCESSING_RUNS exist;
+- AGENTS contains its required navigation sections;
+- archived local text sources contain processed frontmatter;
+- archive links resolve;
+- sources marked archived are not still present in the inbox;
+- legacy TODO/HISTORY/OPEN_QUESTIONS are reported as migration warnings.
 
-- required files exist
-- `AGENTS.md` exists
-- `docs/catalog/` exists
-- `OPEN_QUESTIONS.md` contains `Open`, `Resolved`, and `Archived`
-- `PROCESSING_RUNS.md` exists and has a title
-- archived processed sources contain frontmatter with `catalog_status: processed`
-- basic Obsidian-style and Markdown links point to existing archive files
-- sources marked `archived` are not still left in `docs/inbox/`
+## GitHub-native cutover validation
 
-## Manual Checks
+After project migration:
 
-Also verify manually:
+```bash
+python skills/content/project-documentation-archivist/scripts/validate_catalog.py \
+  --project-root . \
+  --require-github-native
+```
 
-- `README.md` stays focused on present state
-- `AGENTS.md` stays agent-oriented, concise at the top, and uses relative links
-- existing semantic content in `AGENTS.md` was preserved or explicitly quarantined in a legacy section
-- `HISTORY.md` entries have evidence
-- `TODO.md` avoids duplicate tasks
-- `DECISIONS.md` explains reasons
-- `RUNBOOK.md` does not expose secret values
-- `SOURCE_INDEX.md` rows match the files actually processed
+This additionally fails when `TODO.md`, `HISTORY.md`, or `.agent/catalog/OPEN_QUESTIONS.md` remain.
 
-## Failure Handling
+Before deleting legacy files, also run `github_migration.py validate-cutover` against the reviewed decisions file.
 
-When validation fails:
+## Manual checks
 
-1. Read the failing items.
-2. Fix the catalog structure or links.
-3. Re-run the validator.
-4. Register the failed and successful attempts in `PROCESSING_RUNS.md`.
+- README describes present reality, not an Issue summary.
+- AGENTS remains agent-oriented and concise at the top.
+- DECISIONS records reasons rather than events.
+- RUNBOOK contains no secret values.
+- GitHub Issues represent actionable/open work.
+- Existing Issues/PRs/commits were reused rather than duplicated during migration.
+- Synthetic historical Issues retain original dates in their body.
+- `SOURCE_INDEX` has revision data for remote sources so repeated processing is incremental.

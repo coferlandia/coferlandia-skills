@@ -1,12 +1,9 @@
 # Portfolio Report
 
 - Active projects: 4
-- Blocked projects: 1
-- Ready-for-agent tasks: 3
-- Projects in review: 1
-- Tasks completed this week: 5
-- Repos with uncommitted changes: 2
-- Repos ahead or behind remote: 1
-- Projects lacking archivist artifacts: 1
-- Projects with sync conflicts: 1
-- Projects without recent activity: 2
+- Open Issues: 18
+- In progress: 6
+- In review: 3
+- Blocked: 2
+- Closed this week: 5
+- Pending GitHub-native migration: 1

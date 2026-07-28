@@ -1,9 +1,14 @@
 # Project Report
 
 - Project:
+- Repository:
+- GitHub Project:
 - Repo path:
 - Git status:
 - Archivist status:
-- PM status:
-- Ready tasks:
-- Blockers:
+- GitHub-native migration:
+- Open Issues:
+- In progress:
+- In review:
+- Blocked:
+- Recently closed:

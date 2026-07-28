@@ -1,8 +1,10 @@
-# Execution Brief
+# Legacy Execution Brief Compatibility Example
 
-- Task: `example-project-task-001`
-- Current status: `ready-for-agent`
-- Required next skill: `superpowers:executing-plans`
-- Required approvals: plan approval before implementation
-- Blocking conflicts: none
+The PM no longer owns an operational task state machine. The retained execution-brief command is a compatibility surface only.
+
+- Issue: `example-project#42`
+- Source of truth: GitHub
+- Required next skill: none
+- Suggested next action: use the selected delivery workflow for the GitHub Issue
 - Executes work: no
+- Mode: compatibility-only

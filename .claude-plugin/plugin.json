@@ -1,7 +1,7 @@
 {
   "name": "coferlandia-skills",
-  "version": "1.9.0",
-  "description": "Coferlandia's Agent Skills: a control process for software development, project documentation cataloging, documentation-to-skill mining, scientific claim evaluation, and the skill-usage discipline that ties them together.",
+  "version": "2.0.0",
+  "description": "Coferlandia's Agent Skills: GitHub-native project management and durable project knowledge, software-development controls, documentation-to-skill mining, scientific claim evaluation, and reusable agent workflows.",
   "author": {
     "name": "Coferlandia"
   },
