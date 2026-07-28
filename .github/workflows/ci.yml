@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Archivist GitHub-native migration tests
+        run: python -m unittest skills.content.project-documentation-archivist.tests.test_github_native_migration
+
+      - name: Project Manager GitHub-native reporting tests
+        run: python -m unittest skills.ops.coferlandia-project-manager.tests.test_github_native_reporting
+
+      - name: Validate all skills
+        run: python _protocol/scripts/validate_skill.py --all skills
+
+      - name: Check repository version drift
+        run: python _protocol/scripts/bump_version.py --check
+
+      - name: Audit repository version declarations
+        run: python _protocol/scripts/bump_version.py --audit
