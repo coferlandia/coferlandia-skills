@@ -70,7 +70,7 @@ class FakeGitHub:
         return [item for item in self.issues if f"Parent Epic: #{ref.number}" in str(item.get("body") or "")]
 
     def list_issues(self, repository: str) -> list[dict]:
-        return list(self.issues)
+        return self.issues
 
     def create_issue(self, repository: str, *, title: str, body: str, labels=None) -> dict:
         item = {
