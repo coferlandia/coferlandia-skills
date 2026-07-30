@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .contracts import OrchestratorError, ValidationError
+from .contracts import ValidationError
 from .github_service import GitHubService, IssueRef
 from .materialization import ANALYSIS_MARKER, now
 from .work_items import direct_plan_manifest, parse_execution_strategy, sha256_text, validate_manifest
@@ -64,7 +64,7 @@ def _strip_projection_frontmatter(text: str) -> str:
     if end < 0:
         return text.strip()
     frontmatter = text[4:end]
-    generated_keys = ("source:", "repository:", "issue:", "epic:", "work_item:", "materialized_at:")
+    generated_keys = ("snapshot:", "repository:", "issue:", "epic:", "work_item:", "materialized_at:")
     if any(re.search(rf"(?m)^\s*{re.escape(key)}", frontmatter) for key in generated_keys):
         return text[end + 5 :].strip()
     return text.strip()
@@ -118,29 +118,6 @@ def _find_marked(issues: list[dict[str, Any]], marker: str) -> dict[str, Any] | 
     return matches[0] if matches else None
 
 
-def _create_issue(
-    service: GitHubService,
-    repository: str,
-    *,
-    title: str,
-    body: str,
-    labels: list[str] | None = None,
-) -> dict[str, Any]:
-    args = ["api", f"repos/{repository}/issues", "-f", f"title={title}", "-f", f"body={body}"]
-    for label in labels or []:
-        args.extend(["-f", f"labels[]={label}"])
-    try:
-        value = service._json(*args)
-    except OrchestratorError:
-        if not labels:
-            raise
-        value = service._json("api", f"repos/{repository}/issues", "-f", f"title={title}", "-f", f"body={body}")
-    if not isinstance(value, dict) or not value.get("number"):
-        raise OrchestratorError("GitHub did not return a created Issue")
-    value.setdefault("url", value.get("html_url"))
-    return value
-
-
 def _ensure_issue(
     service: GitHubService,
     repository: str,
@@ -154,34 +131,9 @@ def _ensure_issue(
     existing = _find_marked(issues, marker)
     if existing:
         return existing, False
-    created = _create_issue(service, repository, title=title, body=body, labels=labels)
+    created = service.create_issue(repository, title=title, body=body, labels=labels)
     issues.append(created)
     return created, True
-
-
-def _issue_database_id(service: GitHubService, repository: str, number: int) -> int | None:
-    value = service._json("api", f"repos/{repository}/issues/{number}")
-    if isinstance(value, dict) and value.get("id") is not None:
-        return int(value["id"])
-    return None
-
-
-def _try_native_parent(service: GitHubService, repository: str, epic_number: int, task_number: int) -> bool:
-    task_id = _issue_database_id(service, repository, task_number)
-    if task_id is None:
-        return False
-    try:
-        service._json(
-            "api",
-            "--method",
-            "POST",
-            f"repos/{repository}/issues/{epic_number}/sub_issues",
-            "-F",
-            f"sub_issue_id={task_id}",
-        )
-        return True
-    except OrchestratorError:
-        return False
 
 
 def _parent_matches(issue: dict[str, Any], epic_number: int) -> bool:
@@ -228,17 +180,29 @@ def _validate_existing_mapping(repo: Path, manifest: dict[str, Any], service: Gi
     if not repository or epic_number is None:
         raise ValidationError("GitHub-backed local manifest requires repository and Epic Issue identity")
     epic_number = int(epic_number)
-    service.issue(IssueRef(repository, epic_number))
+    epic_issue = service.issue(IssueRef(repository, epic_number))
     _read_contract(repo, manifest["epic"]["path"], "Epic")
+    origin = str(source.get("origin") or source.get("kind") or "github")
+    if origin == "local":
+        epic_marker = _marker("epic", str(manifest.get("epic", {}).get("id") or "EPIC"))
+        if epic_marker not in str(epic_issue.get("body") or ""):
+            raise ValidationError(f"Epic #{epic_number} does not carry the expected local contract marker")
     for task in manifest["tasks"]:
         _read_contract(repo, task["path"], f"task {task['id']}")
         if task.get("id") == "DIRECT-PLAN":
             continue
         if task.get("issue") is None:
             raise ValidationError(f"task {task['id']} is missing GitHub Issue identity")
-        issue = service.issue(IssueRef(repository, int(task["issue"])))
+        issue_number = int(task["issue"])
+        issue = service.issue(IssueRef(repository, issue_number))
         if not _parent_matches(issue, epic_number):
-            raise ValidationError(f"task {task['id']} Issue #{task['issue']} is not linked to Epic #{epic_number}")
+            raise ValidationError(f"task {task['id']} Issue #{issue_number} is not linked to Epic #{epic_number}")
+        if origin == "local":
+            task_marker = _marker("task", str(task["id"]))
+            if task_marker not in str(issue.get("body") or ""):
+                raise ValidationError(f"task {task['id']} Issue #{issue_number} does not carry the expected contract marker")
+        elif str(task["id"]) != f"TASK-{issue_number}":
+            raise ValidationError(f"GitHub-origin task {task['id']} does not match Issue #{issue_number}")
 
 
 def initialize_local_manifest(
@@ -257,11 +221,22 @@ def initialize_local_manifest(
     except (OSError, json.JSONDecodeError) as exc:
         raise ValidationError(f"invalid manifest JSON: {exc}") from exc
 
+    source = manifest.setdefault("source", {})
+    if not isinstance(manifest.get("execution_strategy"), dict):
+        try:
+            manifest["execution_strategy"] = _strategy(repo, manifest)
+        except ValidationError as exc:
+            if source.get("kind") == "local" and "missing required '## Execution Strategy' contract" in str(exc):
+                source.setdefault("origin", "local")
+                source.setdefault("tracking", "local")
+                source.setdefault("initial_materialization_complete", True)
+                return {"changed": False, "required": False, "tracking": "local", "legacy": True, "manifest": manifest}
+            raise
+
     local = _validate_local_contracts(repo, manifest_path, manifest)
     strategy = local["strategy"]
     manifest["execution_strategy"] = strategy
     tracking = _tracking(strategy)
-    source = manifest.setdefault("source", {})
     source.setdefault("origin", source.get("kind", "local"))
     source["tracking"] = tracking
 
@@ -333,7 +308,7 @@ def initialize_local_manifest(
             raise ValidationError(f"recovered task marker {task_marker} is not linked to Epic #{epic_number}")
         if created:
             created_tasks.append(issue_number)
-            _try_native_parent(service, repository, epic_number, issue_number)
+            service.try_add_sub_issue(repository, epic_number, issue_number)
         else:
             recovered_tasks.append(issue_number)
         task["issue"] = issue_number
@@ -378,6 +353,7 @@ def initialize_local_manifest(
         "repository": repository,
         "epic_issue": epic_number,
         "created_epic": epic_created,
+        "created_analysis": analysis_created,
         "created_tasks": created_tasks,
         "recovered_tasks": recovered_tasks,
         "project_items": project_items,
