@@ -180,6 +180,13 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
     return manifest
 
 
+def _graph_signature(manifest: dict[str, Any]) -> dict[str, tuple[str, ...]]:
+    return {
+        task["id"]: tuple(sorted(str(dep) for dep in task.get("depends_on") or []))
+        for task in manifest.get("tasks", [])
+    }
+
+
 def _preserve_execution_metadata(previous: dict[str, Any], refreshed: dict[str, Any]) -> dict[str, Any]:
     """Refresh contracts without erasing already-executed task/traceability state."""
     previous_by_id = {task["id"]: task for task in previous.get("tasks", [])}
@@ -206,25 +213,37 @@ def verify_github_freshness(repo: Path, manifest: dict[str, Any], service: GitHu
     service = service or GitHubService(repo)
     repository = str(source["repository"])
     epic_number = int(source["epic_issue"])
-    epic = service.issue(IssueRef(repository, epic_number))
+    epic_ref = IssueRef(repository, epic_number)
+    epic = service.issue(epic_ref)
     remote_epic_hash = sha256_text(str(epic.get("body") or ""))
     stale = remote_epic_hash != source.get("source_hash")
 
-    child_by_number = {int(item["number"]): item for item in service.child_issues(IssueRef(repository, epic_number))}
+    children = service.child_issues(epic_ref)
+    child_by_number = {int(item["number"]): item for item in children}
+    known_numbers = {int(task["issue"]) for task in manifest.get("tasks", []) if task.get("issue") is not None}
+    remote_numbers = set(child_by_number)
     changed_tasks: list[str] = []
+    if remote_numbers != known_numbers:
+        stale = True
+        changed_tasks.extend(f"TASK-{number}" for number in sorted(remote_numbers ^ known_numbers))
+
     for task in manifest.get("tasks", []):
         if task.get("issue") is None:
             continue
         remote = child_by_number.get(int(task["issue"]))
         if remote is None or sha256_text(str(remote.get("body") or "")) != task.get("source_hash"):
             stale = True
-            changed_tasks.append(task["id"])
+            if task["id"] not in changed_tasks:
+                changed_tasks.append(task["id"])
 
     if not stale:
         return {"fresh": True, "refreshed": False, "manifest": manifest}
     if in_progress_task and in_progress_task in changed_tasks:
         raise ValidationError(f"authoritative GitHub contract changed while {in_progress_task} is in progress")
+
     refreshed = materialize_github_epic(repo, f"{repository}#{epic_number}", service)
+    if _graph_signature(refreshed) != _graph_signature(manifest):
+        raise ValidationError("authoritative GitHub execution graph changed; re-resolve the Epic before assigning more work")
     refreshed = _preserve_execution_metadata(manifest, refreshed)
     return {"fresh": False, "refreshed": True, "changed_tasks": changed_tasks, "manifest": refreshed}
 
