@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python scripts/epic-11-review-fixes.py
+      - run: python scripts/epic-11-review-fixes-v2.py
       - run: python -m py_compile skills/ops/project-orchestrator/scripts/project_orchestrator_cli/*.py skills/ops/project-orchestrator/scripts/project-orchestrator-cli.py
       - run: python -m unittest discover -s skills/ops/project-orchestrator/tests -p "test_*.py"
       - name: Commit review fixes
