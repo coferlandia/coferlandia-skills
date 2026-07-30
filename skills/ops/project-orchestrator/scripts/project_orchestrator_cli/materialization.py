@@ -1,4 +1,4 @@
-"""GitHub/local work-contract materialization for project-orchestrator v2."""
+"""One-time GitHub/local work-contract materialization for project-orchestrator v2."""
 from __future__ import annotations
 
 import json
@@ -10,9 +10,10 @@ from pathlib import Path
 from typing import Any
 
 from .contracts import ValidationError
-from .github_service import GitHubService, IssueRef
+from .github_service import GitHubService
 from .work_items import execution_mode_from_strategy, parse_execution_strategy, sha256_text, validate_manifest
 
+ANALYSIS_MARKER = "<!-- coferlandia-analysis-contract -->"
 FRONTMATTER_REV_RE = re.compile(r"(?mi)^\s*Contract revision\s*:\s*(\d+)\s*$")
 HEADING_RE_TEMPLATE = r"(?ms)^##\s+{heading}\s*$\n(?P<body>.*?)(?=^##\s+|\Z)"
 
@@ -61,6 +62,17 @@ def _latest_strategy(epic_body: str, comments: list[dict[str, Any]]) -> dict[str
         raise body_error
 
 
+def _canonical_analysis(comments: list[dict[str, Any]]) -> tuple[str, Any] | None:
+    for comment in reversed(comments):
+        body = str(comment.get("body") or "")
+        if ANALYSIS_MARKER not in body:
+            continue
+        analysis = body.split(ANALYSIS_MARKER, 1)[1].strip()
+        if analysis:
+            return analysis, comment.get("id")
+    return None
+
+
 def _frontmatter(meta: dict[str, Any]) -> str:
     lines = ["---"]
     for key, value in meta.items():
@@ -75,6 +87,7 @@ def github_materialization_root(repo: Path, epic_number: int) -> Path:
 
 
 def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | None = None) -> dict[str, Any]:
+    """Materialize a GitHub Epic into one frozen local execution snapshot."""
     service = service or GitHubService(repo)
     ref = service.resolve_issue_ref(raw_epic)
     epic = service.issue(ref)
@@ -85,6 +98,7 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
     if mode == "task-execution" and not children:
         raise ValidationError(f"Epic {ref.repository}#{ref.number} selected Analyst decomposition but has no task Issues")
 
+    initialized_at = now()
     root = github_materialization_root(repo, ref.number)
     tasks_dir = root / "tasks"
     archive_dir = root / "archive"
@@ -95,16 +109,42 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
     epic_hash = sha256_text(epic_body)
     epic_meta = {
         "source": "github",
+        "origin": "github",
+        "snapshot": True,
         "repository": ref.repository,
         "issue": ref.number,
         "epic": ref.number,
         "source_updated_at": epic.get("updatedAt"),
         "source_hash": epic_hash,
-        "materialized_at": now(),
+        "materialized_at": initialized_at,
         "contract_revision": _contract_revision(epic_body),
     }
     epic_path = root / "EPIC.md"
     _atomic_text(epic_path, f"{_frontmatter(epic_meta)}\n\n# {epic.get('title', f'Epic #{ref.number}')}\n\n{epic_body.strip()}\n")
+
+    analysis_row: dict[str, Any] | None = None
+    analysis = _canonical_analysis(comments)
+    if analysis is not None:
+        analysis_text, comment_id = analysis
+        analysis_path = root / "ANALYSIS.md"
+        analysis_hash = sha256_text(analysis_text)
+        analysis_meta = {
+            "source": "github",
+            "origin": "github",
+            "snapshot": True,
+            "repository": ref.repository,
+            "epic": ref.number,
+            "comment_id": comment_id,
+            "source_hash": analysis_hash,
+            "materialized_at": initialized_at,
+        }
+        _atomic_text(analysis_path, f"{_frontmatter(analysis_meta)}\n\n{analysis_text.rstrip()}\n")
+        analysis_row = {
+            "path": str(analysis_path.relative_to(repo)).replace("\\", "/"),
+            "marker": ANALYSIS_MARKER,
+            "comment_id": comment_id,
+            "source_hash": analysis_hash,
+        }
 
     task_rows: list[dict[str, Any]] = []
     child_numbers = {int(item["number"]) for item in children}
@@ -117,12 +157,14 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
         meta = {
             "work_item": task_id,
             "source": "github",
+            "origin": "github",
+            "snapshot": True,
             "repository": ref.repository,
             "issue": number,
             "epic": ref.number,
             "source_updated_at": item.get("updatedAt"),
             "source_hash": task_hash,
-            "materialized_at": now(),
+            "materialized_at": initialized_at,
             "contract_revision": _contract_revision(body),
         }
         _atomic_text(task_path, f"{_frontmatter(meta)}\n\n# {item.get('title', task_id)}\n\n{body.strip()}\n")
@@ -154,17 +196,21 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
             "commits": [],
         }]
 
-    manifest = validate_manifest({
+    manifest_value: dict[str, Any] = {
         "schema_version": 2,
         "execution_mode": mode,
         "execution_strategy": strategy,
         "source": {
             "kind": "github",
+            "origin": "github",
+            "tracking": "github",
             "repository": ref.repository,
             "epic_issue": ref.number,
             "source_updated_at": epic.get("updatedAt"),
             "source_hash": epic_hash,
             "contract_revision": _contract_revision(epic_body),
+            "initialized_at": initialized_at,
+            "initial_materialization_complete": True,
         },
         "epic": {
             "id": f"EPIC-{ref.number}",
@@ -175,7 +221,10 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
         "tasks": task_rows,
         "final_pr": None,
         "squash_sha": None,
-    })
+    }
+    if analysis_row is not None:
+        manifest_value["analysis"] = analysis_row
+    manifest = validate_manifest(manifest_value)
     _atomic_text(root / "manifest.json", json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
     return manifest
 
@@ -188,7 +237,7 @@ def _graph_signature(manifest: dict[str, Any]) -> dict[str, tuple[str, ...]]:
 
 
 def _preserve_execution_metadata(previous: dict[str, Any], refreshed: dict[str, Any]) -> dict[str, Any]:
-    """Refresh contracts without erasing already-executed task/traceability state."""
+    """Compatibility support for explicit/manual refresh callers only."""
     previous_by_id = {task["id"]: task for task in previous.get("tasks", [])}
     for task in refreshed.get("tasks", []):
         old = previous_by_id.get(task["id"])
@@ -206,13 +255,26 @@ def _preserve_execution_metadata(previous: dict[str, Any], refreshed: dict[str, 
     return validate_manifest(refreshed)
 
 
-def verify_github_freshness(repo: Path, manifest: dict[str, Any], service: GitHubService | None = None, *, in_progress_task: str | None = None) -> dict[str, Any]:
+def verify_github_freshness(
+    repo: Path,
+    manifest: dict[str, Any],
+    service: GitHubService | None = None,
+    *,
+    in_progress_task: str | None = None,
+) -> dict[str, Any]:
+    """Return the frozen snapshot during normal orchestration.
+
+    The engine calls this compatibility entry point without an injected service, so no GitHub read,
+    comparison, refresh, or merge occurs after initialization. An injected service preserves the
+    old explicit/manual verification behavior for compatibility and migration tooling.
+    """
     source = manifest.get("source") or {}
-    if source.get("kind") != "github":
-        return {"fresh": True, "refreshed": False, "manifest": manifest}
-    service = service or GitHubService(repo)
+    if source.get("kind") != "github" or service is None:
+        return {"fresh": True, "refreshed": False, "snapshot": True, "manifest": manifest}
+
     repository = str(source["repository"])
     epic_number = int(source["epic_issue"])
+    from .github_service import IssueRef
     epic_ref = IssueRef(repository, epic_number)
     epic = service.issue(epic_ref)
     remote_epic_hash = sha256_text(str(epic.get("body") or ""))
