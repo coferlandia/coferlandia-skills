@@ -30,17 +30,11 @@ class GitHubService:
     def _run(self, *args: str) -> str:
         if not self.available():
             raise DependencyError("GitHub CLI (gh) is required for GitHub-backed orchestrator mode")
-        result = subprocess.run(
-            ["gh", *args],
-            cwd=self.repo,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+        result = subprocess.run(["gh", *args], cwd=self.repo, text=True, capture_output=True, check=False)
         if result.returncode:
             message = (result.stderr or result.stdout).strip() or f"gh {' '.join(args)} failed"
             lowered = message.lower()
-            if "auth" in lowered or "token" in lowered or "login" in lowered:
+            if "auth" in lowered or "token" in lowered or "login" in lowered or "scope" in lowered:
                 raise DependencyError(message)
             raise OrchestratorError(message)
         return result.stdout.strip()
@@ -82,11 +76,7 @@ class GitHubService:
         return value
 
     def comments(self, ref: IssueRef) -> list[dict[str, Any]]:
-        value = self._json(
-            "api",
-            f"repos/{ref.repository}/issues/{ref.number}/comments",
-            "--paginate",
-        )
+        value = self._json("api", f"repos/{ref.repository}/issues/{ref.number}/comments", "--paginate")
         return value if isinstance(value, list) else []
 
     def list_issues(self, repository: str) -> list[dict[str, Any]]:
@@ -118,3 +108,84 @@ class GitHubService:
         if existing:
             return existing
         return self.add_issue_comment(ref, f"{marker}\n\n{body}")
+
+    def pull_requests_for_head(self, repository: str, branch: str) -> list[dict[str, Any]]:
+        value = self._json("pr", "list", "--repo", repository, "--head", branch, "--state", "all", "--json", "number,url,state,title,headRefName,baseRefName")
+        return value if isinstance(value, list) else []
+
+    def ensure_pull_request(self, repository: str, branch: str, base: str, title: str, body: str) -> dict[str, Any]:
+        existing = self.pull_requests_for_head(repository, branch)
+        if existing:
+            return self.pull_request(repository, int(existing[0]["number"]))
+        value = self._json(
+            "api",
+            f"repos/{repository}/pulls",
+            "-f", f"title={title}",
+            "-f", f"head={branch}",
+            "-f", f"base={base}",
+            "-f", f"body={body}",
+        )
+        if not isinstance(value, dict) or not value.get("number"):
+            raise OrchestratorError("GitHub did not return a created pull request")
+        return self.pull_request(repository, int(value["number"]))
+
+    def pull_request(self, repository: str, number: int) -> dict[str, Any]:
+        value = self._json("pr", "view", str(number), "--repo", repository, "--json", "number,url,state,mergeCommit,headRefName,baseRefName,title,body")
+        if not isinstance(value, dict):
+            raise ValidationError(f"GitHub PR {repository}#{number} did not return an object")
+        return value
+
+    def merge_pull_request_squash(self, repository: str, number: int) -> dict[str, Any]:
+        self._run("pr", "merge", str(number), "--repo", repository, "--squash", "--delete-branch=false")
+        return self.pull_request(repository, number)
+
+    def project_view(self, owner: str, number: int) -> dict[str, Any]:
+        value = self._json("project", "view", str(number), "--owner", owner, "--format", "json")
+        if not isinstance(value, dict):
+            raise ValidationError(f"GitHub Project {owner}/{number} did not return an object")
+        return value
+
+    def project_fields(self, owner: str, number: int) -> list[dict[str, Any]]:
+        value = self._json("project", "field-list", str(number), "--owner", owner, "--format", "json")
+        if isinstance(value, dict):
+            value = value.get("fields")
+        return value if isinstance(value, list) else []
+
+    def project_items(self, owner: str, number: int) -> list[dict[str, Any]]:
+        value = self._json("project", "item-list", str(number), "--owner", owner, "--limit", "1000", "--format", "json")
+        if isinstance(value, dict):
+            value = value.get("items")
+        return value if isinstance(value, list) else []
+
+    def ensure_project_item(self, owner: str, number: int, issue_url: str, issue_number: int) -> dict[str, Any]:
+        for item in self.project_items(owner, number):
+            content = item.get("content") or {}
+            if content.get("number") == issue_number:
+                return item
+        value = self._json("project", "item-add", str(number), "--owner", owner, "--url", issue_url, "--format", "json")
+        if isinstance(value, dict):
+            return value.get("item") if isinstance(value.get("item"), dict) else value
+        raise OrchestratorError(f"failed to add Issue #{issue_number} to GitHub Project")
+
+    def set_project_status(self, owner: str, number: int, issue: dict[str, Any], status_name: str) -> None:
+        project = self.project_view(owner, number)
+        project_id = project.get("id")
+        if not project_id:
+            raise ValidationError("GitHub Project id is missing")
+        status_field = next((field for field in self.project_fields(owner, number) if str(field.get("name", "")).lower() == "status"), None)
+        if not status_field:
+            raise ValidationError("GitHub Project has no Status field")
+        option = next((item for item in status_field.get("options") or [] if str(item.get("name", "")).lower() == status_name.lower()), None)
+        if not option:
+            raise ValidationError(f"GitHub Project Status option not found: {status_name}")
+        item = self.ensure_project_item(owner, number, str(issue["url"]), int(issue["number"]))
+        item_id = item.get("id")
+        if not item_id:
+            raise ValidationError("GitHub Project item id is missing")
+        self._run(
+            "project", "item-edit",
+            "--id", str(item_id),
+            "--project-id", str(project_id),
+            "--field-id", str(status_field["id"]),
+            "--single-select-option-id", str(option["id"]),
+        )
