@@ -216,6 +216,8 @@ def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, 
         if state["state"] not in allowed:
             raise ValidationError(f"run is not awaiting explicit integration: {state['state']}")
         _assert_reviewed_integration_head(git, repo, state)
+        if kind != "github" and git.current_branch(repo) != state["base_branch"]:
+            raise ValidationError(f"local integration requires the primary checkout on base branch {state['base_branch']}")
         branch = state["resources"]["epic_branch"]
 
         state = store.transition("INTEGRATING", {"branch": branch, "reviewed_sha": state["final_reviewed_sha"]})
