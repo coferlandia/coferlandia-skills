@@ -45,6 +45,9 @@ class GitService:
     def head(self, ref: str = "HEAD", cwd: Path | None = None) -> str:
         return self.run("rev-parse", ref, cwd=cwd)
 
+    def current_branch(self, cwd: Path | None = None) -> str:
+        return self.run("branch", "--show-current", cwd=cwd)
+
     def branch_exists(self, branch: str) -> bool:
         return subprocess.run(["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"], cwd=self.repo).returncode == 0
 
