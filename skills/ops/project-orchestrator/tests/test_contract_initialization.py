@@ -13,7 +13,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 from project_orchestrator_cli.contract_initialization import initialize_local_manifest, initialize_local_spec
 from project_orchestrator_cli.contracts import ValidationError
 from project_orchestrator_cli.github_service import IssueRef
-from project_orchestrator_cli.materialization import ANALYSIS_MARKER, materialize_github_epic, verify_github_freshness
+from project_orchestrator_cli.materialization import ANALYSIS_MARKER, materialize_github_epic
 
 GITHUB_STRATEGY = """## Execution Strategy
 
@@ -29,6 +29,10 @@ LOCAL_STRATEGY = GITHUB_STRATEGY.replace("Tracking: GitHub", "Tracking: local fa
 DIRECT_GITHUB_STRATEGY = GITHUB_STRATEGY.replace("Decomposition: Analyst", "Decomposition: none").replace(
     "Worker profile: Basic coding agents", "Worker profile: capable coding agent"
 )
+
+
+def read_materialization_source() -> str:
+    return (SKILL / "scripts/project_orchestrator_cli/materialization.py").read_text(encoding="utf-8")
 
 
 class FakeGitHub:
@@ -68,6 +72,23 @@ class FakeGitHub:
     def list_issues(self, repository: str) -> list[dict]:
         return list(self.issues)
 
+    def create_issue(self, repository: str, *, title: str, body: str, labels=None) -> dict:
+        item = {
+            "id": 1000 + self.next_number,
+            "number": self.next_number,
+            "title": title,
+            "body": body,
+            "state": "OPEN",
+            "url": f"https://github.test/{self.next_number}",
+            "parent": None,
+        }
+        self.next_number += 1
+        return item
+
+    def try_add_sub_issue(self, repository: str, epic_number: int, task_number: int) -> bool:
+        self.native_links.append((repository, epic_number, task_number))
+        return True
+
     def existing_comment_with_marker(self, ref: IssueRef, marker: str) -> dict | None:
         return next((comment for comment in self.comments(ref) if marker in str(comment.get("body") or "")), None)
 
@@ -81,32 +102,6 @@ class FakeGitHub:
 
     def ensure_project_item(self, owner: str, number: int, url: str, issue_number: int) -> dict:
         self.project_items.append(issue_number)
-        return {}
-
-    def _json(self, *args: str):
-        if args[:2] == ("api", "--method"):
-            self.native_links.append(args)
-            return {}
-        endpoint = next((arg for arg in args if isinstance(arg, str) and arg.startswith("repos/")), "")
-        if endpoint.endswith("/issues"):
-            title = next(arg[6:] for arg in args if arg.startswith("title="))
-            body = next(arg[5:] for arg in args if arg.startswith("body="))
-            item = {
-                "id": 1000 + self.next_number,
-                "number": self.next_number,
-                "title": title,
-                "body": body,
-                "state": "OPEN",
-                "url": f"https://github.test/{self.next_number}",
-                "parent": None,
-            }
-            self.next_number += 1
-            self.issues.append(item)
-            return item
-        if "/issues/" in endpoint:
-            number = int(endpoint.rsplit("/", 1)[1])
-            item = next(issue for issue in self.issues if issue["number"] == number)
-            return {"id": item["id"]}
         return {}
 
 
@@ -155,10 +150,8 @@ class ContractInitializationTests(unittest.TestCase):
         self.assertTrue((repo / ".agent/work-items/epic-1/ANALYSIS.md").is_file())
         self.assertEqual(manifest["source"]["origin"], "github")
         self.assertTrue(manifest["source"]["initial_materialization_complete"])
-        before = service.issue_calls
-        result = verify_github_freshness(repo, manifest)
-        self.assertEqual(service.issue_calls, before)
-        self.assertTrue(result["snapshot"])
+        self.assertEqual(service.issue_calls, 1)
+        self.assertNotIn("verify_github_freshness", read_materialization_source())
 
     def test_local_to_github_creates_marked_contracts_and_analysis(self) -> None:
         repo = Path(tempfile.mkdtemp())
@@ -173,6 +166,7 @@ class ContractInitializationTests(unittest.TestCase):
         self.assertIn("Parent Epic: #40", service.issues[1]["body"])
         self.assertIsNotNone(service.existing_comment_with_marker(IssueRef("acme/repo", 40), ANALYSIS_MARKER))
         self.assertTrue(result["performed"])
+        self.assertTrue(result["created_analysis"])
 
     def test_second_initialization_reuses_issue_mapping_without_new_writes(self) -> None:
         repo = Path(tempfile.mkdtemp())
@@ -228,6 +222,16 @@ class ContractInitializationTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             initialize_local_manifest(repo, path, service=service)
 
+    def test_existing_mapping_requires_contract_marker(self) -> None:
+        repo = Path(tempfile.mkdtemp())
+        path = write_local(repo)
+        service = FakeGitHub()
+        initialize_local_manifest(repo, path, service=service)
+        task = next(item for item in service.issues if "task:TASK-001" in item["body"])
+        task["body"] = task["body"].replace("<!-- coferlandia-contract-id: task:TASK-001 -->\n", "")
+        with self.assertRaises(ValidationError):
+            initialize_local_manifest(repo, path, service=service)
+
     def test_local_fallback_never_resolves_or_writes_github(self) -> None:
         repo = Path(tempfile.mkdtemp())
         path = write_local(repo, strategy=LOCAL_STRATEGY)
@@ -236,6 +240,25 @@ class ContractInitializationTests(unittest.TestCase):
         self.assertEqual(result["tracking"], "local")
         self.assertEqual(service.repository_calls, 0)
         self.assertEqual(service.issues, [])
+
+    def test_legacy_local_manifest_without_strategy_remains_compatible(self) -> None:
+        repo = Path(tempfile.mkdtemp())
+        work = repo / ".agent/work-items/legacy"
+        (work / "tasks").mkdir(parents=True)
+        (work / "EPIC.md").write_text("# Legacy\n", encoding="utf-8")
+        (work / "tasks/TASK-A.md").write_text("# A\n", encoding="utf-8")
+        manifest = {
+            "schema_version": 2,
+            "execution_mode": "task-execution",
+            "source": {"kind": "local"},
+            "epic": {"id": "LEGACY", "path": ".agent/work-items/legacy/EPIC.md"},
+            "tasks": [{"id": "TASK-A", "path": ".agent/work-items/legacy/tasks/TASK-A.md", "depends_on": []}],
+        }
+        path = work / "manifest.json"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        result = initialize_local_manifest(repo, path, service=FakeGitHub())
+        self.assertTrue(result["legacy"])
+        self.assertEqual(result["tracking"], "local")
 
     def test_direct_spec_dry_run_reports_required_initialization_without_issue_ids(self) -> None:
         repo = Path(tempfile.mkdtemp())
