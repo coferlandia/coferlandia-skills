@@ -169,3 +169,36 @@ No repo-wide plugin version bump is included in this implementation branch; the 
 - `ARTIFACT_OUTPUT_CONVENTIONS.md` — new single source of truth for output paths.
 - `HOW_TO_CREATE_SKILLS.md` — references the new convention in prerequisites and Step 4.
 - `SKILL_TEMPLATE.md` — includes `## Output Location` / `### Output Exceptions` sections.
+
+## v1.1.0 (2026-07-05)
+
+### Skills
+
+- **coferlandia-software-dev** (`engineering`) — v2.2.0. Adds optional supervisory-agent role to Step 2, with explicit mode selection at task start, mandatory execution context package, structured checkpoint contract, role & authority boundary, and audit trail. No changes to Steps 1, 3, 4, or 5.
+- **coferlandia-software-dev** (`engineering`) — v2.1.0. Adds commit proposal + explicit approval as Step 5.5, test-results-report requirement before proposing a commit, push never automatic, and optional integration with `project-documentation-archivist` for documentation updates (HISTORY.md, TODO.md, DECISIONS.md, RUNBOOK.md, AGENTS.md).
+- **coferlandia-software-dev** (`engineering`) — v2.0.0. Complete redesign into a multi-role engineering workflow with Developer, Debugger, Code Reviewer, and Commit Prep modes. Adds strict mode detection, control-authority abstraction, code review protocol, and commit preparation gates. Replaces v1.x workflow entirely.
+- **coferlandia-software-dev** (`engineering`) — v1.0.0. Initial development process skill: mandatory study → plan → implement → review → test/docs/commit workflow.
+- **using-coferlandia-skills** (`meta`) — v1.0.0. First meta-skill: checks `skills/INDEX.md` and invokes matching skills before responding to any task.
+- **skill-repository-versioning** (`meta`) — v1.0.0. Pre-commit checklist: update index, classify change, bump per-skill and repo-wide versions correctly.
+- **project-documentation-archivist** (`content`) — v2.0.0. Evidence-first project knowledge base with managed blocks, deterministic source indexing, open questions, module manifests, and incremental processing.
+- **sagan-scientific-debunker** (`content`) — v1.1.0. Adds systematic structured claim analysis and stronger source hierarchy.
+
+### Protocol
+
+- `HOW_TO_CREATE_SKILLS.md` — added a decision tree for per-skill vs. repo-wide version bumps; linked `superpowers:writing-skills` in Step 3; added "adding a skill" checklist.
+- `VERSIONING.md` — added per-skill and repo-wide versioning examples, dirty-worktree note, release commit checklist.
+- `CHANGELOG.md` — added historical entry guidance, documented the initial repo-wide release history as v1.0.0, added same-change-line multiple skill version bump guidance.
+- `SKILL_TEMPLATE.md` — added `{category}` and `{status}` placeholders to metadata; added error-handling and gotchas guidance; clarified external tools in references section.
+
+### Repository
+
+- GitHub Actions CI validates all skills and checks version drift on push/PR (including Windows and Linux runners).
+- The repository tracks its version through `.version-bump.json`.
+- Added `RELEASE-NOTES.md` to keep detailed release history out of `README.md`.
+
+## v1.0.0 (2026-07-04)
+
+- Established the reusable Coferlandia skill repository protocol.
+- Added Apache-2.0 licensing and repository-level author/license/version policy.
+- Added `_protocol/` templates and `validate_skill.py` tooling.
+- Added first four canonical skills under `skills/`.
