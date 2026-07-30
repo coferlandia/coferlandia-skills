@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -16,7 +15,7 @@ from .git_service import GitService
 from .materialization import materialize_github_epic, verify_github_freshness
 from .providers import ProcessRequest, extract_agent_result, provider
 from .state import RunStore, TERMINAL, atomic_json
-from .work_items import direct_plan_manifest, load_manifest, next_ready_task, record_commit, task_by_id, validate_manifest
+from .work_items import direct_plan_manifest, load_manifest, next_ready_task, record_commit, task_by_id
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "version": 2,
@@ -107,7 +106,14 @@ def load_config(repo: Path, requested: str | None = None) -> tuple[Path, dict[st
     if raw.get("version") == 1:
         raw = {**raw, "version": 2}
         git = dict(raw.get("git") or {})
-        for retired in ("merge_strategy", "base_update_strategy", "candidate_commit_strategy", "one_commit_per_phase", "delete_phase_branch_after_merge", "remove_implementation_worktree_after_merge"):
+        for retired in (
+            "merge_strategy",
+            "base_update_strategy",
+            "candidate_commit_strategy",
+            "one_commit_per_phase",
+            "delete_phase_branch_after_merge",
+            "remove_implementation_worktree_after_merge",
+        ):
             git.pop(retired, None)
         raw["git"] = git
     value = _deep_merge(DEFAULT_CONFIG, raw)
@@ -126,9 +132,15 @@ def validate_config(value: dict[str, Any]) -> None:
             raise ValidationError(f"configuration requires role: {role}")
 
 
-def _resolve_manifest(repo: Path, *, spec: Path | None, epic: str | None, manifest_path: Path | None, dry_run: bool) -> dict[str, Any]:
-    supplied = sum(value is not None for value in (spec, epic, manifest_path))
-    if supplied != 1:
+def _resolve_manifest(
+    repo: Path,
+    *,
+    spec: Path | None,
+    epic: str | None,
+    manifest_path: Path | None,
+    dry_run: bool,
+) -> dict[str, Any]:
+    if sum(value is not None for value in (spec, epic, manifest_path)) != 1:
         raise ValidationError("exactly one execution source is required: --spec, --epic, or --manifest")
     if spec is not None:
         return direct_plan_manifest(spec)
@@ -254,13 +266,11 @@ def prepare_run(
 
 
 def _write_reports(store: RunStore, state: dict[str, Any]) -> None:
-    root = store.root
     manifest = state.get("manifest", {})
     tasks = manifest.get("tasks", [])
-    lines = [f"- {task['id']}: {task.get('status', 'pending')}" for task in tasks]
     files = {
         "RUN.md": f"# Orchestration run {state['run_id']}\n\nBase: `{state.get('base_branch')}` / `{state.get('base_commit')}`\nMode: `{manifest.get('execution_mode')}`\n",
-        "WORK-ITEMS.md": "# Work items\n\n" + "\n".join(lines) + "\n",
+        "WORK-ITEMS.md": "# Work items\n\n" + "\n".join(f"- {task['id']}: {task.get('status', 'pending')}" for task in tasks) + "\n",
         "CURRENT-STATUS.md": (
             f"# Current status\n\n- Run: {state['run_id']}\n- State: {state['state']}\n"
             f"- Task: {state.get('current_task_id') or 'none'}\n"
@@ -271,7 +281,7 @@ def _write_reports(store: RunStore, state: dict[str, Any]) -> None:
     if state.get("state") == "PROJECT_COMPLETED":
         files["FINAL-REPORT.md"] = f"# Final report\n\nRun `{state['run_id']}` completed at {state.get('updated_at')}.\n"
     for name, content in files.items():
-        (root / name).write_text(content, encoding="utf-8")
+        (store.root / name).write_text(content, encoding="utf-8")
 
 
 def progress_signature(value: dict[str, Any]) -> str:
@@ -354,9 +364,24 @@ def _invoke(store: RunStore, state: dict[str, Any], config: dict[str, Any], work
             continue
         model = adapter.resolve_model(choice.get("model"))
         session = state.get("sessions", {}).get(role)
-        command = adapter.build_command(worktree=worktree, model=model, prompt_file=prompt_file, role=role, reasoning=choice.get("reasoning") or choice.get("variant"), session_id=session, output_schema=schema)
+        command = adapter.build_command(
+            worktree=worktree,
+            model=model,
+            prompt_file=prompt_file,
+            role=role,
+            reasoning=choice.get("reasoning") or choice.get("variant"),
+            session_id=session,
+            output_schema=schema,
+        )
         timeout_key = {"coding-agent": "coding_seconds", "completion-verifier": "completion_verification_seconds", "code-reviewer": "review_seconds", "fix-agent": "fix_seconds"}[role]
-        execution = adapter.execute(ProcessRequest(command=command, cwd=worktree, stdin=prompt, timeout=config["timeouts"][timeout_key], termination_grace=config["timeouts"].get("process_termination_grace_seconds", 30), pid_path=attempt / "process.pid"))
+        execution = adapter.execute(ProcessRequest(
+            command=command,
+            cwd=worktree,
+            stdin=prompt,
+            timeout=config["timeouts"][timeout_key],
+            termination_grace=config["timeouts"].get("process_termination_grace_seconds", 30),
+            pid_path=attempt / "process.pid",
+        ))
         classification = adapter.classify_failure(execution)
         attempts.append({"attempt": number, "role": role, "provider": client, "model": model, "classification": classification, "session_id": execution.session_id, "at": now()})
         if execution.session_id:
@@ -390,7 +415,14 @@ def _invoke(store: RunStore, state: dict[str, Any], config: dict[str, Any], work
         result.setdefault("candidate_commit", candidate)
         result.setdefault("provider", client)
         result.setdefault("model", model)
-        _write_attempt(attempt, {"role": role, "work_item_id": work_item_id, "worktree_path": str(worktree), "candidate_commit": candidate}, result, f"# {role}\n\nStatus: `{result.get('status')}`\n\nProvider: `{client}`\n", execution.__dict__, execution.events)
+        _write_attempt(
+            attempt,
+            {"role": role, "work_item_id": work_item_id, "worktree_path": str(worktree), "candidate_commit": candidate},
+            result,
+            f"# {role}\n\nStatus: `{result.get('status')}`\n\nProvider: `{client}`\n",
+            execution.__dict__,
+            execution.events,
+        )
         return result
     if last_error:
         raise last_error
@@ -406,16 +438,14 @@ def git_head_safe(worktree: Path) -> str:
 
 def _contract_prompt(state: dict[str, Any], work_item: dict[str, Any], role: str, worktree: Path, candidate: str | None = None, findings: list[Any] | None = None, *, holistic: bool = False) -> str:
     manifest = state["manifest"]
-    epic_path = manifest.get("epic", {}).get("path")
-    task_path = work_item.get("path")
     return (
         f"You are the {role} in project-orchestrator v2.\n"
         f"Use exactly this worktree: {worktree}\n"
         "Do not perform Git lifecycle operations or commit.\n"
         f"Execution mode: {manifest.get('execution_mode')}\n"
-        f"Epic contract: {epic_path or 'none'}\n"
+        f"Epic contract: {manifest.get('epic', {}).get('path') or 'none'}\n"
         f"Assigned work item: {work_item['id']} — {work_item.get('title', '')}\n"
-        f"Work contract: {task_path}\n"
+        f"Work contract: {work_item.get('path')}\n"
         f"Holistic Epic review: {'yes' if holistic else 'no'}\n"
         f"Candidate: {candidate or 'none'}\n"
         f"Findings: {json.dumps(findings or [])}\n"
@@ -426,8 +456,7 @@ def _contract_prompt(state: dict[str, Any], work_item: dict[str, Any], role: str
 
 def deterministic_checks(repo: Path, worktree: Path, config: dict[str, Any], base: str) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
-    commands = list(config.get("validation", {}).get("commands", []))
-    for command in commands:
+    for command in list(config.get("validation", {}).get("commands", [])):
         argv = command if isinstance(command, list) else str(command).split()
         if not argv:
             continue
@@ -466,11 +495,23 @@ def _wait_for_provider(store: RunStore, state: dict[str, Any], config: dict[str,
 
 def _remove_review(git: GitService, state: dict[str, Any], config: dict[str, Any]) -> None:
     raw = state.get("resources", {}).pop("review_worktree", None)
-    if not raw:
-        return
-    path = Path(raw)
-    if path.exists() and config["git"].get("remove_review_worktree_after_review", True):
-        git.remove_worktree(path)
+    if raw:
+        path = Path(raw)
+        if path.exists() and config["git"].get("remove_review_worktree_after_review", True):
+            git.remove_worktree(path)
+
+
+def _retry_coding(store: RunStore, state: dict[str, Any], config: dict[str, Any], detail: dict[str, Any]) -> dict[str, Any]:
+    state = store.transition("CODING_INCOMPLETE", detail)
+    signatures = state.setdefault("coding_progress_signatures", [])
+    signature = progress_signature(detail)
+    repeated = signatures and signatures[-1] == signature
+    state["coding_no_progress_cycles"] = state.get("coding_no_progress_cycles", 0) + 1 if repeated else 0
+    signatures.append(signature)
+    atomic_json(store.state_file, state)
+    if state["coding_no_progress_cycles"] >= config["loops"].get("max_no_progress_cycles", 3):
+        return store.transition("BLOCKED_BY_NO_PROGRESS", {"signature": signature, "detail": detail})
+    return store.transition("CODING_RUNNING")
 
 
 def execute_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, Any]:
@@ -503,6 +544,8 @@ def execute_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, An
                             break
                     state["current_task_id"] = next_task["id"]
                     next_task["status"] = "in_progress"
+                    state["coding_no_progress_cycles"] = 0
+                    state["coding_progress_signatures"] = []
                     atomic_json(store.state_file, state)
                     state = store.transition("TASK_SELECTED", {"task": next_task["id"]})
 
@@ -519,8 +562,9 @@ def execute_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, An
                     break
                 state = store.transition("CODING_REPORTED", result)
                 if result.get("status") != "completed":
-                    state = store.transition("CODING_INCOMPLETE", result)
-                    state = store.transition("CODING_RUNNING")
+                    state = _retry_coding(store, state, config, result)
+                    if state["state"] in TERMINAL:
+                        break
                     continue
 
             if state["state"] == "CODING_REPORTED":
@@ -534,13 +578,17 @@ def execute_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, An
                 except DependencyError:
                     result = {"status": "completed", "requirement_completion": []}
                 if result.get("status") != "completed":
-                    state = store.transition("CODING_INCOMPLETE", result)
+                    state = _retry_coding(store, state, config, result)
+                    if state["state"] in TERMINAL:
+                        break
                     continue
                 evidence = deterministic_checks(repo, worktree, config, state["resources"]["epic_base_commit"])
                 state["test_evidence"] = evidence
                 atomic_json(store.state_file, state)
                 if not evidence["passed"]:
-                    state = store.transition("CODING_INCOMPLETE", {"blockers": ["deterministic validation failed"], "test_evidence": evidence})
+                    state = _retry_coding(store, state, config, {"blockers": ["deterministic validation failed"], "test_evidence": evidence})
+                    if state["state"] in TERMINAL:
+                        break
                     continue
                 state = store.transition("CANDIDATE_PREPARING")
 
@@ -549,8 +597,8 @@ def execute_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, An
                 worktree = Path(state["resources"]["implementation_worktree"])
                 selected = git.stage_product_changes(worktree, include_work_items=state["manifest"].get("source", {}).get("kind") == "local")
                 if not selected:
-                    state = store.transition("CODING_INCOMPLETE", {"blockers": ["no implementation changes to commit"]})
-                    continue
+                    state = store.transition("BLOCKED_BY_NO_PROGRESS", {"reason": "no implementation changes to commit", "task": task["id"]})
+                    break
                 reviews = state.setdefault("task_reviews", {}).setdefault(task["id"], [])
                 kind = "review-fix" if state["state"] == "FIX_COMMIT_PREPARING" else "candidate"
                 review_round = len(reviews) if kind == "review-fix" else None
