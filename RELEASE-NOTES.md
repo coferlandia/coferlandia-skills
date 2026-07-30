@@ -1,5 +1,16 @@
 # Coferlandia Skills Release Notes
 
+## Unreleased (2026-07-29)
+
+### Epic-based development workflow
+
+- **coferlandia-project-manager** — adds Epic Planner as the initiative-level WHAT/WHY capability and records a normalized Execution Strategy. The PM now resolves only ambiguous workflow dimensions and supports both direct capable-agent execution and Analyst-decomposed execution, with GitHub preferred and `.agent/work-items/` as the local planning fallback.
+- **software-development** — adds the first-class, analysis-only `analyst` role. Analyst owns broad system context and compiles it into Atomic + Self-contained + Low-context task contracts with explicit reuse, compatibility, dependency, consumer, and regression decisions. `coding-agent` now accepts any precise Executable Work Contract and does not require GitHub access in orchestrated mode.
+- **project-orchestrator** — v2.0 replaces phase-per-worktree/amend/per-phase-merge execution with a v2 manifest, `direct-plan` and `task-execution` modes, one Epic branch/worktree, GitHub-to-filesystem materialization with freshness checks, additive task/review-fix commits, detached immutable reviews, a mandatory holistic Epic review, bidirectional Issue/commit/PR traceability, one final PR, explicit `integrate`, and post-delivery task archival.
+- **CI** — exercises Project Manager workflow contracts and the Project Orchestrator v2 lifecycle on Linux and Windows in addition to existing repository validation.
+
+No repo-wide plugin version bump is included in this implementation branch; the existing v2.0.0 plugin protocol version remains authoritative until a separate release action changes it.
+
 ## v2.0.0 (2026-07-27)
 
 ### Breaking project protocol change
@@ -52,7 +63,7 @@
 ### Skills
 
 - **coferlandia-skill-toolsmith** (`meta`) — v1.0.0. Explicit-invocation-only
-  meta skill that analyzes a target agent skill, classifies its deterministic
+  meta skill that analyzes a target skill, classifies its deterministic
   vs. semantic behavior, and consolidates the deterministic parts behind one
   unified Python CLI (`scripts/<skill-name>-cli.py`) following a stable output
   envelope, documented exit codes, and mandatory `--help` / `version` /
@@ -158,54 +169,3 @@
 - `ARTIFACT_OUTPUT_CONVENTIONS.md` — new single source of truth for output paths.
 - `HOW_TO_CREATE_SKILLS.md` — references the new convention in prerequisites and Step 4.
 - `SKILL_TEMPLATE.md` — includes `## Output Location` / `### Output Exceptions` sections.
-- `AGENTS.md` — source-of-truth table updated.
-
-## v1.1.0 (2026-07-01)
-
-### Skills
-
-- **skill-repository-versioning** (`meta`, `draft`) — pre-commit checklist for a skill
-  repository: sync the skill index, decide whether a change needs only a per-skill
-  version bump or a repo-wide release bump, and keep every version artifact (index,
-  manifests, release notes) in sync. Written generically enough to apply to any
-  repository following this same two-axis versioning convention, not just this one.
-
-## v1.0.0 (2026-07-01)
-
-Baseline tracked release. The plugin's version now lives in
-`.claude-plugin/plugin.json` and is checked with
-`_protocol/scripts/bump_version.py --check` / `--audit` (see
-`_protocol/NAMING_CONVENTIONS.md` for how this differs from each skill's own
-`metadata.version`). This entry documents the state that baseline reflects.
-
-### Skills
-
-- **coferlandia-software-dev** — control process for development tasks (developer /
-  debugger roles, prior study, plan approval, code review, commit prep). Now
-  integrates required `superpowers:test-driven-development`,
-  `superpowers:systematic-debugging`, and `superpowers:verification-before-completion`
-  when those skills are available in the environment.
-- **project-documentation-archivist** — catalogs and archives project documentation.
-  Dropped GitHub sync mode and merged the separate conflicts register into
-  `docs/catalog/OPEN_QUESTIONS.md`.
-- **sagan-scientific-debunker** — evaluates claims against scientific evidence with a
-  traceable evidence map and confidence scale.
-- **using-coferlandia-skills** (`draft`) — gates skill invocation: check
-  `skills/INDEX.md` before responding to a task instead of skipping it. Adapted from
-  `superpowers:using-superpowers`; not yet activated with a natural prompt.
-
-### Repository
-
-- Removed the agent-friendly-logging suite (9 skills), `build-agentic-repo`,
-  `coferlandia-skill-testing`, `skill-auditor`, `skill-factory`, `sr-de-la-nata`, and
-  `vault/` — reducing the repo to the 4 skills above.
-- Relicensed the repo under Apache License 2.0 (added `LICENSE`; unified all skill
-  frontmatter to `license: Apache-2.0`).
-- Translated `README.md`, `AGENTS.md`, `skills/INDEX.md`, and all of `_protocol/` to
-  English; fixed dangling references left by the deletions above (stale skill
-  pointers, the `vault/Genesis_Plan.md` category-proposal instruction, and validator
-  paths pointing at the deleted `coferlandia-skill-testing` runner).
-- Fixed manifest drift in `.claude-plugin/plugin.json` and `marketplace.json`: the
-  `skills` array was missing `./skills/content` entirely, the license field still said
-  MIT, and both descriptions referenced a "14 skills" count that no longer matched
-  reality. `scripts/update-plugin.ps1` now also packages `AGENTS.md` and `LICENSE`.
