@@ -27,6 +27,9 @@ def parse_execution_strategy(text: str) -> dict[str, str]:
     missing = sorted(required - set(fields))
     if missing:
         raise ValidationError(f"Execution Strategy is incomplete: missing {', '.join(missing)}")
+    ambiguous = sorted(key for key, value in fields.items() if "|" in value or not value.strip())
+    if ambiguous:
+        raise ValidationError(f"Execution Strategy is not resolved: ambiguous {', '.join(ambiguous)}")
     return fields
 
 
@@ -131,8 +134,7 @@ def validate_manifest(value: dict[str, Any]) -> dict[str, Any]:
             if dep not in id_set:
                 raise ValidationError(f"task {task_id} references missing dependency: {dep}")
 
-    order = topological_order(tasks)
-    value["execution_order"] = order
+    value["execution_order"] = topological_order(tasks)
     value.setdefault("final_pr", None)
     value.setdefault("squash_sha", None)
     return value
