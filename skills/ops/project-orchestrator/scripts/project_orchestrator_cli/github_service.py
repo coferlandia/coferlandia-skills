@@ -76,8 +76,12 @@ class GitHubService:
         return value
 
     def comments(self, ref: IssueRef) -> list[dict[str, Any]]:
-        value = self._json("api", f"repos/{ref.repository}/issues/{ref.number}/comments", "--paginate")
-        return value if isinstance(value, list) else []
+        pages = self._json("api", f"repos/{ref.repository}/issues/{ref.number}/comments", "--paginate", "--slurp")
+        if not isinstance(pages, list):
+            return []
+        if pages and all(isinstance(page, list) for page in pages):
+            return [comment for page in pages for comment in page if isinstance(comment, dict)]
+        return [comment for comment in pages if isinstance(comment, dict)]
 
     def list_issues(self, repository: str) -> list[dict[str, Any]]:
         fields = "number,title,body,state,stateReason,url,createdAt,updatedAt,closedAt,labels,assignees,parent,subIssuesSummary,blockedBy,blocking,projectItems"
