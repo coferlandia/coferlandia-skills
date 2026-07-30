@@ -28,7 +28,7 @@ Code, infrastructure, architecture, debugging.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [software-development](./engineering/software-development/) | Routes developer, debugger, coding-agent, and code-reviewer work through isolated worktrees, validation, review, and supervisor-controlled Git integration | active |
+| [software-development](./engineering/software-development/) | Routes broad-context Analyst decomposition, developer/debugger work, executable coding-agent contracts, and independent review while keeping Git authority separate from semantic workers | active |
 
 ## Data
 
@@ -61,9 +61,9 @@ Operations, automation, incidents, standups.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Design project initiatives and manage a GitHub Issues/Projects-backed multi-project portfolio with Obsidian projections | active |
-| [project-orchestrator](./ops/project-orchestrator/) | Explicitly execute approved development specifications through deterministic phase, commit, review, and merge orchestration | active |
+| [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Design Epics, resolve execution strategy, and manage GitHub Issues/Projects-backed portfolio state with a local planning fallback when GitHub is unavailable | active |
+| [project-orchestrator](./ops/project-orchestrator/) | Explicitly execute direct plans or Analyst task DAGs through one Epic worktree, additive immutable reviews, GitHub/filesystem materialization, final PR traceability, and explicit integration | active |
 
 ---
 
-*Last updated: 2026-07-27*
+*Last updated: 2026-07-29*

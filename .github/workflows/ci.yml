@@ -27,11 +27,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install orchestration test dependency
+        run: python -m pip install jsonschema
+
       - name: Archivist GitHub-native migration tests
         run: python -m unittest skills.content.project-documentation-archivist.tests.test_github_native_migration
 
       - name: Project Manager GitHub-native reporting tests
         run: python -m unittest skills.ops.coferlandia-project-manager.tests.test_github_native_reporting
+
+      - name: Project Manager workflow contract tests
+        run: python skills/ops/coferlandia-project-manager/tests/test_workflow_contract.py
+
+      - name: Project Orchestrator v2 tests
+        run: python -m unittest discover -s skills/ops/project-orchestrator/tests -p "test_*.py"
 
       - name: Validate all skills
         run: python _protocol/scripts/validate_skill.py --all skills
