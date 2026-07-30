@@ -20,7 +20,7 @@ Worker instructions contain only bounded execution context:
 - in-scope review findings for fix-agent;
 - holistic-review marker when reviewing the integrated Epic.
 
-Workers must not browse GitHub, perform Git lifecycle operations, or reconstruct the project plan.
+Workers must not browse GitHub, perform Git lifecycle operations, or reconstruct the project plan. The supplied local Epic/analysis/task files are the frozen contract snapshot for the run; workers never check remote freshness.
 Coding agents execute the supplied low-context contract; reviewers compare the exact immutable SHA
 to that contract; fix agents address only approved in-scope findings.
 

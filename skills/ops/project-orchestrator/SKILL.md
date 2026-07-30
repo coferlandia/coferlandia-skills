@@ -11,16 +11,16 @@ compatibility: >
   (`gh`); local `--spec` and `--manifest` execution do not.
 metadata:
   author: coferlandia
-  version: "2.0"
+  version: "2.1"
   category: ops
   status: active
-  tested: "2026-07-29 - Epic/task v2 lifecycle with direct-plan compatibility, low-context materialization, additive immutable review commits, and explicit final integration."
+  tested: "2026-07-30 - One-time bidirectional contract initialization with frozen local execution snapshots."
 ---
 
 ## Context
 
 `project-orchestrator` is an explicit-invocation-only deterministic controller. It owns Git,
-worktrees, commits, durable run state, provider retries, GitHub synchronization, final integration,
+worktrees, commits, durable run state, provider retries, GitHub operational traceability, final integration,
 and cleanup. Semantic models provide coding, completion verification, review, and in-scope fixes;
 they never own controller state or Git lifecycle.
 
@@ -49,24 +49,38 @@ The public CLI accepts exactly one source:
 GitHub mode is controller-facing. Coding/review/fix agents receive bounded local files and do not
 need `gh`, GitHub API credentials, Project access, Issue browsing, or the original planning chat.
 
-GitHub materialization lives under:
+Before creating the Epic branch/worktree, the controller performs **Initial Contract
+Materialization** exactly once:
+
+- GitHub-only Epic/analysis/task contracts become the standard local execution tree;
+- complete local contracts whose resolved strategy is `Tracking: GitHub` become marked, linked
+  GitHub Epic/task Issues plus the canonical marked analysis comment;
+- when both representations already exist, only repository/Epic/task identity and parent linkage
+  are validated; bodies are not compared or merged;
+- local-fallback tracking never publishes Issues merely because a remote exists.
+
+The local tree is:
 
 ```text
 .agent/work-items/epic-<issue>/
 ├── EPIC.md
+├── ANALYSIS.md          # Analyst mode
 ├── manifest.json
 ├── tasks/
 │   └── TASK-<issue>.md
 └── archive/
 ```
 
-Source metadata includes repository/Issue/Epic identity, update time, normalized source hash,
-materialization time, and contract revision. Before assignment, stale GitHub contracts are refreshed;
-an incompatible change to an in-progress task blocks rather than being overwritten.
+Stable contract markers make interrupted local-to-GitHub initialization retry-safe and prevent
+Issue duplication. Source hashes, timestamps, and revisions remain passive provenance. After
+initialization, the local tree is the frozen contract snapshot for that run: the controller does not
+re-fetch, compare, refresh, merge, or propagate later contract-body changes. Issue comments,
+Project status, commit linkage, the final PR, closure, and archival remain active operational
+traceability and are not contract synchronization.
 
 ## Execution lifecycle
 
-1. Resolve and validate the v2 manifest/Execution Strategy.
+1. Resolve and validate the v2 manifest/Execution Strategy, then complete one-time Initial Contract Materialization.
 2. Create **one Epic branch and one implementation worktree for the whole run**.
 3. Select the next dependency-ready execution unit.
 4. Invoke `coding-agent` only in the assigned Epic worktree with the bounded Epic/task contract.
@@ -170,16 +184,14 @@ cleanup <run-id>
 validate-result
 ```
 
-Use `run ... --dry-run` for local `--spec`/`--manifest` planning. GitHub `--epic` materialization is
-itself a local write; materialize first and preview its manifest when a mutation-free preview is
-required.
+Use `run ... --dry-run` for local `--spec`/`--manifest` planning. When their resolved tracking is GitHub, dry-run validates and reports that initialization is required without creating Issues or inventing Issue numbers. GitHub `--epic` materialization is itself a local write; materialize first and preview its manifest when a mutation-free preview is required.
 
 ## Provider and workspace rules
 
 - The controller assigns one Epic implementation worktree and detached immutable review worktrees.
 - Coding/fix agents use only the Epic implementation worktree.
 - Reviewers use only their exact detached candidate worktree and remain read-only.
-- Only the controller creates commits, branches/worktrees, remote synchronization, PRs, integration,
+- Only the controller creates commits, branches/worktrees, remote operational traceability, PRs, integration,
   archival, and cleanup.
 - Provider retry/fallback remains deterministic and durable. Temporary provider capacity failures
   are not semantic approval/blocker decisions.
@@ -190,6 +202,8 @@ required.
 - Do not activate merely because a plan, Issue, phase, or project-management concept is mentioned;
   require explicit project-orchestrator invocation.
 - Direct plans are not heuristically decomposed.
+- Initial Contract Materialization occurs before the worktree is created and never becomes continuous synchronization.
+- Later GitHub/local contract-body drift does not mutate the frozen execution snapshot automatically.
 - Analyst task dependencies must form a valid deterministic DAG.
 - Never amend after independent review starts.
 - Never merge a task independently to `main` in task-execution mode.
@@ -233,6 +247,7 @@ contracts/materializations use `.agent/work-items/` in the implementation worksp
 ## References
 
 - `references/architecture.md` — controller/worker/source boundaries.
+- `references/initial-contract-materialization.md` — one-time GitHub/filesystem initialization contract.
 - `references/configuration.md` — v2 config, providers, optional GitHub Project mapping.
 - `references/agent-protocol.md` — bounded worker requests/results.
 - `references/state-machine.md` — durable Epic/task states.

@@ -11,10 +11,10 @@ compatibility: >
   GitHub is optional for Analyst/coding-agent execution; local fallback contracts use `.agent/`.
 metadata:
   author: community
-  version: "4.4"
+  version: "4.5"
   category: engineering
   status: active
-  tested: "2026-07-27 - Retouch Mode retained; GitHub-native Coferlandia traceability replaces TODO/HISTORY dependencies while preserving non-GitHub repository compatibility."
+  tested: "2026-07-30 - Analyst single-store outputs and canonical analysis contract support one-time orchestrator initialization."
 ---
 
 ## Context
@@ -25,7 +25,7 @@ implementation, independent review, and deterministic Git integration as distinc
 Development roles finish reviewed work without Git integration by default. Only a direct, current
 instruction from the human supervisor can authorize a standalone reviewer to commit and/or merge.
 In orchestrated mode, `project-orchestrator` owns Git, worktrees, commits, integration, external
-tracking synchronization, and cleanup. Development roles never push.
+operational tracking, one-time contract-store initialization, and cleanup. Development roles never push.
 
 ## Role Routing
 
@@ -214,13 +214,23 @@ regression validation. Shared behavior without a defined regression surface is n
 
 ### Analyst output modes
 
-**GitHub mode:** when GitHub is available and selected by the workflow, the Epic/task Issues are the
-authoritative active contracts. Record analysis in the Epic chronology/contract and create native
-sub-issues when supported; otherwise use the repository's explicit parent-link convention. Do not
-duplicate every task into local files merely for execution; the orchestrator materializes them.
+Analyst writes exactly one complete representation per invocation. It never manually mirrors or
+continuously synchronizes GitHub and local work-item files.
 
-**Local fallback:** when GitHub is unavailable or local tracking is explicitly selected, write the
-equivalent contracts under:
+**GitHub mode:** when GitHub is available and selected by the workflow, the Epic/task Issues are the
+active contracts. Create native sub-issues when supported; otherwise use the repository's explicit
+parent-link convention. Publish the complete canonical analysis as one marked Epic comment:
+
+```html
+<!-- coferlandia-analysis-contract -->
+```
+
+The current analysis follows that marker. Later decisions and execution evidence remain separate
+chronological comments. Do not duplicate every task into local files merely for execution; the
+orchestrator creates the standard local snapshot once before workers run.
+
+**Local output:** when GitHub is unavailable, or when local tracking is selected, write the complete
+representation under:
 
 ```text
 .agent/work-items/<epic>/
@@ -231,6 +241,11 @@ equivalent contracts under:
 │   └── TASK-*.md
 └── archive/
 ```
+
+If `Tracking: GitHub` is already resolved, this local output is not a change to local-fallback
+tracking. It is a complete source contract for the orchestrator's one-time local-to-GitHub
+initialization. Once initialization completes, the local files are the frozen execution snapshot;
+Analyst does not maintain later cross-store synchronization.
 
 Analyst stops after the execution graph passes Atomic + Self-contained + Low-context and regression
 gates. It never implements production code, creates implementation commits, or assigns itself as
@@ -243,7 +258,8 @@ reviewer.
 
 Source contract: {reference}
 Repository/context studied: {summary}
-Storage mode: {GitHub | local fallback}
+Storage mode: {GitHub | local files}
+Canonical analysis: {marked Epic comment | ANALYSIS.md path}
 Execution strategy: {reference}
 Technical findings: {summary}
 Task graph/order: {ids and dependencies}
@@ -252,6 +268,7 @@ Unresolved blockers: {none | list}
 Atomic gate: {PASS | FAIL}
 Self-contained gate: {PASS | FAIL}
 Low-context gate: {PASS | FAIL}
+Initial counterpart materialization performed: none
 Implementation performed: none
 ```
 
