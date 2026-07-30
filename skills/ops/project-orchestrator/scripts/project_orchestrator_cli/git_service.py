@@ -87,20 +87,16 @@ class GitService:
         return hashlib.sha256(diff.encode()).hexdigest()
 
     def changed_paths(self, cwd: Path) -> list[str]:
-        values = self.run("status", "--porcelain", "--untracked-files=all", cwd=cwd).splitlines()
-        paths: list[str] = []
-        for line in values:
-            if len(line) < 4:
-                continue
-            path = line[3:]
-            if " -> " in path:
-                path = path.split(" -> ", 1)[1]
-            paths.append(path.strip())
-        return paths
+        """Return changed file paths without parsing whitespace-sensitive porcelain columns."""
+        tracked = self.run("diff", "--name-only", "HEAD", cwd=cwd).splitlines()
+        untracked = self.run("ls-files", "--others", "--exclude-standard", cwd=cwd).splitlines()
+        return sorted({path for path in [*tracked, *untracked] if path})
 
     @staticmethod
     def _operational_projection(path: str) -> bool:
-        normalized = path.replace("\\", "/").lstrip("./")
+        normalized = path.replace("\\", "/")
+        while normalized.startswith("./"):
+            normalized = normalized[2:]
         return normalized.startswith(".agent/work-items/")
 
     def stage_product_changes(self, cwd: Path, *, include_work_items: bool = False) -> list[str]:
