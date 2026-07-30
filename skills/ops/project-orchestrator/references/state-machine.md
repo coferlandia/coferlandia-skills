@@ -1,8 +1,55 @@
 # State machine
 
-States and allowed transitions are centrally defined in `scripts/project_orchestrator_cli/state.py`.
-The controller persists before worktree creation, candidate commit/amend, merge, waiting,
-or cleanup. Invalid transitions are rejected. Important terminal states include
-`PROJECT_COMPLETED`, `CANCELLED`, `BLOCKED_BY_SPECIFICATION`,
-`BLOCKED_BY_MERGE_CONFLICT`, and `BLOCKED_BY_NO_PROGRESS`. `status`, `resume`, and
-`retry` read this durable state; a restart must not duplicate Git actions.
+States and allowed transitions are centrally defined in
+`scripts/project_orchestrator_cli/state.py`. The v2 machine is Epic/task-oriented.
+
+Main path:
+
+```text
+INITIALIZED
+  -> CONFIG_VALIDATED
+  -> CONTRACT_RESOLVED
+  -> EPIC_WORKTREE_CREATING
+  -> EPIC_WORKTREE_CREATED
+  -> TASK_SELECTED
+  -> CODING_RUNNING
+  -> CODING_REPORTED
+  -> COMPLETION_VERIFYING
+  -> CANDIDATE_PREPARING
+  -> CANDIDATE_COMMITTED
+  -> REVIEW_WORKTREE_CREATING
+  -> REVIEW_WORKTREE_CREATED
+  -> REVIEW_RUNNING
+  -> REVIEW_PASSED
+  -> TASK_READY_FOR_MERGE
+  -> ... next task ...
+  -> HOLISTIC_REVIEW_WORKTREE_CREATING
+  -> HOLISTIC_REVIEW_WORKTREE_CREATED
+  -> HOLISTIC_REVIEW_RUNNING
+  -> EPIC_READY_FOR_INTEGRATION
+```
+
+GitHub mode may then move to `PR_OPEN_AWAITING_MERGE_APPROVAL`; final delivery occurs only after an
+explicit `integrate` command:
+
+```text
+EPIC_READY_FOR_INTEGRATION
+  -> PR_OPEN_AWAITING_MERGE_APPROVAL   # GitHub mode
+  -> INTEGRATING
+  -> INTEGRATED
+  -> ARCHIVING
+  -> PROJECT_COMPLETED
+```
+
+Review changes use `FIXES_REQUIRED -> FIXING -> FIX_COMMIT_PREPARING -> CANDIDATE_COMMITTED`, then
+create a fresh detached review worktree. Holistic findings use the corresponding
+`HOLISTIC_FIX*` path. Fixes are additive commits; no v2 state implies `git commit --amend`.
+
+Provider waits are durable and return to the recorded semantic state. Blocked/cancelled states
+preserve the Epic implementation worktree/evidence by default. Important blockers include invalid
+specification/config/authentication, Git/base movement, merge conflicts, stale in-progress
+contracts, and no semantic progress.
+
+The controller persists state before external/Git side effects where needed so `status`, `resume`,
+`retry`, and `integrate` can avoid duplicating completed operations. Invalid transitions are
+rejected.
