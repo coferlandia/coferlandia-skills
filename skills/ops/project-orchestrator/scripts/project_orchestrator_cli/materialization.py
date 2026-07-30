@@ -180,6 +180,25 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
     return manifest
 
 
+def _preserve_execution_metadata(previous: dict[str, Any], refreshed: dict[str, Any]) -> dict[str, Any]:
+    """Refresh contracts without erasing already-executed task/traceability state."""
+    previous_by_id = {task["id"]: task for task in previous.get("tasks", [])}
+    for task in refreshed.get("tasks", []):
+        old = previous_by_id.get(task["id"])
+        if not old:
+            continue
+        task["status"] = old.get("status", task.get("status", "pending"))
+        task["commits"] = list(old.get("commits") or [])
+        for key in ("completed_at", "ready_for_merge_at", "final_review_sha"):
+            if key in old:
+                task[key] = old[key]
+    refreshed["final_pr"] = previous.get("final_pr")
+    refreshed["squash_sha"] = previous.get("squash_sha")
+    if previous.get("local_manifest_path"):
+        refreshed["local_manifest_path"] = previous["local_manifest_path"]
+    return validate_manifest(refreshed)
+
+
 def verify_github_freshness(repo: Path, manifest: dict[str, Any], service: GitHubService | None = None, *, in_progress_task: str | None = None) -> dict[str, Any]:
     source = manifest.get("source") or {}
     if source.get("kind") != "github":
@@ -206,12 +225,11 @@ def verify_github_freshness(repo: Path, manifest: dict[str, Any], service: GitHu
     if in_progress_task and in_progress_task in changed_tasks:
         raise ValidationError(f"authoritative GitHub contract changed while {in_progress_task} is in progress")
     refreshed = materialize_github_epic(repo, f"{repository}#{epic_number}", service)
+    refreshed = _preserve_execution_metadata(manifest, refreshed)
     return {"fresh": False, "refreshed": True, "changed_tasks": changed_tasks, "manifest": refreshed}
 
 
 def archive_delivered_tasks(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
-    root = repo / ".agent" / "work-items" / manifest["epic"]["path"].split("/")[-2] if False else None
-    del root  # path is derived task-by-task to avoid assumptions about epic slugging
     for task in manifest.get("tasks", []):
         if task.get("status") != "done" or task.get("id") == "DIRECT-PLAN":
             continue
