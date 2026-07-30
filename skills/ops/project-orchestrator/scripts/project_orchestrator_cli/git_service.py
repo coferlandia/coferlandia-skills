@@ -48,8 +48,11 @@ class GitService:
     def branch_exists(self, branch: str) -> bool:
         return subprocess.run(["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"], cwd=self.repo).returncode == 0
 
-    def clean(self, cwd: Path | None = None) -> bool:
-        return not self.run("status", "--porcelain", cwd=cwd)
+    def clean(self, cwd: Path | None = None, *, ignore_untracked: bool = False) -> bool:
+        args = ["status", "--porcelain"]
+        if ignore_untracked:
+            args.append("--untracked-files=no")
+        return not self.run(*args, cwd=cwd)
 
     def ensure_repo(self) -> None:
         if self.run("rev-parse", "--is-inside-work-tree") != "true":
@@ -111,6 +114,9 @@ class GitService:
     def commit(self, message: str, cwd: Path) -> str:
         self.run("commit", "-m", message, cwd=cwd)
         return self.head("HEAD", cwd=cwd)
+
+    def push_branch(self, branch: str, *, remote: str = "origin") -> None:
+        self.run("push", "-u", remote, branch)
 
     def merge_ff_only(self, commit: str) -> str:
         return self.run("merge", "--ff-only", commit)
