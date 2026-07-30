@@ -1,0 +1,32 @@
+name: Epic 11 patch
+
+on:
+  push:
+    branches: [agent/epic-11-initial-contract-materialization]
+    paths: [.github/workflows/epic-11-patch.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/epic-11-initial-contract-materialization
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python scripts/epic-11-patch.py
+      - run: python -m py_compile skills/ops/project-orchestrator/scripts/project_orchestrator_cli/*.py skills/ops/project-orchestrator/scripts/project-orchestrator-cli.py
+      - run: python -m unittest discover -s skills/ops/project-orchestrator/tests -p "test_contract_initialization.py"
+      - name: Commit patch
+        run: |
+          git config user.name "coferlandia-agent"
+          git config user.email "coferlandia-agent@users.noreply.github.com"
+          git add skills RELEASE-NOTES.md
+          git diff --cached --check
+          git commit -m "feat: complete one-time contract initialization" \
+            -m "Epic: #11" || exit 0
+          git push origin HEAD:agent/epic-11-initial-contract-materialization
