@@ -12,7 +12,7 @@ from typing import Any
 
 from .contracts import DependencyError, ValidationError, validate_json_schema
 from .git_service import GitService
-from .materialization import materialize_github_epic, verify_github_freshness
+from .materialization import materialize_github_epic
 from .providers import ProcessRequest, extract_agent_result, provider
 from .state import RunStore, TERMINAL, atomic_json
 from .work_items import direct_plan_manifest, load_manifest, next_ready_task, record_commit, task_by_id
@@ -533,15 +533,6 @@ def execute_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, An
                 if next_task is None:
                     state = store.transition("HOLISTIC_REVIEW_WORKTREE_CREATING")
                 else:
-                    if state["manifest"].get("source", {}).get("kind") == "github":
-                        try:
-                            check = verify_github_freshness(repo, state["manifest"], in_progress_task=None)
-                            if check.get("refreshed"):
-                                state["manifest"] = _copy_contracts_to_worktree(repo, Path(state["resources"]["implementation_worktree"]), check["manifest"])
-                                next_task = task_by_id(state["manifest"], next_task["id"])
-                        except ValidationError as exc:
-                            state = store.transition("BLOCKED_BY_STALE_CONTRACT", {"reason": str(exc)})
-                            break
                     state["current_task_id"] = next_task["id"]
                     next_task["status"] = "in_progress"
                     state["coding_no_progress_cycles"] = 0

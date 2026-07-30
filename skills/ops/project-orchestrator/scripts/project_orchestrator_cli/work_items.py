@@ -33,6 +33,15 @@ def parse_execution_strategy(text: str) -> dict[str, str]:
     return fields
 
 
+def tracking_mode_from_strategy(strategy: dict[str, str]) -> str:
+    tracking = strategy["tracking"].strip().lower()
+    if tracking == "github":
+        return "github"
+    if tracking in {"local", "local fallback", "local-fallback"}:
+        return "local"
+    raise ValidationError(f"unsupported Execution Strategy tracking: {strategy['tracking']}")
+
+
 def execution_mode_from_strategy(strategy: dict[str, str]) -> str:
     decomposition = strategy["decomposition"].strip().lower()
     if decomposition == "analyst":
@@ -51,14 +60,17 @@ def direct_plan_manifest(spec: Path) -> dict[str, Any]:
     if not text.strip():
         raise ValidationError("specification is empty")
     source_hash = sha256_text(text)
-    return validate_manifest({
+    value: dict[str, Any] = {
         "schema_version": 2,
         "execution_mode": "direct-plan",
         "source": {
             "kind": "local",
+            "origin": "local",
+            "tracking": "local",
             "path": str(spec.resolve()),
             "source_hash": source_hash,
             "contract_revision": 1,
+            "initial_materialization_complete": True,
         },
         "epic": {
             "id": "DIRECT-PLAN",
@@ -78,7 +90,16 @@ def direct_plan_manifest(spec: Path) -> dict[str, Any]:
         }],
         "final_pr": None,
         "squash_sha": None,
-    })
+    }
+    try:
+        strategy = parse_execution_strategy(text)
+    except ValidationError:
+        strategy = None
+    if strategy is not None:
+        value["execution_strategy"] = strategy
+        value["source"]["tracking"] = tracking_mode_from_strategy(strategy)
+        value["source"]["initial_materialization_complete"] = value["source"]["tracking"] == "local"
+    return validate_manifest(value)
 
 
 def load_manifest(path: Path) -> dict[str, Any]:
@@ -99,6 +120,31 @@ def validate_manifest(value: dict[str, Any]) -> dict[str, Any]:
         raise ValidationError(f"unsupported execution_mode: {mode}")
     if not isinstance(value.get("source"), dict) or not isinstance(value.get("epic"), dict):
         raise ValidationError("manifest requires source and epic objects")
+
+    source = value["source"]
+    kind = str(source.get("kind") or "").strip().lower()
+    if kind not in {"local", "github"}:
+        raise ValidationError(f"unsupported manifest source kind: {source.get('kind')}")
+    source["kind"] = kind
+    source.setdefault("origin", kind)
+    if source["origin"] not in {"local", "github"}:
+        raise ValidationError(f"unsupported manifest source origin: {source['origin']}")
+
+    strategy = value.get("execution_strategy")
+    if strategy is not None:
+        if not isinstance(strategy, dict):
+            raise ValidationError("execution_strategy must be an object")
+        normalized_strategy = {str(key): str(item) for key, item in strategy.items()}
+        if "tracking" not in normalized_strategy:
+            raise ValidationError("execution_strategy is missing tracking")
+        tracking = tracking_mode_from_strategy(normalized_strategy)
+    else:
+        tracking = "github" if kind == "github" else str(source.get("tracking") or "local").lower()
+    if tracking not in {"local", "github"}:
+        raise ValidationError(f"unsupported manifest tracking mode: {tracking}")
+    source["tracking"] = tracking
+    source.setdefault("initial_materialization_complete", kind == "github" or tracking == "local")
+
     tasks = value.get("tasks")
     if not isinstance(tasks, list) or not tasks:
         raise ValidationError("manifest requires at least one task/execution unit")

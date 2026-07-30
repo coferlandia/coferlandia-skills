@@ -147,60 +147,6 @@ print(json.dumps(result))
         })
         self.assertEqual(manifest["execution_order"], ["A", "C", "B"])
 
-    def test_materialization_discovers_tasks_and_preserves_execution_metadata_on_refresh(self) -> None:
-        from project_orchestrator_cli.materialization import materialize_github_epic, verify_github_freshness
-        from project_orchestrator_cli.github_service import IssueRef
-
-        class FakeGitHub:
-            def __init__(self):
-                self.epic_body = """# Goal\n\n## Execution Strategy\nTracking: GitHub\nDecomposition: Analyst\nExecution: Project Orchestrator\nWorker profile: Basic coding agents\nReview: Per-task + final Epic review\nIntegration: Single PR / squash merge\n"""
-                self.task_bodies = {2: "## Dependencies\nNone.\n", 3: "## Dependencies\nDepends on #2.\n"}
-
-            def resolve_issue_ref(self, raw):
-                return IssueRef("acme/repo", 1)
-
-            def issue(self, ref):
-                if ref.number == 1:
-                    return {"number": 1, "title": "Epic", "body": self.epic_body, "state": "OPEN", "updatedAt": "t1"}
-                return {"number": ref.number, "title": f"Task {ref.number}", "body": self.task_bodies[ref.number], "state": "OPEN", "updatedAt": "t1"}
-
-            def comments(self, ref):
-                return []
-
-            def child_issues(self, ref):
-                return [self.issue(IssueRef("acme/repo", number)) for number in (2, 3)]
-
-        repo = self.make_repo()
-        service = FakeGitHub()
-        manifest = materialize_github_epic(repo, "#1", service)
-        self.assertEqual(manifest["execution_order"], ["TASK-2", "TASK-3"])
-        manifest["tasks"][0]["status"] = "ready_for_merge"
-        manifest["tasks"][0]["commits"] = [{"sha": "abc", "kind": "candidate"}]
-        service.task_bodies[3] += "\n## Outcome\nChanged contract.\n"
-        refreshed = verify_github_freshness(repo, manifest, service)["manifest"]
-        self.assertEqual(refreshed["tasks"][0]["status"], "ready_for_merge")
-        self.assertEqual(refreshed["tasks"][0]["commits"][0]["sha"], "abc")
-        self.assertNotEqual(refreshed["tasks"][1]["source_hash"], manifest["tasks"][1]["source_hash"])
-
-    def test_materialization_blocks_changed_in_progress_task(self) -> None:
-        from project_orchestrator_cli.contracts import ValidationError
-        from project_orchestrator_cli.github_service import IssueRef
-        from project_orchestrator_cli.materialization import materialize_github_epic, verify_github_freshness
-
-        class FakeGitHub:
-            body = """## Execution Strategy\nTracking: GitHub\nDecomposition: Analyst\nExecution: Project Orchestrator\nWorker profile: Basic coding agents\nReview: Per-task + final Epic review\nIntegration: Single PR / squash merge\n"""
-            task = "## Dependencies\nNone.\n"
-            def resolve_issue_ref(self, raw): return IssueRef("acme/repo", 1)
-            def issue(self, ref): return {"number": ref.number, "title": "Epic" if ref.number == 1 else "Task", "body": self.body if ref.number == 1 else self.task, "state": "OPEN", "updatedAt": "t"}
-            def comments(self, ref): return []
-            def child_issues(self, ref): return [self.issue(IssueRef("acme/repo", 2))]
-
-        repo = self.make_repo(); service = FakeGitHub()
-        manifest = materialize_github_epic(repo, "#1", service)
-        service.task += "\nchanged\n"
-        with self.assertRaises(ValidationError):
-            verify_github_freshness(repo, manifest, service, in_progress_task="TASK-2")
-
     def test_git_staging_excludes_github_projection_files(self) -> None:
         from project_orchestrator_cli.git_service import GitService
 

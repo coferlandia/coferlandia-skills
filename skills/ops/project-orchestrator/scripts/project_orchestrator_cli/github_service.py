@@ -97,6 +97,65 @@ class GitHubService:
         fallback = [item for item in issues if item.get("number") != epic.number and fallback_re.search(str(item.get("body") or ""))]
         return sorted(fallback, key=lambda item: int(item["number"]))
 
+    def create_issue(
+        self,
+        repository: str,
+        *,
+        title: str,
+        body: str,
+        labels: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Create exactly one Issue, then apply optional labels without retrying creation."""
+        value = self._json(
+            "api",
+            f"repos/{repository}/issues",
+            "-f",
+            f"title={title}",
+            "-f",
+            f"body={body}",
+        )
+        if not isinstance(value, dict) or not value.get("number"):
+            raise OrchestratorError("GitHub did not return a created Issue")
+        ref = IssueRef(repository, int(value["number"]))
+        for label in labels or []:
+            self.try_add_issue_label(ref, label)
+        return self.issue(ref)
+
+    def try_add_issue_label(self, ref: IssueRef, label: str) -> bool:
+        try:
+            self._run("issue", "edit", str(ref.number), "--repo", ref.repository, "--add-label", label)
+            return True
+        except DependencyError:
+            raise
+        except OrchestratorError as exc:
+            lowered = str(exc).lower()
+            if "label" in lowered and any(token in lowered for token in ("not found", "does not exist", "could not resolve")):
+                return False
+            raise
+
+    def issue_database_id(self, repository: str, number: int) -> int:
+        value = self._json("api", f"repos/{repository}/issues/{number}")
+        if not isinstance(value, dict) or value.get("id") is None:
+            raise ValidationError(f"GitHub Issue {repository}#{number} has no database id")
+        return int(value["id"])
+
+    def try_add_sub_issue(self, repository: str, epic_number: int, task_number: int) -> bool:
+        task_id = self.issue_database_id(repository, task_number)
+        try:
+            self._json(
+                "api",
+                "--method",
+                "POST",
+                f"repos/{repository}/issues/{epic_number}/sub_issues",
+                "-F",
+                f"sub_issue_id={task_id}",
+            )
+            return True
+        except DependencyError:
+            raise
+        except OrchestratorError:
+            return False
+
     def add_issue_comment(self, ref: IssueRef, body: str) -> dict[str, Any]:
         value = self._json("api", f"repos/{ref.repository}/issues/{ref.number}/comments", "-f", f"body={body}")
         return value if isinstance(value, dict) else {}

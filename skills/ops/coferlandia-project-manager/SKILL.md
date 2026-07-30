@@ -12,10 +12,10 @@ compatibility: >
   local `.agent/work-items/` contracts when GitHub is unavailable or local tracking is selected.
 metadata:
   author: coferlandia
-  version: "0.6.0"
+  version: "0.7.0"
   category: ops
   status: active
-  tested: "2026-07-27 - Phase 1 GitHub-native project-management protocol."
+  tested: "2026-07-30 - Single-store Epic planning with one-time orchestrator contract initialization."
 ---
 
 ## Context
@@ -123,7 +123,16 @@ When GitHub is unavailable or local tracking was explicitly selected:
 - do not recreate `TODO.md`, `HISTORY.md`, or a PM-owned operational task database;
 - keep `projects.json` limited to portfolio membership/integration metadata.
 
-Do not require GitHub and local representations to be maintained manually at the same time.
+Epic Planner writes exactly one complete representation per invocation. It does not manually mirror or
+continuously synchronize GitHub and `.agent/work-items/`.
+
+When the resolved strategy is `Tracking: GitHub` but the active Planner lacks usable GitHub write
+capability, it may emit the complete standard local Epic contract and hand it to
+`project-orchestrator`. Before execution, the orchestrator performs one-time Initial Contract
+Materialization to create the missing GitHub counterpart. When Planner writes the Epic directly to
+GitHub, the orchestrator performs the inverse one-time materialization into local execution files.
+After that boundary, the local files are the frozen contract snapshot for the run; later contract
+changes are not propagated automatically in either direction.
 
 ### 2. Portfolio management
 

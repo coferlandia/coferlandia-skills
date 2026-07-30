@@ -28,7 +28,7 @@ Code, infrastructure, architecture, debugging.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [software-development](./engineering/software-development/) | Routes broad-context Analyst decomposition, developer/debugger work, executable coding-agent contracts, and independent review while keeping Git authority separate from semantic workers | active |
+| [software-development](./engineering/software-development/) | Routes broad-context Analyst decomposition with single-store outputs, developer/debugger work, executable coding-agent contracts, and independent review while keeping Git authority separate | active |
 
 ## Data
 
@@ -61,9 +61,9 @@ Operations, automation, incidents, standups.
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Design Epics, resolve execution strategy, and manage GitHub Issues/Projects-backed portfolio state with a local planning fallback when GitHub is unavailable | active |
-| [project-orchestrator](./ops/project-orchestrator/) | Explicitly execute direct plans or Analyst task DAGs through one Epic worktree, additive immutable reviews, GitHub/filesystem materialization, final PR traceability, and explicit integration | active |
+| [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Design Epics, resolve execution strategy, and emit one complete GitHub or local planning representation for orchestrator initialization | active |
+| [project-orchestrator](./ops/project-orchestrator/) | Execute direct plans or Analyst DAGs after one-time GitHub/filesystem initialization, using a frozen local snapshot, immutable reviews, final PR traceability, and explicit integration | active |
 
 ---
 
-*Last updated: 2026-07-29*
+*Last updated: 2026-07-30*

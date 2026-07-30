@@ -1,12 +1,12 @@
 # Coferlandia Skills Release Notes
 
-## Unreleased (2026-07-29)
+## Unreleased (2026-07-30)
 
 ### Epic-based development workflow
 
-- **coferlandia-project-manager** — adds Epic Planner as the initiative-level WHAT/WHY capability and records a normalized Execution Strategy. The PM now resolves only ambiguous workflow dimensions and supports both direct capable-agent execution and Analyst-decomposed execution, with GitHub preferred and `.agent/work-items/` as the local planning fallback.
-- **software-development** — adds the first-class, analysis-only `analyst` role. Analyst owns broad system context and compiles it into Atomic + Self-contained + Low-context task contracts with explicit reuse, compatibility, dependency, consumer, and regression decisions. `coding-agent` now accepts any precise Executable Work Contract and does not require GitHub access in orchestrated mode.
-- **project-orchestrator** — v2.0 replaces phase-per-worktree/amend/per-phase-merge execution with a v2 manifest, `direct-plan` and `task-execution` modes, one Epic branch/worktree, GitHub-to-filesystem materialization with freshness checks, additive task/review-fix commits, detached immutable reviews, a mandatory holistic Epic review, bidirectional Issue/commit/PR traceability, one final PR, explicit `integrate`, and post-delivery task archival.
+- **coferlandia-project-manager** — v0.7 adds Epic Planner as the initiative-level WHAT/WHY capability, records a normalized Execution Strategy, and emits exactly one complete planning representation for one-time orchestrator initialization. The PM now resolves only ambiguous workflow dimensions and supports both direct capable-agent execution and Analyst-decomposed execution, with GitHub preferred and `.agent/work-items/` as the local planning fallback.
+- **software-development** — v4.5 adds the first-class, analysis-only `analyst` role and formalizes single-store output plus the canonical marked GitHub analysis contract. Analyst owns broad system context and compiles it into Atomic + Self-contained + Low-context task contracts with explicit reuse, compatibility, dependency, consumer, and regression decisions. `coding-agent` now accepts any precise Executable Work Contract and does not require GitHub access in orchestrated mode.
+- **project-orchestrator** — v2.1 keeps the Epic/task v2 lifecycle and replaces ongoing contract freshness refreshes with one-time bidirectional Initial Contract Materialization. GitHub-only plans become frozen local Epic/analysis/task snapshots; complete local GitHub-tracked plans are published with stable retry-safe markers before execution. Operational Issue/Project/commit/PR traceability remains active.
 - **CI** — exercises Project Manager workflow contracts and the Project Orchestrator v2 lifecycle on Linux and Windows in addition to existing repository validation.
 
 No repo-wide plugin version bump is included in this implementation branch; the existing v2.0.0 plugin protocol version remains authoritative until a separate release action changes it.

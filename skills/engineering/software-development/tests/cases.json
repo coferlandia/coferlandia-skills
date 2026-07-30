@@ -27,6 +27,21 @@
       "expect": "Uses the local fallback under .agent/work-items/<epic>/ with equivalent Epic/analysis/manifest/task contracts; does not recreate TODO.md/HISTORY.md or require GitHub."
     },
     {
+      "id": "analyst-does-not-maintain-contract-sync",
+      "prompt": "Keep the GitHub Issues and local task files continuously synchronized while implementation runs.",
+      "expect": "Rejects continuous contract synchronization as outside the Analyst role; each invocation writes one representation and the orchestrator performs only one-time initial materialization before freezing the run snapshot."
+    },
+    {
+      "id": "analyst-local-output-for-github-initialization",
+      "prompt": "Tracking is already GitHub, but this Analyst has no GitHub tools. Produce the execution graph for the orchestrator.",
+      "expect": "Writes one complete local EPIC.md/ANALYSIS.md/manifest.json/TASK-*.md representation without changing the selected tracking mode; project-orchestrator will publish the missing GitHub counterpart once before execution."
+    },
+    {
+      "id": "analyst-github-canonical-analysis",
+      "prompt": "GitHub tracking is selected and available. Analyze this Epic and publish the execution graph.",
+      "expect": "Writes only the GitHub representation, publishes the complete current analysis in one Epic comment marked <!-- coferlandia-analysis-contract -->, creates linked task Issues, and leaves local snapshot creation to project-orchestrator."
+    },
+    {
       "id": "analyst-low-context-gate",
       "prompt": "Create a tiny task: change the shared booking resolver; the worker can figure out which consumers and architecture are affected.",
       "expect": "Rejects the task as not Low-context because broad architecture/consumer/regression decisions remain unresolved; Analyst studies and prescribes those details or splits the work before publishing it."
@@ -179,7 +194,7 @@
     {
       "id": "project-orchestrator-retains-git-ownership",
       "prompt": "The explicitly invoked project-orchestrator assigns an immutable candidate to a reviewer.",
-      "expect": "Keeps the reviewer read-only and leaves commits, additive review-fix commits, integration, remote synchronization, branches, and worktrees to the deterministic project-orchestrator controller."
+      "expect": "Keeps the reviewer read-only and leaves commits, additive review-fix commits, integration, remote operational traceability, branches, and worktrees to the deterministic project-orchestrator controller."
     },
     {
       "id": "implementation-and-reviewer-are-distinct",

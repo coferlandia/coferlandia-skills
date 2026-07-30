@@ -8,7 +8,7 @@ Main path:
 ```text
 INITIALIZED
   -> CONFIG_VALIDATED
-  -> CONTRACT_RESOLVED
+  -> CONTRACT_RESOLVED          # initial materialization already completed
   -> EPIC_WORKTREE_CREATING
   -> EPIC_WORKTREE_CREATED
   -> TASK_SELECTED
@@ -47,8 +47,9 @@ create a fresh detached review worktree. Holistic findings use the corresponding
 
 Provider waits are durable and return to the recorded semantic state. Blocked/cancelled states
 preserve the Epic implementation worktree/evidence by default. Important blockers include invalid
-specification/config/authentication, Git/base movement, merge conflicts, stale in-progress
-contracts, and no semantic progress.
+specification/config/authentication, invalid contract identity/linkage during initialization,
+Git/base movement, merge conflicts, and no semantic progress. Later contract-body drift is not a
+runtime state transition because the local snapshot is frozen before the run begins.
 
 The controller persists state before external/Git side effects where needed so `status`, `resume`,
 `retry`, and `integrate` can avoid duplicating completed operations. Invalid transitions are

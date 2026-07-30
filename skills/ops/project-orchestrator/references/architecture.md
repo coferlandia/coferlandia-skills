@@ -1,21 +1,28 @@
 # Architecture
 
 `project-orchestrator-cli.py` is the sole public interface. The deterministic controller owns
-source resolution/materialization, durable state transitions, Git, worktrees, commits, provider
-retries, GitHub synchronization, final integration, archival, and cleanup. Models provide semantic
-coding/completion/review/fix results only; they never own controller state or Git authority.
+source resolution, one-time contract-store initialization, durable state transitions, Git,
+worktrees, commits, provider retries, GitHub operational traceability, final integration, archival,
+and cleanup. Models provide semantic coding/completion/review/fix results only; they never own
+controller state or Git authority.
 
 ## Source boundary
 
 The controller normalizes exactly one source into a v2 execution manifest:
 
 - `--spec`: local direct plan -> one `DIRECT-PLAN` unit;
-- `--epic`: GitHub Epic -> local materialized Epic/tasks;
-- `--manifest`: local v2 manifest/task DAG.
+- `--epic`: GitHub Epic -> one frozen local Epic/analysis/task snapshot;
+- `--manifest`: local v2 manifest/task DAG, optionally published once when Tracking is GitHub.
 
-GitHub-backed active contracts remain authoritative in GitHub. `materialization.py` projects them to
-`.agent/work-items/` for workers and verifies source hashes/revisions before assignment. Workers do
-not need GitHub access.
+Before a run creates its Epic worktree, Initial Contract Materialization ensures the missing GitHub
+or filesystem counterpart exists. GitHub-only contracts produce `EPIC.md`, canonical `ANALYSIS.md`
+when applicable, `manifest.json`, and task files. Local GitHub-tracked contracts produce marked,
+retry-safe Epic/task Issues and one marked canonical analysis comment. Existing dual
+representations are checked only for identity and parent linkage.
+
+After this boundary, workers use the frozen local snapshot. Contract bodies are not re-fetched,
+compared, refreshed, merged, or propagated automatically. Operational Issue comments, Project
+fields, commit references, PR creation, closure, and archival continue independently.
 
 ## Execution boundary
 
@@ -30,8 +37,9 @@ is the only final delivery action.
 
 ## Components
 
-- `work_items.py`: v2 manifest, Execution Strategy parsing, DAG validation/order.
-- `materialization.py`: GitHub/local contract projection, hashing, freshness, archive paths.
+- `work_items.py`: v2 manifest, tracking/origin metadata, Execution Strategy parsing, DAG validation/order.
+- `contract_initialization.py`: one-time local-to-GitHub initialization, identity recovery, and dry-run preflight.
+- `materialization.py`: one-time GitHub-to-local snapshots, canonical analysis extraction, passive provenance, archive paths.
 - `github_service.py`: structured `gh` reads/writes for Issues, Projects, and PRs.
 - `GitService`: argument-array Git operations and controlled staging.
 - `RunStore`: atomic durable state/events and run locking.
