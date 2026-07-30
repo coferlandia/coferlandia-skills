@@ -1,9 +1,28 @@
 # Candidate commit lifecycle
 
-After deterministic completion checks, the controller stages only allowed project files
-and creates one phase candidate commit. It creates a detached review worktree from that
-exact SHA. When review requires changes, it preserves evidence, uses the original
-implementation worktree for fixes, validates them, and performs `git commit --amend`.
-Every new SHA receives a new detached review. Immediately before merge, require:
-approved SHA equals phase branch HEAD, clean implementation worktree, unchanged reviewed
-diff, valid base relation, passing required tests, and approval referencing that SHA.
+Project-orchestrator v2 uses **additive immutable commits** on one Epic branch.
+
+For each task:
+
+1. coding/completion/deterministic checks pass in the Epic implementation worktree;
+2. the controller stages only allowed product changes;
+3. it creates one candidate commit;
+4. it creates a detached review worktree at that exact SHA;
+5. an independent reviewer approves or returns findings;
+6. findings are applied by fix-agent in the Epic implementation worktree;
+7. the controller creates a new additive `review-fix` commit;
+8. the new branch HEAD receives a fresh detached review.
+
+Never use `git commit --amend` after review begins. Previous candidate/fix SHAs remain durable
+evidence and, in GitHub mode, are associated with task Issue + Epic identity.
+
+A passing task becomes `ready_for_merge` but remains on the Epic branch. No task candidate is merged
+to `main` independently.
+
+After all tasks pass, one holistic Epic review evaluates the complete final HEAD against the Epic
+contract and cross-task regressions. Holistic corrections are additive and invalidate the previous
+holistic approval. Only the exact final reviewed SHA may reach `EPIC_READY_FOR_INTEGRATION`.
+
+GitHub mode then opens one final PR. Task commits contain non-closing `Issue:` / `Epic:` metadata;
+`Closes` references appear only in the final PR. Final squash/merge is a separate explicit
+`integrate` operation, after which local task contracts become `done`/archived.
