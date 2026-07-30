@@ -1,12 +1,11 @@
 """Final traceability, PR/integration, archival, and cleanup for project-orchestrator v2."""
 from __future__ import annotations
 
-import json
 import shutil
 from pathlib import Path
 from typing import Any
 
-from .contracts import DependencyError, ValidationError
+from .contracts import ValidationError
 from .git_service import GitService
 from .github_service import GitHubService, IssueRef
 from .materialization import archive_delivered_tasks
@@ -126,6 +125,16 @@ def _pr_body(state: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _assert_reviewed_integration_head(git: GitService, repo: Path, state: dict[str, Any]) -> None:
+    branch = state["resources"]["epic_branch"]
+    if git.head(branch) != state.get("final_reviewed_sha"):
+        raise ValidationError("Epic branch HEAD no longer matches the final reviewed SHA")
+    if git.head(state["base_branch"]) != state["base_commit"]:
+        raise ValidationError("base branch advanced after Epic execution; rerun holistic review against the new base")
+    if not git.clean(repo, ignore_untracked=True):
+        raise ValidationError("base worktree has tracked changes; integration is unsafe")
+
+
 def prepare_final_pr(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, Any]:
     git = GitService(repo)
     store = RunStore(git.common_dir(), run_id)
@@ -135,16 +144,13 @@ def prepare_final_pr(repo: Path, run_id: str, config: dict[str, Any]) -> dict[st
             return state
         if state["state"] != "EPIC_READY_FOR_INTEGRATION":
             raise ValidationError(f"run is not ready for PR creation: {state['state']}")
-        branch = state["resources"]["epic_branch"]
-        if git.head(branch) != state.get("final_reviewed_sha"):
-            raise ValidationError("Epic branch HEAD no longer matches the final reviewed SHA")
-        if git.head(state["base_branch"]) != state["base_commit"]:
-            raise ValidationError("base branch advanced after Epic execution; rerun holistic review against the new base")
+        _assert_reviewed_integration_head(git, repo, state)
         if state["manifest"].get("source", {}).get("kind") != "github":
             return state
 
         _ensure_task_traceability(repo, state, config)
         repository, epic_number = _github_refs(state)
+        branch = state["resources"]["epic_branch"]
         git.push_branch(branch)
         service = GitHubService(repo)
         title = f"Epic #{epic_number}: {state['manifest'].get('epic', {}).get('title', 'orchestrated implementation')}"
@@ -152,8 +158,7 @@ def prepare_final_pr(repo: Path, run_id: str, config: dict[str, Any]) -> dict[st
         state["manifest"]["final_pr"] = int(pr["number"])
         state["final_pr_url"] = pr.get("url")
         atomic_json(store.state_file, state)
-        state = store.transition("PR_OPEN_AWAITING_MERGE_APPROVAL", {"pr": pr.get("number"), "url": pr.get("url")})
-        return state
+        return store.transition("PR_OPEN_AWAITING_MERGE_APPROVAL", {"pr": pr.get("number"), "url": pr.get("url")})
 
 
 def _archive_execution_contracts(store: RunStore, state: dict[str, Any]) -> None:
@@ -163,6 +168,9 @@ def _archive_execution_contracts(store: RunStore, state: dict[str, Any]) -> None
         if task.get("status") == "ready_for_merge":
             task["status"] = "done"
     archive_delivered_tasks(worktree, manifest)
+    state["manifest"] = manifest
+    atomic_json(store.state_file, state)
+
     local_manifest_path = manifest.get("local_manifest_path")
     if local_manifest_path:
         atomic_json(Path(local_manifest_path), manifest)
@@ -207,11 +215,8 @@ def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, 
         allowed = {"EPIC_READY_FOR_INTEGRATION"} if kind != "github" else {"PR_OPEN_AWAITING_MERGE_APPROVAL"}
         if state["state"] not in allowed:
             raise ValidationError(f"run is not awaiting explicit integration: {state['state']}")
+        _assert_reviewed_integration_head(git, repo, state)
         branch = state["resources"]["epic_branch"]
-        if git.head(branch) != state.get("final_reviewed_sha"):
-            raise ValidationError("Epic branch HEAD changed after holistic review")
-        if git.head(state["base_branch"]) != state["base_commit"]:
-            raise ValidationError("base branch advanced after holistic review")
 
         state = store.transition("INTEGRATING", {"branch": branch, "reviewed_sha": state["final_reviewed_sha"]})
         if kind == "github":
@@ -240,7 +245,7 @@ def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, 
         implementation = Path(state["resources"]["implementation_worktree"])
         if implementation.exists() and config["git"].get("remove_implementation_worktree_after_integration", True):
             git.remove_worktree(implementation)
-        if config["git"].get("delete_epic_branch_after_integration", True) and kind != "github":
+        if config["git"].get("delete_epic_branch_after_integration", True):
             git.remove_branch(branch)
         state = store.transition("PROJECT_COMPLETED", {"sha": final_sha, "warnings": state.get("integration_warnings", [])})
         state["state_path"] = str(store.root)
