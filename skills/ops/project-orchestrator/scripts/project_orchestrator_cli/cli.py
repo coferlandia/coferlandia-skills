@@ -62,16 +62,16 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--dry-run", action="store_true")
 
     for name in ("resume", "retry", "cancel", "cleanup", "integrate"):
-        q = sub.add_parser(name)
-        q.add_argument("run_id")
+        command = sub.add_parser(name)
+        command.add_argument("run_id")
         if name == "cleanup":
-            q.add_argument("--dry-run", action="store_true")
+            command.add_argument("--dry-run", action="store_true")
 
     status = sub.add_parser("status")
     status.add_argument("run_id", nargs="?")
-    vr = sub.add_parser("validate-result")
-    vr.add_argument("--role", required=True, choices=["coding-agent", "completion-verifier", "code-reviewer", "fix-agent"])
-    vr.add_argument("--file", required=True)
+    validate_result = sub.add_parser("validate-result")
+    validate_result.add_argument("--role", required=True, choices=["coding-agent", "completion-verifier", "code-reviewer", "fix-agent"])
+    validate_result.add_argument("--file", required=True)
     return p
 
 
@@ -98,11 +98,21 @@ def get_store(path: Path, run_id: str) -> RunStore:
 def cmd_doctor(path: Path) -> Envelope:
     git = GitService(path)
     git.ensure_repo()
-    cp, config = load_config(path)
+    config_file, config = load_config(path)
     schemas = Path(__file__).resolve().parents[2] / "schemas"
     required = list(schemas.glob("*.schema.json"))
-    health = {name: provider(name, config).probe().__dict__ for name in config["providers"] if config["providers"][name].get("enabled", True)}
-    configured_models = {role: {"primary": value.get("primary", {}).get("model"), "fallbacks": [item.get("model") for item in value.get("fallbacks", [])]} for role, value in config.get("roles", {}).items()}
+    health = {
+        name: provider(name, config).probe().__dict__
+        for name in config["providers"]
+        if config["providers"][name].get("enabled", True)
+    }
+    configured_models = {
+        role: {
+            "primary": value.get("primary", {}).get("model"),
+            "fallbacks": [item.get("model") for item in value.get("fallbacks", [])],
+        }
+        for role, value in config.get("roles", {}).items()
+    }
     runs = git.common_dir() / "project-orchestrator" / "runs"
     interrupted: list[str] = []
     stale_locks: list[str] = []
@@ -119,7 +129,12 @@ def cmd_doctor(path: Path) -> Envelope:
                     stale_locks.append(str(lock))
             except (OSError, json.JSONDecodeError):
                 stale_locks.append(str(lock))
-        managed = [str(Path(item.get("path")).resolve()) for state_file in runs.glob("*/run-state.json") for item in json.loads(state_file.read_text(encoding="utf-8")).get("cleanup_ownership", []) if item.get("kind") == "worktree"]
+        managed = [
+            str(Path(item.get("path")).resolve())
+            for state_file in runs.glob("*/run-state.json")
+            for item in json.loads(state_file.read_text(encoding="utf-8")).get("cleanup_ownership", [])
+            if item.get("kind") == "worktree"
+        ]
         collisions = sorted({path for path in managed if managed.count(path) > 1})
     return Envelope(
         "doctor",
@@ -130,7 +145,7 @@ def cmd_doctor(path: Path) -> Envelope:
             "base_branch": config["git"]["base_branch"],
             "base_exists": bool(git.head(config["git"]["base_branch"])),
             "clean": git.clean(),
-            "config": str(cp),
+            "config": str(config_file),
             "config_version": config["version"],
             "schemas": len(required),
             "providers": health,
@@ -151,7 +166,12 @@ def cmd_validate_result(args: argparse.Namespace) -> Envelope:
         value = json.loads(file.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValidationError(f"invalid result JSON: {exc}") from exc
-    schema_name = {"coding-agent": "coding-result.schema.json", "completion-verifier": "completion-result.schema.json", "code-reviewer": "review-result.schema.json", "fix-agent": "fix-result.schema.json"}[args.role]
+    schema_name = {
+        "coding-agent": "coding-result.schema.json",
+        "completion-verifier": "completion-result.schema.json",
+        "code-reviewer": "review-result.schema.json",
+        "fix-agent": "fix-result.schema.json",
+    }[args.role]
     schema = Path(__file__).resolve().parents[2] / "schemas" / schema_name
     validate_json_schema(value, schema)
     if value["role"] != args.role:
@@ -185,31 +205,35 @@ def _maybe_open_pr(path: Path, run_id: str, config: dict) -> dict:
     return value
 
 
+def _execution_configured(path: Path, args: argparse.Namespace) -> bool:
+    return config_path(path).exists() or bool(args.provider)
+
+
 def dispatch(args: argparse.Namespace) -> Envelope:
     path = repo(args)
-    cmd = args.command
-    if cmd == "version":
+    command_name = args.command
+    if command_name == "version":
         return Envelope("version", result={"version": "2.0.0"})
-    if cmd == "capabilities":
+    if command_name == "capabilities":
         return Envelope("capabilities", result={"version": "2.0.0", "execution_modes": ["direct-plan", "task-execution"], "commands": COMMANDS})
-    if cmd in {"self-check", "doctor"}:
+    if command_name in {"self-check", "doctor"}:
         return cmd_doctor(path)
-    if cmd == "init-config":
+    if command_name == "init-config":
         target = config_path(path)
         if target.exists():
             return Envelope("init-config", result={"path": str(target), "created": False})
         atomic_json(target, DEFAULT_CONFIG)
         return Envelope("init-config", changed=True, result={"path": str(target), "created": True}, artifacts=[{"path": str(target), "action": "created"}])
-    if cmd == "validate-config":
+    if command_name == "validate-config":
         target, value = load_config(path)
         validate_config(value)
         return Envelope("validate-config", result={"valid": True, "path": str(target), "version": value["version"]})
-    if cmd == "providers":
+    if command_name == "providers":
         _, config = load_config(path)
         names = [args.name] if args.providers_command == "probe" and args.name else list(config["providers"])
         items = [provider(name, config).probe().__dict__ for name in names]
         return Envelope(f"providers.{args.providers_command}", result={"providers": items})
-    if cmd == "run":
+    if command_name == "run":
         _, config = load_config(path, args.config)
         run_id = args.run_id or f"run-{uuid.uuid4().hex[:12]}"
         spec = Path(args.spec).resolve() if args.spec else None
@@ -221,21 +245,21 @@ def dispatch(args: argparse.Namespace) -> Envelope:
         persisted = store.load()
         persisted.update({"requested_provider": args.provider, "requested_model": args.model, "requested_reasoning": args.reasoning})
         atomic_json(store.state_file, persisted)
-        if (config_path(path).exists() or args.provider) and any(shutil.which(provider_cfg.get("command", name)) for name, provider_cfg in config.get("providers", {}).items() if provider_cfg.get("enabled", True)):
+        if _execution_configured(path, args):
             execute_run(path, run_id, config)
             value = _maybe_open_pr(path, run_id, config)
         else:
             value = store.load()
         value["state_path"] = str(store.root)
         return Envelope("run", changed=True, result=value, artifacts=[{"path": str(store.root), "action": "created"}])
-    if cmd == "status":
+    if command_name == "status":
         git = GitService(path)
         runs = git.common_dir() / "project-orchestrator" / "runs"
         if args.run_id:
             return Envelope("status", result=get_store(path, args.run_id).load())
         values = [json.loads(file.read_text(encoding="utf-8")) for file in sorted(runs.glob("*/run-state.json"))] if runs.exists() else []
         return Envelope("status", result={"runs": values})
-    if cmd == "cancel":
+    if command_name == "cancel":
         store = get_store(path, args.run_id)
         value = store.load()
         terminated: list[int] = []
@@ -249,24 +273,24 @@ def dispatch(args: argparse.Namespace) -> Envelope:
         if value["state"] not in TERMINAL and value["state"] != "PROJECT_COMPLETED":
             value = store.transition("CANCELLED", {"reason": "explicit user cancellation"})
         return Envelope("cancel", changed=True, result={**value, "terminated_pids": terminated}, warnings=["Epic worktree, candidates, and evidence are preserved"])
-    if cmd in {"resume", "retry"}:
+    if command_name in {"resume", "retry"}:
         store = get_store(path, args.run_id)
         value = store.load()
         _, config = load_config(path)
         if value["state"] in TERMINAL:
-            raise ValidationError(f"cannot {cmd} terminal run in state {value['state']}")
+            raise ValidationError(f"cannot {command_name} terminal run in state {value['state']}")
         value = execute_run(path, args.run_id, config)
         value = _maybe_open_pr(path, args.run_id, config)
-        return Envelope(cmd, changed=True, result=value)
-    if cmd == "integrate":
+        return Envelope(command_name, changed=True, result=value)
+    if command_name == "integrate":
         _, config = load_config(path)
         value = integrate_run(path, args.run_id, config)
         return Envelope("integrate", changed=True, result=value)
-    if cmd == "cleanup":
+    if command_name == "cleanup":
         return cmd_cleanup(path, args)
-    if cmd == "validate-result":
+    if command_name == "validate-result":
         return cmd_validate_result(args)
-    raise ValidationError(f"unknown command: {cmd}")
+    raise ValidationError(f"unknown command: {command_name}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -275,14 +299,14 @@ def main(argv: list[str] | None = None) -> int:
         raw.remove("--json")
         raw.insert(0, "--json")
     args = parser().parse_args(raw)
-    command = args.command if args.command != "providers" else f"providers.{args.providers_command}"
+    command_name = args.command if args.command != "providers" else f"providers.{args.providers_command}"
     try:
         envelope = dispatch(args)
         json_or_human(envelope, args.json)
         return 0
     except OrchestratorError as exc:
-        json_or_human(failure(command, exc), True)
+        json_or_human(failure(command_name, exc), True)
         return exc.code
     except Exception as exc:
-        json_or_human(failure(command, exc), True)
+        json_or_human(failure(command_name, exc), True)
         return 1
