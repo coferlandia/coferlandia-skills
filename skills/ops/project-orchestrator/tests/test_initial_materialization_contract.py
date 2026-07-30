@@ -24,14 +24,16 @@ class InitialMaterializationContractTests(unittest.TestCase):
         reference = self.read("skills/ops/project-orchestrator/references/initial-contract-materialization.md")
         for text in (skill, reference):
             self.assertIn("Initial Contract Materialization", text)
-            self.assertIn("frozen", text)
+            self.assertIn("frozen", text.lower())
             self.assertIn("not contract synchronization", text)
         self.assertIn("ANALYSIS.md", skill)
 
     def test_execution_loop_does_not_refresh_contracts_between_tasks(self) -> None:
         engine = self.read("skills/ops/project-orchestrator/scripts/project_orchestrator_cli/engine.py")
         state = self.read("skills/ops/project-orchestrator/scripts/project_orchestrator_cli/state.py")
+        materialization = self.read("skills/ops/project-orchestrator/scripts/project_orchestrator_cli/materialization.py")
         self.assertNotIn("verify_github_freshness", engine)
+        self.assertNotIn("verify_github_freshness", materialization)
         self.assertNotIn("BLOCKED_BY_STALE_CONTRACT", engine)
         self.assertNotIn("BLOCKED_BY_STALE_CONTRACT", state)
 
