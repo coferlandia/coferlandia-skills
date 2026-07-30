@@ -40,7 +40,7 @@ jobs:
         run: python skills/ops/coferlandia-project-manager/tests/test_workflow_contract.py
 
       - name: Project Orchestrator v2 tests
-        run: python skills/ops/project-orchestrator/tests/test_cli.py
+        run: python -m unittest discover -s skills/ops/project-orchestrator/tests -p "test_*.py"
 
       - name: Validate all skills
         run: python _protocol/scripts/validate_skill.py --all skills
