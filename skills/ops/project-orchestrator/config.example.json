@@ -26,8 +26,8 @@
   "protocol": {"version": "1.0", "retain_full_event_streams": true, "retain_stdout": true, "retain_stderr": true, "redact_secrets": true},
   "validation": {"commands": []},
   "github_project": {
-    "owner": "diegocofre",
-    "number": 2,
+    "owner": "your-github-owner",
+    "number": 1,
     "status_mapping": {
       "pending": "Todo",
       "in_progress": "In Progress",
