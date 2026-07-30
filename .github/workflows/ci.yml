@@ -33,6 +33,12 @@ jobs:
       - name: Project Manager GitHub-native reporting tests
         run: python -m unittest skills.ops.coferlandia-project-manager.tests.test_github_native_reporting
 
+      - name: Project Manager workflow contract tests
+        run: python skills/ops/coferlandia-project-manager/tests/test_workflow_contract.py
+
+      - name: Project Orchestrator v2 tests
+        run: python skills/ops/project-orchestrator/tests/test_cli.py
+
       - name: Validate all skills
         run: python _protocol/scripts/validate_skill.py --all skills
 
