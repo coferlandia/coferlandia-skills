@@ -4,7 +4,8 @@ Initial Contract Materialization is the one-time controller operation that ensur
 GitHub-tracked initiative has both a GitHub contract representation and a bounded local execution
 representation before the Epic worktree is created.
 
-It is initialization, not continuous synchronization.
+It is initialization, not contract synchronization. In particular, it does not establish continuous
+or periodic reconciliation between GitHub and local files.
 
 ## Trigger
 
