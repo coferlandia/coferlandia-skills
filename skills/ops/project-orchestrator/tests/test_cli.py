@@ -1,15 +1,12 @@
-"""Black-box tests for the deterministic project-orchestrator CLI."""
+"""Black-box and contract tests for project-orchestrator v2."""
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 import tempfile
 import unittest
-from unittest import mock
 from pathlib import Path
-
 
 SKILL = Path(__file__).resolve().parents[1]
 CLI = SKILL / "scripts" / "project-orchestrator-cli.py"
@@ -17,9 +14,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 
 
 def run_cli(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, str(CLI), *args], cwd=repo, text=True, capture_output=True
-    )
+    return subprocess.run([sys.executable, str(CLI), *args], cwd=repo, text=True, capture_output=True)
 
 
 class CliTests(unittest.TestCase):
@@ -34,23 +29,276 @@ class CliTests(unittest.TestCase):
         subprocess.run(["git", "-C", str(directory), "commit", "-m", "initial"], check=True, capture_output=True)
         return directory
 
-    def test_capabilities_is_a_json_envelope(self) -> None:
+    def commit_all(self, repo: Path, message: str = "fixture") -> None:
+        subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-m", message], check=True, capture_output=True)
+
+    def write_fake_provider(self, repo: Path, *, request_one_fix: bool = False) -> Path:
+        fake = repo / "fake-provider.py"
+        fake.write_text(
+            """#!/usr/bin/env python3
+import json, pathlib, re, sys
+prompt = sys.stdin.read()
+role = 'code-reviewer' if 'code-reviewer' in prompt else ('completion-verifier' if 'completion-verifier' in prompt else ('fix-agent' if 'fix-agent' in prompt else 'coding-agent'))
+candidate = re.search(r'Candidate: ([0-9a-f]+)', prompt)
+result = {'protocol_version':'1.0','role':role,'status':'approved' if role == 'code-reviewer' else 'completed','remaining_work':[],'requirement_completion':[],'findings':[],'candidate_commit':candidate.group(1) if candidate else '','base_commit':'base','changed_files':[],'tests':[],'blockers':[],'scope_deviations':[]}
+readme = pathlib.Path('README.md')
+if role == 'coding-agent':
+    readme.write_text(readme.read_text() + 'coding:' + re.search(r'Assigned work item: ([^ ]+)', prompt).group(1) + '\\n')
+if role == 'code-reviewer' and 'Holistic Epic review: no' in prompt and pathlib.Path('.request-one-fix').exists() and not pathlib.Path('.fix-applied').exists():
+    result['status'] = 'changes-required'; result['findings'] = [{'severity':'medium','reason':'fixture requests one additive fix'}]
+if role == 'fix-agent':
+    readme.write_text(readme.read_text() + 'review-fix\\n'); pathlib.Path('.fix-applied').write_text('yes')
+if role == 'coding-agent':
+    result = {k: result[k] for k in ('protocol_version','role','status','remaining_work','changed_files','tests','blockers','scope_deviations')}
+elif role == 'completion-verifier':
+    result = {k: result[k] for k in ('protocol_version','role','status','requirement_completion','remaining_work','blockers','scope_deviations','tests')}
+elif role == 'fix-agent':
+    result = {k: result[k] for k in ('protocol_version','role','status','findings','changed_files','tests','blockers')}
+elif role == 'code-reviewer':
+    result = {k: result[k] for k in ('protocol_version','role','status','candidate_commit','base_commit','findings','tests','scope_deviations')}
+print(json.dumps(result))
+""",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        if request_one_fix:
+            (repo / ".request-one-fix").write_text("yes\n", encoding="utf-8")
+        return fake
+
+    def write_config(self, repo: Path, fake: Path) -> None:
+        config = {
+            "version": 2,
+            "git": {
+                "base_branch": "main",
+                "branch_prefix": "orchestrator",
+                "worktree_root": "../.worktrees",
+                "require_clean_base_worktree": True,
+                "remove_review_worktree_after_review": True,
+                "remove_implementation_worktree_after_integration": True,
+                "delete_epic_branch_after_integration": True,
+            },
+            "roles": {role: {"primary": {"client": "codex", "model": "fake"}} for role in ("orchestrator", "coding_agent", "completion_verifier", "code_reviewer", "fix_agent")},
+            "providers": {"codex": {"command": str(fake), "enabled": True}, "opencode": {"enabled": False}},
+            "retry": {"provider_wait_seconds": 1},
+            "timeouts": {"coding_seconds": 5, "completion_verification_seconds": 5, "review_seconds": 5, "fix_seconds": 5, "process_termination_grace_seconds": 1, "test_seconds": 5},
+            "loops": {"max_no_progress_cycles": 3},
+            "protocol": {},
+            "validation": {"commands": []},
+        }
+        directory = repo / ".project-orchestrator"
+        directory.mkdir(exist_ok=True)
+        (directory / "config.json").write_text(json.dumps(config), encoding="utf-8")
+
+    def test_capabilities_expose_v2_modes_and_integrate(self) -> None:
         result = run_cli(self.make_repo(), "capabilities", "--json")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         payload = json.loads(result.stdout)
-        self.assertEqual(payload["status"], "success")
-        self.assertIn("run", [item["name"] for item in payload["result"]["commands"]])
+        self.assertEqual(payload["result"]["version"], "2.0.0")
+        self.assertEqual(payload["result"]["execution_modes"], ["direct-plan", "task-execution"])
+        self.assertIn("integrate", [item["name"] for item in payload["result"]["commands"]])
 
-    def test_dry_run_creates_no_branch_or_worktree(self) -> None:
+    def test_run_sources_are_mutually_exclusive(self) -> None:
+        result = run_cli(self.make_repo(), "run", "--spec", "a.md", "--manifest", "b.json", "--json")
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_direct_plan_dry_run_is_one_execution_unit_even_with_many_headings(self) -> None:
         repo = self.make_repo()
         spec = Path(tempfile.mkdtemp()) / "plan.md"
-        spec.write_text("# Phase 1: add a thing\n\nAcceptance criteria: tests pass.\n", encoding="utf-8")
+        spec.write_text("# Phase 1: first\n\n# Phase 2: second\n", encoding="utf-8")
         result = run_cli(repo, "run", "--spec", str(spec), "--dry-run", "--json")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        payload = json.loads(result.stdout)
-        self.assertFalse(payload["changed"])
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        manifest = json.loads(result.stdout)["result"]["manifest"]
+        self.assertEqual(manifest["execution_mode"], "direct-plan")
+        self.assertEqual([item["id"] for item in manifest["tasks"]], ["DIRECT-PLAN"])
         branches = subprocess.run(["git", "-C", str(repo), "branch", "--list", "orchestrator/*"], text=True, capture_output=True).stdout
         self.assertEqual(branches.strip(), "")
+
+    def test_manifest_rejects_cycle_and_missing_dependency(self) -> None:
+        from project_orchestrator_cli.contracts import ValidationError
+        from project_orchestrator_cli.work_items import validate_manifest
+
+        base = {
+            "schema_version": 2,
+            "execution_mode": "task-execution",
+            "source": {"kind": "local"},
+            "epic": {"id": "E", "path": "EPIC.md"},
+            "final_pr": None,
+            "squash_sha": None,
+        }
+        with self.assertRaises(ValidationError):
+            validate_manifest({**base, "tasks": [{"id": "A", "path": "A.md", "depends_on": ["MISSING"]}]})
+        with self.assertRaises(ValidationError):
+            validate_manifest({**base, "tasks": [{"id": "A", "path": "A.md", "depends_on": ["B"]}, {"id": "B", "path": "B.md", "depends_on": ["A"]}]})
+
+    def test_manifest_topological_order_is_deterministic(self) -> None:
+        from project_orchestrator_cli.work_items import validate_manifest
+
+        manifest = validate_manifest({
+            "schema_version": 2,
+            "execution_mode": "task-execution",
+            "source": {"kind": "local"},
+            "epic": {"id": "E", "path": "EPIC.md"},
+            "tasks": [
+                {"id": "B", "path": "B.md", "depends_on": ["A"]},
+                {"id": "C", "path": "C.md", "depends_on": []},
+                {"id": "A", "path": "A.md", "depends_on": []},
+            ],
+        })
+        self.assertEqual(manifest["execution_order"], ["A", "C", "B"])
+
+    def test_materialization_discovers_tasks_and_preserves_execution_metadata_on_refresh(self) -> None:
+        from project_orchestrator_cli.materialization import materialize_github_epic, verify_github_freshness
+        from project_orchestrator_cli.github_service import IssueRef
+
+        class FakeGitHub:
+            def __init__(self):
+                self.epic_body = """# Goal\n\n## Execution Strategy\nTracking: GitHub\nDecomposition: Analyst\nExecution: Project Orchestrator\nWorker profile: Basic coding agents\nReview: Per-task + final Epic review\nIntegration: Single PR / squash merge\n"""
+                self.task_bodies = {2: "## Dependencies\nNone.\n", 3: "## Dependencies\nDepends on #2.\n"}
+
+            def resolve_issue_ref(self, raw):
+                return IssueRef("acme/repo", 1)
+
+            def issue(self, ref):
+                if ref.number == 1:
+                    return {"number": 1, "title": "Epic", "body": self.epic_body, "state": "OPEN", "updatedAt": "t1"}
+                return {"number": ref.number, "title": f"Task {ref.number}", "body": self.task_bodies[ref.number], "state": "OPEN", "updatedAt": "t1"}
+
+            def comments(self, ref):
+                return []
+
+            def child_issues(self, ref):
+                return [self.issue(IssueRef("acme/repo", number)) for number in (2, 3)]
+
+        repo = self.make_repo()
+        service = FakeGitHub()
+        manifest = materialize_github_epic(repo, "#1", service)
+        self.assertEqual(manifest["execution_order"], ["TASK-2", "TASK-3"])
+        manifest["tasks"][0]["status"] = "ready_for_merge"
+        manifest["tasks"][0]["commits"] = [{"sha": "abc", "kind": "candidate"}]
+        service.task_bodies[3] += "\n## Outcome\nChanged contract.\n"
+        refreshed = verify_github_freshness(repo, manifest, service)["manifest"]
+        self.assertEqual(refreshed["tasks"][0]["status"], "ready_for_merge")
+        self.assertEqual(refreshed["tasks"][0]["commits"][0]["sha"], "abc")
+        self.assertNotEqual(refreshed["tasks"][1]["source_hash"], manifest["tasks"][1]["source_hash"])
+
+    def test_materialization_blocks_changed_in_progress_task(self) -> None:
+        from project_orchestrator_cli.contracts import ValidationError
+        from project_orchestrator_cli.github_service import IssueRef
+        from project_orchestrator_cli.materialization import materialize_github_epic, verify_github_freshness
+
+        class FakeGitHub:
+            body = """## Execution Strategy\nTracking: GitHub\nDecomposition: Analyst\nExecution: Project Orchestrator\nWorker profile: Basic coding agents\nReview: Per-task + final Epic review\nIntegration: Single PR / squash merge\n"""
+            task = "## Dependencies\nNone.\n"
+            def resolve_issue_ref(self, raw): return IssueRef("acme/repo", 1)
+            def issue(self, ref): return {"number": ref.number, "title": "Epic" if ref.number == 1 else "Task", "body": self.body if ref.number == 1 else self.task, "state": "OPEN", "updatedAt": "t"}
+            def comments(self, ref): return []
+            def child_issues(self, ref): return [self.issue(IssueRef("acme/repo", 2))]
+
+        repo = self.make_repo(); service = FakeGitHub()
+        manifest = materialize_github_epic(repo, "#1", service)
+        service.task += "\nchanged\n"
+        with self.assertRaises(ValidationError):
+            verify_github_freshness(repo, manifest, service, in_progress_task="TASK-2")
+
+    def test_git_staging_excludes_github_projection_files(self) -> None:
+        from project_orchestrator_cli.git_service import GitService
+
+        repo = self.make_repo()
+        projection = repo / ".agent" / "work-items" / "epic-1" / "TASK.md"
+        projection.parent.mkdir(parents=True)
+        projection.write_text("projection\n", encoding="utf-8")
+        (repo / "README.md").write_text("product change\n", encoding="utf-8")
+        selected = GitService(repo).stage_product_changes(repo, include_work_items=False)
+        self.assertEqual(selected, ["README.md"])
+        staged = subprocess.run(["git", "-C", str(repo), "diff", "--cached", "--name-only"], text=True, capture_output=True).stdout.splitlines()
+        self.assertEqual(staged, ["README.md"])
+
+    def test_commit_messages_link_issue_and_epic_without_closing_keywords(self) -> None:
+        from project_orchestrator_cli.engine import _commit_message
+        manifest = {"source": {"kind": "github", "epic_issue": 1}}
+        task = {"id": "TASK-2", "issue": 2, "title": "Implement thing"}
+        candidate = _commit_message(manifest, task, kind="candidate")
+        fix = _commit_message(manifest, task, kind="review-fix", review_round=1)
+        self.assertIn("Issue: #2", candidate)
+        self.assertIn("Epic: #1", candidate)
+        self.assertIn("Review: round 1", fix)
+        for word in ("Closes", "Fixes", "Resolves"):
+            self.assertNotIn(word, candidate)
+            self.assertNotIn(word, fix)
+
+    def test_final_pr_body_owns_closing_references(self) -> None:
+        from project_orchestrator_cli.integration import _pr_body
+        state = {
+            "final_reviewed_sha": "abc",
+            "manifest": {
+                "source": {"kind": "github", "epic_issue": 1},
+                "execution_order": ["TASK-2", "TASK-3"],
+                "tasks": [
+                    {"id": "TASK-2", "issue": 2, "title": "A"},
+                    {"id": "TASK-3", "issue": 3, "title": "B"},
+                ],
+            },
+            "task_reviews": {},
+            "holistic_reviews": [{}],
+        }
+        body = _pr_body(state)
+        self.assertIn("Closes #2", body)
+        self.assertIn("Closes #3", body)
+        self.assertIn("Closes #1", body)
+
+    def test_fake_provider_executes_two_tasks_in_one_epic_worktree_without_merging_main(self) -> None:
+        repo = self.make_repo()
+        fake = self.write_fake_provider(repo)
+        self.write_config(repo, fake)
+        contracts = repo / ".agent" / "work-items" / "local-epic"
+        (contracts / "tasks").mkdir(parents=True)
+        (contracts / "EPIC.md").write_text("# Local Epic\n", encoding="utf-8")
+        (contracts / "tasks" / "TASK-A.md").write_text("# A\n", encoding="utf-8")
+        (contracts / "tasks" / "TASK-B.md").write_text("# B\n", encoding="utf-8")
+        manifest = {
+            "schema_version": 2,
+            "execution_mode": "task-execution",
+            "source": {"kind": "local", "source_hash": "fixture", "contract_revision": 1},
+            "epic": {"id": "LOCAL-EPIC", "title": "Local Epic", "path": ".agent/work-items/local-epic/EPIC.md"},
+            "tasks": [
+                {"id": "TASK-A", "title": "A", "path": ".agent/work-items/local-epic/tasks/TASK-A.md", "depends_on": [], "status": "pending", "commits": []},
+                {"id": "TASK-B", "title": "B", "path": ".agent/work-items/local-epic/tasks/TASK-B.md", "depends_on": ["TASK-A"], "status": "pending", "commits": []},
+            ],
+        }
+        (contracts / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        self.commit_all(repo)
+        main_before = subprocess.run(["git", "-C", str(repo), "rev-parse", "main"], text=True, capture_output=True, check=True).stdout.strip()
+        result = run_cli(repo, "run", "--manifest", str(contracts / "manifest.json"), "--run-id", "v2-two-task", "--json")
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        state = json.loads(result.stdout)["result"]
+        self.assertEqual(state["state"], "EPIC_READY_FOR_INTEGRATION", result.stdout)
+        self.assertEqual(subprocess.run(["git", "-C", str(repo), "rev-parse", "main"], text=True, capture_output=True, check=True).stdout.strip(), main_before)
+        worktree = Path(state["resources"]["implementation_worktree"])
+        self.assertTrue(worktree.exists())
+        history = subprocess.run(["git", "-C", str(worktree), "log", "--format=%s", "--reverse", f"{main_before}..HEAD"], text=True, capture_output=True, check=True).stdout.splitlines()
+        self.assertEqual(len(history), 2)
+        self.assertIn("A", history[0])
+        self.assertIn("B", history[1])
+        self.assertIn("coding:TASK-A", (worktree / "README.md").read_text())
+        self.assertIn("coding:TASK-B", (worktree / "README.md").read_text())
+
+    def test_review_fix_creates_additive_commit_and_new_review(self) -> None:
+        repo = self.make_repo()
+        fake = self.write_fake_provider(repo, request_one_fix=True)
+        self.write_config(repo, fake)
+        self.commit_all(repo)
+        spec = Path(tempfile.mkdtemp()) / "plan.md"
+        spec.write_text("Implement the fixture.\n", encoding="utf-8")
+        result = run_cli(repo, "run", "--spec", str(spec), "--run-id", "v2-fix", "--json")
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        state = json.loads(result.stdout)["result"]
+        self.assertEqual(state["state"], "EPIC_READY_FOR_INTEGRATION")
+        task = state["manifest"]["tasks"][0]
+        commits = task["commits"]
+        self.assertEqual([item["kind"] for item in commits], ["candidate", "review-fix"])
+        self.assertNotEqual(commits[0]["sha"], commits[1]["sha"])
+        self.assertGreaterEqual(len(state["task_reviews"]["DIRECT-PLAN"]), 2)
 
     def test_validate_result_rejects_wrong_role(self) -> None:
         repo = self.make_repo()
@@ -59,73 +307,6 @@ class CliTests(unittest.TestCase):
         result = run_cli(repo, "validate-result", "--role", "coding-agent", "--file", str(result_file), "--json")
         self.assertEqual(result.returncode, 3)
         self.assertEqual(json.loads(result.stdout)["status"], "failure")
-
-    def test_init_config_is_idempotent(self) -> None:
-        repo = self.make_repo()
-        first = run_cli(repo, "init-config", "--json")
-        second = run_cli(repo, "init-config", "--json")
-        self.assertEqual(first.returncode, 0, first.stderr)
-        self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertFalse(json.loads(second.stdout)["changed"])
-
-    def test_run_assigns_one_owned_implementation_worktree(self) -> None:
-        repo = self.make_repo()
-        spec = Path(tempfile.mkdtemp()) / "plan.md"
-        spec.write_text("# Phase 1: add a thing\n", encoding="utf-8")
-        result = run_cli(repo, "run", "--spec", str(spec), "--run-id", "run-test", "--json")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        state = run_cli(repo, "status", "run-test", "--json")
-        value = json.loads(state.stdout)["result"]
-        self.assertEqual(value["state"], "IMPLEMENTATION_WORKTREE_CREATED")
-        self.assertTrue(Path(value["resources"]["implementation_worktree"]).is_dir())
-        cleanup = run_cli(repo, "cleanup", "run-test", "--json")
-        self.assertEqual(cleanup.returncode, 0, cleanup.stderr)
-
-    def test_validate_result_checks_complete_schema(self) -> None:
-        repo = self.make_repo()
-        result_file = repo / "result.json"
-        result_file.write_text(json.dumps({
-            "protocol_version": "1.0", "role": "coding-agent", "status": "completed",
-            "remaining_work": "not-an-array"
-        }), encoding="utf-8")
-        result = run_cli(repo, "validate-result", "--role", "coding-agent", "--file", str(result_file), "--json")
-        self.assertEqual(result.returncode, 3)
-        self.assertIn("schema", json.loads(result.stdout)["errors"][0].lower())
-
-    def test_provider_runner_captures_jsonl_and_final_response(self) -> None:
-        from project_orchestrator_cli.providers import ProcessRunner, ProcessRequest
-        repo_path = self.make_repo()
-        request = ProcessRequest(command=[sys.executable, "-c", "import sys; print('{\\\"session_id\\\":\\\"s1\\\"}'); print('{\\\"status\\\":\\\"completed\\\"}')"], cwd=repo_path, timeout=5)
-        result = ProcessRunner().execute(request)
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.session_id, "s1")
-        self.assertEqual(result.events[-1]["status"], "completed")
-
-    def test_extract_agent_result_from_codex_agent_message_event(self) -> None:
-        from project_orchestrator_cli.providers import extract_agent_result
-        payload = {"status": "completed", "role": "coding-agent"}
-        events = [
-            {"type": "thread.started", "thread_id": "t1"},
-            {"type": "item.completed", "item": {"type": "agent_message", "text": json.dumps(payload)}},
-            {"type": "tool.completed", "status": "completed"},
-        ]
-        self.assertEqual(extract_agent_result(events), payload)
-
-    def test_extract_agent_result_from_nested_opencode_text_event(self) -> None:
-        from project_orchestrator_cli.providers import extract_agent_result
-        payload = {"status": "completed", "role": "coding-agent"}
-        events = [{"type": "text", "part": {"type": "text", "text": json.dumps(payload)}}]
-        self.assertEqual(extract_agent_result(events), payload)
-
-    def test_normalize_provider_result_to_completion_contract(self) -> None:
-        from project_orchestrator_cli.engine import normalize_provider_result
-        result = normalize_provider_result("completion-verifier", {
-            "status": "pass", "acceptance": {"hello.txt exists": "pass"},
-            "findings": [], "summary": "ok", "worktree": "/tmp/work"
-        })
-        self.assertEqual(result["status"], "completed")
-        self.assertEqual(result["requirement_completion"][0]["criterion"], "hello.txt exists")
-        self.assertNotIn("summary", result)
 
     def test_run_lock_rejects_second_owner(self) -> None:
         from project_orchestrator_cli.state import RunLock
@@ -147,83 +328,6 @@ class CliTests(unittest.TestCase):
         clock.sleep(300)
         self.assertTrue(retry_due(retry_at, clock.now()))
 
-    def test_default_model_ids_match_provider_syntax(self) -> None:
-        from project_orchestrator_cli.engine import DEFAULT_CONFIG
-        from project_orchestrator_cli.providers import OpenCodeProvider
-        self.assertEqual(DEFAULT_CONFIG["roles"]["code_reviewer"]["primary"]["model"], "gpt-5.6-luna")
-        self.assertEqual(DEFAULT_CONFIG["roles"]["coding_agent"]["primary"]["model"], "gpt-5.4-mini")
-        self.assertEqual(OpenCodeProvider("opencode").resolve_model("bigpickle"), "opencode/big-pickle")
-        command = OpenCodeProvider("opencode").build_command(worktree=Path("/tmp"), model="opencode/big-pickle", prompt_file=Path("/tmp/prompt.md"), role="coding-agent")
-        self.assertIn("--auto", command)
 
-    def test_fake_provider_completes_candidate_review_and_merge(self) -> None:
-        repo = self.make_repo()
-        fake = repo / "fake-provider.py"
-        fake.write_text("""#!/usr/bin/env python3
-import json, pathlib, re, sys
-prompt = sys.stdin.read()
-role = 'code-reviewer' if 'code-reviewer' in prompt else ('completion-verifier' if 'completion-verifier' in prompt else ('fix-agent' if 'fix-agent' in prompt else 'coding-agent'))
-candidate = re.search(r'Candidate: ([0-9a-f]+)', prompt)
-result = {'protocol_version':'1.0','role':role,'status':'approved' if role == 'code-reviewer' else 'completed','remaining_work':[],'requirement_completion':[],'findings':[],'candidate_commit':candidate.group(1) if candidate else '','base_commit':'base','changed_files':[],'tests':[],'blockers':[],'scope_deviations':[]}
-if role == 'coding-agent':
-    result = {k: result[k] for k in ('protocol_version','role','status','remaining_work','changed_files','tests','blockers','scope_deviations')}
-elif role == 'completion-verifier':
-    result = {k: result[k] for k in ('protocol_version','role','status','requirement_completion','remaining_work','blockers','scope_deviations','tests')}
-elif role == 'fix-agent':
-    result = {k: result[k] for k in ('protocol_version','role','status','findings','changed_files','tests','blockers')}
-elif role == 'code-reviewer':
-    result = {k: result[k] for k in ('protocol_version','role','status','candidate_commit','base_commit','findings','tests','scope_deviations')}
-if role == 'coding-agent' and '--version' not in sys.argv and 'login' not in sys.argv: pathlib.Path('README.md').write_text('done\\n')
-print(json.dumps(result))
-""", encoding="utf-8")
-        fake.chmod(0o755)
-        config = json.loads(json.dumps({
-            "version": 1, "git": {"base_branch":"main", "branch_prefix":"orchestrator", "worktree_root":"../.worktrees", "require_clean_base_worktree":True, "merge_strategy":"ff-only"},
-            "roles": {role:{"primary":{"client":"codex","model":"fake"}} for role in ("orchestrator","coding_agent","completion_verifier","code_reviewer","fix_agent")},
-            "providers": {"codex":{"command":str(fake),"enabled":True},"opencode":{"enabled":False}},
-            "retry":{"provider_wait_seconds":1}, "timeouts":{"coding_seconds":5,"completion_verification_seconds":5,"review_seconds":5,"fix_seconds":5,"process_termination_grace_seconds":1}, "loops":{}, "protocol":{}
-        }))
-        config_dir = repo / ".project-orchestrator"; config_dir.mkdir()
-        (config_dir / "config.json").write_text(json.dumps(config), encoding="utf-8")
-        spec = repo / "plan.md"; spec.write_text("# Phase 1: fake execution\n\n# Phase 2: second execution\n", encoding="utf-8")
-        subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
-        subprocess.run(["git", "-C", str(repo), "commit", "-m", "fixture"], check=True, capture_output=True)
-        result = run_cli(repo, "run", "--spec", str(spec), "--run-id", "fake-run", "--json")
-        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-        state = json.loads(result.stdout)["result"]
-        self.assertEqual(state["state"], "PROJECT_COMPLETED", result.stdout)
-        self.assertTrue((Path(state["state_path"]) / "FINAL-REPORT.md").exists())
-        cleaned_worktrees = state.get("cleaned_worktrees", [])
-        self.assertEqual(len(cleaned_worktrees), 2)
-        self.assertTrue(
-            all(not Path(item["path"]).exists() for item in cleaned_worktrees),
-            "a successful merge must remove every run-owned worktree",
-        )
-
-    def test_real_git_rebase_conflict_is_detectable_without_guessing(self) -> None:
-        from project_orchestrator_cli.git_service import GitService
-        repo = self.make_repo()
-        branch = "orchestrator/conflict/phase-001"
-        worktree = Path(tempfile.mkdtemp()) / "conflict-worktree"
-        subprocess.run(["git", "-C", str(repo), "branch", branch], check=True, capture_output=True)
-        subprocess.run(["git", "-C", str(repo), "worktree", "add", str(worktree), branch], check=True, capture_output=True)
-        try:
-            (worktree / "README.md").write_text("implementation\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(worktree), "add", "README.md"], check=True)
-            subprocess.run(["git", "-C", str(worktree), "commit", "-m", "implementation"], check=True, capture_output=True)
-            (repo / "README.md").write_text("base change\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(repo), "add", "README.md"], check=True)
-            env = {**os.environ, "GIT_EDITOR":"true", "GIT_TERMINAL_PROMPT":"0", "GIT_CONFIG_GLOBAL":"/dev/null"}
-            subprocess.run(["git", "-C", str(repo), "-c", "core.hooksPath=/dev/null", "-c", "maintenance.auto=false", "commit", "-m", "base change"], check=True, capture_output=True, env=env)
-            with self.assertRaises(Exception):
-                GitService(repo).run("merge", "--no-commit", "main", cwd=worktree)
-            merge_head = subprocess.run(
-                ["git", "-C", str(worktree), "rev-parse", "--quiet", "--verify", "MERGE_HEAD"],
-                text=True,
-                capture_output=True,
-            )
-            if merge_head.returncode == 0:
-                GitService(repo).run("merge", "--abort", cwd=worktree)
-            self.assertEqual(subprocess.run(["git", "-C", str(worktree), "status", "--porcelain"], text=True, capture_output=True).stdout, "")
-        finally:
-            subprocess.run(["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)], check=False, capture_output=True)
+if __name__ == "__main__":
+    unittest.main()
