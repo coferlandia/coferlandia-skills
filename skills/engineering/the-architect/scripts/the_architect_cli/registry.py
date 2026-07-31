@@ -11,6 +11,7 @@ from .paths import atomic_write, confined
 
 DIRECTORIES = ["dashboards", "projects", "components", "applications", "extractions", "events", "patterns", "policies", "schemas"]
 DASHBOARDS = ["PROJECTS", "COMPONENTS", "DECISIONS", "RISKS", "APPLICATIONS", "EXTRACTIONS", "TIMELINE"]
+MANAGED_ENTITY_PREFIXES = ("PROJECT-", "COMP-", "ADR-", "ARCH-", "APP-", "ENG-", "EXTRACT-", "EVENT-")
 
 
 def home_skeleton() -> dict[str, str]:
@@ -87,10 +88,14 @@ def records(home: Path) -> list[tuple[Path, dict[str, Any]]]:
     for path in markdown_files(home):
         try:
             fm = parse_frontmatter(path.read_text(encoding="utf-8"))
-        except ValidationError:
+        except ValidationError as exc:
+            if path.stem.startswith(MANAGED_ENTITY_PREFIXES):
+                raise ValidationError(f"{path}: invalid managed entity: {exc}") from exc
             continue
         entity_id = fm.get("id")
         if not entity_id:
+            if path.stem.startswith(MANAGED_ENTITY_PREFIXES):
+                raise ValidationError(f"{path}: managed entity is missing id")
             continue
         if entity_id in seen:
             raise ValidationError(f"duplicate id {entity_id}: {seen[entity_id]} and {path}")
@@ -174,12 +179,11 @@ def link_application(home: Path, application_id: str, project_slug: str, compone
 def validate_links(home: Path) -> list[str]:
     id_to_path = {str(fm["id"]): path for path, fm in records(home)}
     stem_to_path = {path.stem: path for path in markdown_files(home)}
-    prefixes = ("PROJECT-", "COMP-", "ADR-", "ARCH-", "APP-", "ENG-", "EXTRACT-", "EVENT-")
     broken: list[str] = []
     for path in markdown_files(home):
         for target in wikilinks(path.read_text(encoding="utf-8")):
             short = target.split("/")[-1]
-            if target.startswith(prefixes) and target not in id_to_path and short not in stem_to_path:
+            if target.startswith(MANAGED_ENTITY_PREFIXES) and target not in id_to_path and short not in stem_to_path:
                 broken.append(f"{path.relative_to(home)} -> {target}")
     if broken:
         raise ValidationError("broken managed wikilinks: " + "; ".join(broken))
