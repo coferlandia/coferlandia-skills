@@ -44,6 +44,7 @@ class CliTests(unittest.TestCase):
             self.run_cli(*common, "application", "create", "--slug", "sample-outbox", "--title", "Outbox in Sample", "--project", "sample", "--component", "outbox")
             self.run_cli(*common, "engagement", "create", "--slug", "sample-release", "--title", "Sample release", "--project", "sample")
             self.run_cli(*common, "index", "rebuild")
+            self.run_cli(*common, "index", "validate")
             self.run_cli(*common, "links", "validate")
             self.run_cli(*common, "home", "validate")
             self.assertFalse((home / ".obsidian").exists())
@@ -58,11 +59,12 @@ class CliTests(unittest.TestCase):
             self.run_cli("--home", str(home), "home", "init", "--dry-run")
             self.assertFalse(home.exists())
 
-    def test_path_traversal_and_missing_semantic_relationship_are_rejected(self) -> None:
+    def test_path_traversal_and_missing_semantic_relationship_are_rejected_atomically(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp) / "architecture"
             self.run_cli("--home", str(home), "home", "init")
-            self.run_cli("--home", str(home), "application", "create", "--slug", "bad", "--title", "Bad", ok=False)
+            self.run_cli("--home", str(home), "application", "create", "--slug", "bad", "--title", "Bad", "--project", "missing", "--component", "missing", ok=False)
+            self.assertFalse((home / "applications" / "APP-bad.md").exists())
             self.run_cli("--home", str(home), "project", "register", "--slug", "../../outside", "--title", "Safe")
             self.assertFalse((Path(tmp) / "outside").exists())
 
@@ -81,6 +83,17 @@ class CliTests(unittest.TestCase):
             bad = home / "events" / "EVENT-bad.md"
             bad.write_text("---\nid: EVENT-bad\ntype: architecture-event\ntitle: Bad\n---\n# Bad\n\n## Event\n[[COMP-missing]]\n\n## Evidence\n", encoding="utf-8")
             self.run_cli("--home", str(home), "links", "validate", ok=False)
+
+    def test_stale_index_is_detected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "architecture"
+            self.run_cli("--home", str(home), "home", "init")
+            self.run_cli("--home", str(home), "project", "register", "--slug", "sample", "--title", "Sample")
+            dashboard = home / "dashboards" / "PROJECTS.md"
+            dashboard.write_text("# Projects\n\n<!-- the-architect:managed:start -->\n_No records._\n<!-- the-architect:managed:end -->\n", encoding="utf-8")
+            self.run_cli("--home", str(home), "index", "validate", ok=False)
+            self.run_cli("--home", str(home), "index", "rebuild")
+            self.run_cli("--home", str(home), "index", "validate")
 
 
 if __name__ == "__main__":

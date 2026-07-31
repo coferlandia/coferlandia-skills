@@ -15,8 +15,17 @@ from .markdown import render_frontmatter
 from .output import emit, envelope
 from .paths import DEFAULT_CONFIG, resolve_home
 from .registry import (
-    component_template, create_unique, init_home, link_application, project_template, rebuild_indexes,
-    records, validate_home, validate_links,
+    application_endpoints,
+    component_template,
+    create_unique,
+    init_home,
+    link_application,
+    project_template,
+    rebuild_indexes,
+    records,
+    validate_home,
+    validate_indexes,
+    validate_links,
 )
 
 CAPABILITIES = {
@@ -181,6 +190,8 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         prepared = _entity_content(args.command, args)
         if prepared is None:
             return envelope(command, data={"created": False, "reason": "No material architectural change."})
+        if args.command == "application":
+            application_endpoints(home, args.project, args.component)
         relative, content = prepared
         result = create_unique(home, relative, content, args.dry_run)
         relationship_changes: list[str] = []
@@ -191,7 +202,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         return envelope(command, data=result)
     if args.command == "index":
         if args.action == "rebuild": return envelope(command, data={"changed": rebuild_indexes(home, args.dry_run), "dry_run": args.dry_run})
-        return envelope(command, data={"validated": True, "records": len(records(home))})
+        return envelope(command, data={"validated": True, "warnings": validate_indexes(home)})
     if args.command == "links": return envelope(command, data={"validated": True, "warnings": validate_links(home)})
     if args.command == "report": return envelope(command, data={"validated": str(Path(args.path)), "warnings": validate_report(Path(args.path), args.kind, args.strict)})
     raise ValidationError(f"unsupported command: {command}")
@@ -199,7 +210,6 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     normalized = list(sys.argv[1:] if argv is None else argv)
-    # ``--json`` is a compatibility flag and may appear anywhere in the command.
     normalized = [item for item in normalized if item != "--json"]
     args = parser().parse_args(normalized)
     command = args.command if not hasattr(args, "action") else f"{args.command} {args.action}"

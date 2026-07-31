@@ -107,7 +107,7 @@ def records(home: Path) -> list[tuple[Path, dict[str, Any]]]:
     return found
 
 
-def rebuild_indexes(home: Path, dry_run: bool = False) -> list[str]:
+def _render_indexes(home: Path) -> dict[Path, str]:
     grouped: dict[str, list[str]] = {name: [] for name in DASHBOARDS}
     mapping = {
         "project": "PROJECTS", "component": "COMPONENTS", "architecture-decision": "DECISIONS",
@@ -120,11 +120,18 @@ def rebuild_indexes(home: Path, dry_run: bool = False) -> list[str]:
             continue
         rel = path.relative_to(home).with_suffix("")
         grouped[dashboard].append(f"- [[{rel.as_posix()}|{fm.get('title', fm.get('id'))}]] — `{fm.get('id')}`")
-    changed: list[str] = []
+    rendered: dict[Path, str] = {}
     for dashboard, lines in grouped.items():
         path = home / "dashboards" / f"{dashboard}.md"
         existing = path.read_text(encoding="utf-8") if path.exists() else f"# {dashboard.title()}\n"
-        updated = update_managed(existing, "\n".join(sorted(lines)) or "_No records._")
+        rendered[path] = update_managed(existing, "\n".join(sorted(lines)) or "_No records._")
+    return rendered
+
+
+def rebuild_indexes(home: Path, dry_run: bool = False) -> list[str]:
+    changed: list[str] = []
+    for path, updated in _render_indexes(home).items():
+        existing = path.read_text(encoding="utf-8") if path.exists() else ""
         if updated != existing:
             changed.append(str(path))
             if not dry_run:
@@ -132,17 +139,28 @@ def rebuild_indexes(home: Path, dry_run: bool = False) -> list[str]:
     return changed
 
 
+def validate_indexes(home: Path) -> list[str]:
+    stale = rebuild_indexes(home, dry_run=True)
+    if stale:
+        raise ValidationError("architecture indexes are stale: " + ", ".join(stale))
+    return []
+
+
+def application_endpoints(home: Path, project_slug: str, component_slug: str) -> tuple[Path, Path]:
+    project = confined(home, f"projects/{slugify(project_slug)}/PROJECT-{slugify(project_slug)}.md")
+    component = confined(home, f"components/{slugify(component_slug)}/COMP-{slugify(component_slug)}.md")
+    for path in (project, component):
+        if not path.is_file():
+            raise ValidationError(f"application endpoint not registered: {path}")
+    return project, component
+
+
 def link_application(home: Path, application_id: str, project_slug: str, component_slug: str, dry_run: bool = False) -> list[str]:
     """Link one canonical Application Record from both relationship endpoints."""
     link = f"- [[{application_id}]]"
-    targets = [
-        confined(home, f"projects/{slugify(project_slug)}/PROJECT-{slugify(project_slug)}.md"),
-        confined(home, f"components/{slugify(component_slug)}/COMP-{slugify(component_slug)}.md"),
-    ]
+    targets = application_endpoints(home, project_slug, component_slug)
     changed: list[str] = []
     for path in targets:
-        if not path.is_file():
-            raise ValidationError(f"application endpoint not registered: {path}")
         existing = path.read_text(encoding="utf-8")
         managed = []
         if MANAGED_START in existing and MANAGED_END in existing:
@@ -178,4 +196,5 @@ def validate_home(home: Path) -> list[str]:
     for path, _ in records(home):
         validate_record(path)
     validate_links(home)
+    validate_indexes(home)
     return []

@@ -11,7 +11,26 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from project_orchestrator_cli.contracts import ValidationError  # noqa: E402
+from project_orchestrator_cli.github_service import IssueRef  # noqa: E402
+from project_orchestrator_cli.materialization import materialize_github_epic  # noqa: E402
 from project_orchestrator_cli import work_items as module  # noqa: E402
+
+
+class FakeGitHub:
+    def __init__(self, body: str):
+        self.body = body
+
+    def resolve_issue_ref(self, raw: str) -> IssueRef:
+        return IssueRef("owner/repo", 13)
+
+    def issue(self, ref: IssueRef) -> dict:
+        return {"number": ref.number, "title": "Epic", "body": self.body, "state": "OPEN", "updatedAt": "2026-07-31T00:00:00Z"}
+
+    def comments(self, ref: IssueRef) -> list[dict]:
+        return []
+
+    def child_issues(self, ref: IssueRef) -> list[dict]:
+        return []
 
 
 class ArchitectureGateTests(unittest.TestCase):
@@ -73,6 +92,19 @@ Integration: Single PR / squash merge
             }), encoding="utf-8")
             with self.assertRaisesRegex(ValidationError, "unresolved risk"):
                 module.load_manifest(manifest)
+
+    def test_github_epic_gate_is_checked_without_cwd_dependency(self) -> None:
+        body = self.contract("## Architecture Gate\n\nMode: the-architect\nStatus: blocked\nBlocker: github preflight pending\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValidationError, "github preflight pending"):
+                materialize_github_epic(Path(tmp), "#13", service=FakeGitHub(body))
+            self.assertFalse((Path(tmp) / ".agent").exists())
+
+    def test_passed_github_epic_persists_gate_in_manifest(self) -> None:
+        body = self.contract("## Architecture Gate\n\nMode: the-architect\nStatus: passed\nBlocker: none\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = materialize_github_epic(Path(tmp), "#13", service=FakeGitHub(body))
+            self.assertEqual("passed", manifest["architecture_gate"]["status"])
 
     def test_addendum_stays_inside_epic_contract(self) -> None:
         reference = (Path(__file__).resolve().parents[3] / "engineering" / "the-architect" / "references" / "architecture-gate.md").read_text(encoding="utf-8")
