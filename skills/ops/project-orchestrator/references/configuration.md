@@ -34,9 +34,19 @@ GitHub Project configuration is optional. A representative block is:
 }
 ```
 
-Project fields are projections only; they never redefine Epic/task contracts. Project mutations
-require `gh` authentication with sufficient project scope. Local `--spec` and `--manifest`
-execution remain available without GitHub.
+The `in_progress` mapping defaults to the exact display value `In Progress`; `done` defaults to
+`Done`. When a Project is configured, an Epic/task must be projected to `In Progress` before the
+coding provider is invoked. The same items remain there through independent review and pending
+merge approval, then move to `Done` only after integration is verified.
+
+Project fields are projections only; they never redefine Epic/task contracts and never replace the
+local claim. Project mutations require `gh` authentication with sufficient project scope. If no
+Project is configured, local claims still provide exclusion across all runs sharing the Git common
+directory. Local `--spec` and `--manifest` execution remain available without GitHub.
+
+A configured Project mutation failure is visible and blocks the provider operation that depended on
+it. Cancellation attempts compare-aware restoration of the previous Project status and will not
+overwrite a later external status change.
 
 Never put credentials in config. Use native provider/GitHub authentication or environment
 variables. Providers are probed/resolved at run time; an unavailable provider is a fallback/retry
