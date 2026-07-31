@@ -12,10 +12,10 @@ compatibility: >
   local `.agent/work-items/` contracts when GitHub is unavailable or local tracking is selected.
 metadata:
   author: coferlandia
-  version: "0.7.0"
+  version: "0.8.0"
   category: ops
   status: active
-  tested: "2026-07-30 - Single-store Epic planning with one-time orchestrator contract initialization."
+  tested: "2026-07-31 - Architecture Gate selection and the-architect handoff contract covered by cross-skill tests."
 ---
 
 ## Context
@@ -102,6 +102,30 @@ Integration: Single PR / squash merge | explicitly selected alternative
 
 The PM chooses or confirms the workflow. The orchestrator executes the selected strategy and
 must not silently redesign it.
+
+### Architecture Gate
+
+Before publishing an initiative, decide whether it materially needs `the-architect` Architecture
+Preflight. Select the gate for new or cross-cutting subsystems, shared/public contracts,
+persistence or migrations, security/trust boundaries, reliability/concurrency/transactions/eventing,
+deployment topology, reusable-component selection or extraction, major modernization, or material
+performance/scalability constraints.
+
+Do not require the gate for Retouch Mode or ordinary localized work. Epic Planner records the gate
+but does not perform the assessment. When selected, use:
+
+```md
+## Architecture Gate
+
+Mode: the-architect
+Status: required
+Assessment reference: none
+Addendum updated: none
+Blocker: Architecture Preflight pending
+```
+
+Read `references/architecture-gate.md` whenever gate selection may apply. The Architect updates the
+managed addendum and changes the status to `passed` or `blocked` before Analyst or direct execution.
 
 ### Planning storage policy
 

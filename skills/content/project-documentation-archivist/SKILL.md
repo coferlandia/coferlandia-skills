@@ -12,10 +12,10 @@ compatibility: >
   ingestion or migration operations.
 metadata:
   author: dc-sistemas
-  version: "3.0.0"
+  version: "3.1.0"
   category: content
   status: active
-  tested: "2026-07-27 - GitHub-native protocol migration: TODO/HISTORY removed from canonical outputs; GitHub Issues/PRs become operational evidence; migration CLI added."
+  tested: "2026-07-31 - The Architect cross-project memory boundary covered by cross-skill ownership tests."
 ---
 
 ## Context
@@ -28,6 +28,18 @@ GitHub Projects, pull requests, and Git history.
 
 Archivist reads those sources, together with local documentation, and distills only the
 knowledge that must survive outside an individual issue or implementation discussion.
+
+## The Architect boundary
+
+`the-architect` owns cross-project architecture memory, reusable-component definitions, component
+application results, and architectural engagement history in its dedicated architecture home.
+Archivist continues to own durable documentation inside the target repository: README, AGENTS,
+DECISIONS, RUNBOOK, and catalog traceability.
+
+Architect findings may be consumed as evidence, but neither role mirrors the other's knowledge base.
+GitHub Issues and Projects remain operational work state. Read
+`references/the-architect-boundary.md` when processing Architect-produced evidence or deciding where
+architecture knowledge belongs.
 
 ## Source-of-truth boundaries
 
