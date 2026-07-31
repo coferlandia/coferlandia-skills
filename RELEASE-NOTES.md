@@ -1,6 +1,12 @@
 # Coferlandia Skills Release Notes
 
-## Unreleased (2026-07-30)
+## Unreleased (2026-07-31)
+
+### The Architect
+
+- **the-architect** — v1.0.0 adds cross-project architecture memory, evidence-based preflight and assessment, reusable-component lifecycle/application history, explicit extraction contracts, concise delta-first reports, and a portable Markdown/Obsidian architecture home managed through one deterministic Python CLI.
+- **Architecture Gate integration** — `coferlandia-project-manager` v0.8.0 may select the gate for material architecture work; `software-development` v4.6 consumes/blocks it before Analyst or direct execution; `project-orchestrator` v2.2 enforces it before materialization/worktree creation; `project-documentation-archivist` v3.1.0 retains in-project documentation ownership while the Architect owns cross-project evidence.
+- **Validation** — cross-skill ownership and gate behavior are regression-tested alongside the Architect CLI and the full Project Orchestrator suite on Linux and Windows.
 
 ### Epic-based development workflow
 

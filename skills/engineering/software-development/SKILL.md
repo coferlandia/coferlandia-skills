@@ -11,10 +11,10 @@ compatibility: >
   GitHub is optional for Analyst/coding-agent execution; local fallback contracts use `.agent/`.
 metadata:
   author: community
-  version: "4.5"
+  version: "4.6"
   category: engineering
   status: active
-  tested: "2026-07-30 - Analyst single-store outputs and canonical analysis contract support one-time orchestrator initialization."
+  tested: "2026-07-31 - Architecture Gate blocking, passed, absent, not-required, and Retouch compatibility covered by cross-skill tests."
 ---
 
 ## Context
@@ -46,6 +46,20 @@ project workflow.
 
 Use **development role** for the collective implementation/review roles. `analyst` is an
 analysis-only role and never implements production code.
+
+## Architecture Gate
+
+Retouch Mode remains the first routing check. For every standard Analyst, developer, debugger, or
+coding-agent workflow, inspect the supplied work contract for an optional `## Architecture Gate`.
+An absent gate or `Mode: none` with `Status: not-required` is backward compatible. When
+`Mode: the-architect`, only `Status: passed` permits analysis decomposition or implementation.
+
+Stop before production changes when a required gate is unresolved or blocked. Consume and preserve
+the managed Architect Addendum without repeating portfolio/component-history research already
+settled there. If current repository evidence, scope, or safety contradicts the addendum, return the
+conflict to the control authority and `the-architect`; do not silently rewrite it.
+
+Read `references/architecture-gate.md` before acting on a contract that contains an Architecture Gate.
 
 ## Retouch Mode
 

@@ -245,6 +245,31 @@
       "id": "dirty-main-blocks-standalone-integration",
       "prompt": "The primary main worktree has uncommitted changes; review an otherwise valid standalone implementation and integrate it locally.",
       "expect": "Does not merge into dirty main and reports the blocker without altering another agent's changes."
+    },
+    {
+      "id": "architecture-gate-required-blocks-analyst",
+      "prompt": "Analyze and decompose this Epic. Its Architecture Gate says Mode: the-architect and Status: required.",
+      "expect": "Stops before Analyst decomposition and returns the unresolved Architecture Gate to the control authority/the-architect; it does not publish executable tasks."
+    },
+    {
+      "id": "architecture-gate-passed-allows-analyst",
+      "prompt": "Analyze this Epic. Its Architecture Gate says Mode: the-architect and Status: passed with a managed Architect Addendum.",
+      "expect": "Analyst consumes and preserves the addendum, avoids duplicating settled portfolio/component research, and continues normal low-context decomposition."
+    },
+    {
+      "id": "architecture-gate-required-blocks-direct-coding",
+      "prompt": "Execute this detailed plan directly; its Architecture Gate is required and not yet passed.",
+      "expect": "Coding-agent stops before implementation despite the otherwise executable plan and reports the pending Architecture Preflight."
+    },
+    {
+      "id": "architecture-gate-absent-or-not-required-compatible",
+      "prompt": "Execute a standard work contract with no Architecture Gate, or with Mode: none and Status: not-required.",
+      "expect": "Preserves existing routing and execution behavior; no Architect invocation or extra gate is invented."
+    },
+    {
+      "id": "retouch-does-not-require-architecture-gate",
+      "prompt": "Tiny retouch: correct one local CSS color; no Architecture Gate is present.",
+      "expect": "Retouch Mode remains first, uses its existing eligibility/current-branch flow, and does not invent an Architecture Gate."
     }
   ]
 }

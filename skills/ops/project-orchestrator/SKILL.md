@@ -11,10 +11,10 @@ compatibility: >
   (`gh`); local `--spec` and `--manifest` execution do not.
 metadata:
   author: coferlandia
-  version: "2.1"
+  version: "2.2"
   category: ops
   status: active
-  tested: "2026-07-30 - One-time bidirectional contract initialization with frozen local execution snapshots."
+  tested: "2026-07-31 - Optional Architecture Gate enforcement validated before materialization/worktree creation on local and GitHub inputs."
 ---
 
 ## Context
@@ -35,6 +35,19 @@ The controller supports two first-class execution modes:
 
 The orchestrator executes the selected execution graph. It must not re-plan, repartition, or
 silently change the Epic/task contracts.
+
+## Architecture Gate
+
+During source/contract validation, before creating the Epic branch or worktree, validate the optional
+`## Architecture Gate`. Absent gates and `Mode: none` / `Status: not-required` remain compatible.
+When `Mode: the-architect`, only `Status: passed` may continue; `required` or `blocked` returns a
+deterministic contract-validation blocker before materialization or Git side effects.
+
+The controller never invokes `the-architect` automatically. The complete Epic body, including the
+managed Architect Addendum, remains inside `EPIC.md` through one-time Initial Contract
+Materialization. Do not create `ARCHITECTURE.md` or add contract synchronization.
+
+Read `references/architecture-gate.md` when resolving any source contract that contains the gate.
 
 ## Contract sources
 
