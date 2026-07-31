@@ -13,6 +13,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 
 from project_orchestrator_cli.claims import ClaimStore
 from project_orchestrator_cli.claims_runtime import prepare_claimed_run, stable_epic_key
+from project_orchestrator_cli.state import atomic_json
 
 
 class ClaimReviewFixTests(unittest.TestCase):
@@ -87,6 +88,30 @@ class ClaimReviewFixTests(unittest.TestCase):
                 )
 
         self.assertIsNone(ClaimStore(common).get(expected_key))
+
+    def test_release_tolerates_legacy_state_with_null_epic_summary(self) -> None:
+        common = Path(tempfile.mkdtemp())
+        store = ClaimStore(common)
+        key = "task:local:legacy:TASK-1"
+        store.acquire({"claim_key": key, "run_id": "legacy-run", "scope": "task"})
+        state_file = common / "project-orchestrator" / "runs" / "legacy-run" / "run-state.json"
+        atomic_json(
+            state_file,
+            {
+                "schema_version": 2,
+                "run_id": "legacy-run",
+                "state": "CANCELLED",
+                "events": [],
+                "claims": {"epic": None, "tasks": {}},
+            },
+        )
+
+        released = store.release(key, "legacy-run", "cancelled legacy run")
+
+        self.assertIsNotNone(released)
+        self.assertIsNone(store.get(key))
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+        self.assertEqual(state["claims"]["epic"], {})
 
 
 if __name__ == "__main__":
