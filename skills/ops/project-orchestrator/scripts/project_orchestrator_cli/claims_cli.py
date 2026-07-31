@@ -2,11 +2,20 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from . import cli as base_cli
-from .claims import ClaimStore, enrich_state_with_claims, execute_claimed_run, integrate_claimed_run, prepare_claimed_final_pr, prepare_claimed_run, release_run_claims
+from .claims import (
+    ClaimStore,
+    enrich_state_with_claims,
+    execute_claimed_run,
+    integrate_claimed_run,
+    prepare_claimed_final_pr,
+    release_run_claims,
+)
+from .claims_runtime import prepare_claimed_run
 from .contracts import Envelope, OrchestratorError, ValidationError, failure
 from .git_service import GitService
 
@@ -70,7 +79,15 @@ def _dispatch_claims(path: Path, args: argparse.Namespace) -> Envelope:
         if not args.force:
             raise ValidationError("administrative claim release requires --force")
         released = store.release(record["claim_key"], "administrative", args.reason, force=True)
-        return Envelope("claims.release", changed=bool(released), result={"claim_key": record["claim_key"], "released": bool(released), "reason": args.reason})
+        return Envelope(
+            "claims.release",
+            changed=bool(released),
+            result={
+                "claim_key": record["claim_key"],
+                "released": bool(released),
+                "reason": args.reason,
+            },
+        )
     raise ValidationError(f"unknown claims command: {args.claims_command}")
 
 
@@ -83,18 +100,37 @@ def dispatch(args: argparse.Namespace) -> Envelope:
     if args.command == "capabilities":
         commands = envelope.result.setdefault("commands", [])
         if not any(item.get("name") == "claims" for item in commands):
-            commands.append({"name": "claims", "mutating": True, "supports_dry_run": False, "supports_json": True})
+            commands.append(
+                {
+                    "name": "claims",
+                    "mutating": True,
+                    "supports_dry_run": False,
+                    "supports_json": True,
+                }
+            )
     if args.command == "cancel":
         _, config = base_cli.load_config(path)
-        warnings = release_run_claims(path, args.run_id, config, "explicit user cancellation", restore_project=True)
+        warnings = release_run_claims(
+            path,
+            args.run_id,
+            config,
+            "explicit user cancellation",
+            restore_project=True,
+        )
         envelope.warnings.extend(warnings)
-        envelope.result = enrich_state_with_claims(GitService(path).common_dir(), base_cli.get_store(path, args.run_id).load())
+        envelope.result = enrich_state_with_claims(
+            GitService(path).common_dir(),
+            base_cli.get_store(path, args.run_id).load(),
+        )
     elif args.command == "status":
         common_dir = GitService(path).common_dir()
         if args.run_id:
             envelope.result = enrich_state_with_claims(common_dir, envelope.result)
         else:
-            envelope.result["runs"] = [enrich_state_with_claims(common_dir, item) for item in envelope.result.get("runs", [])]
+            envelope.result["runs"] = [
+                enrich_state_with_claims(common_dir, item)
+                for item in envelope.result.get("runs", [])
+            ]
     return envelope
 
 
@@ -104,7 +140,11 @@ def main(argv: list[str] | None = None) -> int:
         raw.remove("--json")
         raw.insert(0, "--json")
     args = parser().parse_args(raw)
-    command_name = args.command if args.command not in {"providers", "claims"} else f"{args.command}.{getattr(args, args.command + '_command')}"
+    command_name = (
+        args.command
+        if args.command not in {"providers", "claims"}
+        else f"{args.command}.{getattr(args, args.command + '_command')}"
+    )
     try:
         envelope = dispatch(args)
         json_or_human(envelope, args.json)
