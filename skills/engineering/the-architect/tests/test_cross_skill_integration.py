@@ -1,3 +1,4 @@
+"""Cross-skill regression coverage for Architecture Gate ownership and handoffs."""
 from __future__ import annotations
 
 import json
