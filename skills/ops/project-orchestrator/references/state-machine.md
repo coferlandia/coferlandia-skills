@@ -41,6 +41,24 @@ EPIC_READY_FOR_INTEGRATION
   -> PROJECT_COMPLETED
 ```
 
+## Claim guards
+
+Claims are durable operation guards around the existing semantic states; they do not add parallel
+state-machine branches.
+
+- The Epic claim must be owned before `EPIC_WORKTREE_CREATING` can produce Git side effects.
+- The selected task claim must be owned before `TASK_SELECTED` can invoke `coding-agent` through
+  `CODING_RUNNING`.
+- Claim ownership is revalidated on `resume` and `retry` before provider execution.
+- `TASK_READY_FOR_MERGE`, review/fix states, provider waits, blocked states, and pending merge
+  approval retain the claims.
+- `PROJECT_COMPLETED` releases claims only after verified delivery and completion projection.
+- `CANCELLED` releases claims through explicit cancellation cleanup; other terminal failures retain
+  them until recovery or audited administrative release.
+
+Claim acquisition and Project projection events are persisted in `run-state.json`, while the
+authoritative active records live under `<git-common-dir>/project-orchestrator/claims/`.
+
 Review changes use `FIXES_REQUIRED -> FIXING -> FIX_COMMIT_PREPARING -> CANDIDATE_COMMITTED`, then
 create a fresh detached review worktree. Holistic findings use the corresponding
 `HOLISTIC_FIX*` path. Fixes are additive commits; no v2 state implies `git commit --amend`.
@@ -48,9 +66,9 @@ create a fresh detached review worktree. Holistic findings use the corresponding
 Provider waits are durable and return to the recorded semantic state. Blocked/cancelled states
 preserve the Epic implementation worktree/evidence by default. Important blockers include invalid
 specification/config/authentication, invalid contract identity/linkage during initialization,
-Git/base movement, merge conflicts, and no semantic progress. Later contract-body drift is not a
-runtime state transition because the local snapshot is frozen before the run begins.
+claim conflicts, Git/base movement, merge conflicts, and no semantic progress. Later contract-body
+drift is not a runtime state transition because the local snapshot is frozen before the run begins.
 
 The controller persists state before external/Git side effects where needed so `status`, `resume`,
-`retry`, and `integrate` can avoid duplicating completed operations. Invalid transitions are
-rejected.
+`retry`, and `integrate` can avoid duplicating completed operations. Invalid transitions and
+provider execution without valid claim ownership are rejected.

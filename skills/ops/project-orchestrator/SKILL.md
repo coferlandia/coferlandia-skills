@@ -11,10 +11,10 @@ compatibility: >
   (`gh`); local `--spec` and `--manifest` execution do not.
 metadata:
   author: coferlandia
-  version: "2.2"
+  version: "2.3"
   category: ops
   status: active
-  tested: "2026-07-31 - Optional Architecture Gate enforcement validated before materialization/worktree creation on local and GitHub inputs."
+  tested: "2026-07-31 - Durable Epic/task claims, duplicate-run exclusion, cancellation release, and In Progress Project projection covered."
 ---
 
 ## Context
@@ -94,33 +94,36 @@ traceability and are not contract synchronization.
 ## Execution lifecycle
 
 1. Resolve and validate the v2 manifest/Execution Strategy, then complete one-time Initial Contract Materialization.
-2. Create **one Epic branch and one implementation worktree for the whole run**.
-3. Select the next dependency-ready execution unit.
-4. Invoke `coding-agent` only in the assigned Epic worktree with the bounded Epic/task contract.
-5. Invoke completion verification and deterministic controller checks.
-6. Stage only allowed product changes; GitHub projection files under `.agent/work-items/**` are not
+2. Atomically acquire the repository-wide Epic claim before creating the Epic branch or worktree.
+3. Create **one Epic branch and one implementation worktree for the whole run**.
+4. Select the next dependency-ready execution unit, atomically acquire its task claim, and project
+   the GitHub Epic/task to `In Progress` when a Project is configured.
+5. Invoke `coding-agent` only after claim ownership is verified and only in the assigned Epic
+   worktree with the bounded Epic/task contract.
+6. Invoke completion verification and deterministic controller checks.
+7. Stage only allowed product changes; GitHub projection files under `.agent/work-items/**` are not
    included in GitHub-mode candidate commits.
-7. Create an additive task candidate commit. In GitHub mode its metadata references task Issue and
+8. Create an additive task candidate commit. In GitHub mode its metadata references task Issue and
    parent Epic without closing keywords.
-8. Create a detached review worktree from the exact immutable SHA and invoke a distinct
+9. Create a detached review worktree from the exact immutable SHA and invoke a distinct
    `code-reviewer`.
-9. If review requires changes, run `fix-agent` in the Epic implementation worktree, create an
+10. If review requires changes, run `fix-agent` in the Epic implementation worktree, create an
    **additive review-fix commit**, and review the new immutable HEAD again. Never amend a reviewed
    commit.
-10. A passing task becomes `ready_for_merge`; it stays on the Epic branch and is not merged to
-    `main`.
-11. Repeat for all dependency-ready tasks.
-12. Run one holistic Epic review over the final integrated branch HEAD. Holistic corrections are
-    also additive and require a fresh holistic review.
-13. Stop at `EPIC_READY_FOR_INTEGRATION` when the final SHA is approved.
-14. In GitHub mode, record traceability, push the Epic branch, and open **one final PR**. The PR owns
-    `Closes` references for delivered tasks/Epic. Stop at `PR_OPEN_AWAITING_MERGE_APPROVAL`.
-15. Merge only through a separate explicit `integrate <run-id>` action. GitHub mode uses the final
-    PR squash integration; local fallback performs a verified local squash and never pretends a PR
-    exists.
-16. After verified delivery to `main`, mark tasks `done`, move local task files from `tasks/` to
-    `archive/`, synchronize Project/Issue completion evidence where configured, and clean run-owned
-    worktrees/branches safely.
+11. A passing task becomes `ready_for_merge`; it stays on the Epic branch, remains claimed and
+   remains `In Progress`, and is not merged to `main`.
+12. Repeat for all dependency-ready tasks.
+13. Run one holistic Epic review over the final integrated branch HEAD. Holistic corrections are
+   also additive and require a fresh holistic review.
+14. Stop at `EPIC_READY_FOR_INTEGRATION` when the final SHA is approved.
+15. In GitHub mode, record traceability, push the Epic branch, and open **one final PR**. The PR owns
+   `Closes` references for delivered tasks/Epic. Stop at `PR_OPEN_AWAITING_MERGE_APPROVAL`.
+16. Merge only through a separate explicit `integrate <run-id>` action. GitHub mode uses the final
+   PR squash integration; local fallback performs a verified local squash and never pretends a PR
+   exists.
+17. After verified delivery to `main`, mark tasks and Epic `done`, synchronize Project/Issue
+   completion evidence, release task/Epic claims, move local task files from `tasks/` to `archive/`,
+   and clean run-owned worktrees/branches safely.
 
 ## Commit and Issue traceability
 
@@ -160,13 +163,33 @@ Review: round 1
 Task commits never use `Closes`, `Fixes`, or `Resolves`. The final PR owns delivery closure.
 Machine-generated Issue comments use stable markers so retry/resume does not duplicate evidence.
 
+## Durable claims
+
+The local claim store is the authoritative exclusion mechanism. It lives under the Git common
+directory, outside all worktrees, and blocks duplicate Epic/task execution across runs sharing that
+Git repository. GitHub Project statuses, labels, and comments are not locks.
+
+Claims are acquired atomically from fully written records, are idempotent for the owning run, and
+fail closed on malformed state. They survive process termination, provider waits, blocked states,
+`resume`, `retry`, review/fix cycles, PR creation, and worktree cleanup. There is no automatic
+expiration or claim stealing.
+
+Claims are released only after verified delivery to `main`, explicit cancellation, or audited
+administrative release. Read `references/claims.md` before changing claim identity, persistence,
+recovery, release, or Project projection behavior.
+
 ## GitHub Projects
 
 When `github_project` is configured, Project membership/status is an operational projection only.
-It must never redefine the Epic/task body contract. Resolve Project/item/field/option IDs
-structurally through `gh project` commands. Requested Project mutations that fail must fail visibly;
-do not claim a status change that was not applied. Issue-based execution remains usable when
-Project mutation is optional.
+It must never redefine the Epic/task body contract or replace the local claim. Resolve
+Project/item/field/option IDs structurally through `gh project` commands. Requested Project
+mutations that fail must fail visibly; do not claim a status change that was not applied.
+Issue-based execution remains usable when no Project is configured.
+
+The controller projects active Epic/task Issues to the configured `in_progress` status before
+provider execution, keeps them there through review and pending merge approval, and projects them to
+`done` only after verified integration. Cancellation restores the previous Project status only when
+it has not been changed externally.
 
 ## Direct-plan compatibility
 
@@ -177,8 +200,8 @@ python scripts/project-orchestrator-cli.py run --spec plan.md --json
 ```
 
 The plan becomes one `DIRECT-PLAN` execution unit regardless of Markdown headings. Analyst
-involvement is not mandatory. The same Epic-scoped commit/review/holistic-review/integration gates
-apply.
+involvement is not mandatory. The same Epic-scoped claim/commit/review/holistic-review/integration
+gates apply.
 
 ## Core commands
 
@@ -194,6 +217,9 @@ retry <run-id>
 cancel <run-id>
 integrate <run-id>
 cleanup <run-id>
+claims list
+claims inspect <claim-key-or-digest>
+claims release <claim-key-or-digest> --reason <text> --force
 validate-result
 ```
 
@@ -204,11 +230,12 @@ Use `run ... --dry-run` for local `--spec`/`--manifest` planning. When their res
 - The controller assigns one Epic implementation worktree and detached immutable review worktrees.
 - Coding/fix agents use only the Epic implementation worktree.
 - Reviewers use only their exact detached candidate worktree and remain read-only.
-- Only the controller creates commits, branches/worktrees, remote operational traceability, PRs, integration,
-  archival, and cleanup.
+- Only the controller creates claims, Project projections, commits, branches/worktrees, remote
+  operational traceability, PRs, integration, archival, and cleanup.
 - Provider retry/fallback remains deterministic and durable. Temporary provider capacity failures
-  are not semantic approval/blocker decisions.
-- A blocked/cancelled run preserves implementation worktree, commits, and evidence by default.
+  are not semantic approval/blocker decisions and do not release claims.
+- A blocked/cancelled run preserves implementation worktree, commits, and evidence by default;
+  cancellation releases claims explicitly after recording the terminal state.
 
 ## Safety invariants
 
@@ -217,6 +244,10 @@ Use `run ... --dry-run` for local `--spec`/`--manifest` planning. When their res
 - Direct plans are not heuristically decomposed.
 - Initial Contract Materialization occurs before the worktree is created and never becomes continuous synchronization.
 - Later GitHub/local contract-body drift does not mutate the frozen execution snapshot automatically.
+- A provider must never run without valid Epic and current-task claim ownership.
+- Never treat Project status, Issue comments, or labels as an atomic/distributed lock.
+- Claims coordinate one Git common directory; they do not claim distributed exclusion across
+  independent clones or machines.
 - Analyst task dependencies must form a valid deterministic DAG.
 - Never amend after independent review starts.
 - Never merge a task independently to `main` in task-execution mode.
@@ -225,8 +256,8 @@ Use `run ... --dry-run` for local `--spec`/`--manifest` planning. When their res
 - Refuse integration if the final reviewed SHA changed, the base advanced, or tracked base changes
   make integration unsafe.
 - Never include GitHub operational projection files in product candidate commits.
-- Development subroles never push; controller-owned GitHub execution may push the reviewed Epic
-  branch only when preparing the final PR.
+- Development subroles never push or manage claims/Projects; controller-owned GitHub execution may
+  push the reviewed Epic branch only when preparing the final PR.
 
 ## Expected output
 
@@ -236,6 +267,8 @@ State: {state}
 Mode: {direct-plan | task-execution}
 Current task: {id | none}
 Epic branch/worktree: {branch} / {path}
+Epic/task claim: {active | missing | conflict | released}
+GitHub Project projection: {In Progress | skipped | failed | Done}
 Candidate / final reviewed SHA: {sha | none}
 Final PR: {number/url | none}
 Next action or blocker: {detail}
@@ -248,6 +281,7 @@ Durable runtime evidence lives under the target Git common directory at:
 
 ```text
 project-orchestrator/runs/<run-id>/
+project-orchestrator/claims/<claim-digest>.json
 ```
 
 This is an operational exception to `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`. Local execution
@@ -265,4 +299,5 @@ contracts/materializations use `.agent/work-items/` in the implementation worksp
 - `references/agent-protocol.md` — bounded worker requests/results.
 - `references/state-machine.md` — durable Epic/task states.
 - `references/candidate-commit-lifecycle.md` — additive immutable task/Epic review lifecycle.
+- `references/claims.md` — authoritative local claims, Project projection, recovery, and administration.
 - failure/recovery/troubleshooting references — provider and operational failure handling.

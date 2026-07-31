@@ -5,8 +5,15 @@
 ### The Architect
 
 - **the-architect** — v1.0.0 adds cross-project architecture memory, evidence-based preflight and assessment, reusable-component lifecycle/application history, explicit extraction contracts, concise delta-first reports, and a portable Markdown/Obsidian architecture home managed through one deterministic Python CLI.
-- **Architecture Gate integration** — `coferlandia-project-manager` v0.8.0 may select the gate for material architecture work; `software-development` v4.6 consumes/blocks it before Analyst or direct execution; `project-orchestrator` v2.2 enforces it before materialization/worktree creation; `project-documentation-archivist` v3.1.0 retains in-project documentation ownership while the Architect owns cross-project evidence.
+- **Architecture Gate integration** — `coferlandia-project-manager` v0.8.0 may select the gate for material architecture work; `software-development` v4.6 consumes/blocks it before Analyst or direct execution; `project-orchestrator` v2.3 enforces it before materialization/worktree creation; `project-documentation-archivist` v3.1.0 retains in-project documentation ownership while the Architect owns cross-project evidence.
 - **Validation** — cross-skill ownership and gate behavior are regression-tested alongside the Architect CLI and the full Project Orchestrator suite on Linux and Windows.
+
+### Durable orchestrator claims
+
+- **project-orchestrator** — v2.3 adds repository-wide atomic Epic/task claims under the Git common directory, preventing different runs and worktrees from executing the same work item concurrently.
+- **GitHub Project lifecycle** — configured Epic/task items move to `In Progress` before coding begins, remain there through review and merge approval, and move to `Done` only after verified delivery to `main`.
+- **Recovery and administration** — claims survive provider waits, blocked states, retries, resumes, and process termination; cancellation and audited `claims release` operations provide explicit release paths without timeout-based claim stealing.
+- **Validation** — concurrency, duplicate-run exclusion, path-independent local identities, early Project failure cleanup, cancellation release, and Project projection behavior are covered on Linux and Windows.
 
 ### Epic-based development workflow
 

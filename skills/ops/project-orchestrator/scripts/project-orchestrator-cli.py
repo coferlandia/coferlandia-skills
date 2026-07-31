@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from project_orchestrator_cli.cli import json_or_human, main
+from project_orchestrator_cli.claims_cli import json_or_human, main
 from project_orchestrator_cli.contract_initialization import prepare_cli_args
 from project_orchestrator_cli.contracts import OrchestratorError, failure
 

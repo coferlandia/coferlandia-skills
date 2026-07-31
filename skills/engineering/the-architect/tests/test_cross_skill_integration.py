@@ -42,7 +42,7 @@ class CrossSkillIntegrationTests(unittest.TestCase):
         versions = {
             "skills/ops/coferlandia-project-manager/SKILL.md": 'version: "0.8.0"',
             "skills/engineering/software-development/SKILL.md": 'version: "4.6"',
-            "skills/ops/project-orchestrator/SKILL.md": 'version: "2.2"',
+            "skills/ops/project-orchestrator/SKILL.md": 'version: "2.3"',
             "skills/content/project-documentation-archivist/SKILL.md": 'version: "3.1.0"',
         }
         for path, version in versions.items():
