@@ -39,6 +39,9 @@ jobs:
       - name: Project Manager workflow contract tests
         run: python skills/ops/coferlandia-project-manager/tests/test_workflow_contract.py
 
+      - name: The Architect activation, contract, and CLI tests
+        run: python -m unittest discover -s skills/engineering/the-architect/tests -p "test_*.py"
+
       - name: Project Orchestrator v2 tests
         run: python -m unittest discover -s skills/ops/project-orchestrator/tests -p "test_*.py"
 

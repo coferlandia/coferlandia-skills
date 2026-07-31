@@ -11,7 +11,7 @@ from typing import Any
 
 from .contracts import ValidationError
 from .github_service import GitHubService
-from .work_items import execution_mode_from_strategy, parse_execution_strategy, sha256_text, validate_manifest
+from .work_items import execution_mode_from_strategy, parse_execution_strategy, sha256_text, validate_architecture_gate, validate_manifest
 
 ANALYSIS_MARKER = "<!-- coferlandia-analysis-contract -->"
 FRONTMATTER_REV_RE = re.compile(r"(?mi)^\s*Contract revision\s*:\s*(\d+)\s*$")
@@ -92,8 +92,10 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
     ref = service.resolve_issue_ref(raw_epic)
     epic = service.issue(ref)
     comments = service.comments(ref)
-    strategy = _latest_strategy(str(epic.get("body") or ""), comments)
+    epic_body = str(epic.get("body") or "")
+    strategy = _latest_strategy(epic_body, comments)
     mode = execution_mode_from_strategy(strategy)
+    architecture_gate = validate_architecture_gate(epic_body)
     children = service.child_issues(ref) if mode == "task-execution" else []
     if mode == "task-execution" and not children:
         raise ValidationError(f"Epic {ref.repository}#{ref.number} selected Analyst decomposition but has no task Issues")
@@ -105,7 +107,6 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
     tasks_dir.mkdir(parents=True, exist_ok=True)
     archive_dir.mkdir(parents=True, exist_ok=True)
 
-    epic_body = str(epic.get("body") or "")
     epic_hash = sha256_text(epic_body)
     epic_meta = {
         "source": "github",
@@ -200,6 +201,7 @@ def materialize_github_epic(repo: Path, raw_epic: str, service: GitHubService | 
         "schema_version": 2,
         "execution_mode": mode,
         "execution_strategy": strategy,
+        "architecture_gate": architecture_gate,
         "source": {
             "kind": "github",
             "origin": "github",
