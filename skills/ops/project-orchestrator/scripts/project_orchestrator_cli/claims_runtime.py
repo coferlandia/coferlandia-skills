@@ -8,7 +8,7 @@ from typing import Any
 
 from . import claims as _claims
 from .git_service import GitService
-from .state import RunStore
+from .state import RunStore, atomic_json
 
 
 def stable_epic_key(manifest: dict[str, Any], source_path: Path | None = None) -> str:
@@ -28,6 +28,43 @@ def stable_epic_key(manifest: dict[str, Any], source_path: Path | None = None) -
 
 # Existing recovery/task-key paths resolve this module-level function dynamically.
 _claims._epic_key_from_manifest = stable_epic_key
+
+
+_original_release = _claims.ClaimStore.release
+
+
+def safe_release(
+    self: _claims.ClaimStore,
+    claim_key: str,
+    run_id: str,
+    reason: str,
+    *,
+    force: bool = False,
+) -> dict[str, Any] | None:
+    """Normalize legacy/missing claim summaries before recording release evidence."""
+    record = self.get(claim_key)
+    if record is not None and (record.get("run_id") == run_id or force):
+        state_file = (
+            self.common_dir
+            / "project-orchestrator"
+            / "runs"
+            / str(record["run_id"])
+            / "run-state.json"
+        )
+        if state_file.exists():
+            try:
+                state = json.loads(state_file.read_text(encoding="utf-8"))
+                claims = state.setdefault("claims", {"epic": None, "tasks": {}})
+                if claims.get("epic") is None:
+                    claims["epic"] = {}
+                claims.setdefault("tasks", {})
+                atomic_json(state_file, state)
+            except (OSError, json.JSONDecodeError):
+                pass
+    return _original_release(self, claim_key, run_id, reason, force=force)
+
+
+_claims.ClaimStore.release = safe_release
 
 
 def prepare_claimed_run(
