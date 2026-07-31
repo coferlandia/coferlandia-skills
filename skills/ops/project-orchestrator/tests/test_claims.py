@@ -50,7 +50,10 @@ class ClaimStoreTests(unittest.TestCase):
         self.assertEqual(sorted(result[0] for result in results), ["conflict", "owner"])
         owner = first.get(key)
         self.assertIsNotNone(owner)
-        self.assertEqual(first.acquire({"claim_key": key, "run_id": owner["run_id"], "scope": "task"})["run_id"], owner["run_id"])
+        self.assertEqual(
+            first.acquire({"claim_key": key, "run_id": owner["run_id"], "scope": "task"})["run_id"],
+            owner["run_id"],
+        )
 
     def test_claim_filename_is_digest_and_force_release_is_audited(self) -> None:
         common = Path(tempfile.mkdtemp())
@@ -117,6 +120,7 @@ class ClaimLifecycleCliTests(unittest.TestCase):
         subprocess.run(["git", "init", "-b", "main", str(directory)], check=True, capture_output=True)
         subprocess.run(["git", "-C", str(directory), "config", "user.email", "test@example.invalid"], check=True)
         subprocess.run(["git", "-C", str(directory), "config", "user.name", "Test"], check=True)
+        subprocess.run(["git", "-C", str(directory), "config", "core.autocrlf", "false"], check=True)
         (directory / "README.md").write_text("test\n", encoding="utf-8")
         subprocess.run(["git", "-C", str(directory), "add", "README.md"], check=True)
         subprocess.run(["git", "-C", str(directory), "commit", "-m", "initial"], check=True, capture_output=True)
