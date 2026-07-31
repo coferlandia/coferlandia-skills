@@ -29,6 +29,7 @@ Code, infrastructure, architecture, debugging.
 | Skill | Description | Status |
 |-------|-------------|--------|
 | [software-development](./engineering/software-development/) | Routes broad-context Analyst decomposition with single-store outputs, developer/debugger work, executable coding-agent contracts, and independent review while keeping Git authority separate | active |
+| [the-architect](./engineering/the-architect/) | Govern cross-project architecture memory, reusable components, evidence-based assessments, concise release deltas, and optional pre-execution Architecture Gates | active |
 
 ## Data
 
@@ -66,4 +67,4 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-07-30*
+*Last updated: 2026-07-31*

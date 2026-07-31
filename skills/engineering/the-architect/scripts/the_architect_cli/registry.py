@@ -1,0 +1,181 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from .contracts import validate_record
+from .errors import ConflictError, ValidationError
+from .ids import stable_id, slugify
+from .markdown import MANAGED_END, MANAGED_START, markdown_files, parse_frontmatter, render_frontmatter, update_managed, wikilinks
+from .paths import atomic_write, confined
+
+DIRECTORIES = [
+    "dashboards", "projects", "components", "applications", "extractions", "events", "patterns", "policies", "schemas"
+]
+DASHBOARDS = ["PROJECTS", "COMPONENTS", "DECISIONS", "RISKS", "APPLICATIONS", "EXTRACTIONS", "TIMELINE"]
+
+
+def home_skeleton() -> dict[str, str]:
+    home = "# Architecture Home\n\nPortable cross-project architecture memory.\n\n## Dashboards\n\n" + "\n".join(f"- [[dashboards/{name}]]" for name in DASHBOARDS) + "\n"
+    result = {"HOME.md": home, ".gitignore": ".obsidian/\n"}
+    for name in DASHBOARDS:
+        result[f"dashboards/{name}.md"] = f"# {name.title()}\n\n{MANAGED_START}\n_No records._\n{MANAGED_END}\n"
+    return result
+
+
+def init_home(home: Path, dry_run: bool = False) -> list[str]:
+    planned: list[str] = []
+    for directory in DIRECTORIES:
+        path = confined(home, directory)
+        planned.append(str(path))
+        if not dry_run:
+            path.mkdir(parents=True, exist_ok=True)
+    for relative, content in home_skeleton().items():
+        path = confined(home, relative)
+        planned.append(str(path))
+        if not dry_run and not path.exists():
+            atomic_write(path, content)
+    return planned
+
+
+def project_template(slug: str, title: str) -> tuple[str, str]:
+    slug = slugify(slug)
+    entity_id = stable_id("project", slug)
+    fm = {
+        "id": entity_id,
+        "type": "project",
+        "title": title,
+        "slug": slug,
+        "status": "active",
+        "lifecycle_stage": "unknown",
+        "criticality": "unknown",
+        "knowledge_status": "unknown",
+        "architecture_confidence": "low",
+        "last_assessed": "unknown",
+    }
+    body = """# {title}\n\n## Purpose and criticality\n\n## System boundary\n\n## Critical flows\n\n## Deployment and operations\n\n## Data boundaries\n\n## Quality attributes\n\n## Critical quality scenarios\n\n## Active material risks\n\n## Accepted constraints\n\n## Components\n\n## Architectural runway\n\n## Knowledge completeness\n\n## Related records\n""".format(title=title)
+    return f"projects/{slug}/PROJECT-{slug}.md", render_frontmatter(fm) + body
+
+
+def component_template(slug: str, title: str, artifact_kind: str, status: str = "candidate") -> tuple[str, str]:
+    slug = slugify(slug)
+    if status not in {"candidate", "incubating"}:
+        raise ValidationError("new components may only start as candidate or incubating")
+    entity_id = stable_id("component", slug)
+    fm = {
+        "id": entity_id,
+        "type": "component",
+        "title": title,
+        "slug": slug,
+        "artifact_kind": artifact_kind,
+        "status": status,
+        "version": "0.1.0",
+        "evidence_strength": "anecdotal",
+    }
+    body = """# {title}\n\n## Purpose\n\n## Problem solved\n\n## Public contract\n\n## Supported environments\n\n## Configuration\n\n## Dependencies\n\n## Quality contribution\n\n## Compatibility\n\n## Limitations and contraindications\n\n## Provenance and license\n\n## Applications\n\n## Upgrade and deprecation policy\n\n## Cross-project lessons\n""".format(title=title)
+    return f"components/{slug}/COMP-{slug}.md", render_frontmatter(fm) + body
+
+
+def create_unique(home: Path, relative: str, content: str, dry_run: bool = False) -> dict[str, Any]:
+    path = confined(home, relative)
+    if path.exists():
+        existing = path.read_text(encoding="utf-8")
+        if existing == content:
+            return {"path": str(path), "created": False, "idempotent": True}
+        raise ConflictError(f"record already exists with different content: {path}")
+    if not dry_run:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(path, content)
+    return {"path": str(path), "created": not dry_run, "dry_run": dry_run}
+
+
+def records(home: Path) -> list[tuple[Path, dict[str, Any]]]:
+    found: list[tuple[Path, dict[str, Any]]] = []
+    seen: dict[str, Path] = {}
+    for path in markdown_files(home):
+        try:
+            fm = parse_frontmatter(path.read_text(encoding="utf-8"))
+        except ValidationError:
+            continue
+        entity_id = fm.get("id")
+        if not entity_id:
+            continue
+        if entity_id in seen:
+            raise ValidationError(f"duplicate id {entity_id}: {seen[entity_id]} and {path}")
+        seen[str(entity_id)] = path
+        found.append((path, fm))
+    return found
+
+
+def rebuild_indexes(home: Path, dry_run: bool = False) -> list[str]:
+    grouped: dict[str, list[str]] = {name: [] for name in DASHBOARDS}
+    mapping = {
+        "project": "PROJECTS", "component": "COMPONENTS", "architecture-decision": "DECISIONS",
+        "architecture-finding": "RISKS", "component-application": "APPLICATIONS", "component-extraction": "EXTRACTIONS",
+        "engagement": "TIMELINE", "architecture-event": "TIMELINE",
+    }
+    for path, fm in records(home):
+        dashboard = mapping.get(str(fm.get("type")))
+        if not dashboard:
+            continue
+        rel = path.relative_to(home).with_suffix("")
+        grouped[dashboard].append(f"- [[{rel.as_posix()}|{fm.get('title', fm.get('id'))}]] — `{fm.get('id')}`")
+    changed: list[str] = []
+    for dashboard, lines in grouped.items():
+        path = home / "dashboards" / f"{dashboard}.md"
+        existing = path.read_text(encoding="utf-8") if path.exists() else f"# {dashboard.title()}\n"
+        updated = update_managed(existing, "\n".join(sorted(lines)) or "_No records._")
+        if updated != existing:
+            changed.append(str(path))
+            if not dry_run:
+                atomic_write(path, updated)
+    return changed
+
+
+def link_application(home: Path, application_id: str, project_slug: str, component_slug: str, dry_run: bool = False) -> list[str]:
+    """Link one canonical Application Record from both relationship endpoints."""
+    link = f"- [[{application_id}]]"
+    targets = [
+        confined(home, f"projects/{slugify(project_slug)}/PROJECT-{slugify(project_slug)}.md"),
+        confined(home, f"components/{slugify(component_slug)}/COMP-{slugify(component_slug)}.md"),
+    ]
+    changed: list[str] = []
+    for path in targets:
+        if not path.is_file():
+            raise ValidationError(f"application endpoint not registered: {path}")
+        existing = path.read_text(encoding="utf-8")
+        managed = []
+        if MANAGED_START in existing and MANAGED_END in existing:
+            block = existing.split(MANAGED_START, 1)[1].split(MANAGED_END, 1)[0]
+            managed = [line.strip() for line in block.splitlines() if line.strip().startswith("- [[")]
+        updated = update_managed(existing, "\n".join(sorted(set([*managed, link]))))
+        if updated != existing:
+            changed.append(str(path))
+            if not dry_run:
+                atomic_write(path, updated)
+    return changed
+
+
+def validate_links(home: Path) -> list[str]:
+    id_to_path = {str(fm["id"]): path for path, fm in records(home)}
+    stem_to_path = {path.stem: path for path in markdown_files(home)}
+    broken: list[str] = []
+    prefixes = ("PROJECT-", "COMP-", "ADR-", "ARCH-", "APP-", "ENG-", "EXTRACT-", "EVENT-")
+    for path in markdown_files(home):
+        for target in wikilinks(path.read_text(encoding="utf-8")):
+            short = target.split("/")[-1]
+            if target.startswith(prefixes) and target not in id_to_path and short not in stem_to_path:
+                broken.append(f"{path.relative_to(home)} -> {target}")
+    if broken:
+        raise ValidationError("broken managed wikilinks: " + "; ".join(broken))
+    return []
+
+
+def validate_home(home: Path) -> list[str]:
+    for required in ("HOME.md", "dashboards/PROJECTS.md", "projects", "components", "applications"):
+        if not confined(home, required).exists():
+            raise ValidationError(f"architecture home missing: {required}")
+    for path, _ in records(home):
+        validate_record(path)
+    validate_links(home)
+    return []

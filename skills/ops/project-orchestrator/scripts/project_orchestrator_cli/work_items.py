@@ -12,6 +12,12 @@ from .contracts import ValidationError
 EXECUTION_MODES = {"direct-plan", "task-execution"}
 STRATEGY_RE = re.compile(r"(?ms)^##\s+Execution Strategy\s*$\n(?P<body>.*?)(?=^##\s+|\Z)")
 STRATEGY_FIELD_RE = re.compile(r"(?mi)^\s*(Tracking|Decomposition|Execution|Worker profile|Review|Integration)\s*:\s*(.+?)\s*$")
+ARCHITECTURE_GATE_RE = re.compile(r"(?ms)^##\s+Architecture Gate\s*$\n(?P<body>.*?)(?=^##\s+|\Z)")
+ARCHITECTURE_GATE_FIELD_RE = re.compile(
+    r"(?mi)^\s*(Mode|Status|Assessment reference|Addendum updated|Blocker)\s*:\s*(.*?)\s*$"
+)
+ARCHITECTURE_GATE_MODES = {"the-architect", "none"}
+ARCHITECTURE_GATE_STATUSES = {"required", "passed", "blocked", "not-required"}
 
 
 def sha256_text(text: str) -> str:
@@ -31,6 +37,82 @@ def parse_execution_strategy(text: str) -> dict[str, str]:
     if ambiguous:
         raise ValidationError(f"Execution Strategy is not resolved: ambiguous {', '.join(ambiguous)}")
     return fields
+
+
+def parse_architecture_gate(text: str) -> dict[str, str] | None:
+    """Parse an optional Architecture Gate without treating absence as an error."""
+    match = ARCHITECTURE_GATE_RE.search(text)
+    if not match:
+        return None
+    fields = {
+        item.group(1).lower().replace(" ", "_"): item.group(2).strip()
+        for item in ARCHITECTURE_GATE_FIELD_RE.finditer(match.group("body"))
+    }
+    missing = sorted({"mode", "status"} - set(fields))
+    if missing:
+        raise ValidationError(f"Architecture Gate is incomplete: missing {', '.join(missing)}")
+    mode = fields["mode"].lower()
+    status = fields["status"].lower()
+    if "|" in mode or "|" in status:
+        raise ValidationError("Architecture Gate is not resolved")
+    if mode not in ARCHITECTURE_GATE_MODES:
+        raise ValidationError(f"unsupported Architecture Gate mode: {fields['mode']}")
+    if status not in ARCHITECTURE_GATE_STATUSES:
+        raise ValidationError(f"unsupported Architecture Gate status: {fields['status']}")
+    fields["mode"] = mode
+    fields["status"] = status
+    fields.setdefault("assessment_reference", "none")
+    fields.setdefault("addendum_updated", "none")
+    fields.setdefault("blocker", "none")
+    return fields
+
+
+def validate_architecture_gate(text: str) -> dict[str, str]:
+    """Return normalized gate metadata or block unresolved Architect-gated work."""
+    gate = parse_architecture_gate(text)
+    if gate is None:
+        return {
+            "mode": "none",
+            "status": "not-required",
+            "assessment_reference": "none",
+            "addendum_updated": "none",
+            "blocker": "none",
+        }
+    if gate["mode"] == "the-architect" and gate["status"] != "passed":
+        blocker = gate.get("blocker") or "Architecture Preflight has not passed"
+        raise ValidationError(
+            f"Architecture Gate blocks execution: status={gate['status']}; blocker={blocker}"
+        )
+    if gate["mode"] == "none" and gate["status"] == "required":
+        raise ValidationError("Architecture Gate is inconsistent: mode=none cannot have status=required")
+    return gate
+
+
+def architecture_gate_from_manifest(value: dict[str, Any]) -> dict[str, str]:
+    """Validate the Epic/spec contract before any branch or worktree is created."""
+    explicit = value.get("architecture_gate")
+    if isinstance(explicit, dict):
+        mode = str(explicit.get("mode") or "none").strip().lower()
+        status = str(explicit.get("status") or "not-required").strip().lower()
+        synthetic = (
+            "## Architecture Gate\n\n"
+            f"Mode: {mode}\nStatus: {status}\n"
+            f"Assessment reference: {explicit.get('assessment_reference', 'none')}\n"
+            f"Addendum updated: {explicit.get('addendum_updated', 'none')}\n"
+            f"Blocker: {explicit.get('blocker', 'none')}\n"
+        )
+        return validate_architecture_gate(synthetic)
+    raw = str(value.get("epic", {}).get("path") or "").strip()
+    if not raw:
+        return validate_architecture_gate("")
+    path = Path(raw)
+    if not path.is_file():
+        candidate = Path.cwd() / path
+        if candidate.is_file():
+            path = candidate
+        else:
+            return validate_architecture_gate("")
+    return validate_architecture_gate(path.read_text(encoding="utf-8"))
 
 
 def tracking_mode_from_strategy(strategy: dict[str, str]) -> str:
@@ -88,6 +170,7 @@ def direct_plan_manifest(spec: Path) -> dict[str, Any]:
             "source_hash": source_hash,
             "commits": [],
         }],
+        "architecture_gate": validate_architecture_gate(text),
         "final_pr": None,
         "squash_sha": None,
     }
@@ -109,6 +192,11 @@ def load_manifest(path: Path) -> dict[str, Any]:
         value = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValidationError(f"invalid manifest JSON: {exc}") from exc
+    epic_path = Path(str(value.get("epic", {}).get("path") or ""))
+    if epic_path and not epic_path.is_absolute():
+        candidate = (path.parent / epic_path).resolve()
+        if candidate.is_file():
+            value["architecture_gate"] = validate_architecture_gate(candidate.read_text(encoding="utf-8"))
     return validate_manifest(value)
 
 
@@ -180,6 +268,7 @@ def validate_manifest(value: dict[str, Any]) -> dict[str, Any]:
             if dep not in id_set:
                 raise ValidationError(f"task {task_id} references missing dependency: {dep}")
 
+    value["architecture_gate"] = architecture_gate_from_manifest(value)
     value["execution_order"] = topological_order(tasks)
     value.setdefault("final_pr", None)
     value.setdefault("squash_sha", None)
