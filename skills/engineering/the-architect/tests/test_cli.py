@@ -59,12 +59,19 @@ class CliTests(unittest.TestCase):
             self.run_cli("--home", str(home), "home", "init", "--dry-run")
             self.assertFalse(home.exists())
 
-    def test_path_traversal_and_missing_semantic_relationship_are_rejected_atomically(self) -> None:
+    def test_missing_relationships_are_rejected_before_entity_write(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp) / "architecture"
             self.run_cli("--home", str(home), "home", "init")
             self.run_cli("--home", str(home), "application", "create", "--slug", "bad", "--title", "Bad", "--project", "missing", "--component", "missing", ok=False)
             self.assertFalse((home / "applications" / "APP-bad.md").exists())
+            self.run_cli("--home", str(home), "finding", "create", "--slug", "bad-finding", "--title", "Bad finding", "--project", "missing", ok=False)
+            self.assertFalse((home / "projects" / "missing" / "findings" / "ARCH-bad-finding.md").exists())
+
+    def test_path_traversal_is_normalized_inside_home(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "architecture"
+            self.run_cli("--home", str(home), "home", "init")
             self.run_cli("--home", str(home), "project", "register", "--slug", "../../outside", "--title", "Safe")
             self.assertFalse((Path(tmp) / "outside").exists())
 

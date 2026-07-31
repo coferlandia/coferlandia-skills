@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -57,6 +58,14 @@ Integration: Single PR / squash merge
         self.assertEqual("not-required", module.validate_architecture_gate(not_required)["status"])
         self.assertEqual("passed", module.validate_architecture_gate(passed)["status"])
 
+    def test_inconsistent_mode_status_pairs_are_rejected(self) -> None:
+        for text in (
+            "## Architecture Gate\n\nMode: none\nStatus: passed\n",
+            "## Architecture Gate\n\nMode: the-architect\nStatus: not-required\n",
+        ):
+            with self.assertRaisesRegex(ValidationError, "inconsistent"):
+                module.validate_architecture_gate(text)
+
     def test_required_or_blocked_architect_gate_stops_execution(self) -> None:
         for status in ("required", "blocked"):
             text = f"## Architecture Gate\n\nMode: the-architect\nStatus: {status}\nBlocker: preflight pending\n"
@@ -77,21 +86,30 @@ Integration: Single PR / squash merge
             manifest = module.direct_plan_manifest(path)
             self.assertEqual("passed", manifest["architecture_gate"]["status"])
 
-    def test_local_manifest_reads_epic_gate(self) -> None:
+    def test_local_manifest_resolves_repo_root_relative_epic_without_cwd_dependency(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            epic = root / "EPIC.md"
+            repo = Path(tmp) / "repo"
+            contract_root = repo / ".agent" / "work-items" / "epic-demo"
+            contract_root.mkdir(parents=True)
+            epic = contract_root / "EPIC.md"
             epic.write_text(self.contract("## Architecture Gate\n\nMode: the-architect\nStatus: blocked\nBlocker: unresolved risk\n"), encoding="utf-8")
-            manifest = root / "manifest.json"
+            manifest = contract_root / "manifest.json"
             manifest.write_text(json.dumps({
                 "schema_version": 2,
                 "execution_mode": "direct-plan",
                 "source": {"kind": "local", "tracking": "local"},
-                "epic": {"id": "EPIC-demo", "path": str(epic)},
-                "tasks": [{"id": "DIRECT-PLAN", "path": str(epic), "depends_on": []}],
+                "epic": {"id": "EPIC-demo", "path": ".agent/work-items/epic-demo/EPIC.md"},
+                "tasks": [{"id": "DIRECT-PLAN", "path": ".agent/work-items/epic-demo/EPIC.md", "depends_on": []}],
             }), encoding="utf-8")
-            with self.assertRaisesRegex(ValidationError, "unresolved risk"):
-                module.load_manifest(manifest)
+            previous = Path.cwd()
+            other = Path(tmp) / "other"
+            other.mkdir()
+            try:
+                os.chdir(other)
+                with self.assertRaisesRegex(ValidationError, "unresolved risk"):
+                    module.load_manifest(manifest)
+            finally:
+                os.chdir(previous)
 
     def test_github_epic_gate_is_checked_without_cwd_dependency(self) -> None:
         body = self.contract("## Architecture Gate\n\nMode: the-architect\nStatus: blocked\nBlocker: github preflight pending\n")

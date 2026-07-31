@@ -20,6 +20,7 @@ from .registry import (
     create_unique,
     init_home,
     link_application,
+    project_endpoint,
     project_template,
     rebuild_indexes,
     records,
@@ -190,6 +191,10 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         prepared = _entity_content(args.command, args)
         if prepared is None:
             return envelope(command, data={"created": False, "reason": "No material architectural change."})
+        if args.command in {"engagement", "decision", "finding", "extraction"}:
+            project_endpoint(home, args.project)
+        elif args.command == "event" and args.project:
+            project_endpoint(home, args.project)
         if args.command == "application":
             application_endpoints(home, args.project, args.component)
         relative, content = prepared

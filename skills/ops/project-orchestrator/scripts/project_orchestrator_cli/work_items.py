@@ -78,13 +78,19 @@ def validate_architecture_gate(text: str) -> dict[str, str]:
             "addendum_updated": "none",
             "blocker": "none",
         }
-    if gate["mode"] == "the-architect" and gate["status"] != "passed":
+    if gate["mode"] == "none":
+        if gate["status"] != "not-required":
+            raise ValidationError(
+                f"Architecture Gate is inconsistent: mode=none requires status=not-required, got {gate['status']}"
+            )
+        return gate
+    if gate["status"] == "not-required":
+        raise ValidationError("Architecture Gate is inconsistent: mode=the-architect cannot be not-required")
+    if gate["status"] != "passed":
         blocker = gate.get("blocker") or "Architecture Preflight has not passed"
         raise ValidationError(
             f"Architecture Gate blocks execution: status={gate['status']}; blocker={blocker}"
         )
-    if gate["mode"] == "none" and gate["status"] == "required":
-        raise ValidationError("Architecture Gate is inconsistent: mode=none cannot have status=required")
     return gate
 
 
@@ -107,12 +113,23 @@ def architecture_gate_from_manifest(value: dict[str, Any]) -> dict[str, str]:
         return validate_architecture_gate("")
     path = Path(raw)
     if not path.is_file():
-        candidate = Path.cwd() / path
-        if candidate.is_file():
-            path = candidate
-        else:
-            return validate_architecture_gate("")
+        return validate_architecture_gate("")
     return validate_architecture_gate(path.read_text(encoding="utf-8"))
+
+
+def _resolve_manifest_contract_path(manifest_path: Path, raw_path: str) -> Path | None:
+    candidate = Path(raw_path)
+    if candidate.is_absolute():
+        return candidate if candidate.is_file() else None
+    seen: set[Path] = set()
+    for root in (manifest_path.parent, *manifest_path.parents):
+        resolved = (root / candidate).resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if resolved.is_file():
+            return resolved
+    return None
 
 
 def tracking_mode_from_strategy(strategy: dict[str, str]) -> str:
@@ -192,11 +209,11 @@ def load_manifest(path: Path) -> dict[str, Any]:
         value = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValidationError(f"invalid manifest JSON: {exc}") from exc
-    epic_path = Path(str(value.get("epic", {}).get("path") or ""))
-    if epic_path and not epic_path.is_absolute():
-        candidate = (path.parent / epic_path).resolve()
-        if candidate.is_file():
-            value["architecture_gate"] = validate_architecture_gate(candidate.read_text(encoding="utf-8"))
+    raw_epic_path = str(value.get("epic", {}).get("path") or "").strip()
+    if raw_epic_path:
+        epic_path = _resolve_manifest_contract_path(path.resolve(), raw_epic_path)
+        if epic_path is not None:
+            value["architecture_gate"] = validate_architecture_gate(epic_path.read_text(encoding="utf-8"))
     return validate_manifest(value)
 
 

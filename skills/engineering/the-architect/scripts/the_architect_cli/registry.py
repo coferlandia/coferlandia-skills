@@ -146,12 +146,20 @@ def validate_indexes(home: Path) -> list[str]:
     return []
 
 
+def project_endpoint(home: Path, project_slug: str) -> Path:
+    slug = slugify(project_slug)
+    path = confined(home, f"projects/{slug}/PROJECT-{slug}.md")
+    if not path.is_file():
+        raise ValidationError(f"project not registered: {path}")
+    return path
+
+
 def application_endpoints(home: Path, project_slug: str, component_slug: str) -> tuple[Path, Path]:
-    project = confined(home, f"projects/{slugify(project_slug)}/PROJECT-{slugify(project_slug)}.md")
-    component = confined(home, f"components/{slugify(component_slug)}/COMP-{slugify(component_slug)}.md")
-    for path in (project, component):
-        if not path.is_file():
-            raise ValidationError(f"application endpoint not registered: {path}")
+    project = project_endpoint(home, project_slug)
+    component_slug = slugify(component_slug)
+    component = confined(home, f"components/{component_slug}/COMP-{component_slug}.md")
+    if not component.is_file():
+        raise ValidationError(f"application endpoint not registered: {component}")
     return project, component
 
 
