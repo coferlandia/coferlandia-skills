@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from .errors import ValidationError
 from .markdown import parse_frontmatter, word_count
@@ -48,19 +47,24 @@ def validate_record(path: Path) -> list[str]:
         if not fm.get(key):
             raise ValidationError(f"{path}: missing required frontmatter field '{key}'")
     entity_type = str(fm["type"])
-    for section in REQUIRED_SECTIONS.get(entity_type, []):
+    if entity_type not in REQUIRED_SECTIONS:
+        raise ValidationError(f"{path}: unsupported architecture entity type '{entity_type}'")
+    for section in REQUIRED_SECTIONS[entity_type]:
         if f"## {section}" not in text:
             raise ValidationError(f"{path}: missing required section '## {section}'")
     if entity_type == "project" and fm.get("knowledge_status") not in KNOWLEDGE_STATUS:
         raise ValidationError(f"{path}: invalid knowledge_status")
     if entity_type == "component":
         status = fm.get("status")
+        evidence = fm.get("evidence_strength")
         if status not in COMPONENT_STATUS:
             raise ValidationError(f"{path}: invalid component status")
+        if evidence not in EVIDENCE:
+            raise ValidationError(f"{path}: invalid component evidence_strength")
         if status == "stable":
-            required = ("validated_implementation", "automated_tests", "integration_documentation", "compatibility_documented", "provenance", "maintenance_policy", "evidence_strength")
+            required = ("validated_implementation", "automated_tests", "integration_documentation", "compatibility_documented", "provenance", "maintenance_policy")
             missing = [key for key in required if not fm.get(key)]
-            if missing or fm.get("evidence_strength") == "anecdotal":
+            if missing or evidence == "anecdotal":
                 raise ValidationError(f"{path}: stable component lacks required evidence: {', '.join(missing) or 'evidence_strength'}")
     if entity_type == "component-application":
         for relationship in ("project", "component"):

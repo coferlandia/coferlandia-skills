@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -13,10 +14,11 @@ MANAGED_END = "<!-- the-architect:managed:end -->"
 
 
 def quote(value: Any) -> str:
-    text = str(value)
-    if text in {"true", "false", "null"} or ":" in text or "#" in text or text.startswith("[["):
-        return '"' + text.replace('"', '\\"') + '"'
-    return text
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    return json.dumps(str(value), ensure_ascii=False)
 
 
 def render_frontmatter(values: dict[str, Any]) -> str:
@@ -25,8 +27,6 @@ def render_frontmatter(values: dict[str, Any]) -> str:
         if isinstance(value, list):
             lines.append(f"{key}:")
             lines.extend(f"  - {quote(item)}" for item in value)
-        elif isinstance(value, bool):
-            lines.append(f"{key}: {'true' if value else 'false'}")
         else:
             lines.append(f"{key}: {quote(value)}")
     lines.append("---")
@@ -34,7 +34,8 @@ def render_frontmatter(values: dict[str, Any]) -> str:
 
 
 def parse_frontmatter(text: str) -> dict[str, Any]:
-    match = FRONTMATTER_RE.match(text.replace("\r\n", "\n"))
+    normalized = text.replace("\r\n", "\n")
+    match = FRONTMATTER_RE.match(normalized)
     if not match:
         raise ValidationError("missing YAML frontmatter")
     result: dict[str, Any] = {}
@@ -49,6 +50,8 @@ def parse_frontmatter(text: str) -> dict[str, Any]:
             raise ValidationError(f"unsupported frontmatter line: {raw}")
         key, value = raw.split(":", 1)
         key, value = key.strip(), value.strip()
+        if key in result:
+            raise ValidationError(f"duplicate frontmatter key: {key}")
         if not value:
             result[key] = []
             active_list = key
@@ -61,7 +64,10 @@ def parse_frontmatter(text: str) -> dict[str, Any]:
 def _scalar(value: str) -> Any:
     value = value.strip()
     if len(value) >= 2 and value[0] == value[-1] == '"':
-        return value[1:-1].replace('\\"', '"')
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValidationError(f"invalid quoted frontmatter scalar: {value}") from exc
     if value == "true":
         return True
     if value == "false":
@@ -72,13 +78,18 @@ def _scalar(value: str) -> Any:
 
 
 def body_without_frontmatter(text: str) -> str:
-    match = FRONTMATTER_RE.match(text.replace("\r\n", "\n"))
-    return text[match.end():] if match else text
+    normalized = text.replace("\r\n", "\n")
+    match = FRONTMATTER_RE.match(normalized)
+    return normalized[match.end():] if match else normalized
 
 
 def update_managed(text: str, generated: str) -> str:
+    has_start = MANAGED_START in text
+    has_end = MANAGED_END in text
+    if has_start != has_end:
+        raise ValidationError("managed section has an unmatched start/end marker")
     block = f"{MANAGED_START}\n{generated.rstrip()}\n{MANAGED_END}"
-    if MANAGED_START in text and MANAGED_END in text:
+    if has_start:
         pattern = re.compile(re.escape(MANAGED_START) + r".*?" + re.escape(MANAGED_END), re.S)
         return pattern.sub(block, text)
     return text.rstrip() + "\n\n" + block + "\n"

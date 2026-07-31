@@ -9,9 +9,7 @@ from .ids import stable_id, slugify
 from .markdown import MANAGED_END, MANAGED_START, markdown_files, parse_frontmatter, render_frontmatter, update_managed, wikilinks
 from .paths import atomic_write, confined
 
-DIRECTORIES = [
-    "dashboards", "projects", "components", "applications", "extractions", "events", "patterns", "policies", "schemas"
-]
+DIRECTORIES = ["dashboards", "projects", "components", "applications", "extractions", "events", "patterns", "policies", "schemas"]
 DASHBOARDS = ["PROJECTS", "COMPONENTS", "DECISIONS", "RISKS", "APPLICATIONS", "EXTRACTIONS", "TIMELINE"]
 
 
@@ -40,20 +38,17 @@ def init_home(home: Path, dry_run: bool = False) -> list[str]:
 
 def project_template(slug: str, title: str) -> tuple[str, str]:
     slug = slugify(slug)
-    entity_id = stable_id("project", slug)
     fm = {
-        "id": entity_id,
-        "type": "project",
-        "title": title,
-        "slug": slug,
-        "status": "active",
-        "lifecycle_stage": "unknown",
-        "criticality": "unknown",
-        "knowledge_status": "unknown",
-        "architecture_confidence": "low",
-        "last_assessed": "unknown",
+        "id": stable_id("project", slug), "type": "project", "title": title, "slug": slug,
+        "status": "active", "lifecycle_stage": "unknown", "criticality": "unknown",
+        "knowledge_status": "unknown", "architecture_confidence": "low", "last_assessed": "unknown",
     }
-    body = """# {title}\n\n## Purpose and criticality\n\n## System boundary\n\n## Critical flows\n\n## Deployment and operations\n\n## Data boundaries\n\n## Quality attributes\n\n## Critical quality scenarios\n\n## Active material risks\n\n## Accepted constraints\n\n## Components\n\n## Architectural runway\n\n## Knowledge completeness\n\n## Related records\n""".format(title=title)
+    sections = [
+        "Purpose and criticality", "System boundary", "Critical flows", "Deployment and operations",
+        "Data boundaries", "Quality attributes", "Critical quality scenarios", "Active material risks",
+        "Accepted constraints", "Components", "Architectural runway", "Knowledge completeness", "Related records",
+    ]
+    body = f"# {title}\n\n" + "\n\n".join(f"## {section}" for section in sections) + "\n"
     return f"projects/{slug}/PROJECT-{slug}.md", render_frontmatter(fm) + body
 
 
@@ -61,26 +56,23 @@ def component_template(slug: str, title: str, artifact_kind: str, status: str = 
     slug = slugify(slug)
     if status not in {"candidate", "incubating"}:
         raise ValidationError("new components may only start as candidate or incubating")
-    entity_id = stable_id("component", slug)
     fm = {
-        "id": entity_id,
-        "type": "component",
-        "title": title,
-        "slug": slug,
-        "artifact_kind": artifact_kind,
-        "status": status,
-        "version": "0.1.0",
-        "evidence_strength": "anecdotal",
+        "id": stable_id("component", slug), "type": "component", "title": title, "slug": slug,
+        "artifact_kind": artifact_kind, "status": status, "version": "0.1.0", "evidence_strength": "anecdotal",
     }
-    body = """# {title}\n\n## Purpose\n\n## Problem solved\n\n## Public contract\n\n## Supported environments\n\n## Configuration\n\n## Dependencies\n\n## Quality contribution\n\n## Compatibility\n\n## Limitations and contraindications\n\n## Provenance and license\n\n## Applications\n\n## Upgrade and deprecation policy\n\n## Cross-project lessons\n""".format(title=title)
+    sections = [
+        "Purpose", "Problem solved", "Public contract", "Supported environments", "Configuration",
+        "Dependencies", "Quality contribution", "Compatibility", "Limitations and contraindications",
+        "Provenance and license", "Applications", "Upgrade and deprecation policy", "Cross-project lessons",
+    ]
+    body = f"# {title}\n\n" + "\n\n".join(f"## {section}" for section in sections) + "\n"
     return f"components/{slug}/COMP-{slug}.md", render_frontmatter(fm) + body
 
 
 def create_unique(home: Path, relative: str, content: str, dry_run: bool = False) -> dict[str, Any]:
     path = confined(home, relative)
     if path.exists():
-        existing = path.read_text(encoding="utf-8")
-        if existing == content:
+        if path.read_text(encoding="utf-8") == content:
             return {"path": str(path), "created": False, "idempotent": True}
         raise ConflictError(f"record already exists with different content: {path}")
     if not dry_run:
@@ -111,18 +103,17 @@ def _render_indexes(home: Path) -> dict[Path, str]:
     grouped: dict[str, list[str]] = {name: [] for name in DASHBOARDS}
     mapping = {
         "project": "PROJECTS", "component": "COMPONENTS", "architecture-decision": "DECISIONS",
-        "architecture-finding": "RISKS", "component-application": "APPLICATIONS", "component-extraction": "EXTRACTIONS",
-        "engagement": "TIMELINE", "architecture-event": "TIMELINE",
+        "architecture-finding": "RISKS", "component-application": "APPLICATIONS",
+        "component-extraction": "EXTRACTIONS", "engagement": "TIMELINE", "architecture-event": "TIMELINE",
     }
     for path, fm in records(home):
         dashboard = mapping.get(str(fm.get("type")))
-        if not dashboard:
-            continue
-        rel = path.relative_to(home).with_suffix("")
-        grouped[dashboard].append(f"- [[{rel.as_posix()}|{fm.get('title', fm.get('id'))}]] — `{fm.get('id')}`")
+        if dashboard:
+            rel = path.relative_to(home).with_suffix("")
+            grouped[dashboard].append(f"- [[{rel.as_posix()}|{fm.get('title', fm.get('id'))}]] — `{fm.get('id')}`")
     rendered: dict[Path, str] = {}
     for dashboard, lines in grouped.items():
-        path = home / "dashboards" / f"{dashboard}.md"
+        path = confined(home, f"dashboards/{dashboard}.md")
         existing = path.read_text(encoding="utf-8") if path.exists() else f"# {dashboard.title()}\n"
         rendered[path] = update_managed(existing, "\n".join(sorted(lines)) or "_No records._")
     return rendered
@@ -156,21 +147,19 @@ def project_endpoint(home: Path, project_slug: str) -> Path:
 
 def application_endpoints(home: Path, project_slug: str, component_slug: str) -> tuple[Path, Path]:
     project = project_endpoint(home, project_slug)
-    component_slug = slugify(component_slug)
-    component = confined(home, f"components/{component_slug}/COMP-{component_slug}.md")
+    slug = slugify(component_slug)
+    component = confined(home, f"components/{slug}/COMP-{slug}.md")
     if not component.is_file():
         raise ValidationError(f"application endpoint not registered: {component}")
     return project, component
 
 
 def link_application(home: Path, application_id: str, project_slug: str, component_slug: str, dry_run: bool = False) -> list[str]:
-    """Link one canonical Application Record from both relationship endpoints."""
     link = f"- [[{application_id}]]"
-    targets = application_endpoints(home, project_slug, component_slug)
     changed: list[str] = []
-    for path in targets:
+    for path in application_endpoints(home, project_slug, component_slug):
         existing = path.read_text(encoding="utf-8")
-        managed = []
+        managed: list[str] = []
         if MANAGED_START in existing and MANAGED_END in existing:
             block = existing.split(MANAGED_START, 1)[1].split(MANAGED_END, 1)[0]
             managed = [line.strip() for line in block.splitlines() if line.strip().startswith("- [[")]
@@ -185,8 +174,8 @@ def link_application(home: Path, application_id: str, project_slug: str, compone
 def validate_links(home: Path) -> list[str]:
     id_to_path = {str(fm["id"]): path for path, fm in records(home)}
     stem_to_path = {path.stem: path for path in markdown_files(home)}
-    broken: list[str] = []
     prefixes = ("PROJECT-", "COMP-", "ADR-", "ARCH-", "APP-", "ENG-", "EXTRACT-", "EVENT-")
+    broken: list[str] = []
     for path in markdown_files(home):
         for target in wikilinks(path.read_text(encoding="utf-8")):
             short = target.split("/")[-1]
