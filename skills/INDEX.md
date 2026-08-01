@@ -5,9 +5,10 @@
 > changing a skill — there are no mirror catalogs to sync by hand.
 >
 > **Row format (defined here, not repeated elsewhere):**
-> `| [skill-name](./{category}/{skill-name}/) | One-line description | {status} |`
-> where `status` is `draft | active | deprecated`. The link path is relative to this
-> file (which lives inside `skills/`), so it starts with `./{category}/`.
+> `| [skill-name](RELATIVE_SKILL_PATH) | One-line description | {status} |`
+> where `RELATIVE_SKILL_PATH` is `./{category}/{skill-name}/` and `status` is
+> `draft | active | deprecated`. The path is relative to this file, which lives inside
+> `skills/`.
 
 ---
 
@@ -68,4 +69,4 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-07-31*
+*Last updated: 2026-08-01*
