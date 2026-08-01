@@ -1,31 +1,42 @@
 # Coferlandia Skills Release Notes
 
-## Unreleased (2026-07-31)
+## Unreleased
 
-### Project Evangelist
+## v2.2.0 (2026-08-01)
 
-- **project-evangelist** — v1.0 adds evidence-based developer documentation design, a mandatory verified Technology at a Glance, separate architecture orientation, progressive reading paths, adaptive repository maps, main-flow and common-change documentation, explicit Archivist ownership boundaries, proposal approval, templates, and activation/contract coverage.
-- **Repository** — bumped the installable plugin surface to v2.1.0 for the new content skill.
+### Skills
 
-### The Architect
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| project-evangelist | new | 1.0 | Adds progressive, evidence-based developer documentation with verified technology and architecture summaries, reading paths, repository maps, and contributor guidance. |
+| the-architect | new | 1.0.0 | Adds cross-project architecture memory, Architecture Gates, evidence-based assessments, reusable-component governance, and a deterministic Markdown/Obsidian CLI. |
+| coferlandia-project-manager | 0.6.0 | 0.8.0 | Adds Epic Planner execution strategies and Architecture Gate selection before material development work. |
+| software-development | 4.4 | 4.6 | Adds the broad-context Analyst role, executable low-context task contracts, and Architecture Gate enforcement before decomposition or implementation. |
+| project-orchestrator | 1.1 | 2.3 | Adds Epic/task execution, one-time contract materialization, immutable review lifecycles, final integration traceability, and durable concurrent work-item claims. |
+| project-documentation-archivist | 3.0.0 | 3.1.0 | Clarifies in-project durable-knowledge ownership while the Architect owns cross-project architecture and component evidence. |
+| skill-repository-versioning | 1.1.0 | 1.2.0 | Defers to stronger repository-local release-maintenance workflows instead of running a competing generic protocol. |
 
-- **the-architect** — v1.0.0 adds cross-project architecture memory, evidence-based preflight and assessment, reusable-component lifecycle/application history, explicit extraction contracts, concise delta-first reports, and a portable Markdown/Obsidian architecture home managed through one deterministic Python CLI.
-- **Architecture Gate integration** — `coferlandia-project-manager` v0.8.0 may select the gate for material architecture work; `software-development` v4.6 consumes/blocks it before Analyst or direct execution; `project-orchestrator` v2.3 enforces it before materialization/worktree creation; `project-documentation-archivist` v3.1.0 retains in-project documentation ownership while the Architect owns cross-project evidence.
-- **Validation** — cross-skill ownership and gate behavior are regression-tested alongside the Architect CLI and the full Project Orchestrator suite on Linux and Windows.
+### Repository and protocol
 
-### Durable orchestrator claims
+- Added the repository-local `coferlandia-release-maintainer` final-delivery gate under `.agents/skills/` without shipping it as a public plugin skill.
+- Added one canonical release-maintenance policy and per-skill `CHANGELOG.md` ownership for every public skill.
+- Updated skill authoring templates, quality standards, and validation so new and modified public skills keep `metadata.version`, changelog history, release notes, and repository release metadata coherent.
+- Added deterministic release inspection, preparation, validation, README rendering, and package verification through one Python CLI.
+- Preserved `skills/INDEX.md` as the inventory source of truth rather than duplicating release history there.
 
-- **project-orchestrator** — v2.3 adds repository-wide atomic Epic/task claims under the Git common directory, preventing different runs and worktrees from executing the same work item concurrently.
-- **GitHub Project lifecycle** — configured Epic/task items move to `In Progress` before coding begins, remain there through review and merge approval, and move to `Done` only after verified delivery to `main`.
-- **Recovery and administration** — claims survive provider waits, blocked states, retries, resumes, and process termination; cancellation and audited `claims release` operations provide explicit release paths without timeout-based claim stealing.
-- **Validation** — concurrency, duplicate-run exclusion, path-independent local identities, early Project failure cleanup, cancellation release, and Project projection behavior are covered on Linux and Windows.
+### Plugin and packaging
 
-### Epic-based development workflow
+- Bumped the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
+- Corrected plugin repository/homepage metadata to `coferlandia/coferlandia-skills` and refreshed marketplace descriptions.
+- Replaced pull-before-package behavior with deterministic packaging of the already-reviewed branch state.
+- The package now includes `RELEASE-NOTES.md` and `SKILLS-GUIDE.md`, excludes repository-local `.agents/**` and `.agent/**`, reopens the archive for verification, and reports a SHA-256 digest.
+- CI now enforces changelog/version consistency, the release-ready gate, README projection freshness, and verified plugin packaging on Linux and Windows.
 
-- **coferlandia-project-manager** — v0.7 adds Epic Planner as the initiative-level WHAT/WHY capability, records a normalized Execution Strategy, and emits exactly one complete planning representation for one-time orchestrator initialization. The PM now resolves only ambiguous workflow dimensions and supports both direct capable-agent execution and Analyst-decomposed execution, with GitHub preferred and `.agent/work-items/` as the local planning fallback.
-- **software-development** — v4.5 adds the first-class, analysis-only `analyst` role and formalizes single-store output plus the canonical marked GitHub analysis contract. Analyst owns broad system context and compiles it into Atomic + Self-contained + Low-context task contracts with explicit reuse, compatibility, dependency, consumer, and regression decisions. `coding-agent` now accepts any precise Executable Work Contract and does not require GitHub access in orchestrated mode.
-- **project-orchestrator** — v2.1 keeps the Epic/task v2 lifecycle and replaces ongoing contract freshness refreshes with one-time bidirectional Initial Contract Materialization. GitHub-only plans become frozen local Epic/analysis/task snapshots; complete local GitHub-tracked plans are published with stable retry-safe markers before execution. Operational Issue/Project/commit/PR traceability remains active.
-- **CI** — exercises Project Manager workflow contracts and the Project Orchestrator v2 lifecycle on Linux and Windows in addition to existing repository validation.
+### Migration or compatibility
+
+- Existing consumers should reinstall or update the plugin to receive the accumulated v2.2.0 skill set.
+- Repository contributors must run the local release-maintenance gate before final commit, pull-request readiness, or integration when a shipped surface changed; intermediate implementation commits remain allowed.
+- The public `skill-repository-versioning` skill remains reusable in other repositories and delegates when a repository provides a stronger local release workflow.
 
 ## v2.0.0 (2026-07-27)
 
