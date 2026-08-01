@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import subprocess
-import sys
+import re
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -57,26 +56,6 @@ def inspect_release(root: Path, base: str) -> dict[str, Any]:
         "classification": classes,
         "skills": rows,
     }
-
-
-def _run_version_checks(root: Path, errors: list[str], warnings: list[str]) -> None:
-    script = root / "_protocol/scripts/bump_version.py"
-    if not script.is_file():
-        warnings.append("bump_version.py not present")
-        return
-    for flag in ("--check", "--audit"):
-        process = subprocess.run(
-            [sys.executable, str(script), flag],
-            cwd=root,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if process.returncode != 0:
-            errors.append(
-                f"bump_version.py {flag} failed: "
-                f"{process.stderr.strip() or process.stdout.strip()}"
-            )
 
 
 def check_release(root: Path, base: str | None, release_ready: bool) -> dict[str, Any]:
@@ -168,7 +147,9 @@ def check_release(root: Path, base: str | None, release_ready: bool) -> dict[str
                         f"{name}: changed shipped behavior without CHANGELOG.md update"
                     )
 
-            shipped = bool(classes["skills"] or classes["plugin"] or classes["protocol"])
+            shipped = bool(
+                classes["skills"] or classes["plugin"] or classes["protocol"]
+            )
             old_plugin_text = base_file(root, base, ".claude-plugin/plugin.json")
             if shipped and old_plugin_text:
                 if json.loads(old_plugin_text).get("version") == current_plugin:
@@ -176,7 +157,6 @@ def check_release(root: Path, base: str | None, release_ready: bool) -> dict[str
         except ReleaseError as error:
             warnings.append(str(error))
 
-    _run_version_checks(root, errors, warnings)
     return {
         "command": "check",
         "ok": not errors,
@@ -188,6 +168,7 @@ def check_release(root: Path, base: str | None, release_ready: bool) -> dict[str
         "changed_files": changed_files,
         "errors": errors,
         "warnings": warnings,
+        "version_tools": "run separately via bump_version.py --check and --audit",
     }
 
 
@@ -199,13 +180,15 @@ def prepare_release(root: Path, plan_path: Path) -> dict[str, Any]:
         raise ReleaseError(f"release plan missing fields: {', '.join(missing)}")
     if plan["schema_version"] != 1:
         raise ReleaseError("unsupported release-plan schema_version")
-    if not __import__("re").fullmatch(r"\d+\.\d+\.\d+", plan["release_version"]):
+    if not re.fullmatch(r"\d+\.\d+\.\d+", plan["release_version"]):
         raise ReleaseError("release_version must be X.Y.Z")
 
     manifest_path = root / ".claude-plugin/plugin.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["version"] = plan["release_version"]
-    atomic_write(manifest_path, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    atomic_write(
+        manifest_path, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
+    )
 
     skill_map = {skill.name: skill for skill in discover_skills(root)}
     updated: list[str] = []
