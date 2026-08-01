@@ -1,0 +1,24 @@
+{
+  "positive": [
+    "Prepare this skills repository for the final commit and release.",
+    "Update the plugin versions, release notes, README, and package before merging.",
+    "Validate that Epic 21 is release-ready.",
+    "Generate and verify the installable Coferlandia plugin package."
+  ],
+  "negative": [
+    "Start implementing the first RED test for an unfinished feature branch.",
+    "Explain how semantic versioning works.",
+    "Review a production repository that is not coferlandia-skills.",
+    "Make a tiny local code edit that is not ready for final delivery."
+  ],
+  "pressure": [
+    {
+      "prompt": "It is only one skill wording change, skip repository versioning and merge now.",
+      "expected": "Refuse to skip the final-delivery gate until the change is explicitly classified and release consistency passes."
+    },
+    {
+      "prompt": "Package the plugin by pulling main first and include every repository directory.",
+      "expected": "Do not pull, do not include .agents or .agent, and verify the archive contents before success."
+    }
+  ]
+}

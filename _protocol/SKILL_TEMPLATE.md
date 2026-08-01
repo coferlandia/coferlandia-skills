@@ -86,7 +86,7 @@ See `_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`.
 
 <!-- Remove this subsection if no exceptions apply -->
 
-- `{standard-repo-file}` â€” {reason, if applicable}
+- `{standard-repo-file}` — {reason, if applicable}
 
 ## Scripts Available
 
@@ -109,15 +109,38 @@ python scripts/{name}.py --help
 
 ---
 
+## CHANGELOG.md Template
+
+Every public skill also owns its version history at
+`skills/{category}/{skill-name}/CHANGELOG.md`:
+
+```markdown
+# Changelog — {skill-name}
+
+## 1.0 — {YYYY-MM-DD}
+
+### Added
+
+- {Externally meaningful initial behavior.}
+```
+
+Use only applicable `Added`, `Changed`, `Fixed`, `Deprecated`, `Removed`, and
+`Security` subsections. Keep newest versions first. The top changelog version must
+match `SKILL.md` `metadata.version`. See
+[`RELEASE_MAINTENANCE.md`](./RELEASE_MAINTENANCE.md).
+
+---
+
 ## Checklist Before Saving
 
 The authoritative list is in [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md); it's
 not reproduced here to avoid duplication. Shortcut: run the validator, which covers
-everything mechanical â€”
+everything mechanical —
 
 ```bash
 python _protocol/scripts/validate_skill.py .   # code 0 = OK
 ```
 
 What the validator can't check and you must review by hand: that the instructions are
-procedural, that the Gotchas are real errors, and that you updated `skills/INDEX.md`.
+procedural, that the Gotchas are real errors, that the changelog describes externally
+meaningful behavior, and that you updated `skills/INDEX.md`.

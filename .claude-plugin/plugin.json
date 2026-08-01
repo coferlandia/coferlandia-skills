@@ -1,17 +1,19 @@
 {
   "name": "coferlandia-skills",
-  "version": "2.1.0",
-  "description": "Coferlandia's Agent Skills: GitHub-native project management and durable project knowledge, software-development controls, documentation-to-skill mining, scientific claim evaluation, and reusable agent workflows.",
+  "version": "2.2.0",
+  "description": "Coferlandia Agent Skills for supervised planning, architecture, software delivery, durable project knowledge, developer documentation, evidence-based analysis, and deterministic repository workflows.",
   "author": {
     "name": "Coferlandia"
   },
-  "homepage": "https://github.com/diegocofre/coferlandia-skills",
-  "repository": "https://github.com/diegocofre/coferlandia-skills",
+  "homepage": "https://github.com/coferlandia/coferlandia-skills",
+  "repository": "https://github.com/coferlandia/coferlandia-skills",
   "license": "Apache-2.0",
   "keywords": [
     "skills",
     "agents",
     "software-development",
+    "project-management",
+    "architecture",
     "documentation",
     "fact-checking",
     "skill-authoring"

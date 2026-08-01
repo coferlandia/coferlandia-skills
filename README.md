@@ -70,32 +70,50 @@ The workflow is modular. The Project Manager, Architect, development roles, Arch
 | [`skills/INDEX.md`](./skills/INDEX.md) | Canonical inventory, category, status, and location of every skill. |
 | [`AGENTS.md`](./AGENTS.md) | Entry point and maintenance rules for AI agents. |
 | Each `SKILL.md` | Complete operational contract for one skill. |
+| Each `CHANGELOG.md` | Version history for one public skill. |
 
 ## Repository structure
 
 ```text
-skills/          Skills, organized by category
-_protocol/       Protocol for creating and maintaining skills
+skills/          Public skills, organized by category
+_protocol/       Protocol for creating, validating, and releasing skills
+.agents/skills/  Repository-local skills that are not shipped in the plugin
 AGENTS.md        Entry point for agents
 ```
 
 ## Releases
 
-Current version and changelog: [`RELEASE-NOTES.md`](./RELEASE-NOTES.md).
+<!-- coferlandia-latest-release:start -->
+## Latest release
+
+**v2.2.0 — 2026-08-01**
+
+| Changed skill | Version | Main change |
+|---|---:|---|
+| project-evangelist | 1.0 | Adds progressive, evidence-based developer documentation with verified technology and architecture summaries, reading paths, repository maps, and contributor guidance. |
+| the-architect | 1.0.0 | Adds cross-project architecture memory, Architecture Gates, evidence-based assessments, reusable-component governance, and a deterministic Markdown/Obsidian CLI. |
+| coferlandia-project-manager | 0.8.0 | Adds Epic Planner execution strategies and Architecture Gate selection before material development work. |
+| software-development | 4.6 | Adds the broad-context Analyst role, executable low-context task contracts, and Architecture Gate enforcement before decomposition or implementation. |
+| project-orchestrator | 2.3 | Adds Epic/task execution, one-time contract materialization, immutable review lifecycles, final integration traceability, and durable concurrent work-item claims. |
+| project-documentation-archivist | 3.1.0 | Clarifies in-project durable-knowledge ownership while the Architect owns cross-project architecture and component evidence. |
+| skill-repository-versioning | 1.2.0 | Defers to stronger repository-local release-maintenance workflows instead of running a competing generic protocol. |
+
+[Read the complete release notes](./RELEASE-NOTES.md)
+<!-- coferlandia-latest-release:end -->
 
 ## Install
 
 ### Claude Code
 
 ```powershell
-claude plugin marketplace add diegocofre/coferlandia-skills
+claude plugin marketplace add coferlandia/coferlandia-skills
 claude plugin install coferlandia-skills@coferlandia
 ```
 
 ### GitHub Copilot CLI
 
 ```powershell
-copilot plugin marketplace add diegocofre/coferlandia-skills
+copilot plugin marketplace add coferlandia/coferlandia-skills
 copilot plugin install coferlandia-skills@coferlandia
 ```
 

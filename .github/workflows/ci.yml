@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -45,11 +47,46 @@ jobs:
       - name: Project Orchestrator v2 tests
         run: python -m unittest discover -s skills/ops/project-orchestrator/tests -p "test_*.py"
 
-      - name: Validate all skills
+      - name: Release maintainer activation and CLI tests
+        run: python -m unittest discover -s .agents/skills/coferlandia-release-maintainer/tests -p "test_*.py"
+
+      - name: Validate all public skills
         run: python _protocol/scripts/validate_skill.py --all skills
+
+      - name: Validate repository-local release skill
+        run: python _protocol/scripts/validate_skill.py .agents/skills/coferlandia-release-maintainer
 
       - name: Check repository version drift
         run: python _protocol/scripts/bump_version.py --check
 
       - name: Audit repository version declarations
         run: python _protocol/scripts/bump_version.py --audit
+
+      - name: Resolve release comparison base
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            base="$PR_BASE"
+          else
+            base="$PUSH_BEFORE"
+          fi
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            base="HEAD^"
+          fi
+          echo "RELEASE_BASE=$base" >> "$GITHUB_ENV"
+
+      - name: Enforce final-delivery release readiness
+        shell: bash
+        run: >-
+          python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py
+          check --base "$RELEASE_BASE" --release-ready
+
+      - name: Build and verify plugin package
+        shell: bash
+        run: >-
+          python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py
+          package --output "${{ runner.temp }}/coferlandia-skills.plugin" --verify

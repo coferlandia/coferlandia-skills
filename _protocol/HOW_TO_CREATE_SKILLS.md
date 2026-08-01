@@ -9,10 +9,11 @@
 
 Before creating a skill, read:
 - [The canonical agentskills.io specification](https://agentskills.io/specification)
-- [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) â€” naming and category rules
-- [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) â€” template to use
-- [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) â€” quality checklist
-- [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md) â€” where skills save generated files
+- [`NAMING_CONVENTIONS.md`](./NAMING_CONVENTIONS.md) — naming and category rules
+- [`SKILL_TEMPLATE.md`](./SKILL_TEMPLATE.md) — templates to use
+- [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) — quality checklist
+- [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md) — where skills save generated files
+- [`RELEASE_MAINTENANCE.md`](./RELEASE_MAINTENANCE.md) — per-skill changelog and repository release policy
 - If available in the environment, invoke `superpowers:writing-skills` before
   authoring each approved skill; use it to shape the draft, then tighten the
   result against this protocol and the quality checklist.
@@ -34,8 +35,8 @@ A good skill encapsulates **one coherent unit of work**. Ask yourself:
 - An output format that needs to stay consistent
 
 **Signs of bad scope:**
-- "Everything related to X" â†’ too broad
-- A single bash command â†’ too narrow, inline it instead
+- "Everything related to X" → too broad
+- A single bash command → too narrow, inline it instead
 
 ---
 
@@ -54,6 +55,8 @@ A good skill encapsulates **one coherent unit of work**. Ask yourself:
 
 ```bash
 mkdir -p skills/{category}/{skill-name}
+touch skills/{category}/{skill-name}/SKILL.md
+touch skills/{category}/{skill-name}/CHANGELOG.md
 # If the skill has scripts:
 mkdir -p skills/{category}/{skill-name}/scripts
 # If it has long external references:
@@ -136,52 +139,83 @@ Recommended structure:
 - Explanations of basic concepts
 - Every edge case (delegate to the agent's judgment when reasonable)
 
-**Limit:** target <5000 tokens; hard cap ~500 lines in SKILL.md. Extensive material â†’
+**Limit:** target <5000 tokens; hard cap ~500 lines in SKILL.md. Extensive material →
 `references/`.
 
-- **Output Location** â€” declare where the skill's artifacts go, following
+- **Output Location** — declare where the skill's artifacts go, following
   [`ARTIFACT_OUTPUT_CONVENTIONS.md`](./ARTIFACT_OUTPUT_CONVENTIONS.md). Default is
   `.agent/`. If any artifact targets a standard repo file (README.md, AGENTS.md,
   LICENSE, RUNBOOK.md), list it under an `### Output Exceptions` subsection.
 
 ---
 
-## Step 5: Write scripts (if applicable)
+## Step 5: Write CHANGELOG.md
 
-If the skill needs scripts, put them in `scripts/`. Minimum requirements:
+Every public skill owns its version history. Start with the same version declared in
+`SKILL.md`:
 
-1. **No interactive prompts** â€” the agent runs in a non-interactive shell.
-2. **Must have documented `--help`.**
-3. **Descriptive error messages** â€” the agent uses the error to fix its next attempt.
-4. **Structured output** â€” prefer JSON/CSV over free text.
-5. **Idempotent** â€” the agent can retry them with no side effects.
-6. **Declare dependencies inline** â€” use PEP 723 for Python (`# /// script`), etc.
+```markdown
+# Changelog — {skill-name}
+
+## 1.0 — {YYYY-MM-DD}
+
+### Added
+
+- {Externally meaningful initial capability.}
+```
+
+Use only applicable `Added`, `Changed`, `Fixed`, `Deprecated`, `Removed`, and
+`Security` subsections. Keep newest versions first. Do not describe every file edit;
+describe the behavior a skill consumer receives.
 
 ---
 
-## Step 6: Verify quality
+## Step 6: Write scripts (if applicable)
 
-The authoritative list lives in [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) â€”
-check it in full (not reproduced here to avoid duplication). First run the mechanical
-validator:
+If the skill needs scripts, put them in `scripts/`. Minimum requirements:
+
+1. **No interactive prompts** — the agent runs in a non-interactive shell.
+2. **Must have documented `--help`.**
+3. **Descriptive error messages** — the agent uses the error to fix its next attempt.
+4. **Structured output** — prefer JSON/CSV over free text.
+5. **Idempotent** — the agent can retry them with no side effects.
+6. **Declare dependencies inline** — use PEP 723 for Python (`# /// script`), etc.
+
+---
+
+## Step 7: Verify quality
+
+The authoritative list lives in [`QUALITY_STANDARDS.md`](./QUALITY_STANDARDS.md) —
+check it in full. First run the mechanical validator:
 
 ```bash
 python _protocol/scripts/validate_skill.py .
 # must exit with code 0 (no errors)
 ```
 
+Confirm the top `CHANGELOG.md` version equals `metadata.version`.
+
 ---
 
-## Step 7: Update the index
+## Step 8: Update the index
 
 **Required.** Add the skill to `skills/INDEX.md`. The **row format is defined in the
-header of `INDEX.md`** (single source of truth) â€” use it from there, don't copy it
+header of `INDEX.md`** (single source of truth) — use it from there, don't copy it
 here. In short:
 `| [skill-name](./{category}/{skill-name}/) | Brief description | {status} |`.
 
 ---
 
-## Step 8: Commit
+## Step 9: Prepare the repository release
+
+A new public skill changes the installable plugin surface. Follow
+[`RELEASE_MAINTENANCE.md`](./RELEASE_MAINTENANCE.md), update the repository/plugin
+version and release notes, render the README latest-release block, and verify the
+package before final delivery.
+
+---
+
+## Step 10: Commit
 
 Commit format:
 
