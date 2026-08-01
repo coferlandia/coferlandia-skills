@@ -2,6 +2,11 @@
 
 ## Unreleased (2026-07-31)
 
+### Project Evangelist
+
+- **project-evangelist** — v1.0 adds evidence-based developer documentation design, a mandatory verified Technology at a Glance, separate architecture orientation, progressive reading paths, adaptive repository maps, main-flow and common-change documentation, explicit Archivist ownership boundaries, proposal approval, templates, and activation/contract coverage.
+- **Repository** — bumped the installable plugin surface to v2.1.0 for the new content skill.
+
 ### The Architect
 
 - **the-architect** — v1.0.0 adds cross-project architecture memory, evidence-based preflight and assessment, reusable-component lifecycle/application history, explicit extraction contracts, concise delta-first reports, and a portable Markdown/Obsidian architecture home managed through one deterministic Python CLI.
@@ -21,8 +26,6 @@
 - **software-development** — v4.5 adds the first-class, analysis-only `analyst` role and formalizes single-store output plus the canonical marked GitHub analysis contract. Analyst owns broad system context and compiles it into Atomic + Self-contained + Low-context task contracts with explicit reuse, compatibility, dependency, consumer, and regression decisions. `coding-agent` now accepts any precise Executable Work Contract and does not require GitHub access in orchestrated mode.
 - **project-orchestrator** — v2.1 keeps the Epic/task v2 lifecycle and replaces ongoing contract freshness refreshes with one-time bidirectional Initial Contract Materialization. GitHub-only plans become frozen local Epic/analysis/task snapshots; complete local GitHub-tracked plans are published with stable retry-safe markers before execution. Operational Issue/Project/commit/PR traceability remains active.
 - **CI** — exercises Project Manager workflow contracts and the Project Orchestrator v2 lifecycle on Linux and Windows in addition to existing repository validation.
-
-No repo-wide plugin version bump is included in this implementation branch; the existing v2.0.0 plugin protocol version remains authoritative until a separate release action changes it.
 
 ## v2.0.0 (2026-07-27)
 
