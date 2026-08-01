@@ -17,11 +17,12 @@ RELEASE_HEADING_RE = re.compile(
     re.M,
 )
 UNRELEASED_RE = re.compile(r"^## Unreleased(?:\s*\([^\n]+\))?\s*$", re.M)
-VERSION_RE = re.compile(
-    r"(?ms)(^metadata:\s*\n(?:^[ \t]+.*\n)*?^[ \t]+version:\s*[\"']?)"
-    r"([^\"'\n]+)([\"']?\s*$)"
+METADATA_VERSION_LINE_RE = re.compile(
+    r"^(?P<indent>[ \t]+)version:\s*(?P<quote>[\"']?)(?P<version>[^\"'\n]+)(?P=quote)\s*$"
 )
-CHANGELOG_VERSION_RE = re.compile(r"^##\s+v?(?P<version>[^\s—-]+)\s*(?:[—-]|\()", re.M)
+CHANGELOG_VERSION_RE = re.compile(
+    r"^##\s+v?(?P<version>[^\s—-]+)\s*(?:[—-]|\()", re.M
+)
 INDEX_SKILL_RE = re.compile(r"\]\(\./(?P<category>[^/]+)/(?P<name>[^/]+)/\)")
 
 
@@ -54,7 +55,9 @@ def find_repo_root(start: Path | None = None) -> Path:
         return Path(configured).expanduser().resolve()
     current = (start or Path.cwd()).resolve()
     for candidate in (current, *current.parents):
-        if (candidate / ".claude-plugin/plugin.json").is_file() and (candidate / "skills").is_dir():
+        if (candidate / ".claude-plugin/plugin.json").is_file() and (
+            candidate / "skills"
+        ).is_dir():
             return candidate
     script = Path(__file__).resolve()
     candidate = script.parents[5]
@@ -63,7 +66,9 @@ def find_repo_root(start: Path | None = None) -> Path:
     raise ReleaseError("could not resolve repository root")
 
 
-def run_git(root: Path, *arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+def run_git(
+    root: Path, *arguments: str, check: bool = True
+) -> subprocess.CompletedProcess[str]:
     process = subprocess.run(
         ["git", "-C", str(root), *arguments],
         text=True,
@@ -76,26 +81,46 @@ def run_git(root: Path, *arguments: str, check: bool = True) -> subprocess.Compl
 
 
 def plugin_version(root: Path) -> str:
-    data = json.loads((root / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+    data = json.loads(
+        (root / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
+    )
     version = data.get("version")
     if not isinstance(version, str) or not re.fullmatch(r"\d+\.\d+\.\d+", version):
         raise ReleaseError(".claude-plugin/plugin.json has no valid semantic version")
     return version
 
 
+def _metadata_version_line(lines: list[str]) -> tuple[int, re.Match[str]]:
+    metadata_index: int | None = None
+    for index, line in enumerate(lines):
+        if line.strip() == "metadata:" and not line.startswith((" ", "\t")):
+            metadata_index = index
+            break
+    if metadata_index is None:
+        raise ReleaseError("SKILL.md has no metadata block")
+
+    for index in range(metadata_index + 1, len(lines)):
+        line = lines[index].rstrip("\r\n")
+        if line and not line.startswith((" ", "\t")):
+            break
+        match = METADATA_VERSION_LINE_RE.match(line)
+        if match:
+            return index, match
+    raise ReleaseError("SKILL.md has no metadata.version")
+
+
 def skill_version(text: str) -> str:
-    match = VERSION_RE.search(text)
-    if not match:
-        raise ReleaseError("SKILL.md has no metadata.version")
-    return match.group(2).strip()
+    _, match = _metadata_version_line(text.splitlines(keepends=True))
+    return match.group("version").strip()
 
 
 def set_skill_version(text: str, version: str) -> str:
-    if not VERSION_RE.search(text):
-        raise ReleaseError("SKILL.md has no metadata.version")
-    return VERSION_RE.sub(
-        lambda match: f"{match.group(1)}{version}{match.group(3)}", text, count=1
-    )
+    lines = text.splitlines(keepends=True)
+    index, match = _metadata_version_line(lines)
+    newline = "\r\n" if lines[index].endswith("\r\n") else "\n" if lines[index].endswith("\n") else ""
+    quote = match.group("quote")
+    lines[index] = f"{match.group('indent')}version: {quote}{version}{quote}{newline}"
+    return "".join(lines)
 
 
 def discover_skills(root: Path) -> list[SkillInfo]:
@@ -152,7 +177,11 @@ def parse_skill_table(section: str) -> list[dict[str, str]]:
         if not in_skills or not line.strip().startswith("|"):
             continue
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if len(cells) != 4 or cells[0].lower() == "skill" or set(cells[0]) == {"-"}:
+        if (
+            len(cells) != 4
+            or cells[0].lower() == "skill"
+            or set(cells[0]) == {"-"}
+        ):
             continue
         rows.append(
             {
@@ -226,7 +255,9 @@ def unreleased_body(text: str) -> str | None:
     if not match:
         return None
     next_heading = re.search(r"^## ", text[match.end():], re.M)
-    end = match.end() + (next_heading.start() if next_heading else len(text) - match.end())
+    end = match.end() + (
+        next_heading.start() if next_heading else len(text) - match.end()
+    )
     return text[match.end():end].strip()
 
 
@@ -294,7 +325,9 @@ def upsert_changelog_entry(
     match = version_heading.search(text)
     if match:
         next_heading = re.search(r"^##\s+", text[match.end():], re.M)
-        end = match.end() + (next_heading.start() if next_heading else len(text) - match.end())
+        end = match.end() + (
+            next_heading.start() if next_heading else len(text) - match.end()
+        )
         updated = text[:match.start()] + entry + "\n" + text[end:].lstrip("\n")
     else:
         rest = text[len(heading):].lstrip("\n")
@@ -334,14 +367,23 @@ def upsert_release_section(text: str, version: str, section: str) -> str:
     existing = release_heading.search(text)
     if existing:
         next_heading = re.search(r"^## ", text[existing.end():], re.M)
-        end = existing.end() + (next_heading.start() if next_heading else len(text) - existing.end())
-        text = text[:existing.start()] + section.rstrip() + "\n\n" + text[end:].lstrip("\n")
+        end = existing.end() + (
+            next_heading.start() if next_heading else len(text) - existing.end()
+        )
+        text = (
+            text[:existing.start()]
+            + section.rstrip()
+            + "\n\n"
+            + text[end:].lstrip("\n")
+        )
 
     unreleased = UNRELEASED_RE.search(text)
     if not unreleased:
         return text.rstrip() + "\n\n## Unreleased\n\n" + ("" if existing else section)
     next_heading = re.search(r"^## ", text[unreleased.end():], re.M)
-    end = unreleased.end() + (next_heading.start() if next_heading else len(text) - unreleased.end())
+    end = unreleased.end() + (
+        next_heading.start() if next_heading else len(text) - unreleased.end()
+    )
     suffix = text[end:].lstrip("\n")
     if not existing:
         suffix = section.rstrip() + "\n\n" + suffix
