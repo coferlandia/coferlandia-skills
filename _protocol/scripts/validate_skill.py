@@ -3,30 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Valida una o más skills de coferlandia-skills contra los invariantes mecánicos.
-
-Chequea, por cada skill:
-  - existe SKILL.md
-  - el campo `name` del frontmatter coincide con el nombre de la carpeta
-  - `name` cumple las reglas de naming (lowercase, [a-z0-9-], sin -- ni - al borde, <=64)
-  - `description` está presente y tiene 1..1024 caracteres
-  - `metadata.category` (si existe) es una categoría válida
-  - `metadata.status` (si existe) es draft|active|deprecated
-  - SKILL.md no excede el tope de líneas (~500)
-  - no hay secretos ni PII evidentes (regex-scan)
-
-Salida: JSON a stdout (parseable por un agente). Diagnósticos a stderr.
-Código de salida: 0 si todas las skills son válidas, 1 si alguna falla.
-
-Uso:
-  python validate_skill.py <ruta-skill-o-carpeta> [<ruta> ...]
-  python validate_skill.py --all <ruta-raiz-skills>
-  python validate_skill.py --help
-
-Ejemplos:
-  python _protocol/scripts/validate_skill.py skills/meta/build-agentic-repo
-  python _protocol/scripts/validate_skill.py --all skills
-"""
+"""Validate Coferlandia skills and their public changelog/version contract."""
 from __future__ import annotations
 
 import argparse
@@ -38,9 +15,8 @@ from pathlib import Path
 VALID_CATEGORIES = {"meta", "engineering", "data", "content", "design", "ops"}
 VALID_STATUS = {"draft", "active", "deprecated"}
 MAX_LINES = 500
-NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")  # lowercase, hyphen-separated, sin -- ni bordes
-
-# Patrones de secretos / PII. Conservadores: priorizan no dar falsos negativos en lo obvio.
+NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+CHANGELOG_VERSION_RE = re.compile(r"^##\s+v?(?P<version>[^\s—-]+)\s*(?:[—-]|\()", re.M)
 SECRET_PATTERNS = {
     "openai_key": re.compile(r"sk-[A-Za-z0-9]{20,}"),
     "github_pat": re.compile(r"ghp_[A-Za-z0-9]{20,}"),
@@ -52,19 +28,14 @@ SECRET_PATTERNS = {
         r"(?i)(password|passwd|secret|api[_-]?key|token)\s*[:=]\s*['\"]?[A-Za-z0-9/+_\-]{12,}"
     ),
 }
-# Emails con dominio real (se excluyen dominios de ejemplo permitidos).
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b")
-ALLOWED_EMAIL_DOMAINS = {"example.com", "example.org", "example.net", "coferlandia.test",
-                         "coferlandia.example.com", "agente.example.com"}
+ALLOWED_EMAIL_DOMAINS = {
+    "example.com", "example.org", "example.net", "coferlandia.test",
+    "coferlandia.example.com", "agente.example.com",
+}
 
 
 def parse_frontmatter(text: str) -> dict:
-    """Parser mínimo de frontmatter YAML (sin dependencias).
-
-    Soporta el subconjunto usado por las skills: claves escalares de nivel 0,
-    bloques `>` o `|` multilínea, y un bloque `metadata:` con claves indentadas.
-    No es un parser YAML completo; suficiente para validar invariantes.
-    """
     if not text.startswith("---"):
         return {}
     end = text.find("\n---", 3)
@@ -79,48 +50,69 @@ def parse_frontmatter(text: str) -> dict:
         if not line.strip() or line.lstrip().startswith("#"):
             i += 1
             continue
-        m = re.match(r"^(\S[^:]*):\s*(.*)$", line)
-        if not m:
+        match = re.match(r"^(\S[^:]*):\s*(.*)$", line)
+        if not match:
             i += 1
             continue
-        key, val = m.group(1), m.group(2).strip()
-        if key == "metadata" and val == "":
-            meta: dict = {}
+        key, value = match.group(1), match.group(2).strip()
+        if key == "metadata" and value == "":
+            metadata: dict = {}
             i += 1
             while i < len(lines) and (lines[i].startswith("  ") or not lines[i].strip()):
                 sub = re.match(r"^\s+(\S[^:]*):\s*(.*)$", lines[i])
                 if sub:
-                    meta[sub.group(1).strip()] = sub.group(2).strip().strip('"').strip("'")
+                    metadata[sub.group(1).strip()] = sub.group(2).strip().strip('"').strip("'")
                 i += 1
-            data["metadata"] = meta
+            data["metadata"] = metadata
             continue
-        if val in (">", "|", ">-", "|-", ">+", "|+"):
+        if value in (">", "|", ">-", "|-", ">+", "|+"):
             collected = []
             i += 1
             while i < len(lines) and (lines[i].startswith("  ") or not lines[i].strip()):
                 collected.append(lines[i].strip())
                 i += 1
-            data[key] = " ".join(c for c in collected if c).strip()
+            data[key] = " ".join(item for item in collected if item).strip()
             continue
-        data[key] = val.strip('"').strip("'")
+        data[key] = value.strip('"').strip("'")
         i += 1
     return data
+
+
+def is_public_skill(skill_dir: Path) -> bool:
+    return len(skill_dir.parents) >= 2 and skill_dir.parents[1].name == "skills"
+
+
+def validate_changelog(skill_dir: Path, version: str | None, errors: list[str]) -> None:
+    if not is_public_skill(skill_dir):
+        return
+    path = skill_dir / "CHANGELOG.md"
+    if not path.is_file():
+        errors.append("Falta CHANGELOG.md para la skill pública")
+        return
+    text = path.read_text(encoding="utf-8")
+    expected_heading = f"# Changelog — {skill_dir.name}"
+    if not text.startswith(expected_heading):
+        errors.append(f"CHANGELOG.md debe comenzar con '{expected_heading}'")
+    match = CHANGELOG_VERSION_RE.search(text)
+    if not match:
+        errors.append("CHANGELOG.md no contiene una versión reconocible")
+    elif version and match.group("version") != version:
+        errors.append(
+            f"CHANGELOG.md versión '{match.group('version')}' no coincide con metadata.version '{version}'"
+        )
 
 
 def validate_skill(skill_dir: Path) -> dict:
     errors: list[str] = []
     warnings: list[str] = []
-    md = skill_dir / "SKILL.md"
+    skill_file = skill_dir / "SKILL.md"
+    if not skill_file.is_file():
+        return {"skill": str(skill_dir), "ok": False, "errors": ["No existe SKILL.md en la carpeta"], "warnings": []}
 
-    if not md.is_file():
-        return {"skill": str(skill_dir), "ok": False,
-                "errors": ["No existe SKILL.md en la carpeta"], "warnings": []}
-
-    text = md.read_text(encoding="utf-8")
-    fm = parse_frontmatter(text)
+    text = skill_file.read_text(encoding="utf-8")
+    frontmatter = parse_frontmatter(text)
     folder = skill_dir.name
-
-    name = fm.get("name", "")
+    name = frontmatter.get("name", "")
     if not name:
         errors.append("Falta el campo `name` en el frontmatter")
     else:
@@ -131,73 +123,78 @@ def validate_skill(skill_dir: Path) -> dict:
         if len(name) > 64:
             errors.append(f"`name` excede 64 caracteres ({len(name)})")
 
-    desc = fm.get("description", "")
-    if not desc:
+    description = frontmatter.get("description", "")
+    if not description:
         errors.append("Falta el campo `description`")
-    elif not (1 <= len(desc) <= 1024):
-        errors.append(f"`description` tiene {len(desc)} chars (debe ser 1..1024)")
+    elif not 1 <= len(description) <= 1024:
+        errors.append(f"`description` tiene {len(description)} chars (debe ser 1..1024)")
 
-    meta = fm.get("metadata", {}) if isinstance(fm.get("metadata"), dict) else {}
-    cat = meta.get("category")
-    if cat and cat not in VALID_CATEGORIES:
-        errors.append(f"category '{cat}' no es válida ({sorted(VALID_CATEGORIES)})")
-    status = meta.get("status")
+    metadata = frontmatter.get("metadata", {}) if isinstance(frontmatter.get("metadata"), dict) else {}
+    version = metadata.get("version")
+    if not version:
+        errors.append("Falta metadata.version")
+    category = metadata.get("category")
+    if category and category not in VALID_CATEGORIES:
+        errors.append(f"category '{category}' no es válida ({sorted(VALID_CATEGORIES)})")
+    status = metadata.get("status")
     if status and status not in VALID_STATUS:
         errors.append(f"status '{status}' no es válido ({sorted(VALID_STATUS)})")
-    if status == "active" and not meta.get("tested"):
+    if status == "active" and not metadata.get("tested"):
         warnings.append("status=active sin campo `tested` — criterio no verificable")
 
-    n_lines = text.count("\n") + 1
-    if n_lines > MAX_LINES:
-        errors.append(f"SKILL.md tiene {n_lines} líneas (tope {MAX_LINES})")
+    validate_changelog(skill_dir, version, errors)
 
-    for label, pat in SECRET_PATTERNS.items():
-        if pat.search(text):
+    line_count = text.count("\n") + 1
+    if line_count > MAX_LINES:
+        errors.append(f"SKILL.md tiene {line_count} líneas (tope {MAX_LINES})")
+
+    for label, pattern in SECRET_PATTERNS.items():
+        if pattern.search(text):
             errors.append(f"Posible secreto detectado ({label})")
-    for m in EMAIL_RE.finditer(text):
-        if m.group(1).lower() not in ALLOWED_EMAIL_DOMAINS:
-            warnings.append(f"Email con dominio real: {m.group(0)} (usar dominios de ejemplo)")
+    for match in EMAIL_RE.finditer(text):
+        if match.group(1).lower() not in ALLOWED_EMAIL_DOMAINS:
+            warnings.append(f"Email con dominio real: {match.group(0)} (usar dominios de ejemplo)")
 
-    return {"skill": str(skill_dir), "ok": not errors,
-            "errors": errors, "warnings": warnings, "lines": n_lines}
+    return {
+        "skill": str(skill_dir),
+        "ok": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "lines": line_count,
+        "version": version,
+        "changelog": str(skill_dir / "CHANGELOG.md") if is_public_skill(skill_dir) else None,
+    }
 
 
 def discover(root: Path) -> list[Path]:
-    return sorted(p.parent for p in root.rglob("SKILL.md"))
+    return sorted(path.parent for path in root.rglob("SKILL.md"))
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="Valida skills de coferlandia-skills contra invariantes mecánicos.",
-        formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
-    ap.add_argument("paths", nargs="*", help="Carpetas de skill a validar")
-    ap.add_argument("--all", metavar="ROOT",
-                    help="Descubre y valida todas las skills bajo ROOT")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("paths", nargs="*", help="Carpetas de skill a validar")
+    parser.add_argument("--all", metavar="ROOT", help="Descubre y valida todas las skills bajo ROOT")
+    args = parser.parse_args()
 
     targets: list[Path] = []
     if args.all:
         targets.extend(discover(Path(args.all)))
-    for p in args.paths:
-        targets.append(Path(p))
+    targets.extend(Path(path) for path in args.paths)
     if not targets:
-        ap.print_help(sys.stderr)
+        parser.print_help(sys.stderr)
         return 2
 
-    results = [validate_skill(t) for t in targets]
-    n_fail = sum(1 for r in results if not r["ok"])
-    summary = {"validated": len(results), "failed": n_fail, "results": results}
-    print(json.dumps(summary, indent=2, ensure_ascii=False))
-
-    for r in results:
-        tag = "OK " if r["ok"] else "FAIL"
-        print(f"[{tag}] {r['skill']}", file=sys.stderr)
-        for e in r.get("errors", []):
-            print(f"   error:   {e}", file=sys.stderr)
-        for w in r.get("warnings", []):
-            print(f"   warning: {w}", file=sys.stderr)
-
-    return 1 if n_fail else 0
+    results = [validate_skill(target) for target in targets]
+    failures = sum(1 for result in results if not result["ok"])
+    print(json.dumps({"validated": len(results), "failed": failures, "results": results}, indent=2, ensure_ascii=False))
+    for result in results:
+        tag = "OK " if result["ok"] else "FAIL"
+        print(f"[{tag}] {result['skill']}", file=sys.stderr)
+        for error in result.get("errors", []):
+            print(f"   error:   {error}", file=sys.stderr)
+        for warning in result.get("warnings", []):
+            print(f"   warning: {warning}", file=sys.stderr)
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
