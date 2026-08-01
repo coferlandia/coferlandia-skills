@@ -21,6 +21,7 @@ def run_cli(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
         text=True,
         capture_output=True,
         check=False,
+        timeout=20,
     )
 
 
@@ -177,6 +178,17 @@ class ReleaseMaintainerCliTests(unittest.TestCase):
         result = run_cli(self.repo, "check", "--release-ready")
         self.assertEqual(result.returncode, 1)
         self.assertIn("INDEX.md is missing public skill sample-skill", result.stdout)
+
+    def test_large_skill_body_is_checked_without_backtracking(self) -> None:
+        run_cli(self.repo, "render-readme", "--write")
+        skill = self.repo / "skills/meta/sample-skill/SKILL.md"
+        skill.write_text(
+            skill.read_text(encoding="utf-8")
+            + "\n".join(f"Instruction line {index}" for index in range(20_000)),
+            encoding="utf-8",
+        )
+        result = run_cli(self.repo, "check", "--release-ready")
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 
 
 if __name__ == "__main__":
