@@ -1,12 +1,14 @@
 {
   "name": "coferlandia",
-  "description": "Coferlandia's reusable Agent Skills.",
-  "owner": { "name": "Coferlandia" },
+  "description": "Operational Agent Skills for supervised, traceable software and knowledge workflows.",
+  "owner": {
+    "name": "Coferlandia"
+  },
   "plugins": [
     {
       "name": "coferlandia-skills",
       "source": "./",
-      "description": "Coferlandia's skills: software-dev control process, documentation cataloging, scientific fact-checking, and skill-usage discipline."
+      "description": "Planning, architecture, development, orchestration, durable knowledge, developer documentation, evidence analysis, and skill-system governance."
     }
   ]
 }
