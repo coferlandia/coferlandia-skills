@@ -77,3 +77,11 @@ bindings but generation must report whether the selected platform pack implement
 The validator rejects state-bearing keys at any depth, including current/effective/last-seen values,
 per-environment value maps, snapshots, and secret values. Defaults may be documented only as
 native-authority references; a copied default cannot become operational authority.
+
+## Change-plan integrity
+
+`prepare-change` emits a contract fingerprint, live-state fingerprint, and deterministic plan hash.
+`apply-plan` requires the independently returned hash through `--expect-hash`, rejects modified or
+stale plans, revalidates every field/value against the current contract, and rolls standard native
+artifacts back when a write or post-write verification fails. Contract-native paths must remain
+inside the target repository root.

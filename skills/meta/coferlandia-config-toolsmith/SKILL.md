@@ -18,7 +18,7 @@ metadata:
   version: "1.0.0"
   category: meta
   status: active
-  tested: "2026-08-02 - activation, contract invariants, candidate lifecycle, deterministic documentation, Python facade generation, native-store mutation, stale-plan rejection, and cross-skill contract tests executed with unittest."
+  tested: "2026-08-03 - activation, contract invariants, candidate regeneration lifecycle, deterministic documentation, wizard fallback, JSON flag compatibility, repository-confined native paths, transactional native-store mutation, plan hash/state rejection, and cross-skill contract tests executed with unittest."
 ---
 
 ## Context
@@ -169,8 +169,19 @@ python skills/meta/coferlandia-config-toolsmith/scripts/coferlandia-config-tools
 ```
 
 Approve, reject, defer, or mark intentionally unmanaged only with explicit authority. Approval
-checks the stored source fingerprint, promotes the approved field into the contract, appends a
-decision, and requires regeneration. A stale candidate returns a failure and must be re-analyzed.
+checks the stored source fingerprint, promotes the approved field into the contract, regenerates the
+facade and documentation from that contract, validates immediate drift, appends a decision, and only
+then marks the candidate implemented. A stale candidate returns a failure and must be re-analyzed.
+
+```bash
+python skills/meta/coferlandia-config-toolsmith/scripts/coferlandia-config-toolsmith-cli.py \
+  candidates approve <candidate-id> \
+  --candidates .coferlandia/config-toolsmith/candidates.yaml \
+  --contract .coferlandia/config-toolsmith/contract.yaml \
+  --decisions .coferlandia/config-toolsmith/decisions.yaml \
+  --expected-fingerprint <sha256> --target-root <repo-root> \
+  --output-dir docs/configuration --platform auto --json
+```
 
 ### 7. Test behavior and native parity
 
@@ -220,13 +231,14 @@ The generated facade must expose semantic equivalents of:
 <app> config coverage
 <app> config agent-context --all
 <app> config prepare-change ...
-<app> config apply-plan ...
+<app> config apply-plan --plan-file <plan> --expect-hash <sha256> --confirm
 ```
 
 Conditional capabilities include `change`, `activate`, `rollback`, and `secret set --stdin`.
 All operational commands use stable structured output. Mutations require plan/dry-run semantics,
-explicit confirmation, state revalidation, atomic native writes where applicable, secret redaction,
-and post-change validation.
+explicit confirmation, plan-hash and state revalidation, repository-confined native paths,
+transactional rollback across standard writable artifacts, secret redaction, and post-change
+validation.
 
 ## Gotchas
 

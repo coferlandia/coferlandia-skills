@@ -30,9 +30,9 @@ fingerprint. The deterministic CLI then:
 1. verifies the candidate is not stale;
 2. validates the proposed field;
 3. inserts it into the static contract;
-4. appends a decision record;
-5. marks the candidate `implemented` only after successful writes;
-6. requires facade/docs regeneration and validation.
+4. appends a decision record and leaves the candidate `approved` while generation is pending;
+5. regenerates the facade and documentation from the updated contract;
+6. validates the generated surface and marks the candidate `implemented` only after success.
 
 Approval does not migrate or copy the current native value.
 

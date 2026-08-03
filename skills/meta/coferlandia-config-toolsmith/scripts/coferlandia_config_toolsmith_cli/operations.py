@@ -111,7 +111,7 @@ def decide_candidate(
     decisions = load_decisions(decisions_path)
 
     status_by_action = {
-        "approve": "implemented",
+        "approve": "approved",
         "reject": "rejected",
         "defer": "deferred",
         "intentionally-unmanaged": "intentionally_unmanaged",
@@ -178,6 +178,19 @@ def decide_candidate(
         "artifacts": artifacts,
     }
 
+
+
+def mark_candidate_implemented(candidates_path: Path, candidate_id: str) -> dict[str, Any]:
+    ledger = load_candidates(candidates_path)
+    candidate = find_candidate(ledger, candidate_id)
+    if candidate.get("status") != "approved":
+        raise ToolsmithError(
+            f"candidate {candidate_id} cannot be implemented from status {candidate.get('status')}",
+            code=5,
+        )
+    candidate["status"] = "implemented"
+    atomic_write(candidates_path, dump_data(ledger))
+    return candidate
 
 def _field_lines(contract: dict[str, Any]) -> list[str]:
     lines: list[str] = []
@@ -273,11 +286,12 @@ unsupported adapters.
 {command} config coverage
 {command} config agent-context --all
 {command} config prepare-change --set <key>=<value> --output <plan>
-{command} config apply-plan --plan-file <plan> --confirm
+{command} config apply-plan --plan-file <plan> --expect-hash <sha256> --confirm
 ```
 
-All operational commands support `--json` where applicable. Diagnostics go to stderr. Mutations
-must reject stale native state and report exact changed native artifacts.
+All operational commands accept `--json` in any position and emit stable JSON. Mutations reject
+contract drift, tampered or stale plans, unsafe native paths, and report exact changed artifacts and
+rollback outcomes.
 """
     field_reference = header + "# Configuration Field Reference\n\n" + "\n".join(_field_lines(contract))
     intent_sections: list[str] = [header + f"# Configuration Intent Catalog — {app['name']}\n"]
@@ -295,7 +309,7 @@ must reject stale native state and report exact changed native artifacts.
                 recipe_sections.append(
                     f"User intent: {example.get('request','')}\n\n"
                     f"```bash\n{command} config prepare-change --set {field['key']}={json.dumps(example.get('value'))} --output change-plan.json --json\n"
-                    f"{command} config apply-plan --plan-file change-plan.json --confirm --json\n"
+                    f"{command} config apply-plan --plan-file change-plan.json --expect-hash <plan_hash> --confirm --json\n"
                     f"{command} config validate {module['name']} --json\n```\n"
                 )
     safety = header + f"""# Configuration Safety — {app['name']}

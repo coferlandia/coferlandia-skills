@@ -16,6 +16,7 @@ from .operations import (
     generate_facade,
     inspect_contract,
     load_candidates,
+    mark_candidate_implemented,
     self_check,
 )
 
@@ -76,6 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--decisions", required=True, type=Path)
         sub.add_argument("--expected-fingerprint")
         sub.add_argument("--dry-run", action="store_true")
+        if action == "approve":
+            sub.add_argument("--target-root", required=True, type=Path)
+            sub.add_argument("--output-dir", required=True, type=Path)
+            sub.add_argument(
+                "--platform", choices=("auto", "python", "dotnet", "fallback-python"), default="auto"
+            )
 
     docs = commands.add_parser("docs")
     docs_commands = docs.add_subparsers(dest="docs_command", required=True)
@@ -167,11 +174,24 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             expected_fingerprint=args.expected_fingerprint,
             dry_run=args.dry_run,
         )
+        if args.candidate_command == "approve" and not args.dry_run:
+            contract, warnings = require_valid_contract(args.contract)
+            facade = generate_facade(contract, args.target_root, args.platform, dry_run=False)
+            docs = generate_docs(contract, args.output_dir, dry_run=False)
+            drift = check_drift(contract, args.output_dir)
+            if not drift["clean"]:
+                raise ToolsmithError("generated documentation drifted immediately after approval", code=3, details=drift["drift"])
+            mark_candidate_implemented(args.candidates, args.candidate_id)
+            result["status"] = "implemented"
+            result["regenerated"] = {"facade": facade, "docs": docs, "drift": drift}
+            result["artifacts"].extend(facade["artifacts"] + docs["artifacts"])
+            result["warnings"] = warnings
         return envelope(
             f"candidates.{args.candidate_command}",
-            changed=result["contract_changed"] and not args.dry_run,
+            changed=(result["contract_changed"] or args.candidate_command == "approve") and not args.dry_run,
             result=result,
             artifacts=result["artifacts"],
+            warnings=result.get("warnings", []),
         ), 0
     if args.command == "docs":
         contract, warnings = require_valid_contract(args.contract)
@@ -209,7 +229,9 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
-    args = parser.parse_args(argv)
+    values = list(sys.argv[1:] if argv is None else argv)
+    values = [value for value in values if value != "--json"]
+    args = parser.parse_args(values)
     try:
         payload, code = run(args)
     except ToolsmithError as exc:

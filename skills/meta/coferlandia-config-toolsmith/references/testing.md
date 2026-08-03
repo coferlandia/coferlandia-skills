@@ -11,7 +11,7 @@
 ## Candidate tests
 
 - list/show are read-only;
-- approve promotes exactly one field and appends one decision;
+- approve promotes exactly one field, regenerates facade/docs, validates drift, and only then marks implemented;
 - stale fingerprint rejects approval;
 - reject/defer/intentionally-unmanaged preserve the contract;
 - dry-run changes no file;
@@ -24,8 +24,8 @@
 - every generated file has a generator marker;
 - generated docs cover every managed field;
 - generated Python facade reads live native values;
-- dotenv/JSON writes are atomic and preserve unrelated content;
-- plans reject changed native state;
+- dotenv/JSON writes are atomic, repository-confined, preserve unrelated content, verify unset/secret operations, and roll back failed multi-artifact application;
+- plans reject changed native state, contract drift, duplicate keys, and tampered plan hashes;
 - secret output is always redacted;
 - no runtime configuration store is created.
 
