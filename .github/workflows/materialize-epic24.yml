@@ -1,0 +1,71 @@
+name: Materialize Epic 24
+
+on:
+  push:
+    branches: [epic-24-config-tooling]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: ${{ hashFiles('.agent/epic24.payload.*') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract reviewed implementation
+        shell: bash
+        run: |
+          cat .agent/epic24.payload.* | base64 --decode > /tmp/epic24.tar.xz
+          tar -xJf /tmp/epic24.tar.xz
+          find skills/meta/coferlandia-config-toolsmith skills/ops/coferlandia-config-devops -type d -name __pycache__ -prune -exec rm -rf {} +
+          find skills/meta/coferlandia-config-toolsmith skills/ops/coferlandia-config-devops -type f -name '*.pyc' -delete
+          rm -f .agent/epic24.payload.*
+          rmdir .agent 2>/dev/null || true
+          rm -f .github/workflows/materialize-epic24.yml
+
+      - name: Integrate inventory and CI
+        shell: python
+        run: |
+          from pathlib import Path
+
+          index = Path('skills/INDEX.md')
+          text = index.read_text(encoding='utf-8')
+          meta_anchor = '| [coferlandia-skill-toolsmith](./meta/coferlandia-skill-toolsmith/) | Explicit-invocation-only skill that analyzes a target skill, consolidates its deterministic behavior behind one unified Python CLI (scripts/<name>-cli.py), and rewires the skill to use it | active |\n'
+          meta_row = '| [coferlandia-config-toolsmith](./meta/coferlandia-config-toolsmith/) | Explicitly builds a standardized, agent-operable configuration CLI and static contract over a project’s existing native configuration system without creating a shadow store | active |\n'
+          if meta_row not in text:
+              text = text.replace(meta_anchor, meta_anchor + meta_row)
+          ops_anchor = '| [project-orchestrator](./ops/project-orchestrator/) | Execute direct plans or Analyst DAGs after one-time GitHub/filesystem initialization, using a frozen local snapshot, immutable reviews, final PR traceability, and explicit integration | active |\n'
+          ops_row = '| [coferlandia-config-devops](./ops/coferlandia-config-devops/) | Operate a Toolsmith-prepared configuration facade from natural-language intent in direct Execute Mode or control-tower Guide Mode | active |\n'
+          if ops_row not in text:
+              text = text.replace(ops_anchor, ops_anchor + ops_row)
+          text = text.replace('*Last updated: 2026-08-01*', '*Last updated: 2026-08-03*')
+          index.write_text(text, encoding='utf-8')
+
+          ci = Path('.github/workflows/ci.yml')
+          ci_text = ci.read_text(encoding='utf-8')
+          anchor = '      - name: Validate all public skills\n        run: python _protocol/scripts/validate_skill.py --all skills\n'
+          steps = '''      - name: Config Toolsmith tests\n        run: python -m unittest discover -s skills/meta/coferlandia-config-toolsmith/tests -p "test_*.py"\n\n      - name: Config DevOps tests\n        run: python -m unittest discover -s skills/ops/coferlandia-config-devops/tests -p "test_*.py"\n\n'''
+          if 'Config Toolsmith tests' not in ci_text:
+              ci_text = ci_text.replace(anchor, steps + anchor)
+          ci.write_text(ci_text, encoding='utf-8')
+
+      - name: Validate implementation
+        shell: bash
+        run: |
+          python -m unittest discover -s skills/meta/coferlandia-config-toolsmith/tests -p 'test_*.py'
+          python -m unittest discover -s skills/ops/coferlandia-config-devops/tests -p 'test_*.py'
+          python _protocol/scripts/validate_skill.py skills/meta/coferlandia-config-toolsmith
+          python _protocol/scripts/validate_skill.py skills/ops/coferlandia-config-devops
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name 'coferlandia-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'skill: add agent-operable configuration tooling'
+          git push origin HEAD:epic-24-config-tooling
