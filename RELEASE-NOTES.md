@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## v2.3.0 (2026-08-03)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-config-toolsmith | new | 1.0.0 | Adds an explicit agentic-plus-deterministic process that discovers a project's existing configuration, builds a static contract and standardized native-or-fallback CLI, records ambiguous candidates, generates agent documentation, and preserves the project's native stores as the only runtime source of truth. |
+| coferlandia-config-devops | new | 1.0.0 | Adds Config Operator Execute Mode and control-tower Guide Mode for converting natural-language configuration intent into exact prepare/apply/activate/rollback operations through the Toolsmith-generated interface. |
+
+### Repository and protocol
+
+- Added configuration operations as a first-class skill family while preserving the boundary between repository preparation and day-to-day operation.
+- Added permanent Linux and Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
+- Updated the canonical skill index and human guide with the ownership, composition, and explicit-invocation rules for the new skills.
+- Kept deterministic retrieval non-authoritative: agents must consult the complete generated handbook before concluding that a requested configuration outcome is unsupported.
+
+### Plugin and packaging
+
+- Bumped the installable plugin from v2.2.0 to v2.3.0 for the two additive public skills.
+- Refreshed plugin and marketplace descriptions and keywords to include agent-operable configuration and DevOps workflows.
+- Updated the README managed release block and verified that packaging excludes repository-local and transient artifacts.
+
+### Migration or compatibility
+
+- Existing consumers may update normally; this is an additive compatible release.
+- `coferlandia-config-toolsmith` never migrates or replaces a project's configuration architecture implicitly. Generated contracts contain capabilities and bindings, not current or effective values.
+- Projects must run Config Toolsmith explicitly before Config DevOps can operate them; Config DevOps consumes the generated contract and CLI and does not invent missing adapters or fields.
+
 ## v2.2.0 (2026-08-01)
 
 ### Skills
@@ -213,7 +241,7 @@
 ### Protocol
 
 - `HOW_TO_CREATE_SKILLS.md` — added a decision tree for per-skill vs. repo-wide version bumps; linked `superpowers:writing-skills` in Step 3; added "adding a skill" checklist.
-- `VERSIONING.md` — added per-skill and repo-wide versioning examples, dirty-worktree note, release commit checklist.
+- `VERSIONING.md` — added per-skill vs. repo-wide versioning examples, dirty-worktree note, release commit checklist.
 - `CHANGELOG.md` — added historical entry guidance, documented the initial repo-wide release history as v1.0.0, added same-change-line multiple skill version bump guidance.
 - `SKILL_TEMPLATE.md` — added `{category}` and `{status}` placeholders to metadata; added error-handling and gotchas guidance; clarified external tools in references section.
 
