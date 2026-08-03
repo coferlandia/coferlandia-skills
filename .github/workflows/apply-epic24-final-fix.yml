@@ -3,6 +3,8 @@ name: Apply Epic 24 final correction
 on:
   push:
     branches: [epic-24-config-tooling]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
