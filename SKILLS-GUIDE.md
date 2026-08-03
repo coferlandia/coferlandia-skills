@@ -19,6 +19,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical inventory for skill 
 | [`skill-repository-versioning`](./skills/meta/skill-repository-versioning/) | A skill-repository change is being prepared for commit or release. | Reconciled index, skill versions, repository version, and release metadata. | Does not design or validate the skill's domain behavior. |
 | [`project-skill-miner`](./skills/meta/project-skill-miner/) | A project contains recurring operational procedures worth preserving as local skills. | Evidence-based skill proposals and approved project-local skills. | Rejects speculative or obsolete procedures unsupported by current project evidence. |
 | [`coferlandia-skill-toolsmith`](./skills/meta/coferlandia-skill-toolsmith/) | A skill should become more deterministic, economical, and automation-friendly. | One unified Python CLI plus a skill contract rewired around it. | Explicit invocation only; semantic judgment remains with the model. |
+| [`coferlandia-config-toolsmith`](./skills/meta/coferlandia-config-toolsmith/) | A project's existing configuration should become safe and economical for agents and developers to operate through one standard interface. | A native or Python-fallback configuration CLI, static contract, adapters, candidate ledger, generated agent handbook, and conformance tests. | Explicit invocation only; it adapts existing native stores and never creates a shadow configuration source. |
 
 ## Project Knowledge and Architecture
 
@@ -35,6 +36,12 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical inventory for skill 
 | [`software-development`](./skills/engineering/software-development/) | Code work needs analysis, implementation, debugging, executable-plan execution, fixes, or independent review. | Bounded role execution through Analyst, Developer, Debugger, Coding Agent, Fix Agent, and Code Reviewer. | Does not own portfolio planning or orchestrated Git lifecycle operations. |
 | [`project-orchestrator`](./skills/ops/project-orchestrator/) | An approved direct plan or Analyst task graph must run through a controlled delivery lifecycle. | Contract materialization, claims, Git/worktrees, commits, reviews, traceability, final PR, explicit integration, and cleanup. | Executes approved contracts; it does not silently re-plan or redesign them. |
 
+## Configuration Operations
+
+| Skill | Use when | Delivers | Boundary |
+|---|---|---|---|
+| [`coferlandia-config-devops`](./skills/ops/coferlandia-config-devops/) | A user describes a configuration outcome in natural language after Config Toolsmith has prepared the repository. | Config Operator Execute Mode for direct CLI operation and control-tower Guide Mode for exact remote instructions, with plans, hashes, validation, activation, and rollback. | Consumes the generated contract and CLI; it does not edit native files directly, invent fields, promote candidates, or change adapters. |
+
 ## Evidence and Critical Reasoning
 
 | Skill | Use when | Delivers | Boundary |
@@ -47,6 +54,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical inventory for skill 
 Controlled delivery:     Project Manager -> optional Architect -> Analyst/direct plan -> Orchestrator -> development roles
 Knowledge recovery:      Archivist -> optional Project Skill Miner
 Skill mechanization:     Existing skill -> Skill Toolsmith -> Skill Repository Versioning
+Configuration tooling:   Config Toolsmith -> Config DevOps
 ```
 
 Every component remains independently invokable. Composition is required only when responsibility crosses skill boundaries.
