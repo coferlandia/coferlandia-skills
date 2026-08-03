@@ -18,7 +18,18 @@ jobs:
           fetch-depth: 0
           ref: epic-24-config-tooling
 
+      - name: Detect transport payload
+        id: payload
+        shell: bash
+        run: |
+          if compgen -G '.agent/epic24.valid.*' > /dev/null; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Verify and extract reviewed payload
+        if: steps.payload.outputs.present == 'true'
         shell: python
         run: |
           import base64
@@ -41,8 +52,6 @@ jobs:
           if paths != expected_names:
               raise SystemExit(f'unexpected payload files: {paths}')
           encoded = ''.join(pathlib.Path(path).read_text(encoding='utf-8') for path in paths)
-          lengths = {path: pathlib.Path(path).stat().st_size for path in paths}
-          print({'lengths': lengths, 'total': len(encoded)})
           if len(encoded) != 65328:
               raise SystemExit(f'payload length mismatch: {len(encoded)}')
           digest = hashlib.sha256(encoded.encode('ascii')).hexdigest()
@@ -65,7 +74,8 @@ jobs:
                   raise SystemExit(f'payload missing required files: {sorted(missing)}')
               archive.extractall('.', filter='data')
 
-      - name: Integrate inventory and CI
+      - name: Integrate skill inventory
+        if: steps.payload.outputs.present == 'true'
         shell: python
         run: |
           from pathlib import Path
@@ -87,26 +97,17 @@ jobs:
           text = text.replace('*Last updated: 2026-08-01*', '*Last updated: 2026-08-03*')
           index.write_text(text, encoding='utf-8')
 
-          ci = Path('.github/workflows/ci.yml')
-          ci_text = ci.read_text(encoding='utf-8')
-          anchor = '      - name: Validate all public skills\n        run: python _protocol/scripts/validate_skill.py --all skills\n'
-          addition = '''      - name: Config Toolsmith tests\n        run: python -m unittest discover -s skills/meta/coferlandia-config-toolsmith/tests -p "test_*.py"\n\n      - name: Config DevOps tests\n        run: python -m unittest discover -s skills/ops/coferlandia-config-devops/tests -p "test_*.py"\n\n'''
-          if 'Config Toolsmith tests' not in ci_text:
-              if anchor not in ci_text:
-                  raise SystemExit('CI insertion anchor missing')
-              ci_text = ci_text.replace(anchor, addition + anchor)
-          ci.write_text(ci_text, encoding='utf-8')
-
       - name: Remove transport artifacts
+        if: steps.payload.outputs.present == 'true'
         shell: bash
         run: |
           find skills/meta/coferlandia-config-toolsmith skills/ops/coferlandia-config-devops -type d -name __pycache__ -prune -exec rm -rf {} +
           find skills/meta/coferlandia-config-toolsmith skills/ops/coferlandia-config-devops -type f -name '*.pyc' -delete
           rm -f .agent/epic24.valid.*
           rmdir .agent 2>/dev/null || true
-          rm -f .github/workflows/materialize-epic24-final.yml
 
       - name: Validate implementation
+        if: steps.payload.outputs.present == 'true'
         shell: bash
         run: |
           python -m unittest discover -s skills/meta/coferlandia-config-toolsmith/tests -p 'test_*.py'
@@ -115,10 +116,11 @@ jobs:
           python _protocol/scripts/validate_skill.py skills/ops/coferlandia-config-devops
 
       - name: Commit implementation
+        if: steps.payload.outputs.present == 'true'
         shell: bash
         run: |
           git config user.name 'coferlandia-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add -A
+          git add -A -- ':!/.github/workflows'
           git commit -m 'skill: add agent-operable configuration tooling'
           git push origin HEAD:epic-24-config-tooling
