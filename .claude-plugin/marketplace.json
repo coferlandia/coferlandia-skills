@@ -1,6 +1,6 @@
 {
   "name": "coferlandia",
-  "description": "Operational Agent Skills for supervised, traceable software and knowledge workflows.",
+  "description": "Operational Agent Skills for supervised, traceable software, configuration, and knowledge workflows.",
   "owner": {
     "name": "Coferlandia"
   },
@@ -8,7 +8,7 @@
     {
       "name": "coferlandia-skills",
       "source": "./",
-      "description": "Planning, architecture, development, orchestration, durable knowledge, developer documentation, evidence analysis, and skill-system governance."
+      "description": "Planning, architecture, development, orchestration, agent-operable configuration, durable knowledge, developer documentation, evidence analysis, and skill-system governance."
     }
   ]
 }
