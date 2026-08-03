@@ -91,8 +91,8 @@ AGENTS.md        Entry point for agents
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-config-toolsmith | 1.0.0 | Adds an explicit agentic-plus-deterministic process that builds a standardized configuration CLI, static contract, native adapters, candidate workflow, and agent documentation without creating a shadow configuration store. |
-| coferlandia-config-devops | 1.0.0 | Adds Config Operator Execute and control-tower Guide modes for translating natural-language configuration intent into exact, verified CLI operations. |
+| coferlandia-config-toolsmith | 1.0.0 | Adds an explicit agentic-plus-deterministic process that discovers a project's existing configuration, builds a static contract and standardized native-or-fallback CLI, records ambiguous candidates, generates agent documentation, and preserves the project's native stores as the only runtime source of truth. |
+| coferlandia-config-devops | 1.0.0 | Adds Config Operator Execute Mode and control-tower Guide Mode for converting natural-language configuration intent into exact prepare/apply/activate/rollback operations through the Toolsmith-generated interface. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
