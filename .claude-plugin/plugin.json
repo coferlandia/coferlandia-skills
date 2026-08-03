@@ -1,7 +1,7 @@
 {
   "name": "coferlandia-skills",
-  "version": "2.2.0",
-  "description": "Coferlandia Agent Skills for supervised planning, architecture, software delivery, durable project knowledge, developer documentation, evidence-based analysis, and deterministic repository workflows.",
+  "version": "2.3.0",
+  "description": "Coferlandia Agent Skills for supervised planning, architecture, software delivery, configuration operations, durable project knowledge, developer documentation, evidence-based analysis, and deterministic repository workflows.",
   "author": {
     "name": "Coferlandia"
   },
@@ -14,6 +14,8 @@
     "software-development",
     "project-management",
     "architecture",
+    "configuration",
+    "devops",
     "documentation",
     "fact-checking",
     "skill-authoring"

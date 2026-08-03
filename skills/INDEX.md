@@ -22,6 +22,7 @@ Skills about skills and about the repository itself: creating, auditing, structu
 | [skill-repository-versioning](./meta/skill-repository-versioning/) | Pre-commit checklist for a skill repository: sync the skill index, bump per-skill vs. repo-wide release versions correctly | active |
 | [project-skill-miner](./meta/project-skill-miner/) | Extract current operational recipes from durable project knowledge plus GitHub development evidence and convert approved ones into project-local agent skills | active |
 | [coferlandia-skill-toolsmith](./meta/coferlandia-skill-toolsmith/) | Explicit-invocation-only skill that analyzes a target skill, consolidates its deterministic behavior behind one unified Python CLI (scripts/<name>-cli.py), and rewires the skill to use it | active |
+| [coferlandia-config-toolsmith](./meta/coferlandia-config-toolsmith/) | Explicitly builds a standardized, agent-operable configuration CLI and static contract over a project’s existing native configuration system without creating a shadow store | active |
 
 ## Engineering
 
@@ -66,7 +67,8 @@ Operations, automation, incidents, standups.
 |-------|-------------|--------|
 | [coferlandia-project-manager](./ops/coferlandia-project-manager/) | Design Epics, resolve execution strategy, and emit one complete GitHub or local planning representation for orchestrator initialization | active |
 | [project-orchestrator](./ops/project-orchestrator/) | Execute direct plans or Analyst DAGs after one-time GitHub/filesystem initialization, using a frozen local snapshot, immutable reviews, final PR traceability, and explicit integration | active |
+| [coferlandia-config-devops](./ops/coferlandia-config-devops/) | Operate a Toolsmith-prepared configuration facade from natural-language intent in direct Execute Mode or control-tower Guide Mode | active |
 
 ---
 
-*Last updated: 2026-08-01*
+*Last updated: 2026-08-03*

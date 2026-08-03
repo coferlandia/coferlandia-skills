@@ -30,6 +30,7 @@ It is probably not the right fit when you only need short prompt snippets, expec
 | **Skill System** | Discover, create, version, mine, and mechanize skills. |
 | **Project Knowledge and Architecture** | Preserve durable project knowledge and govern material architectural decisions across projects. |
 | **Software Delivery** | Turn an initiative into an executable contract, implement it, review it, and integrate it under explicit control. |
+| **Configuration Operations** | Standardize existing project configuration and operate it safely from agent or guided workflows. |
 | **Evidence and Critical Reasoning** | Evaluate claims through explicit evidence, confidence, and source traceability. |
 
 See the [Skills Guide](./SKILLS-GUIDE.md) for the human-oriented catalog, selection guidance, boundaries, and expected outcomes.
@@ -86,17 +87,12 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.2.0 — 2026-08-01**
+**v2.3.0 — 2026-08-03**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| project-evangelist | 1.0 | Adds progressive, evidence-based developer documentation with verified technology and architecture summaries, reading paths, repository maps, and contributor guidance. |
-| the-architect | 1.0.0 | Adds cross-project architecture memory, Architecture Gates, evidence-based assessments, reusable-component governance, and a deterministic Markdown/Obsidian CLI. |
-| coferlandia-project-manager | 0.8.0 | Adds Epic Planner execution strategies and Architecture Gate selection before material development work. |
-| software-development | 4.6 | Adds the broad-context Analyst role, executable low-context task contracts, and Architecture Gate enforcement before decomposition or implementation. |
-| project-orchestrator | 2.3 | Adds Epic/task execution, one-time contract materialization, immutable review lifecycles, final integration traceability, and durable concurrent work-item claims. |
-| project-documentation-archivist | 3.1.0 | Clarifies in-project durable-knowledge ownership while the Architect owns cross-project architecture and component evidence. |
-| skill-repository-versioning | 1.2.0 | Defers to stronger repository-local release-maintenance workflows instead of running a competing generic protocol. |
+| coferlandia-config-toolsmith | 1.0.0 | Adds an explicit agentic-plus-deterministic process that discovers a project's existing configuration, builds a static contract and standardized native-or-fallback CLI, records ambiguous candidates, generates agent documentation, and preserves the project's native stores as the only runtime source of truth. |
+| coferlandia-config-devops | 1.0.0 | Adds Config Operator Execute Mode and control-tower Guide Mode for converting natural-language configuration intent into exact prepare/apply/activate/rollback operations through the Toolsmith-generated interface. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

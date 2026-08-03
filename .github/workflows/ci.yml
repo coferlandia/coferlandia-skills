@@ -50,6 +50,12 @@ jobs:
       - name: Release maintainer activation and CLI tests
         run: python -m unittest discover -s .agents/skills/coferlandia-release-maintainer/tests -p "test_*.py"
 
+      - name: Config Toolsmith tests
+        run: python -m unittest discover -s skills/meta/coferlandia-config-toolsmith/tests -p "test_*.py"
+
+      - name: Config DevOps tests
+        run: python -m unittest discover -s skills/ops/coferlandia-config-devops/tests -p "test_*.py"
+
       - name: Validate all public skills
         run: python _protocol/scripts/validate_skill.py --all skills
 
