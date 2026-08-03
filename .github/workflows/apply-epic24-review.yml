@@ -41,7 +41,7 @@ jobs:
           if len(encoded) != 27592:
               raise SystemExit(f'review payload length mismatch: {len(encoded)}')
           digest = hashlib.sha256(encoded.encode('ascii')).hexdigest()
-          if digest != '218409597a8e8a8250c8ce236090f24810397d698b2010df690444e15d04d297':
+          if digest != '4dafd6b96d5608c62dc13857ede86b7f9f36a222cca0fddefa8acb0a7e84719a':
               raise SystemExit(f'review payload hash mismatch: {digest}')
           data = base64.b64decode(encoded, validate=True)
           if len(data) != 20692 or not data.startswith(b'\xfd7zXZ\x00'):
