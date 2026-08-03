@@ -3,14 +3,13 @@ name: Apply Epic 24 final correction
 on:
   push:
     branches: [epic-24-config-tooling]
-  pull_request:
-    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   apply-fix:
+    if: github.event.head_commit.message == 'chore: trigger final epic 24 correction v2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,21 +17,14 @@ jobs:
           fetch-depth: 0
           ref: epic-24-config-tooling
 
-      - name: Detect correction trigger
-        id: trigger
-        shell: bash
-        run: |
-          if [[ -f .agent/epic24-final-fix.trigger ]]; then
-            echo 'present=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'present=false' >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Apply reviewed correction
-        if: steps.trigger.outputs.present == 'true'
         shell: python
         run: |
           from pathlib import Path
+
+          trigger = Path('.agent/epic24-final-fix.trigger')
+          if not trigger.exists():
+              raise SystemExit('final correction trigger missing')
 
           template = Path('skills/meta/coferlandia-config-toolsmith/templates/python-config-cli.py.tmpl')
           text = template.read_text(encoding='utf-8')
@@ -83,7 +75,6 @@ jobs:
           changelog.write_text(changelog_text, encoding='utf-8')
 
       - name: Remove trigger and validate
-        if: steps.trigger.outputs.present == 'true'
         shell: bash
         run: |
           rm -f .agent/epic24-final-fix.trigger
@@ -94,7 +85,6 @@ jobs:
           python _protocol/scripts/validate_skill.py skills/ops/coferlandia-config-devops
 
       - name: Commit correction
-        if: steps.trigger.outputs.present == 'true'
         shell: bash
         run: |
           git config user.name 'coferlandia-bot'
