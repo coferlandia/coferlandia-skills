@@ -110,6 +110,24 @@ def _matches(gate: dict[str, Any], observation: dict[str, Any], sha: str) -> boo
     return configured_app is None or observation.get("app") == configured_app
 
 
+def _latest_authoritative(matches: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, str | None]:
+    if not matches:
+        return None, "missing"
+    if len(matches) == 1:
+        return matches[0], None
+    ranked: list[tuple[int, dict[str, Any]]] = []
+    for item in matches:
+        raw_id = item.get("id")
+        try:
+            ranked.append((int(raw_id), item))
+        except (TypeError, ValueError):
+            return None, "ambiguous"
+    ranked.sort(key=lambda pair: pair[0], reverse=True)
+    if len(ranked) > 1 and ranked[0][0] == ranked[1][0]:
+        return None, "ambiguous"
+    return ranked[0][1], None
+
+
 def evaluate_required_gates(
     required_gates: Iterable[dict[str, Any]],
     observations: Iterable[dict[str, Any]],
@@ -122,23 +140,23 @@ def evaluate_required_gates(
     for gate in gates:
         matches = [item for item in obs if _matches(gate, item, candidate_sha)]
         gate_id = str(gate.get("id"))
-        if len(matches) != 1:
-            details.append({"id": gate_id, "decision": FAILED, "reason": "missing" if not matches else "ambiguous", "matches": len(matches)})
+        item, match_error = _latest_authoritative(matches)
+        if item is None:
+            details.append({"id": gate_id, "decision": FAILED, "reason": match_error, "matches": len(matches)})
             aggregate = FAILED
             continue
-        item = matches[0]
         status = str(item.get("status") or "").lower()
         conclusion = item.get("conclusion")
         conclusion = str(conclusion).lower() if conclusion is not None else None
         if status in _PENDING_STATUSES:
-            details.append({"id": gate_id, "decision": PENDING, "status": status, "conclusion": conclusion})
+            details.append({"id": gate_id, "decision": PENDING, "status": status, "conclusion": conclusion, "observation_id": item.get("id")})
             if aggregate != FAILED:
                 aggregate = PENDING
             continue
         allowed = {str(value).lower() for value in gate.get("allowed_conclusions", ["success"])}
         if status == "completed" and conclusion in allowed:
-            details.append({"id": gate_id, "decision": GREEN, "status": status, "conclusion": conclusion})
+            details.append({"id": gate_id, "decision": GREEN, "status": status, "conclusion": conclusion, "observation_id": item.get("id")})
             continue
-        details.append({"id": gate_id, "decision": FAILED, "status": status, "conclusion": conclusion})
+        details.append({"id": gate_id, "decision": FAILED, "status": status, "conclusion": conclusion, "observation_id": item.get("id")})
         aggregate = FAILED
     return GateEvaluation(aggregate, tuple(details))
