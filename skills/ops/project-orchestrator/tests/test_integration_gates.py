@@ -7,31 +7,46 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
 
-from project_orchestrator_cli.engine import DEFAULT_CONFIG, validate_config
-from project_orchestrator_cli.integration_gates import FAILED, GREEN, PENDING, evaluate_required_gates
+from project_orchestrator_cli.integration_gates import (
+    FAILED,
+    GREEN,
+    PENDING,
+    evaluate_required_gates,
+    integration_github_config,
+    validate_integration_config,
+)
+from project_orchestrator_cli.state import TRANSITIONS
 
 
 class IntegrationGateConfigTests(unittest.TestCase):
-    def test_default_config_is_generic_and_contains_integration_gate_policy(self) -> None:
-        github = DEFAULT_CONFIG["integration"]["github"]
+    def test_missing_integration_config_is_backward_compatible_and_generic(self) -> None:
+        github = integration_github_config({})
         self.assertEqual(github["required_gates"], [])
-        self.assertGreater(github["wait_seconds"], 0)
-        self.assertNotIn("Fast CI", repr(DEFAULT_CONFIG))
+        self.assertEqual(github["wait_seconds"], 30)
+        self.assertIsNone(github["max_wait_cycles"])
+        self.assertNotIn("Fast CI", repr(github))
 
     def test_validate_config_rejects_duplicate_gate_ids(self) -> None:
-        config = {**DEFAULT_CONFIG, "integration": {"github": {"required_gates": [
+        config = {"integration": {"github": {"required_gates": [
             {"id": "ci", "kind": "workflow", "workflow": ".github/workflows/ci.yml", "allowed_conclusions": ["success"]},
             {"id": "ci", "kind": "check_run", "name": "Quality", "allowed_conclusions": ["success"]},
         ], "wait_seconds": 30, "max_wait_cycles": None}}}
         with self.assertRaisesRegex(Exception, "duplicate integration gate id"):
-            validate_config(config)
+            validate_integration_config(config)
 
     def test_validate_config_rejects_unsupported_gate_kind(self) -> None:
-        config = {**DEFAULT_CONFIG, "integration": {"github": {"required_gates": [
+        config = {"integration": {"github": {"required_gates": [
             {"id": "ci", "kind": "magic", "name": "CI", "allowed_conclusions": ["success"]},
         ], "wait_seconds": 30, "max_wait_cycles": None}}}
         with self.assertRaisesRegex(Exception, "unsupported integration gate kind"):
-            validate_config(config)
+            validate_integration_config(config)
+
+    def test_integration_states_are_recoverable_without_provider_wait_semantics(self) -> None:
+        self.assertIn("WAITING_FOR_INTEGRATION_CHECKS", TRANSITIONS["PR_OPEN_AWAITING_MERGE_APPROVAL"])
+        self.assertIn("INTEGRATION_CHECKS_FAILED", TRANSITIONS["PR_OPEN_AWAITING_MERGE_APPROVAL"])
+        self.assertIn("INTEGRATING", TRANSITIONS["WAITING_FOR_INTEGRATION_CHECKS"])
+        self.assertIn("INTEGRATING", TRANSITIONS["INTEGRATION_CHECKS_FAILED"])
+        self.assertNotIn("WAITING_FOR_PROVIDER", TRANSITIONS["WAITING_FOR_INTEGRATION_CHECKS"])
 
 
 class IntegrationGateEvaluationTests(unittest.TestCase):
