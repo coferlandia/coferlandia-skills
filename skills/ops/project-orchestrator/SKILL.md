@@ -11,7 +11,7 @@ compatibility: >
   (`gh`); local `--spec` and `--manifest` execution do not.
 metadata:
   author: coferlandia
-  version: "2.3"
+  version: "2.4"
   category: ops
   status: active
   tested: "2026-07-31 - Durable Epic/task claims, duplicate-run exclusion, cancellation release, and In Progress Project projection covered."

@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v2.4.0 (2026-09-03)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| project-orchestrator | 2.3 | 2.4 | Adds fail-closed exact-candidate GitHub CI gates, durable integration-check states, remote base validation, merge-group awareness, double revalidation, and head-conditional squash merge protection. |
+
+### Repository and protocol
+
+- Adds deterministic exact-candidate integration-gate policy and regression coverage for project-orchestrator.
+
+### Plugin and packaging
+
+- Bumps the installable plugin for the additive project-orchestrator integration-safety behavior.
+
+### Migration or compatibility
+
+- Existing repositories remain compatible when integration.github is absent or required_gates is empty. Repositories that need controller-enforced CI may configure workflow or check-run gates explicitly.
+
 ## v2.3.0 (2026-08-03)
 
 ### Skills
