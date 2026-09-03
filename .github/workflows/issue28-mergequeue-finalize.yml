@@ -1,0 +1,42 @@
+name: Issue 28 Merge Queue Finalize
+
+on:
+  push:
+    branches:
+      - agent/28-exact-ci-merge-gate
+    paths:
+      - .agent/issue28-mergequeue-fix.py
+      - .github/workflows/issue28-mergequeue-finalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/28-exact-ci-merge-gate
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python .agent/issue28-mergequeue-fix.py
+      - run: python -m pip install jsonschema
+      - name: Focused orchestrator tests
+        run: python -m unittest discover -s skills/ops/project-orchestrator/tests -p 'test_*.py'
+      - name: Validate project-orchestrator skill
+        run: python _protocol/scripts/validate_skill.py skills/ops/project-orchestrator
+      - name: Commit merge queue authority fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skills/ops/project-orchestrator
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "fix(orchestrator): bind merge-group authority to active queue entry"
+          git push origin HEAD:agent/28-exact-ci-merge-gate
