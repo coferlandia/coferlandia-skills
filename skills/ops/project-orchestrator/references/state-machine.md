@@ -72,3 +72,19 @@ drift is not a runtime state transition because the local snapshot is frozen bef
 The controller persists state before external/Git side effects where needed so `status`, `resume`,
 `retry`, and `integrate` can avoid duplicating completed operations. Invalid transitions and
 provider execution without valid claim ownership are rejected.
+
+## GitHub integration-check states
+
+The GitHub integration path is:
+
+```text
+PR_OPEN_AWAITING_MERGE_APPROVAL
+  -> WAITING_FOR_INTEGRATION_CHECKS
+  -> INTEGRATION_CHECKS_FAILED
+  -> INTEGRATING
+  -> INTEGRATED
+  -> ARCHIVING
+  -> PROJECT_COMPLETED
+```
+
+`WAITING_FOR_INTEGRATION_CHECKS` represents pending or temporarily unavailable authoritative CI evidence and is separate from provider availability. `INTEGRATION_CHECKS_FAILED` represents a missing required gate or a terminal non-allowed conclusion. Both preserve claims and are re-evaluable by a later integration attempt. `INTEGRATING` means review identity, remote base, exact-candidate gates, and the second pre-merge revalidation have all passed and the controller is executing the merge side effect.

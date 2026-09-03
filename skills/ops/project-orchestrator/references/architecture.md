@@ -71,3 +71,9 @@ and releases the task/Epic claims.
 Run state lives at `<git-common-dir>/project-orchestrator/runs/<run-id>/`; active claims live at
 `<git-common-dir>/project-orchestrator/claims/`. Writes are atomic and run events are append-only.
 Execution adapters must use argument arrays, UTF-8, timeouts, redaction, and never `shell=True`.
+
+## Integration gate boundary
+
+Final GitHub integration is intentionally split into three layers: `GitHubService` acquires authoritative GitHub evidence and performs the head-conditional merge; `integration_gates.py` is a pure deterministic policy evaluator with no I/O; `integration.py` owns run-state transitions, double revalidation, and the final merge decision.
+
+The authoritative candidate is the current PR head unless a valid current `merge_group` candidate for that PR contains the current remote base. The controller uses the remote base SHA, not a possibly stale local `main` ref, at this boundary. No semantic worker or model may decide that CI is green.

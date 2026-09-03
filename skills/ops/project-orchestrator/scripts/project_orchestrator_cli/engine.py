@@ -12,6 +12,7 @@ from typing import Any
 
 from .contracts import DependencyError, ValidationError, validate_json_schema
 from .git_service import GitService
+from .integration_gates import validate_integration_config
 from .materialization import materialize_github_epic
 from .providers import ProcessRequest, extract_agent_result, provider
 from .state import RunStore, TERMINAL, atomic_json
@@ -29,6 +30,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "remove_review_worktree_after_review": True,
         "remove_implementation_worktree_after_integration": True,
         "delete_epic_branch_after_integration": True,
+    },
+    "integration": {
+        "github": {
+            "required_gates": [],
+            "wait_seconds": 30,
+            "max_wait_cycles": None,
+        }
     },
     "roles": {
         role: {
@@ -124,12 +132,13 @@ def load_config(repo: Path, requested: str | None = None) -> tuple[Path, dict[st
 def validate_config(value: dict[str, Any]) -> None:
     if value.get("version") != 2:
         raise ValidationError("configuration version must be 2")
-    for key in ("git", "roles", "providers", "retry", "timeouts", "loops", "protocol"):
+    for key in ("git", "integration", "roles", "providers", "retry", "timeouts", "loops", "protocol"):
         if not isinstance(value.get(key), dict):
             raise ValidationError(f"configuration requires object: {key}")
     for role in ("orchestrator", "coding_agent", "completion_verifier", "code_reviewer", "fix_agent"):
         if role not in value["roles"]:
             raise ValidationError(f"configuration requires role: {role}")
+    validate_integration_config(value)
 
 
 def _resolve_manifest(

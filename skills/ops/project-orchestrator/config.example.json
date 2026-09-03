@@ -9,6 +9,28 @@
     "remove_implementation_worktree_after_integration": true,
     "delete_epic_branch_after_integration": true
   },
+  "integration": {
+    "github": {
+      "required_gates": [
+        {
+          "id": "primary-ci",
+          "kind": "workflow",
+          "workflow": ".github/workflows/ci.yml",
+          "allowed_conclusions": ["success"],
+          "events": ["pull_request", "merge_group"]
+        },
+        {
+          "id": "quality-gate",
+          "kind": "check_run",
+          "name": "Quality Gate",
+          "app": "github-actions",
+          "allowed_conclusions": ["success"]
+        }
+      ],
+      "wait_seconds": 30,
+      "max_wait_cycles": null
+    }
+  },
   "roles": {
     "orchestrator": {"primary": {"client": "codex", "model": "gpt-5.4-mini", "reasoning": "medium"}, "fallbacks": [{"client": "opencode", "model": "opencode/big-pickle", "variant": "high"}]},
     "coding_agent": {"primary": {"client": "codex", "model": "gpt-5.4-mini", "reasoning": "medium"}, "fallbacks": [{"client": "opencode", "model": "opencode/big-pickle", "variant": "high"}]},

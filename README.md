@@ -87,12 +87,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.3.0 — 2026-08-03**
+**v2.4.0 — 2026-09-03**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-config-toolsmith | 1.0.0 | Adds an explicit agentic-plus-deterministic process that discovers a project's existing configuration, builds a static contract and standardized native-or-fallback CLI, records ambiguous candidates, generates agent documentation, and preserves the project's native stores as the only runtime source of truth. |
-| coferlandia-config-devops | 1.0.0 | Adds Config Operator Execute Mode and control-tower Guide Mode for converting natural-language configuration intent into exact prepare/apply/activate/rollback operations through the Toolsmith-generated interface. |
+| project-orchestrator | 2.4 | Adds fail-closed exact-candidate GitHub CI gates, durable integration-check states, remote base validation, merge-group awareness, double revalidation, and head-conditional squash merge protection. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

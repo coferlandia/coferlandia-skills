@@ -1,5 +1,11 @@
 # Changelog — project-orchestrator
 
+## 2.4 — 2026-09-03
+
+### Changed
+
+- Adds fail-closed exact-candidate GitHub CI gates, durable integration-check states, remote base validation, merge-group awareness, double revalidation, and head-conditional squash merge protection.
+
 ## 2.3 — 2026-07-31
 
 ### Added

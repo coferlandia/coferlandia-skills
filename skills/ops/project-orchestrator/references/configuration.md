@@ -51,3 +51,31 @@ overwrite a later external status change.
 Never put credentials in config. Use native provider/GitHub authentication or environment
 variables. Providers are probed/resolved at run time; an unavailable provider is a fallback/retry
 condition, never a success signal.
+
+## GitHub integration gates
+
+GitHub-backed integration may configure required gates independently of GitHub branch-protection availability:
+
+```json
+{
+  "integration": {
+    "github": {
+      "required_gates": [
+        {
+          "id": "primary-ci",
+          "kind": "workflow",
+          "workflow": ".github/workflows/ci.yml",
+          "allowed_conclusions": ["success"],
+          "events": ["pull_request", "merge_group"]
+        }
+      ],
+      "wait_seconds": 30,
+      "max_wait_cycles": null
+    }
+  }
+}
+```
+
+`workflow` gates match a workflow path or numeric workflow id. `check_run` gates match an exact check name and optional app slug/name. Gate IDs must be unique. `allowed_conclusions` is explicit; `neutral` and `skipped` are not successful unless listed. An absent `integration` section or an empty `required_gates` list is backward-compatible and declares no orchestrator-owned remote CI requirement.
+
+The policy is validated by `validate-config`. Gate observations are evaluated only for the exact integration-candidate SHA and never inferred from local validation, comments, or historical runs.
