@@ -303,6 +303,12 @@ def _persist_wait_and_raise(store: RunStore, *, phase: str, exc: Exception) -> N
     raise ValidationError(f"integration evidence is temporarily unavailable: {exc}") from exc
 
 
+def _block_auth_and_raise(store: RunStore, *, phase: str, exc: DependencyError) -> None:
+    waiting = store.transition("WAITING_FOR_INTEGRATION_CHECKS", {"phase": phase, "reason": str(exc), "decision": PENDING})
+    store.transition("BLOCKED_BY_AUTHENTICATION", {"phase": phase, "reason": str(exc), "previous_state": waiting["state"]})
+    raise exc
+
+
 def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, Any]:
     git = GitService(repo)
     store = RunStore(git.common_dir(), run_id)
@@ -330,7 +336,8 @@ def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, 
                     store, store.load(), service, repository, pr_number, config, phase="initial",
                 )
             except DependencyError as exc:
-                store.transition("BLOCKED_BY_AUTHENTICATION", {"phase": "initial", "reason": str(exc)})
+                _block_auth_and_raise(store, phase="initial", exc=exc)
+            except ValidationError:
                 raise
             except Exception as exc:
                 _persist_wait_and_raise(store, phase="initial", exc=exc)
@@ -342,7 +349,8 @@ def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, 
                     store, store.load(), service, repository, pr_number, config, phase="pre-merge-revalidation",
                 )
             except DependencyError as exc:
-                store.transition("BLOCKED_BY_AUTHENTICATION", {"phase": "pre-merge-revalidation", "reason": str(exc)})
+                _block_auth_and_raise(store, phase="pre-merge-revalidation", exc=exc)
+            except ValidationError:
                 raise
             except Exception as exc:
                 _persist_wait_and_raise(store, phase="pre-merge-revalidation", exc=exc)
