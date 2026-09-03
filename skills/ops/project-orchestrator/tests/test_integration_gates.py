@@ -8,6 +8,7 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
 
+from project_orchestrator_cli.github_service import GitHubService
 from project_orchestrator_cli.integration import _gate_state
 from project_orchestrator_cli.integration_gates import (
     FAILED,
@@ -70,14 +71,14 @@ class IntegrationGateEvaluationTests(unittest.TestCase):
             {"id": "quality", "kind": "check_run", "name": "Quality Gate", "app": "github-actions", "allowed_conclusions": ["success"]},
         ]
         observations = [
-            {"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "completed", "conclusion": "success", "event": "pull_request"},
-            {"kind": "check_run", "name": "Quality Gate", "app": "github-actions", "sha": self.SHA, "status": "completed", "conclusion": "success"},
+            {"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "completed", "conclusion": "success", "event": "pull_request", "id": 10},
+            {"kind": "check_run", "name": "Quality Gate", "app": "github-actions", "sha": self.SHA, "status": "completed", "conclusion": "success", "id": 20},
         ]
         self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, GREEN)
 
     def test_pending_exact_sha_gate_is_pending(self) -> None:
         gates = [{"id": "ci", "kind": "workflow", "workflow": ".github/workflows/ci.yml", "allowed_conclusions": ["success"]}]
-        observations = [{"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "in_progress", "conclusion": None, "event": "pull_request"}]
+        observations = [{"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "in_progress", "conclusion": None, "event": "pull_request", "id": 10}]
         self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, PENDING)
 
     def test_missing_required_gate_is_failed(self) -> None:
@@ -86,30 +87,60 @@ class IntegrationGateEvaluationTests(unittest.TestCase):
 
     def test_old_sha_green_does_not_satisfy_current_candidate(self) -> None:
         gates = [{"id": "ci", "kind": "workflow", "workflow": ".github/workflows/ci.yml", "allowed_conclusions": ["success"]}]
-        observations = [{"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": "b" * 40, "status": "completed", "conclusion": "success", "event": "pull_request"}]
+        observations = [{"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": "b" * 40, "status": "completed", "conclusion": "success", "event": "pull_request", "id": 10}]
         self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, FAILED)
 
     def test_neutral_and_skipped_are_not_implicitly_green(self) -> None:
         for conclusion in ("neutral", "skipped"):
             with self.subTest(conclusion=conclusion):
                 gates = [{"id": "quality", "kind": "check_run", "name": "Quality", "allowed_conclusions": ["success"]}]
-                observations = [{"kind": "check_run", "name": "Quality", "sha": self.SHA, "status": "completed", "conclusion": conclusion}]
+                observations = [{"kind": "check_run", "name": "Quality", "sha": self.SHA, "status": "completed", "conclusion": conclusion, "id": 10}]
                 self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, FAILED)
 
     def test_neutral_or_skipped_can_be_explicitly_allowed(self) -> None:
         gates = [{"id": "quality", "kind": "check_run", "name": "Quality", "allowed_conclusions": ["success", "neutral", "skipped"]}]
         for conclusion in ("neutral", "skipped"):
             with self.subTest(conclusion=conclusion):
-                observations = [{"kind": "check_run", "name": "Quality", "sha": self.SHA, "status": "completed", "conclusion": conclusion}]
+                observations = [{"kind": "check_run", "name": "Quality", "sha": self.SHA, "status": "completed", "conclusion": conclusion, "id": 10}]
                 self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, GREEN)
 
-    def test_duplicate_authoritative_matches_fail_closed(self) -> None:
+    def test_latest_rerun_is_authoritative_for_same_exact_sha(self) -> None:
+        gates = [{"id": "ci", "kind": "workflow", "workflow": ".github/workflows/ci.yml", "allowed_conclusions": ["success"]}]
+        observations = [
+            {"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "completed", "conclusion": "failure", "event": "pull_request", "id": 100},
+            {"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "completed", "conclusion": "success", "event": "pull_request", "id": 101},
+        ]
+        self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, GREEN)
+
+    def test_unranked_duplicate_matches_fail_closed(self) -> None:
         gates = [{"id": "ci", "kind": "workflow", "workflow": ".github/workflows/ci.yml", "allowed_conclusions": ["success"]}]
         observations = [
             {"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "completed", "conclusion": "success", "event": "pull_request"},
             {"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "completed", "conclusion": "success", "event": "pull_request"},
         ]
         self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, FAILED)
+
+
+class ConditionalMergeTests(unittest.TestCase):
+    def test_squash_merge_requires_expected_head_sha(self) -> None:
+        class FakeGitHub(GitHubService):
+            def __init__(self) -> None:
+                super().__init__(Path("."))
+                self.calls: list[tuple[str, ...]] = []
+
+            def _run(self, *args: str) -> str:
+                self.calls.append(tuple(args))
+                return ""
+
+            def pull_request(self, repository: str, number: int) -> dict[str, object]:
+                return {"number": number, "state": "MERGED", "mergeCommit": {"oid": "c" * 40}}
+
+        service = FakeGitHub()
+        expected = "a" * 40
+        service.merge_pull_request_squash("owner/repo", 7, expected)
+        command = service.calls[0]
+        self.assertIn("--match-head-commit", command)
+        self.assertEqual(command[command.index("--match-head-commit") + 1], expected)
 
 
 if __name__ == "__main__":
