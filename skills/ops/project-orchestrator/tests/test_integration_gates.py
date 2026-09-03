@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
 
+from project_orchestrator_cli.integration import _gate_state
 from project_orchestrator_cli.integration_gates import (
     FAILED,
     GREEN,
@@ -15,7 +17,7 @@ from project_orchestrator_cli.integration_gates import (
     integration_github_config,
     validate_integration_config,
 )
-from project_orchestrator_cli.state import TRANSITIONS
+from project_orchestrator_cli.state import RunStore, TRANSITIONS
 
 
 class IntegrationGateConfigTests(unittest.TestCase):
@@ -47,6 +49,16 @@ class IntegrationGateConfigTests(unittest.TestCase):
         self.assertIn("INTEGRATING", TRANSITIONS["WAITING_FOR_INTEGRATION_CHECKS"])
         self.assertIn("INTEGRATING", TRANSITIONS["INTEGRATION_CHECKS_FAILED"])
         self.assertNotIn("WAITING_FOR_PROVIDER", TRANSITIONS["WAITING_FOR_INTEGRATION_CHECKS"])
+
+    def test_non_green_gate_persists_state_and_stops_integration_call(self) -> None:
+        common_dir = Path(tempfile.mkdtemp()) / ".git"
+        common_dir.mkdir()
+        store = RunStore(common_dir, "run-gate")
+        store.create({"run_id": "run-gate", "state": "PR_OPEN_AWAITING_MERGE_APPROVAL"})
+        candidate = {"kind": "pr_head", "gate_sha": "a" * 40, "pr_head_sha": "a" * 40, "base_sha": "b" * 40, "pr_number": 1}
+        with self.assertRaisesRegex(Exception, "integration checks are not green"):
+            _gate_state(store, PENDING, candidate, phase="initial")
+        self.assertEqual(store.load()["state"], "WAITING_FOR_INTEGRATION_CHECKS")
 
 
 class IntegrationGateEvaluationTests(unittest.TestCase):
