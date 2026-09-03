@@ -288,12 +288,19 @@ def _evaluate_github_candidate(
 def _gate_state(store: RunStore, decision: str, candidate: dict[str, Any], *, phase: str) -> dict[str, Any]:
     detail = {"phase": phase, "candidate": candidate, "decision": decision}
     if decision == PENDING:
-        return store.transition("WAITING_FOR_INTEGRATION_CHECKS", detail)
-    if decision == FAILED:
-        return store.transition("INTEGRATION_CHECKS_FAILED", detail)
-    if decision == "BASE_MOVED":
-        return store.transition("BLOCKED_BY_BASE_MOVED", detail)
-    raise ValidationError(f"unsupported integration gate decision: {decision}")
+        state = store.transition("WAITING_FOR_INTEGRATION_CHECKS", detail)
+    elif decision == FAILED:
+        state = store.transition("INTEGRATION_CHECKS_FAILED", detail)
+    elif decision == "BASE_MOVED":
+        state = store.transition("BLOCKED_BY_BASE_MOVED", detail)
+    else:
+        raise ValidationError(f"unsupported integration gate decision: {decision}")
+    raise ValidationError(f"integration checks are not green: {state['state']}")
+
+
+def _persist_wait_and_raise(store: RunStore, *, phase: str, exc: Exception) -> None:
+    store.transition("WAITING_FOR_INTEGRATION_CHECKS", {"phase": phase, "reason": str(exc), "decision": PENDING})
+    raise ValidationError(f"integration evidence is temporarily unavailable: {exc}") from exc
 
 
 def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, Any]:
@@ -323,33 +330,34 @@ def integrate_run(repo: Path, run_id: str, config: dict[str, Any]) -> dict[str, 
                     store, store.load(), service, repository, pr_number, config, phase="initial",
                 )
             except DependencyError as exc:
-                waiting = store.transition("WAITING_FOR_INTEGRATION_CHECKS", {"phase": "initial", "reason": str(exc), "decision": PENDING})
-                return store.transition("BLOCKED_BY_AUTHENTICATION", {"reason": str(exc), "previous_state": waiting["state"]})
+                store.transition("BLOCKED_BY_AUTHENTICATION", {"phase": "initial", "reason": str(exc)})
+                raise
             except Exception as exc:
-                return store.transition("WAITING_FOR_INTEGRATION_CHECKS", {"phase": "initial", "reason": str(exc), "decision": PENDING})
+                _persist_wait_and_raise(store, phase="initial", exc=exc)
             if first_decision != GREEN:
-                return _gate_state(store, first_decision, first_candidate, phase="initial")
+                _gate_state(store, first_decision, first_candidate, phase="initial")
 
             try:
                 second_candidate, second_decision = _evaluate_github_candidate(
                     store, store.load(), service, repository, pr_number, config, phase="pre-merge-revalidation",
                 )
             except DependencyError as exc:
-                waiting = store.transition("WAITING_FOR_INTEGRATION_CHECKS", {"phase": "pre-merge-revalidation", "reason": str(exc), "decision": PENDING})
-                return store.transition("BLOCKED_BY_AUTHENTICATION", {"reason": str(exc), "previous_state": waiting["state"]})
+                store.transition("BLOCKED_BY_AUTHENTICATION", {"phase": "pre-merge-revalidation", "reason": str(exc)})
+                raise
             except Exception as exc:
-                return store.transition("WAITING_FOR_INTEGRATION_CHECKS", {"phase": "pre-merge-revalidation", "reason": str(exc), "decision": PENDING})
+                _persist_wait_and_raise(store, phase="pre-merge-revalidation", exc=exc)
             identity_keys = ("kind", "gate_sha", "pr_head_sha", "base_sha", "pr_number")
             if any(first_candidate.get(key) != second_candidate.get(key) for key in identity_keys):
-                return store.transition("WAITING_FOR_INTEGRATION_CHECKS", {
+                store.transition("WAITING_FOR_INTEGRATION_CHECKS", {
                     "phase": "pre-merge-revalidation",
                     "decision": PENDING,
                     "reason": "integration candidate changed during revalidation",
                     "before": first_candidate,
                     "after": second_candidate,
                 })
+                raise ValidationError("integration candidate changed during revalidation")
             if second_decision != GREEN:
-                return _gate_state(store, second_decision, second_candidate, phase="pre-merge-revalidation")
+                _gate_state(store, second_decision, second_candidate, phase="pre-merge-revalidation")
 
             state = store.transition("INTEGRATING", {
                 "branch": branch,
