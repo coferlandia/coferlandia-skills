@@ -246,17 +246,51 @@ class GitHubService:
             })
         return observations
 
+    def merge_queue_entry(self, repository: str, pr_number: int) -> dict[str, Any] | None:
+        owner, name = repository.split("/", 1)
+        query = """
+        query($owner: String!, $name: String!, $number: Int!) {
+          repository(owner: $owner, name: $name) {
+            pullRequest(number: $number) {
+              mergeQueueEntry {
+                id
+                state
+                enqueuedAt
+                position
+                baseCommit { oid }
+                headCommit { oid }
+              }
+            }
+          }
+        }
+        """
+        value = self._json(
+            "api", "graphql",
+            "-f", f"query={query}",
+            "-f", f"owner={owner}",
+            "-f", f"name={name}",
+            "-F", f"number={pr_number}",
+        )
+        repository_value = value.get("data", {}).get("repository") if isinstance(value, dict) else None
+        pull = repository_value.get("pullRequest") if isinstance(repository_value, dict) else None
+        entry = pull.get("mergeQueueEntry") if isinstance(pull, dict) else None
+        return entry if isinstance(entry, dict) else None
+
     def _commit_contains_base(self, repository: str, base_sha: str, head_sha: str) -> bool:
         value = self._json("api", f"repos/{repository}/compare/{base_sha}...{head_sha}")
         status = value.get("status") if isinstance(value, dict) else None
         return status in {"ahead", "identical"}
 
-    def merge_group_candidate(self, repository: str, pr_number: int, pr_head_sha: str, base_sha: str) -> dict[str, Any] | None:
+    def merge_group_candidate(
+        self, repository: str, pr_number: int, pr_head_sha: str, base_sha: str, *, enqueued_at: str | None = None
+    ) -> dict[str, Any] | None:
         value = self._json("api", f"repos/{repository}/actions/runs?event=merge_group&per_page=100")
         runs = value.get("workflow_runs") if isinstance(value, dict) else None
         candidates: list[dict[str, Any]] = []
         for run in runs or []:
             if not isinstance(run, dict) or not run.get("head_sha"):
+                continue
+            if enqueued_at and str(run.get("created_at") or "") < enqueued_at:
                 continue
             prs = run.get("pull_requests") or []
             if not any(isinstance(pr, dict) and int(pr.get("number", -1)) == pr_number for pr in prs):

@@ -11,7 +11,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 
 from project_orchestrator_cli.engine import DEFAULT_CONFIG, validate_config
 from project_orchestrator_cli.github_service import GitHubService
-from project_orchestrator_cli.integration import _gate_state
+from project_orchestrator_cli.integration import _gate_state, _resolve_github_candidate
 from project_orchestrator_cli.integration_gates import (
     FAILED,
     GREEN,
@@ -136,6 +136,49 @@ class IntegrationGateEvaluationTests(unittest.TestCase):
             {"kind": "workflow", "workflow": ".github/workflows/ci.yml", "sha": self.SHA, "status": "completed", "conclusion": "success", "event": "pull_request"},
         ]
         self.assertEqual(evaluate_required_gates(gates, observations, self.SHA).decision, FAILED)
+
+
+class MergeQueueAuthorityTests(unittest.TestCase):
+    def test_active_queue_without_current_merge_group_never_falls_back_to_pr_head(self) -> None:
+        class FakeService:
+            def pull_request(self, repository: str, number: int) -> dict[str, object]:
+                return {"state": "OPEN", "headRefOid": "a" * 40, "baseRefName": "main"}
+
+            def branch_sha(self, repository: str, branch: str) -> str:
+                return "b" * 40
+
+            def merge_queue_entry(self, repository: str, number: int) -> dict[str, object]:
+                return {
+                    "id": "MQE_1",
+                    "enqueuedAt": "2026-09-03T17:00:00Z",
+                    "baseCommit": {"oid": "b" * 40},
+                    "headCommit": {"oid": "a" * 40},
+                }
+
+            def merge_group_candidate(self, repository: str, number: int, pr_head_sha: str, base_sha: str, *, enqueued_at: str | None = None) -> None:
+                return None
+
+        state = {"final_reviewed_sha": "a" * 40, "base_branch": "main"}
+        candidate = _resolve_github_candidate(FakeService(), "owner/repo", 7, state)
+        self.assertEqual(candidate["kind"], "merge_group")
+        self.assertIsNone(candidate["gate_sha"])
+        self.assertIn("no current merge_group", candidate["pending_reason"])
+
+    def test_not_queued_uses_current_pr_head_candidate(self) -> None:
+        class FakeService:
+            def pull_request(self, repository: str, number: int) -> dict[str, object]:
+                return {"state": "OPEN", "headRefOid": "a" * 40, "baseRefName": "main"}
+
+            def branch_sha(self, repository: str, branch: str) -> str:
+                return "b" * 40
+
+            def merge_queue_entry(self, repository: str, number: int) -> None:
+                return None
+
+        state = {"final_reviewed_sha": "a" * 40, "base_branch": "main"}
+        candidate = _resolve_github_candidate(FakeService(), "owner/repo", 7, state)
+        self.assertEqual(candidate["kind"], "pr_head")
+        self.assertEqual(candidate["gate_sha"], "a" * 40)
 
 
 class ConditionalMergeTests(unittest.TestCase):

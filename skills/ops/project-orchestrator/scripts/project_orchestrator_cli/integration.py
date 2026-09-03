@@ -252,9 +252,30 @@ def _resolve_github_candidate(
     if base_branch != state["base_branch"]:
         raise ValidationError(f"GitHub PR base changed from {state['base_branch']} to {base_branch}")
     base_sha = service.branch_sha(repository, base_branch)
-    merge_group = service.merge_group_candidate(repository, pr_number, pr_head_sha, base_sha)
-    if merge_group:
-        return merge_group
+    queue_entry = service.merge_queue_entry(repository, pr_number)
+    if queue_entry:
+        queue_base = ((queue_entry.get("baseCommit") or {}).get("oid"))
+        queue_head = ((queue_entry.get("headCommit") or {}).get("oid"))
+        pending_reason = None
+        if queue_base and str(queue_base) != base_sha:
+            pending_reason = "merge queue entry has not reconciled to the current remote base"
+        elif queue_head and str(queue_head) != pr_head_sha:
+            pending_reason = "merge queue entry does not represent the current PR head"
+        merge_group = None if pending_reason else service.merge_group_candidate(
+            repository, pr_number, pr_head_sha, base_sha, enqueued_at=str(queue_entry.get("enqueuedAt") or "") or None
+        )
+        if merge_group:
+            merge_group["merge_queue_entry_id"] = queue_entry.get("id")
+            return merge_group
+        return {
+            "kind": "merge_group",
+            "gate_sha": None,
+            "pr_head_sha": pr_head_sha,
+            "base_sha": base_sha,
+            "pr_number": pr_number,
+            "merge_queue_entry_id": queue_entry.get("id"),
+            "pending_reason": pending_reason or "merge queue entry exists but no current merge_group candidate is available yet",
+        }
     return {
         "kind": "pr_head",
         "gate_sha": pr_head_sha,
@@ -277,6 +298,10 @@ def _evaluate_github_candidate(
     candidate = _resolve_github_candidate(service, repository, pr_number, state)
     if candidate["base_sha"] != state["base_commit"]:
         return candidate, "BASE_MOVED"
+    if candidate.get("pending_reason"):
+        state = store.load()
+        _record_gate_evidence(store, state, candidate, [], PENDING, ({"decision": PENDING, "reason": candidate["pending_reason"]},), phase)
+        return candidate, PENDING
     gate_config = integration_github_config(config)
     observations = service.integration_observations(repository, str(candidate["gate_sha"]))
     evaluation = evaluate_required_gates(gate_config["required_gates"], observations, str(candidate["gate_sha"]))
