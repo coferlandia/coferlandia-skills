@@ -34,7 +34,7 @@ class GitHubService:
         if result.returncode:
             message = (result.stderr or result.stdout).strip() or f"gh {' '.join(args)} failed"
             lowered = message.lower()
-            if "auth" in lowered or "token" in lowered or "login" in lowered or "scope" in lowered:
+            if "auth" in lowered or "token" in lowered or "login" in lowered or "scope" in lowered or "permission" in lowered:
                 raise DependencyError(message)
             raise OrchestratorError(message)
         return result.stdout.strip()
@@ -173,7 +173,7 @@ class GitHubService:
         return self.add_issue_comment(ref, f"{marker}\n\n{body}")
 
     def pull_requests_for_head(self, repository: str, branch: str) -> list[dict[str, Any]]:
-        value = self._json("pr", "list", "--repo", repository, "--head", branch, "--state", "all", "--json", "number,url,state,title,headRefName,baseRefName")
+        value = self._json("pr", "list", "--repo", repository, "--head", branch, "--state", "all", "--json", "number,url,state,title,headRefName,baseRefName,headRefOid,baseRefOid")
         return value if isinstance(value, list) else []
 
     def ensure_pull_request(self, repository: str, branch: str, base: str, title: str, body: str) -> dict[str, Any]:
@@ -193,13 +193,100 @@ class GitHubService:
         return self.pull_request(repository, int(value["number"]))
 
     def pull_request(self, repository: str, number: int) -> dict[str, Any]:
-        value = self._json("pr", "view", str(number), "--repo", repository, "--json", "number,url,state,mergeCommit,headRefName,baseRefName,title,body")
+        value = self._json(
+            "pr", "view", str(number), "--repo", repository,
+            "--json", "number,url,state,mergeCommit,headRefName,baseRefName,headRefOid,baseRefOid,title,body,isDraft,mergeStateStatus",
+        )
         if not isinstance(value, dict):
             raise ValidationError(f"GitHub PR {repository}#{number} did not return an object")
         return value
 
-    def merge_pull_request_squash(self, repository: str, number: int) -> dict[str, Any]:
-        self._run("pr", "merge", str(number), "--repo", repository, "--squash", "--delete-branch=false")
+    def branch_sha(self, repository: str, branch: str) -> str:
+        value = self._json("api", f"repos/{repository}/branches/{branch}")
+        sha = ((value or {}).get("commit") or {}).get("sha") if isinstance(value, dict) else None
+        if not sha:
+            raise ValidationError(f"GitHub branch {repository}:{branch} did not expose a commit SHA")
+        return str(sha)
+
+    def workflow_runs_for_sha(self, repository: str, sha: str) -> list[dict[str, Any]]:
+        value = self._json("api", f"repos/{repository}/actions/runs?head_sha={sha}&per_page=100")
+        runs = value.get("workflow_runs") if isinstance(value, dict) else None
+        return [run for run in (runs or []) if isinstance(run, dict)]
+
+    def check_runs_for_sha(self, repository: str, sha: str) -> list[dict[str, Any]]:
+        value = self._json("api", f"repos/{repository}/commits/{sha}/check-runs?per_page=100")
+        runs = value.get("check_runs") if isinstance(value, dict) else None
+        return [run for run in (runs or []) if isinstance(run, dict)]
+
+    def integration_observations(self, repository: str, sha: str) -> list[dict[str, Any]]:
+        observations: list[dict[str, Any]] = []
+        for run in self.workflow_runs_for_sha(repository, sha):
+            observations.append({
+                "kind": "workflow",
+                "workflow": run.get("path") or run.get("name"),
+                "workflow_id": run.get("workflow_id"),
+                "sha": run.get("head_sha"),
+                "status": run.get("status"),
+                "conclusion": run.get("conclusion"),
+                "event": run.get("event"),
+                "id": run.get("id"),
+                "url": run.get("html_url"),
+            })
+        for run in self.check_runs_for_sha(repository, sha):
+            app = run.get("app") or {}
+            observations.append({
+                "kind": "check_run",
+                "name": run.get("name"),
+                "app": app.get("slug") or app.get("name"),
+                "sha": run.get("head_sha"),
+                "status": run.get("status"),
+                "conclusion": run.get("conclusion"),
+                "id": run.get("id"),
+                "url": run.get("html_url") or run.get("details_url"),
+            })
+        return observations
+
+    def _commit_parent_shas(self, repository: str, sha: str) -> list[str]:
+        value = self._json("api", f"repos/{repository}/commits/{sha}")
+        parents = value.get("parents") if isinstance(value, dict) else None
+        return [str(item.get("sha")) for item in (parents or []) if isinstance(item, dict) and item.get("sha")]
+
+    def merge_group_candidate(self, repository: str, pr_number: int, pr_head_sha: str, base_sha: str) -> dict[str, Any] | None:
+        value = self._json("api", f"repos/{repository}/actions/runs?event=merge_group&per_page=100")
+        runs = value.get("workflow_runs") if isinstance(value, dict) else None
+        candidates: list[dict[str, Any]] = []
+        for run in runs or []:
+            if not isinstance(run, dict) or not run.get("head_sha"):
+                continue
+            prs = run.get("pull_requests") or []
+            if not any(isinstance(pr, dict) and int(pr.get("number", -1)) == pr_number for pr in prs):
+                continue
+            head_sha = str(run["head_sha"])
+            parents = self._commit_parent_shas(repository, head_sha)
+            if base_sha not in parents:
+                continue
+            candidates.append({
+                "kind": "merge_group",
+                "gate_sha": head_sha,
+                "pr_head_sha": pr_head_sha,
+                "base_sha": base_sha,
+                "pr_number": pr_number,
+                "workflow_run_id": run.get("id"),
+                "status": run.get("status"),
+                "created_at": run.get("created_at"),
+            })
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: (str(item.get("created_at") or ""), int(item.get("workflow_run_id") or 0)), reverse=True)
+        return candidates[0]
+
+    def merge_pull_request_squash(self, repository: str, number: int, expected_head_sha: str) -> dict[str, Any]:
+        if not expected_head_sha:
+            raise ValidationError("conditional squash merge requires expected PR head SHA")
+        self._run(
+            "pr", "merge", str(number), "--repo", repository, "--squash", "--delete-branch=false",
+            "--match-head-commit", expected_head_sha,
+        )
         return self.pull_request(repository, number)
 
     def project_view(self, owner: str, number: int) -> dict[str, Any]:
