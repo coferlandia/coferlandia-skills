@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import sys
 import unittest
+from pathlib import Path
 
-from skills.ops.project_orchestrator.scripts.project_orchestrator_cli.engine import DEFAULT_CONFIG, validate_config
-from skills.ops.project_orchestrator.scripts.project_orchestrator_cli.integration_gates import (
-    FAILED,
-    GREEN,
-    PENDING,
-    evaluate_required_gates,
-)
+SKILL = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL / "scripts"))
+
+from project_orchestrator_cli.engine import DEFAULT_CONFIG, validate_config
+from project_orchestrator_cli.integration_gates import FAILED, GREEN, PENDING, evaluate_required_gates
 
 
 class IntegrationGateConfigTests(unittest.TestCase):
