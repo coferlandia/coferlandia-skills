@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import sys
 import tempfile
 import unittest
@@ -8,6 +9,7 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
 
+from project_orchestrator_cli.engine import DEFAULT_CONFIG, validate_config
 from project_orchestrator_cli.github_service import GitHubService
 from project_orchestrator_cli.integration import _gate_state
 from project_orchestrator_cli.integration_gates import (
@@ -28,6 +30,21 @@ class IntegrationGateConfigTests(unittest.TestCase):
         self.assertEqual(github["wait_seconds"], 30)
         self.assertIsNone(github["max_wait_cycles"])
         self.assertNotIn("Fast CI", repr(github))
+
+    def test_default_config_exposes_generic_integration_policy(self) -> None:
+        github = DEFAULT_CONFIG["integration"]["github"]
+        self.assertEqual(github["required_gates"], [])
+        self.assertEqual(github["wait_seconds"], 30)
+        self.assertIsNone(github["max_wait_cycles"])
+
+    def test_public_validate_config_rejects_invalid_integration_policy(self) -> None:
+        config = copy.deepcopy(DEFAULT_CONFIG)
+        config["integration"]["github"]["required_gates"] = [
+            {"id": "ci", "kind": "workflow", "workflow": ".github/workflows/ci.yml", "allowed_conclusions": ["success"]},
+            {"id": "ci", "kind": "check_run", "name": "Quality", "allowed_conclusions": ["success"]},
+        ]
+        with self.assertRaisesRegex(Exception, "duplicate integration gate id"):
+            validate_config(config)
 
     def test_validate_config_rejects_duplicate_gate_ids(self) -> None:
         config = {"integration": {"github": {"required_gates": [

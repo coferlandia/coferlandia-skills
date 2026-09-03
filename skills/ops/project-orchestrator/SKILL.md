@@ -14,7 +14,7 @@ metadata:
   version: "2.4"
   category: ops
   status: active
-  tested: "2026-07-31 - Durable Epic/task claims, duplicate-run exclusion, cancellation release, and In Progress Project projection covered."
+  tested: "2026-09-03 - Exact-candidate integration gates, durable CI states, rerun selection, remote-base validation, and conditional squash merge covered across repository CI."
 ---
 
 ## Context
@@ -301,3 +301,11 @@ contracts/materializations use `.agent/work-items/` in the implementation worksp
 - `references/candidate-commit-lifecycle.md` — additive immutable task/Epic review lifecycle.
 - `references/claims.md` — authoritative local claims, Project projection, recovery, and administration.
 - failure/recovery/troubleshooting references — provider and operational failure handling.
+
+## GitHub integration gates
+
+For GitHub-backed final integration, repository configuration may declare deterministic required gates under `integration.github.required_gates`. The controller evaluates only authoritative observations for the exact current integration candidate: normally the current PR head SHA, or the current merge-group SHA when a valid Merge Queue candidate exists. A green older SHA, comment, local test, or human assertion never satisfies the gate.
+
+Missing required gates and disallowed terminal conclusions fail closed. Pending states use `WAITING_FOR_INTEGRATION_CHECKS`; terminal gate failures use `INTEGRATION_CHECKS_FAILED`. `neutral` and `skipped` count only when that gate explicitly lists them in `allowed_conclusions`. Transient observation errors never imply GREEN. Claims and Project `Done` projection remain active/incomplete until verified `PROJECT_COMPLETED`.
+
+Immediately before merge, re-read PR head, remote base, candidate identity, and all configured gates. Only an unchanged GREEN candidate may enter `INTEGRATING`. The squash merge itself must carry the expected PR head SHA so GitHub atomically rejects a race-window head change. Remote base movement preserves the existing base-reconciliation/review requirement. Read `references/configuration.md`, `references/state-machine.md`, and `references/recovery.md` before changing these semantics.

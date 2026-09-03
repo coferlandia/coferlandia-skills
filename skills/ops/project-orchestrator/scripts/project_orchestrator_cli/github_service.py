@@ -34,7 +34,7 @@ class GitHubService:
         if result.returncode:
             message = (result.stderr or result.stdout).strip() or f"gh {' '.join(args)} failed"
             lowered = message.lower()
-            if "auth" in lowered or "token" in lowered or "login" in lowered or "scope" in lowered or "permission" in lowered:
+            if "auth" in lowered or "token" in lowered or "login" in lowered or "scope" in lowered:
                 raise DependencyError(message)
             raise OrchestratorError(message)
         return result.stdout.strip()
@@ -246,10 +246,10 @@ class GitHubService:
             })
         return observations
 
-    def _commit_parent_shas(self, repository: str, sha: str) -> list[str]:
-        value = self._json("api", f"repos/{repository}/commits/{sha}")
-        parents = value.get("parents") if isinstance(value, dict) else None
-        return [str(item.get("sha")) for item in (parents or []) if isinstance(item, dict) and item.get("sha")]
+    def _commit_contains_base(self, repository: str, base_sha: str, head_sha: str) -> bool:
+        value = self._json("api", f"repos/{repository}/compare/{base_sha}...{head_sha}")
+        status = value.get("status") if isinstance(value, dict) else None
+        return status in {"ahead", "identical"}
 
     def merge_group_candidate(self, repository: str, pr_number: int, pr_head_sha: str, base_sha: str) -> dict[str, Any] | None:
         value = self._json("api", f"repos/{repository}/actions/runs?event=merge_group&per_page=100")
@@ -262,8 +262,7 @@ class GitHubService:
             if not any(isinstance(pr, dict) and int(pr.get("number", -1)) == pr_number for pr in prs):
                 continue
             head_sha = str(run["head_sha"])
-            parents = self._commit_parent_shas(repository, head_sha)
-            if base_sha not in parents:
+            if not self._commit_contains_base(repository, base_sha, head_sha):
                 continue
             candidates.append({
                 "kind": "merge_group",

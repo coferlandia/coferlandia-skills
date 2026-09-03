@@ -476,6 +476,8 @@ def integrate_claimed_run(repo: Path, run_id: str, config: dict[str, Any]) -> di
         state = before
     else:
         state = integrate_run(repo, run_id, config)
+    if state.get("state") != "PROJECT_COMPLETED":
+        return state
     _project_all(repo, state, config, "done")
     release_run_claims(repo, run_id, config, "verified delivery to main")
     return store.load()
