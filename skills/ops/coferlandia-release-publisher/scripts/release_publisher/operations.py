@@ -165,7 +165,46 @@ def build_plan(root: Path, repository: str, inspection: dict[str, Any], policy: 
     if state != "PUBLISHED_CONSISTENT":
         operations.append("publish verified draft GitHub Release")
     operations.append("verify tag/release/SHA consistency")
-    return ReleasePlan(schema_version=1, repository=repository, target_commit=inspection["target_commit"], previous_release=previous, impact=impact, version=version, tag=tag, title=title, release_notes=release_notes, prerelease=prerelease, artifacts=artifacts, provenance=provenance_mode, policy=policy, policy_fingerprint=fingerprint(policy), inspection_fingerprint=inspection["inspection_fingerprint"], observed_state=state, validation=inspection.get("validation", []), operations=operations)
+    plan = ReleasePlan(schema_version=1, repository=repository, target_commit=inspection["target_commit"], previous_release=previous, impact=impact, version=version, tag=tag, title=title, release_notes=release_notes, prerelease=prerelease, artifacts=artifacts, provenance=provenance_mode, policy=policy, policy_fingerprint=fingerprint(policy), inspection_fingerprint=inspection["inspection_fingerprint"], observed_state=state, validation=inspection.get("validation", []), operations=operations)
+    return plan.seal()
+
+def _validate_plan_contract(plan: ReleasePlan) -> dict[str, Any]:
+    plan.assert_integrity()
+    policy = validate_policy(plan.policy)
+    if fingerprint(policy) != plan.policy_fingerprint:
+        raise ReleaseError("release plan policy fingerprint does not match embedded policy")
+    if plan.impact not in {"patch", "minor", "major"}:
+        raise ReleaseError(f"unsupported semantic impact in release plan: {plan.impact}")
+    try:
+        parsed = SemVer.parse(plan.version)
+        previous = plan.previous_release or {}
+        validate_requested_version(previous.get("version"), plan.version, plan.impact)
+    except ValueError as exc:
+        raise ReleaseError(f"release plan version contract is invalid: {exc}") from exc
+    expected_tag = f"{policy['versioning']['tag_prefix']}{plan.version}"
+    if plan.tag != expected_tag:
+        raise ReleaseError(f"release plan tag does not match configured version identity: expected {expected_tag}")
+    if bool(parsed.prerelease) != bool(plan.prerelease):
+        raise ReleaseError("release plan prerelease flag does not match semantic version")
+    if plan.provenance not in {"optional", "required", "disabled"}:
+        raise ReleaseError(f"unsupported provenance mode in release plan: {plan.provenance}")
+    if not isinstance(plan.title, str) or not plan.title.strip():
+        raise ReleaseError("release plan title must be a non-empty string")
+    if not isinstance(plan.release_notes, str):
+        raise ReleaseError("release plan notes must be text")
+    if not isinstance(plan.inspection_fingerprint, str) or len(plan.inspection_fingerprint) != 64:
+        raise ReleaseError("release plan inspection fingerprint is invalid")
+    for artifact in plan.artifacts:
+        if not isinstance(artifact, dict):
+            raise ReleaseError("release plan artifact entry must be an object")
+        if not isinstance(artifact.get("path"), str) or not isinstance(artifact.get("name"), str) or not artifact.get("name"):
+            raise ReleaseError("release plan artifact path/name is invalid")
+        digest = artifact.get("sha256")
+        if not isinstance(digest, str) or len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest.lower()):
+            raise ReleaseError(f"release plan artifact digest is invalid: {artifact.get('name')}")
+        if not isinstance(artifact.get("size"), int) or artifact["size"] < 0:
+            raise ReleaseError(f"release plan artifact size is invalid: {artifact.get('name')}")
+    return policy
 
 def _asset_digest(asset: dict[str, Any]) -> str | None:
     digest = asset.get("sha256")
@@ -204,7 +243,7 @@ def _manifest_payload(plan: ReleasePlan, release: dict[str, Any]) -> dict[str, A
         "created_at": release.get("created_at"),
         "policy_schema_version": plan.policy.get("schema_version"),
         "policy_fingerprint": plan.policy_fingerprint,
-        "plan_sha256": fingerprint(plan.to_dict()),
+        "plan_sha256": plan.plan_fingerprint,
         "validation": plan.validation,
         "artifacts": [{"name": item["name"], "sha256": item["sha256"]} for item in plan.artifacts],
     }
@@ -248,6 +287,35 @@ def _verify_manifest_artifacts(release: dict[str, Any], manifest: dict[str, Any]
             errors.append(f"release artifact declared by provenance is missing: {name}")
         elif _asset_digest(asset) != expected:
             errors.append(f"release artifact digest disagrees with provenance: {name}")
+    return errors
+
+def _release_plan_errors(github: GitHubService, plan: ReleasePlan, release: dict[str, Any], *, require_artifacts: bool, require_manifest: bool) -> list[str]:
+    errors: list[str] = []
+    if release.get("tag") != plan.tag:
+        errors.append("GitHub Release tag disagrees with reviewed release plan")
+    if release.get("title") != plan.title:
+        errors.append("GitHub Release title disagrees with reviewed release plan")
+    if release.get("body") != plan.release_notes:
+        errors.append("GitHub Release notes disagree with reviewed release plan")
+    if bool(release.get("prerelease")) != bool(plan.prerelease):
+        errors.append("GitHub prerelease flag disagrees with reviewed release plan")
+    if require_artifacts:
+        current = {item.get("name"): item for item in release.get("assets", [])}
+        for artifact in plan.artifacts:
+            existing = current.get(artifact["name"])
+            if not existing:
+                errors.append(f"release artifact from reviewed plan is missing: {artifact['name']}")
+            elif _asset_digest(existing) != artifact["sha256"]:
+                errors.append(f"release artifact digest disagrees with reviewed plan: {artifact['name']}")
+    if require_manifest and plan.provenance in {"optional", "required"}:
+        manifest = _read_manifest(github, plan.repository, release)
+        if not manifest:
+            errors.append("release provenance manifest required by reviewed plan is missing")
+        else:
+            if manifest.get("plan_sha256") != plan.plan_fingerprint:
+                errors.append("release provenance manifest belongs to a different reviewed plan")
+            if manifest.get("tag") != plan.tag or manifest.get("commit") != plan.target_commit or manifest.get("repository") != plan.repository or manifest.get("version") != plan.version:
+                errors.append("release provenance manifest disagrees with reviewed release identity")
     return errors
 
 def verify_release(root: Path, repository: str, tag: str, policy: dict[str, Any], *, git: GitService | None = None, github: GitHubService | None = None) -> dict[str, Any]:
@@ -304,16 +372,18 @@ def resolve_release(root: Path, repository: str, tag: str, policy: dict[str, Any
     return {"schema_version": 1, "repository": repository, "version": verified["version"], "tag": tag, "commit": verified["commit"], "created_at": release.get("created_at"), "published_at": release.get("published_at"), "title": release.get("title"), "release_notes": release.get("body"), "prerelease": release.get("prerelease"), "immutable": release.get("immutable"), "previous_version": previous.get("version"), "previous_tag": previous.get("tag"), "artifacts": assets, "provenance": verified["provenance"], "consistency": "pass"}
 
 def publish_release(root: Path, plan: ReleasePlan, *, git: GitService | None = None, github: GitHubService | None = None) -> dict[str, Any]:
-    policy = validate_policy(plan.policy)
-    if fingerprint(policy) != plan.policy_fingerprint:
-        raise ReleaseError("release plan policy fingerprint does not match embedded policy")
+    policy = _validate_plan_contract(plan)
     git = git or GitService(root)
     github = github or GitHubService()
     git.refresh_tags()
-    state = classify_consistency(git.remote_tag_info(plan.tag) or git.tag_info(plan.tag), github.release_by_tag(plan.repository, plan.tag), plan.target_commit)
+    release = github.release_by_tag(plan.repository, plan.tag)
+    state = classify_consistency(git.remote_tag_info(plan.tag) or git.tag_info(plan.tag), release, plan.target_commit)
     if state == "INCONSISTENT":
         raise ReleaseError("existing tag/release state is inconsistent")
     if state == "PUBLISHED_CONSISTENT":
+        drift = _release_plan_errors(github, plan, release, require_artifacts=True, require_manifest=True)
+        if drift:
+            raise ReleaseError("published release disagrees with reviewed plan: " + "; ".join(drift))
         return {"status": "already_consistent", "release": resolve_release(root, plan.repository, plan.tag, policy, git=git, github=github)}
     reinspection = inspect_release(root, plan.repository, plan.target_commit, policy, previous_tag=(plan.previous_release or {}).get("tag"), refresh=False, git=git, github=github)
     if reinspection["inspection_fingerprint"] != plan.inspection_fingerprint:
@@ -341,8 +411,14 @@ def publish_release(root: Path, plan: ReleasePlan, *, git: GitService | None = N
         release = github.release_by_tag(plan.repository, plan.tag)
         if not release:
             raise ReleaseError("draft release disappeared during publication")
+        drift = _release_plan_errors(github, plan, release, require_artifacts=False, require_manifest=False)
+        if drift:
+            raise ReleaseError("draft release disagrees with reviewed plan: " + "; ".join(drift))
         release = _verify_or_upload_artifacts(github, plan.repository, release, plan.artifacts)
         release = _ensure_manifest(root, github, plan, release)
+        drift = _release_plan_errors(github, plan, release, require_artifacts=True, require_manifest=True)
+        if drift:
+            raise ReleaseError("draft release failed reviewed-plan verification: " + "; ".join(drift))
         github.publish_release(plan.repository, int(release["id"]))
     verified = verify_release(root, plan.repository, plan.tag, policy, git=git, github=github)
     if verified["consistency"] != "pass":
