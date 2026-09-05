@@ -35,6 +35,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical inventory for skill 
 | [`coferlandia-project-manager`](./skills/ops/coferlandia-project-manager/) | A rough idea, requirement, document, or bug cluster must become a coherent initiative. | Initiative WHAT/WHY, scope, acceptance criteria, execution strategy, and one authoritative Epic or local contract. | Does not perform technical decomposition, implementation, review, or Git integration. |
 | [`software-development`](./skills/engineering/software-development/) | Code work needs analysis, implementation, debugging, executable-plan execution, fixes, or independent review. | Bounded role execution through Analyst, Developer, Debugger, Coding Agent, Fix Agent, and Code Reviewer. | Does not own portfolio planning or orchestrated Git lifecycle operations. |
 | [`project-orchestrator`](./skills/ops/project-orchestrator/) | An approved direct plan or Analyst task graph must run through a controlled delivery lifecycle. | Contract materialization, claims, Git/worktrees, commits, reviews, traceability, final PR, explicit integration, and cleanup. | Executes approved contracts; it does not silently re-plan or redesign them. |
+| [`coferlandia-release-publisher`](./skills/ops/coferlandia-release-publisher/) | An exact existing commit must become, dry-run, verify, or resolve as a formal product release. | Semantic-version plan, exact annotated tag, GitHub Release, optional artifacts/provenance, consistency verification, and a normalized machine-readable release contract. | Owns Commit → Release only; it does not deploy, roll back production, choose hosts, or decide what version is deployed. |
 
 ## Configuration Operations
 
@@ -52,6 +53,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical inventory for skill 
 
 ```text
 Controlled delivery:     Project Manager -> optional Architect -> Analyst/direct plan -> Orchestrator -> development roles
+Release publication:     validated/integrated commit -> Release Publisher -> separate deployment authority when needed
 Knowledge recovery:      Archivist -> optional Project Skill Miner
 Skill mechanization:     Existing skill -> Skill Toolsmith -> Skill Repository Versioning
 Configuration tooling:   Config Toolsmith -> Config DevOps

@@ -87,11 +87,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.4.0 — 2026-09-03**
+**v2.5.0 — 2026-09-05**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| project-orchestrator | 2.4 | Adds fail-closed exact-candidate GitHub CI gates, durable integration-check states, remote base validation, merge-group awareness, double revalidation, and head-conditional squash merge protection. |
+| coferlandia-release-publisher | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
