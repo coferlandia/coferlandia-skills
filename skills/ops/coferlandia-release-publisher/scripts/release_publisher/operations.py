@@ -183,14 +183,31 @@ def _verify_or_upload_artifacts(github: GitHubService, repository: str, release:
             if _asset_digest(existing) != artifact["sha256"]:
                 raise ReleaseError(f"release asset conflicts with planned digest: {artifact['name']}")
             continue
-        github.upload_asset(repository, int(release["id"]), path, artifact["name"])
+        uploaded = github.upload_asset(repository, int(release["id"]), path, artifact["name"])
+        if uploaded.get("name") != artifact["name"] or _asset_digest(uploaded) != artifact["sha256"]:
+            raise ReleaseError(f"uploaded release asset could not be verified: {artifact['name']}")
         release = github.release_by_id(repository, int(release["id"]))
         current = {item["name"]: item for item in release.get("assets", [])}
     return release
 
 def _manifest_payload(plan: ReleasePlan, release: dict[str, Any]) -> dict[str, Any]:
     previous = plan.previous_release or {}
-    return {"schema_version": 1, "repository": plan.repository, "version": plan.version, "tag": plan.tag, "commit": plan.target_commit, "previous_version": previous.get("version"), "previous_tag": previous.get("tag"), "impact": plan.impact, "created_at": release.get("created_at"), "policy_schema_version": plan.policy.get("schema_version"), "plan_sha256": fingerprint(plan.to_dict()), "artifacts": [{"name": item["name"], "sha256": item["sha256"]} for item in plan.artifacts]}
+    return {
+        "schema_version": 1,
+        "repository": plan.repository,
+        "version": plan.version,
+        "tag": plan.tag,
+        "commit": plan.target_commit,
+        "previous_version": previous.get("version"),
+        "previous_tag": previous.get("tag"),
+        "impact": plan.impact,
+        "created_at": release.get("created_at"),
+        "policy_schema_version": plan.policy.get("schema_version"),
+        "policy_fingerprint": plan.policy_fingerprint,
+        "plan_sha256": fingerprint(plan.to_dict()),
+        "validation": plan.validation,
+        "artifacts": [{"name": item["name"], "sha256": item["sha256"]} for item in plan.artifacts],
+    }
 
 def _ensure_manifest(root: Path, github: GitHubService, plan: ReleasePlan, release: dict[str, Any]) -> dict[str, Any]:
     if plan.provenance == "disabled":
@@ -203,7 +220,9 @@ def _ensure_manifest(root: Path, github: GitHubService, plan: ReleasePlan, relea
         if _asset_digest(existing) != digest:
             raise ReleaseError("existing release-manifest.json conflicts with planned provenance")
         return release
-    github.upload_asset(plan.repository, int(release["id"]), path, "release-manifest.json")
+    uploaded = github.upload_asset(plan.repository, int(release["id"]), path, "release-manifest.json")
+    if uploaded.get("name") != "release-manifest.json" or _asset_digest(uploaded) != digest:
+        raise ReleaseError("uploaded release-manifest.json could not be verified")
     return github.release_by_id(plan.repository, int(release["id"]))
 
 def _read_manifest(github: GitHubService, repository: str, release: dict[str, Any]) -> dict[str, Any] | None:
@@ -215,6 +234,21 @@ def _read_manifest(github: GitHubService, repository: str, release: dict[str, An
     except (json.JSONDecodeError, ReleaseError) as exc:
         raise ReleaseError("release-manifest.json could not be read as JSON") from exc
     return value if isinstance(value, dict) else None
+
+def _verify_manifest_artifacts(release: dict[str, Any], manifest: dict[str, Any] | None) -> list[str]:
+    if not manifest:
+        return []
+    errors: list[str] = []
+    current = {item.get("name"): item for item in release.get("assets", [])}
+    for item in manifest.get("artifacts", []):
+        name = item.get("name")
+        expected = item.get("sha256")
+        asset = current.get(name)
+        if not asset:
+            errors.append(f"release artifact declared by provenance is missing: {name}")
+        elif _asset_digest(asset) != expected:
+            errors.append(f"release artifact digest disagrees with provenance: {name}")
+    return errors
 
 def verify_release(root: Path, repository: str, tag: str, policy: dict[str, Any], *, git: GitService | None = None, github: GitHubService | None = None) -> dict[str, Any]:
     validate_policy(policy)
@@ -228,11 +262,22 @@ def verify_release(root: Path, repository: str, tag: str, policy: dict[str, Any]
     state = classify_consistency(tag_info, release, target)
     if state != "PUBLISHED_CONSISTENT":
         errors.append(f"release consistency state is {state}")
-    manifest = _read_manifest(github, repository, release) if release else None
-    if manifest and (manifest.get("tag") != tag or manifest.get("commit") != target or manifest.get("repository") != repository):
-        errors.append("release manifest disagrees with tag/release identity")
     prefix = policy["versioning"]["tag_prefix"]
     version = _version_from_tag(tag, prefix)
+    parsed_version: SemVer | None = None
+    if version is None:
+        errors.append("release tag does not conform to the configured SemVer/tag-prefix policy")
+    else:
+        parsed_version = SemVer.parse(version)
+    if release and parsed_version is not None and bool(parsed_version.prerelease) != bool(release.get("prerelease")):
+        errors.append("GitHub prerelease flag disagrees with semantic version")
+    manifest = _read_manifest(github, repository, release) if release else None
+    if manifest and (manifest.get("tag") != tag or manifest.get("commit") != target or manifest.get("repository") != repository or manifest.get("version") != version):
+        errors.append("release manifest disagrees with tag/release identity")
+    if manifest and manifest.get("policy_fingerprint") and manifest.get("policy_fingerprint") != fingerprint(policy):
+        errors.append("release manifest was validated under a different release policy")
+    if release:
+        errors.extend(_verify_manifest_artifacts(release, manifest))
     previous = discover_previous_release(git, [item for item in github.list_releases(repository) if item.get("tag") != tag], target, prefix) if target and version else None
     immutability = None
     mode = policy["github_release"]["immutability"]
@@ -245,6 +290,8 @@ def verify_release(root: Path, repository: str, tag: str, policy: dict[str, Any]
                 errors.append("immutable releases required by policy could not be verified")
         if mode == "required" and immutability.get("enabled") is not True:
             errors.append("immutable releases required by policy are not enabled")
+        if mode == "required" and release and release.get("immutable") is not True:
+            errors.append("published GitHub Release is not marked immutable")
     return {"schema_version": 1, "repository": repository, "tag": tag, "version": version, "commit": target or None, "release": release, "previous_release": previous, "provenance": manifest, "immutability": immutability, "consistency": "pass" if not errors else "fail", "errors": errors}
 
 def resolve_release(root: Path, repository: str, tag: str, policy: dict[str, Any], *, git: GitService | None = None, github: GitHubService | None = None) -> dict[str, Any]:

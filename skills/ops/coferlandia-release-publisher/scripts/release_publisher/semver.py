@@ -43,20 +43,28 @@ class SemVer:
         return (self.major, self.minor, self.patch)
 
     def _compare_pre(self, other: "SemVer") -> int:
-        if not self.prerelease and not other.prerelease: return 0
-        if not self.prerelease: return 1
-        if not other.prerelease: return -1
+        if not self.prerelease and not other.prerelease:
+            return 0
+        if not self.prerelease:
+            return 1
+        if not other.prerelease:
+            return -1
         for left, right in zip(self.prerelease, other.prerelease):
-            if left == right: continue
-            ln, rn = left.isdigit(), right.isdigit()
-            if ln and rn: return -1 if int(left) < int(right) else 1
-            if ln != rn: return -1 if ln else 1
+            if left == right:
+                continue
+            left_numeric, right_numeric = left.isdigit(), right.isdigit()
+            if left_numeric and right_numeric:
+                return -1 if int(left) < int(right) else 1
+            if left_numeric != right_numeric:
+                return -1 if left_numeric else 1
             return -1 if left < right else 1
         return (len(self.prerelease) > len(other.prerelease)) - (len(self.prerelease) < len(other.prerelease))
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, SemVer): return NotImplemented
-        if self.core != other.core: return self.core < other.core
+        if not isinstance(other, SemVer):
+            return NotImplemented
+        if self.core != other.core:
+            return self.core < other.core
         return self._compare_pre(other) < 0
 
     def __eq__(self, other: object) -> bool:
@@ -66,10 +74,14 @@ def bump_version(previous: str | None, impact: str) -> str:
     if previous is None:
         raise ValueError("first release requires an explicit version")
     current = SemVer.parse(previous)
-    if impact == "patch": result = (current.major, current.minor, current.patch + 1)
-    elif impact == "minor": result = (current.major, current.minor + 1, 0)
-    elif impact == "major": result = (current.major + 1, 0, 0)
-    else: raise ValueError(f"unsupported semantic impact: {impact}")
+    if impact == "patch":
+        result = (current.major, current.minor, current.patch + 1)
+    elif impact == "minor":
+        result = (current.major, current.minor + 1, 0)
+    elif impact == "major":
+        result = (current.major + 1, 0, 0)
+    else:
+        raise ValueError(f"unsupported semantic impact: {impact}")
     return ".".join(str(value) for value in result)
 
 def validate_requested_version(previous: str | None, requested: str, impact: str) -> None:
@@ -77,8 +89,15 @@ def validate_requested_version(previous: str | None, requested: str, impact: str
     if previous is None:
         return
     old = SemVer.parse(previous)
-    minimum = SemVer.parse(bump_version(previous, impact))
     if candidate <= old:
         raise ValueError(f"requested version {requested} must be newer than {previous}")
+
+    # Once a prerelease line already encodes the next public core version, advancing
+    # within that same core (rc.1 -> rc.2 or rc.1 -> stable) is a promotion, not a
+    # fresh PATCH/MINOR/MAJOR bump from the prerelease identifier.
+    if old.prerelease and candidate.core == old.core:
+        return
+
+    minimum = SemVer.parse(bump_version(previous, impact))
     if candidate.core < minimum.core:
         raise ValueError(f"requested version {requested} understates {impact} impact; minimum core is {minimum}")

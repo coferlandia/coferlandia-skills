@@ -34,6 +34,15 @@ class SemVerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_requested_version("1.6.3", "1.7.0", "major")
 
+    def test_prerelease_line_can_advance_and_promote_without_extra_core_bump(self) -> None:
+        validate_requested_version("1.7.0-rc.1", "1.7.0-rc.2", "minor")
+        validate_requested_version("1.7.0-rc.1", "1.7.0", "minor")
+        with self.assertRaises(ValueError):
+            validate_requested_version("1.7.0-rc.2", "1.7.0-rc.1", "minor")
+
+    def test_new_minor_prerelease_from_stable_is_valid(self) -> None:
+        validate_requested_version("1.6.3", "1.7.0-rc.1", "minor")
+
     def test_first_release_requires_explicit_version(self) -> None:
         with self.assertRaises(ValueError):
             bump_version(None, "minor")
