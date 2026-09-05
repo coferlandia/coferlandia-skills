@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## v2.5.0 (2026-09-05)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-release-publisher | new | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
+
+### Repository and protocol
+
+- Adds a reusable product-release boundary after development/integration: an exact existing commit becomes a formal release without requiring a synthetic declaration commit.
+- Separates semantic release decisions from deterministic Git/GitHub mechanics, including historical targets, release-line ancestry, prereleases, explicit policy checks, and fail-closed inconsistency handling.
+- Preserves repository-local precedence only when a stronger local contract explicitly owns final Commit-to-published-Release; preparation-only release/versioning gates may compose before the generic publisher.
+- Adds Linux/Windows CI coverage for activation, SemVer/policy contracts, real temporary Git histories, GitHub adapter behavior, release planning, and consistency states.
+
+### Plugin and packaging
+
+- Bumps the installable plugin from v2.4.0 to v2.5.0 for the additive `coferlandia-release-publisher` public skill.
+- Refreshes plugin discovery metadata and the human skill guide to include deterministic release publication and machine-readable release resolution.
+- Keeps transient release plans/provenance under `.agent/` and therefore excluded from plugin packaging; optional provenance becomes a GitHub Release asset rather than a required file in the target commit.
+
+### Migration or compatibility
+
+- Existing consumers may update normally; this is an additive compatible release.
+- The generic publisher does not auto-migrate repositories whose published GitHub Release history uses another version scheme; those repositories require an explicit stronger local publication contract or policy decision.
+- Deployment, production rollback, host selection, Docker/service operations, and deployed-version state remain outside the release publisher contract.
+
 ## v2.4.0 (2026-09-03)
 
 ### Skills
