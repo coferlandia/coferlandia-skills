@@ -63,20 +63,41 @@ class ReleasePlan:
     observed_state: str = "NEW"
     validation: list[dict[str, Any]] = field(default_factory=list)
     operations: list[str] = field(default_factory=list)
+    plan_fingerprint: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+    def integrity_payload(self) -> dict[str, Any]:
+        payload = self.to_dict()
+        payload.pop("plan_fingerprint", None)
+        return payload
+
+    def compute_fingerprint(self) -> str:
+        return fingerprint(self.integrity_payload())
+
+    def seal(self) -> "ReleasePlan":
+        self.plan_fingerprint = self.compute_fingerprint()
+        return self
+
+    def assert_integrity(self) -> None:
+        if not self.plan_fingerprint:
+            raise ReleaseError("release plan is not sealed; regenerate it with the plan command")
+        if self.plan_fingerprint != self.compute_fingerprint():
+            raise ReleaseError("release plan integrity check failed; plan was modified after dry-run")
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> "ReleasePlan":
         if value.get("schema_version") != 1:
             raise ReleaseError("unsupported release-plan schema_version")
-        required = {"repository", "target_commit", "impact", "version", "tag", "title", "release_notes"}
+        required = {"repository", "target_commit", "impact", "version", "tag", "title", "release_notes", "plan_fingerprint"}
         missing = sorted(required - set(value))
         if missing:
             raise ReleaseError("release plan missing fields: " + ", ".join(missing))
         fields = {name for name in cls.__dataclass_fields__}
-        return cls(**{key: item for key, item in value.items() if key in fields})
+        plan = cls(**{key: item for key, item in value.items() if key in fields})
+        plan.assert_integrity()
+        return plan
 
 def load_plan(path: Path) -> ReleasePlan:
     try:
