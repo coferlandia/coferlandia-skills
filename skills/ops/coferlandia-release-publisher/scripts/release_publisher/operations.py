@@ -17,7 +17,7 @@ def classify_consistency(tag_info: dict[str, Any] | None, release_info: dict[str
         return "INCONSISTENT"
     if release_info is None:
         return "TAG_ONLY_CORRECT"
-    if release_info.get("tag") != tag_info.get("tag"):
+    if tag_info.get("tag") is not None and release_info.get("tag") != tag_info.get("tag"):
         return "INCONSISTENT"
     return "DRAFT_CORRECT" if release_info.get("draft") else "PUBLISHED_CONSISTENT"
 
