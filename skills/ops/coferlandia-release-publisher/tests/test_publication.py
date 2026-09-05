@@ -164,6 +164,18 @@ class PublicationLifecycleTests(unittest.TestCase):
             self.assertEqual(git.created, 0)
             self.assertEqual(git.pushed, 0)
 
+    def test_publish_rejects_tampered_plan_before_remote_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            git, github = StatefulGit(), StatefulGitHub()
+            plan = self._plan(root, git, github, provenance="disabled")
+            plan.tag = "v9.9.9"
+            with self.assertRaisesRegex(ReleaseError, "plan"):
+                publish_release(root, plan, git=git, github=github)
+            self.assertEqual(git.created, 0)
+            self.assertEqual(git.pushed, 0)
+            self.assertEqual(github.drafts_created, 0)
+
     def test_verify_rejects_non_semver_and_prerelease_flag_drift(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
