@@ -2,7 +2,7 @@
 
 Operational contracts and reusable Chat delivery controllers for AI agents working on real software projects.
 
-Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification for its public skills and additionally maintains a small repository-addressable Chat prompt family for Development, Qualification, and Integration.
+Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification for its public skills and additionally maintains a small public Chat prompt family for Development, Qualification, and Integration.
 
 ## Is this library for you?
 
@@ -96,7 +96,7 @@ The workflows are modular. The Project Manager, Architect, development roles, Ar
 | [`README.md`](./README.md) | Human-facing value proposition and operating model. |
 | [`SKILLS-GUIDE.md`](./SKILLS-GUIDE.md) | Executive guide for deciding which skills/controllers are useful. |
 | [`skills/INDEX.md`](./skills/INDEX.md) | Canonical inventory, category, status, and location of every Agent Skill. |
-| [`prompts/INDEX.md`](./prompts/INDEX.md) | Repository-addressable Chat delivery prompt catalog. |
+| [`prompts/INDEX.md`](./prompts/INDEX.md) | Public Chat delivery prompt catalog. |
 | [`prompts/registry.json`](./prompts/registry.json) | Machine-readable Chat aliases/composition registry. |
 | [`AGENTS.md`](./AGENTS.md) | Entry point and maintenance rules for AI agents. |
 | Each `SKILL.md` | Complete operational contract for one Agent Skill. |
@@ -106,7 +106,7 @@ The workflows are modular. The Project Manager, Architect, development roles, Ar
 
 ```text
 skills/          Public Agent Skills, organized by category
-prompts/         Repository-addressable Chat delivery controllers (not packaged as Agent Skills in V1)
+prompts/         Public Chat delivery controllers, shipped alongside skills
 _protocol/       Shared creation, validation, delivery, and release protocol
 .agents/skills/  Repository-local skills that are not shipped in the plugin
 AGENTS.md        Entry point for agents
@@ -117,12 +117,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.6.0 — 2026-09-07**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| local-ci | 1.0.0 | Adds generic LOCAL Qualification from durable READY_FOR_CI to candidate/profile-bound READY_FOR_MERGE without GitHub-native fallback or merge coupling. |
-| coferlandia-ci-adapter | 1.0.0 | Adds repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
+**v2.6.1 — 2026-09-07**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
@@ -143,7 +138,7 @@ copilot plugin marketplace add coferlandia/coferlandia-skills
 copilot plugin install coferlandia-skills@coferlandia
 ```
 
-Claude Code and Copilot CLI share the marketplace declared in `.claude-plugin/`.
+Claude Code and Copilot CLI share the marketplace declared in `.claude-plugin/`. The generated plugin package includes both public Agent Skills and the public `prompts/` catalog.
 
 ### Global Agent Skills
 
@@ -159,7 +154,9 @@ Use `--dry-run` to inspect removals and copies first, or `--destination PATH` to
 
 ### Chat prompts
 
-The `prompts/` family is repository-addressable in V1 and intentionally is not installed as an Agent Skill plugin payload. Load `prompts/BOOTSTRAP.md`/`prompts/registry.json` from this repository when a Chat environment wants short controller names and composition.
+The `prompts/` family is a separate public artifact family from Agent Skills, but it ships in the same Coferlandia plugin/package. Repository vendoring or installation flows that materialize Coferlandia under `.agents/` should install the prompt catalog under the target prompt location (for example `.agents/prompts/`) as well as the Agent Skills catalog under the target skill location.
+
+Load `prompts/BOOTSTRAP.md`/`prompts/registry.json` when a Chat environment wants short controller names and composition.
 
 ## License
 

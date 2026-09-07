@@ -288,7 +288,7 @@ def classify_paths(paths: Iterable[str]) -> dict[str, Any]:
         parts = Path(path).parts
         if len(parts) >= 4 and parts[0] == "skills":
             result["skills"].setdefault(parts[2], []).append(path)
-        elif path.startswith(".claude-plugin/") or path in {
+        elif path.startswith(".claude-plugin/") or path.startswith("prompts/") or path in {
             ".version-bump.json",
             "scripts/update-plugin.ps1",
         }:
@@ -394,6 +394,7 @@ def iter_package_files(root: Path) -> Iterable[Path]:
     includes = [
         ".claude-plugin",
         "skills",
+        "prompts",
         "_protocol",
         "README.md",
         "AGENTS.md",
