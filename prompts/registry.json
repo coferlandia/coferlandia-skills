@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "prompts": [
+    {
+      "id": "chat-coder",
+      "path": "prompts/chat-coder.md",
+      "stage": "development",
+      "aliases": ["chat coder", "chat-coder"]
+    },
+    {
+      "id": "ci",
+      "path": "prompts/ci.md",
+      "stage": "qualification",
+      "aliases": ["ci", "gh ci", "github ci"]
+    },
+    {
+      "id": "merge",
+      "path": "prompts/merge.md",
+      "stage": "integration",
+      "aliases": ["merge"]
+    }
+  ],
+  "external_aliases": [
+    {"alias": "local ci", "kind": "skill", "target": "local-ci"}
+  ],
+  "composition": {
+    "separator": "+",
+    "order": "left-to-right",
+    "implicit_stages": false,
+    "automatic_fallback": false
+  }
+}
