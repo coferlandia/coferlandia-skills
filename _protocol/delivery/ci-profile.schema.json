@@ -24,7 +24,7 @@
           }
         },
         "required_services": {"type": "array", "items": {"type": "string"}},
-        "environment": {"type": "array", "items": {"type": "string"}}
+        "environment": {"type": "array", "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}, "uniqueItems": true}
       },
       "additionalProperties": false
     },

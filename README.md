@@ -121,8 +121,8 @@ AGENTS.md        Entry point for agents
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| local-ci | 1.0.0 | Adds generic LOCAL Qualification from durable READY_FOR_CI to candidate/profile-bound READY_FOR_MERGE without GitHub-CI fallback or merge. |
-| coferlandia-ci-adapter | 1.0.0 | Adds repository CI discovery plus deterministic validation/fingerprinting/rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
+| local-ci | 1.0.0 | Adds generic LOCAL Qualification from durable READY_FOR_CI to candidate/profile-bound READY_FOR_MERGE without GitHub-native fallback or merge coupling. |
+| coferlandia-ci-adapter | 1.0.0 | Adds repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

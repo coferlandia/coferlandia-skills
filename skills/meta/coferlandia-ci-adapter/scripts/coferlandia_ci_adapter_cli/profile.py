@@ -10,6 +10,7 @@ from typing import Any
 
 PROFILE_PATH = Path(".coferlandia/ci/profile.json")
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 ALLOWED_TOP = {"schema_version", "profile_version", "repository", "documentation", "local", "github", "identity", "exceptions", "fingerprint"}
 FORBIDDEN_KEY_PARTS = {"secret", "password", "passwd", "token", "credential", "private_key"}
 
@@ -64,8 +65,11 @@ def validate_profile(profile: dict, *, verify_fingerprint: bool = False) -> None
     for item in commands:
         _require(set(item) == {"id", "command", "purpose"}, "qualification command fields are invalid")
         _require(all(isinstance(item[key], str) and item[key] for key in ("id", "command", "purpose")), "qualification command values must be non-empty strings")
-    for field in ("required_services", "environment"):
-        _require(isinstance(local[field], list) and all(isinstance(x, str) and x for x in local[field]), f"local.{field} must be a string list")
+    services = local["required_services"]
+    _require(isinstance(services, list) and all(isinstance(x, str) and x for x in services), "local.required_services must be a string list")
+    environment = local["environment"]
+    _require(isinstance(environment, list) and all(isinstance(x, str) and ENV_NAME_RE.fullmatch(x) for x in environment), "local.environment must contain variable names only, never NAME=value or secret values")
+    _require(len(environment) == len(set(environment)), "local.environment entries must be unique")
 
     github = profile.get("github")
     _require(isinstance(github, dict) and set(github) == {"submission", "gates", "merge_group"}, "github fields are invalid")

@@ -31,7 +31,7 @@ class AdapterCLITests(unittest.TestCase):
                     {"id": "canonical", "command": "python -m unittest", "purpose": "canonical qualification"}
                 ],
                 "required_services": [],
-                "environment": []
+                "environment": ["CI_MODE"]
             },
             "github": {
                 "submission": {"mode": "existing-pr-events", "workflow": ".github/workflows/ci.yml"},
@@ -67,6 +67,10 @@ class AdapterCLITests(unittest.TestCase):
             module.validate_profile(profile)
         profile = self.sample()
         profile["local"]["qualification_commands"] = []
+        with self.assertRaises(ValueError):
+            module.validate_profile(profile)
+        profile = self.sample()
+        profile["local"]["environment"] = ["API_TOKEN=super-secret"]
         with self.assertRaises(ValueError):
             module.validate_profile(profile)
 
