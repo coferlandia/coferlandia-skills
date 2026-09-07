@@ -23,6 +23,7 @@ Skills about skills and about the repository itself: creating, auditing, structu
 | [project-skill-miner](./meta/project-skill-miner/) | Extract current operational recipes from durable project knowledge plus GitHub development evidence and convert approved ones into project-local agent skills | active |
 | [coferlandia-skill-toolsmith](./meta/coferlandia-skill-toolsmith/) | Explicit-invocation-only skill that analyzes a target skill, consolidates its deterministic behavior behind one unified Python CLI (scripts/<name>-cli.py), and rewires the skill to use it | active |
 | [coferlandia-config-toolsmith](./meta/coferlandia-config-toolsmith/) | Explicitly builds a standardized, agent-operable configuration CLI and static contract over a project’s existing native configuration system without creating a shadow store | active |
+| [coferlandia-ci-adapter](./meta/coferlandia-ci-adapter/) | Study a repository's real CI/testing contract and create one minimal `.coferlandia/ci/profile.json` shared by generic Chat and local Qualification controllers | active |
 
 ## Engineering
 
@@ -32,6 +33,7 @@ Code, infrastructure, architecture, debugging.
 |-------|-------------|--------|
 | [software-development](./engineering/software-development/) | Routes broad-context Analyst decomposition with single-store outputs, developer/debugger work, executable coding-agent contracts, and independent review while keeping Git authority separate | active |
 | [the-architect](./engineering/the-architect/) | Govern cross-project architecture memory, reusable components, evidence-based assessments, concise release deltas, and optional pre-execution Architecture Gates | active |
+| [local-ci](./engineering/local-ci/) | Qualify an exact READY_FOR_CI candidate locally through the repository CI profile and emit candidate/profile-bound READY_FOR_MERGE evidence without GitHub-CI fallback or merge | active |
 
 ## Data
 
@@ -72,4 +74,4 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-09-05*
+*Last updated: 2026-09-07*

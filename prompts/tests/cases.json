@@ -1,0 +1,15 @@
+{
+  "positive": [
+    "aplica chat coder a #123",
+    "aplica gh ci a #123",
+    "aplica merge a #123",
+    "aplica chat coder + gh ci + merge a #123",
+    "aplica chat coder + local ci + merge a #123"
+  ],
+  "negative": [
+    "corre los tests del repo",
+    "explicame qué es CI",
+    "publica una release",
+    "deploya este commit"
+  ]
+}

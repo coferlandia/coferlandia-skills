@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/coferlandia/coferlandia-skills/_protocol/delivery/ci-profile.schema.json",
+  "title": "Coferlandia Repository CI Profile",
+  "type": "object",
+  "required": ["schema_version", "profile_version", "repository", "documentation", "local", "github", "identity", "exceptions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "profile_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+    "documentation": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "local": {
+      "type": "object",
+      "required": ["working_directory", "qualification_commands", "required_services", "environment"],
+      "properties": {
+        "working_directory": {"type": "string"},
+        "qualification_commands": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "required": ["id", "command", "purpose"],
+            "properties": {"id": {"type": "string"}, "command": {"type": "string"}, "purpose": {"type": "string"}},
+            "additionalProperties": false
+          }
+        },
+        "required_services": {"type": "array", "items": {"type": "string"}},
+        "environment": {"type": "array", "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "github": {
+      "type": "object",
+      "required": ["submission", "gates", "merge_group"],
+      "properties": {
+        "submission": {
+          "type": "object", "required": ["mode"],
+          "properties": {
+            "mode": {"enum": ["existing-pr-events", "workflow-dispatch", "none"]},
+            "workflow": {"type": ["string", "null"]}
+          },
+          "additionalProperties": false
+        },
+        "gates": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "required": ["id", "kind", "allowed_conclusions"],
+            "properties": {
+              "id": {"type": "string"},
+              "kind": {"enum": ["workflow", "check_run"]},
+              "workflow": {"type": "string"},
+              "name": {"type": "string"},
+              "allowed_conclusions": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true}
+            },
+            "additionalProperties": false
+          }
+        },
+        "merge_group": {
+          "type": "object", "required": ["supported", "authoritative_when_present"],
+          "properties": {"supported": {"type": "boolean"}, "authoritative_when_present": {"type": "boolean"}},
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "identity": {
+      "type": "object", "required": ["base_sensitive", "profile_sensitive"],
+      "properties": {"base_sensitive": {"type": "boolean"}, "profile_sensitive": {"type": "boolean"}},
+      "additionalProperties": false
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "documentation", "authorization"],
+        "properties": {"id": {"type": "string"}, "documentation": {"type": "string"}, "authorization": {"enum": ["external", "repository-policy"]}},
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

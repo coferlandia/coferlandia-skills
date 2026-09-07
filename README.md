@@ -1,8 +1,8 @@
 # coferlandia-skills
 
-Operational contracts for AI agents working on real software projects.
+Operational contracts and reusable Chat delivery controllers for AI agents working on real software projects.
 
-Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification and adds local conventions for composition, lifecycle, evidence, and execution.
+Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification for its public skills and additionally maintains a small repository-addressable Chat prompt family for Development, Qualification, and Integration.
 
 ## Is this library for you?
 
@@ -10,32 +10,59 @@ Use Coferlandia Skills when you:
 
 - run AI agents against real repositories, documentation, Git, or GitHub;
 - need repeatable workflows rather than one-off prompts;
-- want planning, architecture, implementation, review, and integration to remain separate;
+- want planning, architecture, implementation, review, Qualification, and Integration to remain separate;
 - need durable decisions, traceability, and safe coordination across agents.
 
-It is probably not the right fit when you only need short prompt snippets, expect unsupervised publication without evidence or control gates, or want a hosted development platform rather than a portable skill library.
+It is probably not the right fit when you only need isolated prompt snippets, expect unsupervised publication without evidence or control gates, or want a hosted development platform rather than portable contracts.
 
 ## Operating philosophy
 
-- **Skills are operational contracts, not prompt fragments.** Each skill defines activation conditions, authority, boundaries, outputs, and completion criteria.
+- **Agent Skills are operational contracts, not prompt fragments.** Each skill defines activation conditions, authority, boundaries, outputs, and completion criteria.
+- **Chat delivery controllers are first-class but distinct.** `chat-coder`, `ci`, and `merge` are centrally maintained prompts for Chat execution surfaces; local Qualification is a skill.
 - **Semantic judgment and deterministic control are separated.** Models reason and produce domain work; code owns mechanical state, validation, and lifecycle operations where reliability matters.
-- **Every responsibility has one owner.** Planning, architecture, implementation, review, integration, and durable knowledge are not silently duplicated.
+- **Every responsibility has one owner.** Planning, architecture, implementation, Qualification, Integration, release publication, and durable knowledge are not silently duplicated.
 - **Autonomy remains supervised and traceable.** Human or agentic control authorities may approve work, but consequential decisions and evidence remain inspectable.
-- **Skills compose without becoming inseparable.** They support complete workflows while remaining independently useful.
+- **Controllers compose without becoming inseparable.** They support complete workflows while remaining independently useful.
 
 ## Natural skill families
 
 | Family | Purpose |
 |---|---|
-| **Skill System** | Discover, create, version, mine, and mechanize skills. |
+| **Skill System** | Discover, create, version, mine, adapt, and mechanize skills/contracts. |
 | **Project Knowledge and Architecture** | Preserve durable project knowledge and govern material architectural decisions across projects. |
-| **Software Delivery** | Turn an initiative into an executable contract, implement it, review it, and integrate it under explicit control. |
+| **Software Delivery** | Turn an initiative into an executable contract, implement it, qualify an exact candidate, review it, and integrate it under explicit control. |
 | **Configuration Operations** | Standardize existing project configuration and operate it safely from agent or guided workflows. |
 | **Evidence and Critical Reasoning** | Evaluate claims through explicit evidence, confidence, and source traceability. |
 
 See the [Skills Guide](./SKILLS-GUIDE.md) for the human-oriented catalog, selection guidance, boundaries, and expected outcomes.
 
-## Typical software-delivery flow
+## Chat delivery flow
+
+```text
+Issue
+  |
+  v
+chat-coder (Chat Development)
+  |
+READY_FOR_CI
+  |
+  +---------------------------+
+  |                           |
+  v                           v
+ci prompt                  local-ci skill
+GITHUB_NATIVE              LOCAL
+  |                           |
+  +--------- READY_FOR_MERGE -+
+               |
+               v
+            merge prompt
+               |
+            COMPLETE
+```
+
+Both Qualification strategies consume one repository-owned `.coferlandia/ci/profile.json` produced/maintained by `coferlandia-ci-adapter`. They are alternatives, not fallback paths.
+
+## Typical orchestrated software-delivery flow
 
 ```text
 Idea, requirement, or bug cluster
@@ -60,24 +87,27 @@ Coding Agent -> Independent Review -> Fixes
 Holistic Review -> Pull Request -> Explicit Integration
 ```
 
-The workflow is modular. The Project Manager, Architect, development roles, Archivist, and Orchestrator can also be invoked independently when the task requires only one responsibility.
+The workflows are modular. The Project Manager, Architect, development roles, Archivist, Orchestrator, Chat prompts, CI strategies, and release publisher can be invoked independently when the task requires only one responsibility.
 
 ## Documentation map
 
 | Document | Purpose |
 |---|---|
 | [`README.md`](./README.md) | Human-facing value proposition and operating model. |
-| [`SKILLS-GUIDE.md`](./SKILLS-GUIDE.md) | Executive guide for deciding which skills are useful. |
-| [`skills/INDEX.md`](./skills/INDEX.md) | Canonical inventory, category, status, and location of every skill. |
+| [`SKILLS-GUIDE.md`](./SKILLS-GUIDE.md) | Executive guide for deciding which skills/controllers are useful. |
+| [`skills/INDEX.md`](./skills/INDEX.md) | Canonical inventory, category, status, and location of every Agent Skill. |
+| [`prompts/INDEX.md`](./prompts/INDEX.md) | Repository-addressable Chat delivery prompt catalog. |
+| [`prompts/registry.json`](./prompts/registry.json) | Machine-readable Chat aliases/composition registry. |
 | [`AGENTS.md`](./AGENTS.md) | Entry point and maintenance rules for AI agents. |
-| Each `SKILL.md` | Complete operational contract for one skill. |
-| Each `CHANGELOG.md` | Version history for one public skill. |
+| Each `SKILL.md` | Complete operational contract for one Agent Skill. |
+| Each skill `CHANGELOG.md` | Version history for one public skill. |
 
 ## Repository structure
 
 ```text
-skills/          Public skills, organized by category
-_protocol/       Protocol for creating, validating, and releasing skills
+skills/          Public Agent Skills, organized by category
+prompts/         Repository-addressable Chat delivery controllers (not packaged as Agent Skills in V1)
+_protocol/       Shared creation, validation, delivery, and release protocol
 .agents/skills/  Repository-local skills that are not shipped in the plugin
 AGENTS.md        Entry point for agents
 ```
@@ -87,11 +117,12 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.5.0 — 2026-09-05**
+**v2.6.0 — 2026-09-07**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-release-publisher | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
+| local-ci | 1.0.0 | Adds generic LOCAL Qualification from durable READY_FOR_CI to candidate/profile-bound READY_FOR_MERGE without GitHub-native fallback or merge coupling. |
+| coferlandia-ci-adapter | 1.0.0 | Adds repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
@@ -126,9 +157,13 @@ python _protocol/scripts/install_global_skills.py
 
 Use `--dry-run` to inspect removals and copies first, or `--destination PATH` to target one runtime explicitly. Repeat `--destination` to update more than one runtime.
 
+### Chat prompts
+
+The `prompts/` family is repository-addressable in V1 and intentionally is not installed as an Agent Skill plugin payload. Load `prompts/BOOTSTRAP.md`/`prompts/registry.json` from this repository when a Chat environment wants short controller names and composition.
+
 ## License
 
-Apache License 2.0 — see [`LICENSE`](./LICENSE). Skills are provided "as is," without warranty. They encode process and judgment, not certified procedures; read a skill fully and verify its behavior before relying on it for consequential work.
+Apache License 2.0 — see [`LICENSE`](./LICENSE). Skills and prompts are provided "as is," without warranty. They encode process and judgment, not certified procedures; read the applicable contract fully and verify its behavior before relying on it for consequential work.
 
 ---
 

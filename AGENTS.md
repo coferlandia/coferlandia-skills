@@ -8,13 +8,13 @@ This file is your entry point to `coferlandia-skills`. Read it in full before do
 
 ## What this repository is
 
-An **Agent Skills** repository in [agentskills.io](https://agentskills.io) format, built to be used and maintained by AI agents. Each public skill is a specialized operational contract. Repository-local skills under `.agents/skills/` govern this repository itself and are not shipped in the plugin.
+An **Agent Skills** repository in [agentskills.io](https://agentskills.io) format, built to be used and maintained by AI agents. Each public skill is a specialized operational contract. The repository also owns a small `prompts/` family for reusable Chat delivery controllers. Repository-local skills under `.agents/skills/` govern this repository itself and are not shipped in the plugin.
 
 ## Canonical contract
 
-The [agentskills.io specification](https://agentskills.io/specification) is the authority on structure, frontmatter, and progressive disclosure. This repo adds verifiable local conventions for categories, status, behavioral evidence, version history, packaging, and release readiness.
+The [agentskills.io specification](https://agentskills.io/specification) is the authority on public skill structure/frontmatter/progressive disclosure. `_protocol/PROMPT_SPEC.md` owns the separate Chat prompt format. This repo adds verifiable local conventions for categories, status, behavioral evidence, delivery handoffs, version history, packaging, and release readiness.
 
-**Philosophy:** this repo is *for agents* and *by agents*. You have everything required to create, improve, validate, release, and maintain skills without relying on hidden conversational instructions.
+**Philosophy:** this repo is *for agents* and *by agents*. You have everything required to create, improve, validate, release, and maintain its contracts without relying on hidden conversational instructions.
 
 ---
 
@@ -25,13 +25,14 @@ coferlandia-skills/
 ├── AGENTS.md              ← You are here
 ├── README.md              ← Human-facing overview and generated latest-release summary
 ├── RELEASE-NOTES.md       ← Repository/plugin release history
-├── SKILLS-GUIDE.md        ← Human-oriented skill catalog
+├── SKILLS-GUIDE.md        ← Human-oriented catalog
 ├── LICENSE                ← Apache License 2.0
-├── .claude-plugin/        ← Plugin and marketplace metadata
+├── prompts/               ← Repository-addressable Chat delivery controllers; not Agent Skills plugin payload in V1
+├── .claude-plugin/        ← Agent Skills plugin and marketplace metadata
 ├── .agents/skills/        ← Repository-local maintenance skills; never shipped
-├── _protocol/             ← Creation, quality, versioning, and release protocol
-└── skills/                ← Public skills
-    ├── INDEX.md           ← Canonical public inventory
+├── _protocol/             ← Creation, quality, delivery, versioning, and release protocol
+└── skills/                ← Public Agent Skills
+    ├── INDEX.md           ← Canonical public skill inventory
     └── <category>/<skill>/
         ├── SKILL.md       ← Current contract and version
         └── CHANGELOG.md   ← Skill-specific version history
@@ -43,7 +44,8 @@ coferlandia-skills/
 
 1. Read `skills/meta/using-project-skills/` and invoke any matching public skill before responding or acting.
 2. Also inspect `.agents/skills/` for a repository-local skill that more specifically owns the requested repository operation.
-3. A repository-local skill overrides a weaker generic public workflow when it explicitly owns the same operation.
+3. When the request explicitly invokes a Chat delivery controller, resolve it through `prompts/registry.json` and load only the requested prompt(s).
+4. A repository-local skill overrides a weaker generic public workflow when it explicitly owns the same operation.
 
 ## Using an existing public skill
 
@@ -51,6 +53,14 @@ coferlandia-skills/
 2. Read the relevant skill's `SKILL.md` in full.
 3. Load its references only under the conditions stated by that skill.
 4. Follow the complete contract and preserve its authority boundaries.
+
+## Using Chat delivery prompts
+
+1. Read `prompts/BOOTSTRAP.md` and `prompts/registry.json`.
+2. Resolve only aliases explicitly requested (`chat coder`, `ci`/`gh ci`, `merge`, or external `local ci`).
+3. Execute compositions left-to-right without inserting missing stages or changing Qualification strategy.
+4. Read `_protocol/delivery/` for shared READY_FOR_CI / READY_FOR_MERGE / requalification contracts.
+5. `prompts/` is repository-addressable in V1; do not pretend it is installed as an Agent Skill through the `.plugin` package.
 
 ## Creating or changing a public skill
 
@@ -60,6 +70,14 @@ coferlandia-skills/
 4. Validate against `_protocol/QUALITY_STANDARDS.md` and run `_protocol/scripts/validate_skill.py`.
 5. Update `skills/INDEX.md` only when inventory, location, category, status, or discovery summary changes.
 6. Before final delivery, run the repository-local release-maintenance gate described below.
+
+## Creating or changing a Chat prompt
+
+1. Read `_protocol/PROMPT_SPEC.md` and `_protocol/PROMPT_QUALITY_STANDARDS.md`.
+2. Keep repository-specific CI facts out of generic prompt bodies; use `.coferlandia/ci/profile.json` in consumer repositories.
+3. Update `prompts/registry.json` only for prompt identity/alias/composition changes.
+4. Run `python _protocol/scripts/validate_prompt.py validate --root .` and the prompt/delivery contract tests.
+5. Treat prompt changes as repository public-surface changes and document them in release notes; do not silently package them as Agent Skills.
 
 ---
 
@@ -73,6 +91,9 @@ Every rule has one owner. Other documents link to it instead of copying competin
 | Quality and safety checklist | [`_protocol/QUALITY_STANDARDS.md`](./_protocol/QUALITY_STANDARDS.md) |
 | SKILL.md format and progressive disclosure | [agentskills.io/specification](https://agentskills.io/specification) |
 | Skill inventory and row format | [`skills/INDEX.md`](./skills/INDEX.md) |
+| Chat prompt identity/aliases/composition | [`prompts/registry.json`](./prompts/registry.json) |
+| Chat prompt format/quality | [`_protocol/PROMPT_SPEC.md`](./_protocol/PROMPT_SPEC.md), [`_protocol/PROMPT_QUALITY_STANDARDS.md`](./_protocol/PROMPT_QUALITY_STANDARDS.md) |
+| Delivery handoffs/requalification | [`_protocol/delivery/`](./_protocol/delivery/) |
 | Lifecycle states | [`_protocol/SKILL_LIFECYCLE.md`](./_protocol/SKILL_LIFECYCLE.md) |
 | When and how to invoke project skills | [`skills/meta/using-project-skills/`](./skills/meta/using-project-skills/) |
 | Artifact output paths | [`_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md`](./_protocol/ARTIFACT_OUTPUT_CONVENTIONS.md) |
@@ -95,7 +116,7 @@ The gate applies before:
 
 It does **not** require every intermediate RED/GREEN/refactor checkpoint commit to represent a complete release.
 
-When a final diff touches any shipped surface (`skills/**`, `_protocol/**`, `.claude-plugin/**`, public installation/discovery documentation, packaging, or license):
+When a final diff touches any shipped Agent Skill surface (`skills/**`, `_protocol/**`, `.claude-plugin/**`, public installation/discovery documentation, packaging, or license):
 
 1. Read and invoke `.agents/skills/coferlandia-release-maintainer/SKILL.md`.
 2. Inspect the complete diff against the intended integration base.
@@ -119,14 +140,14 @@ python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release
 
 7. Do not commit, mark ready, or integrate while any release gate, validation, review, or package verification finding remains unresolved.
 
-The package must exclude `.agents/**`, `.agent/**`, Git state, caches, temporary plans, and secrets. Packaging must never run `git pull`; it packages the already-reviewed state.
+The Agent Skills package must exclude `.agents/**`, `.agent/**`, Git state, caches, temporary plans, secrets, and the repository-addressable `prompts/` family in V1. Packaging must never run `git pull`; it packages the already-reviewed Agent Skills state.
 
 ---
 
 ## Skills at a glance
 
-See `skills/INDEX.md` for the complete public catalog. Repository-local skills are intentionally absent from that index and from plugin packages.
+See `skills/INDEX.md` for the complete public Agent Skill catalog and `prompts/INDEX.md` for Chat delivery controllers. Repository-local skills are intentionally absent from the public index and plugin packages.
 
 ## License
 
-Apache License 2.0 — see [`LICENSE`](./LICENSE). This repository and its skills are provided "as is," without warranty. Verify behavior and evidence before relying on any skill for consequential work.
+Apache License 2.0 — see [`LICENSE`](./LICENSE). This repository and its contracts are provided "as is," without warranty. Verify behavior and evidence before relying on any skill or prompt for consequential work.
