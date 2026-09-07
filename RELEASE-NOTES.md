@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v2.6.1 (2026-09-07)
+
+### Repository and protocol
+
+- Promotes `prompts/**` from repository-only discovery material to a shipped public artifact family alongside `skills/**`.
+- Defines full Coferlandia vendoring as preserving both public families: Agent Skills and Chat delivery prompts remain distinct execution surfaces but are distributed together.
+
+### Plugin and packaging
+
+- Fixes the installable plugin package so it includes `prompts/INDEX.md`, `prompts/registry.json`, `prompts/BOOTSTRAP.md`, `prompts/chat-coder.md`, `prompts/ci.md`, and `prompts/merge.md`.
+- Classifies changes under `prompts/**` as shipped plugin changes so future prompt changes participate in repository release/version checks.
+- Adds regression coverage that fails if the public prompt catalog is omitted from the generated package.
+
+### Migration or compatibility
+
+- Consumers that vendor the complete Coferlandia runtime should install/update both the public skills catalog and the public prompt catalog. Existing Agent Skill behavior is unchanged.
+- This patch corrects the packaging/distribution decision recorded in v2.6.0; the prompt and skill execution surfaces remain intentionally separate.
+
 ## v2.6.0 (2026-09-07)
 
 ### Skills
