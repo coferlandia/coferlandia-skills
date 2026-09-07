@@ -11,6 +11,7 @@
 | Repository release history | `RELEASE-NOTES.md` |
 | Latest human summary | generated README managed block |
 | Inventory/category/status/discovery summary | `skills/INDEX.md` |
+| Chat prompt inventory/discovery summary | `prompts/INDEX.md` and `prompts/registry.json` |
 | Release policy | `_protocol/RELEASE_MAINTENANCE.md` |
 | Semantic decisions | this repository-local skill |
 | Mechanical checks/render/package | release-maintainer CLI |
@@ -21,8 +22,11 @@ Shipped by the plugin:
 
 - `.claude-plugin/**`
 - `skills/**`
+- `prompts/**`
 - `_protocol/**`
 - `README.md`, `AGENTS.md`, `SKILLS-GUIDE.md`, `RELEASE-NOTES.md`, `LICENSE`
+
+`skills/**` and `prompts/**` are separate public artifact families. Repository consumers that vendor Coferlandia must preserve that distinction and install both when they want the complete public runtime surface: Agent Skills under their skill location and Chat controllers under their prompt location.
 
 Repository-local only:
 
@@ -30,11 +34,10 @@ Repository-local only:
 - `.agent/**`
 - `.git/**`, worktrees, caches, temporary plans, generated packages
 
-A local-only change does not require a plugin release by itself. Any changed public skill behavior or
-other shipped contract does.
+A local-only change does not require a plugin release by itself. Any changed public skill, public prompt, or other shipped contract does.
 
 ## Final-delivery boundary
 
 Intermediate implementation commits may precede release preparation. The final branch state must be
 self-consistent and pass the gate before PR readiness or integration. One repository release may
-aggregate multiple skill changes; select the highest material impact.
+aggregate multiple skill/prompt changes; select the highest material impact.
