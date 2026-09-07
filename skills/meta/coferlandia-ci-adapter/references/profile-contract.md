@@ -1,6 +1,6 @@
 # Profile Contract
 
-Canonical path: `.coferlandia/ci/profile.json`; schema owner: `/_protocol/delivery/ci-profile.schema.json`.
+Canonical path: `.coferlandia/ci/profile.json`; schema owner: `_protocol/delivery/ci-profile.schema.json`.
 
 The profile describes static facts required by Qualification: repository identity, canonical docs, local qualification entrypoints/services/environment, GitHub submission/gates, merge-group authority, identity sensitivity and externally authorized exceptional lanes. It contains no current run/result state or credentials.
 

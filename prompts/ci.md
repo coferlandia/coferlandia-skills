@@ -28,7 +28,7 @@ This controller **must not merge** and must not silently switch to Local CI.
 
 Require all of:
 
-1. a current durable `READY_FOR_CI` handoff matching `/_protocol/delivery/READY_FOR_CI.md`;
+1. a current durable `READY_FOR_CI` handoff matching `_protocol/delivery/READY_FOR_CI.md`;
 2. current PR head equals its Candidate SHA;
 3. `.coferlandia/ci/profile.json` exists and validates against the central profile contract;
 4. the profile contains a GitHub qualification definition and current profile fingerprint.
@@ -55,7 +55,7 @@ A new candidate invalidates old qualification evidence. Do not switch to Local C
 
 ## Durable READY_FOR_MERGE
 
-Only after every current required GitHub-native gate is authoritative and allowed-GREEN for the exact effective candidate, create/update one idempotent managed PR comment per `/_protocol/delivery/READY_FOR_MERGE.md` using:
+Only after every current required GitHub-native gate is authoritative and allowed-GREEN for the exact effective candidate, create/update one idempotent managed PR comment per `_protocol/delivery/READY_FOR_MERGE.md` using:
 
 ```html
 <!-- coferlandia-ready-for-merge:v1 -->

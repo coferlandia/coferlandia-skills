@@ -32,7 +32,7 @@ The target repository's real scripts, services and tools remain authoritative. T
 ## Preconditions
 
 1. Read current repository instructions and the work contract.
-2. Resolve the current PR/work candidate and durable `READY_FOR_CI` comment using the shared `/_protocol/delivery/READY_FOR_CI.md` contract.
+2. Resolve the current PR/work candidate and durable `READY_FOR_CI` comment using the shared `_protocol/delivery/READY_FOR_CI.md` contract.
 3. Prove handoff Candidate SHA equals current PR head/current assigned candidate.
 4. Load `.coferlandia/ci/profile.json` and validate/fingerprint it with `coferlandia-ci-adapter` tooling when available.
 5. Confirm the profile has a non-empty `local.qualification_commands` list and required environment/services are available.
@@ -59,7 +59,7 @@ Use marker:
 <!-- coferlandia-ready-for-merge:v1 -->
 ```
 
-and fields from `/_protocol/delivery/READY_FOR_MERGE.md`, including:
+and fields from `_protocol/delivery/READY_FOR_MERGE.md`, including:
 
 ```text
 Qualification strategy: LOCAL

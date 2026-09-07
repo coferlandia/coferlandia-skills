@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+## v2.6.0 (2026-09-07)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| local-ci | new | 1.0.0 | Adds generic LOCAL Qualification from durable READY_FOR_CI to candidate/profile-bound READY_FOR_MERGE without GitHub-native fallback or merge coupling. |
+| coferlandia-ci-adapter | new | 1.0.0 | Adds repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
+
+### Repository and protocol
+
+- Adds `prompts/` as a first-class repository-addressable Chat controller family with generic `chat-coder`, `ci`, and `merge` prompts, a small bootstrap/registry, deterministic alias resolution, and exact left-to-right composition.
+- Separates Development, Qualification, and Integration through versioned `READY_FOR_CI`, `READY_FOR_MERGE`, and requalification contracts bound to exact candidate/base/profile identity.
+- Defines `LOCAL` and `GITHUB_NATIVE` as equal Qualification strategies: neither is a fallback for the other, both emit the same READY_FOR_MERGE identity envelope, and `merge` never executes CI implicitly.
+- Adds a shared repository CI profile schema so repo-specific commands, workflows, services, gates, Merge Queue semantics, and exceptional-lane references remain outside generic controllers.
+- Adds pressure coverage proving SecretarIA's existing CI facts are representable in a repository profile without hardcoding them in the generic prompts or Local CI skill.
+- Extends Linux/Windows CI to validate prompt registry/contracts, delivery identity/requalification, Local CI, and CI Adapter behavior on Python 3.11 and 3.13.
+
+### Plugin and packaging
+
+- Bumps the installable Agent Skills plugin from v2.5.0 to v2.6.0 for the additive `local-ci` and `coferlandia-ci-adapter` public skills plus shared delivery protocol.
+- Refreshes plugin discovery metadata and the human guide for local qualification and repository CI adaptation.
+- Keeps the Chat `prompts/` family repository-addressable and intentionally outside the Agent Skills `.plugin` payload in V1; the package continues to ship public Agent Skills and `_protocol/` only.
+
+### Migration or compatibility
+
+- Existing Agent Skills consumers may update normally; this is an additive compatible release.
+- A consumer repository must be studied/adapted to produce `.coferlandia/ci/profile.json` before generic Chat CI or Local CI can qualify it; the adapter does not invent missing commands or workflows.
+- No consumer repository is migrated automatically by this release. SecretarIA is a conformance fixture and remains a separate repository-local migration step after generic parity is accepted.
+- Qualification strategy stays explicit: a failed/unavailable local run does not switch to GitHub-native CI, and a failed/unavailable GitHub-native run does not switch to Local CI.
+
 ## v2.5.0 (2026-09-05)
 
 ### Skills
@@ -281,7 +312,7 @@
 - **coferlandia-software-dev** (`engineering`) — v2.0.0. Complete redesign into a multi-role engineering workflow with Developer, Debugger, Code Reviewer, and Commit Prep modes. Adds strict mode detection, control-authority abstraction, code review protocol, and commit preparation gates. Replaces v1.x workflow entirely.
 - **coferlandia-software-dev** (`engineering`) — v1.0.0. Initial development process skill: mandatory study → plan → implement → review → test/docs/commit workflow.
 - **using-coferlandia-skills** (`meta`) — v1.0.0. First meta-skill: checks `skills/INDEX.md` and invokes matching skills before responding to any task.
-- **skill-repository-versioning** (`meta`) — v1.0.0. Pre-commit checklist: update index, classify change, bump per-skill and repo-wide versions correctly.
+- **skill-repository-versioning** (`meta`) — v1.0.0. Pre-commit checklist: update index, classify change, bump per-skill vs. repo-wide release versions correctly.
 - **project-documentation-archivist** (`content`) — v2.0.0. Evidence-first project knowledge base with managed blocks, deterministic source indexing, open questions, module manifests, and incremental processing.
 - **sagan-scientific-debunker** (`content`) — v1.1.0. Adds systematic structured claim analysis and stronger source hierarchy.
 

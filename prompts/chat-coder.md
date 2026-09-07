@@ -64,7 +64,7 @@ Review Important = 0
 
 ## Durable READY_FOR_CI handoff
 
-Create or update one idempotent managed PR comment using the shared contract in `/_protocol/delivery/READY_FOR_CI.md` and marker:
+Create or update one idempotent managed PR comment using the shared contract in `_protocol/delivery/READY_FOR_CI.md` and marker:
 
 ```html
 <!-- coferlandia-ready-for-ci:v1 -->

@@ -25,7 +25,7 @@ This controller **must not execute CI**. If qualification is missing or stale, r
 
 ## Entry contract
 
-Require a current durable `READY_FOR_MERGE` handoff matching `/_protocol/delivery/READY_FOR_MERGE.md`. Re-read authoritative repository/GitHub state and prove:
+Require a current durable `READY_FOR_MERGE` handoff matching `_protocol/delivery/READY_FOR_MERGE.md`. Re-read authoritative repository/GitHub state and prove:
 
 - Issue/work item and PR identities still match;
 - current PR head equals qualified Candidate SHA;

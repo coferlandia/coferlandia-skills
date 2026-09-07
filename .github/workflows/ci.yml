@@ -59,6 +59,18 @@ jobs:
       - name: Release Publisher tests
         run: python -m unittest discover -s skills/ops/coferlandia-release-publisher/tests -p "test_*.py"
 
+      - name: Delivery prompt registry and contract tests
+        run: >-
+          python _protocol/scripts/validate_prompt.py validate --root . &&
+          python -m unittest discover -s prompts/tests -p "test_*.py" &&
+          python -m unittest _protocol.delivery.test_contracts
+
+      - name: Local CI skill tests
+        run: python -m unittest discover -s skills/engineering/local-ci/tests -p "test_*.py"
+
+      - name: CI Adapter tests
+        run: python -m unittest discover -s skills/meta/coferlandia-ci-adapter/tests -p "test_*.py"
+
       - name: Validate all public skills
         run: python _protocol/scripts/validate_skill.py --all skills
 
