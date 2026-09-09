@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.0.0"
+version: "1.0.1"
 stage: development
 status: active
 ---
@@ -35,10 +35,13 @@ If the requested work is already implemented/merged, verify that fact and report
 
 ## Entry and ownership
 
-1. Resolve repository, Issue/work contract and current authoritative base branch.
-2. Read current Issue ownership/state. Claim or assign only when the available repository/GitHub workflow authorizes it; otherwise preserve existing ownership and report the blocker.
-3. Inspect current branch/PR state before creating anything. Reuse the work branch/PR only when it clearly belongs to the same work item and current candidate.
-4. Keep implementation in one non-default branch and one Draft PR unless repository policy explicitly requires another approved structure.
+1. Resolve repository, Issue/work contract, authenticated GitHub user and current authoritative base branch.
+2. Read current Issue ownership/state.
+3. If the Issue has no assignees, the first state-changing action for the work item MUST assign it to the authenticated GitHub user. Re-read the Issue and verify that assignment succeeded before continuing.
+4. If the authenticated GitHub user is already an assignee, continue without changing ownership.
+5. If the Issue has one or more assignees and the authenticated GitHub user is not among them, preserve the existing ownership and stop, reporting an ownership blocker.
+6. Inspect current branch/PR state before creating anything. Reuse the work branch/PR only when it clearly belongs to the same work item and current candidate.
+7. Keep implementation in one non-default branch and one Draft PR unless repository policy explicitly requires another approved structure.
 
 ## Study before modification
 
@@ -95,6 +98,7 @@ Return:
 ```text
 Development workflow = READY_FOR_CI
 Issue = <identity>
+Assignee = <authenticated GitHub user>
 PR = <number> / Draft
 Branch = <branch>
 Candidate SHA = <sha>
