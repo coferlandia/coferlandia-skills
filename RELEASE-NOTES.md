@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v2.6.4 (2026-09-09)
+
+### Chat prompts
+
+- `chat-coder` 1.0.2 -> 1.0.3 requires Development to identify and synchronize repository-owned versioned derived artifacts whenever their authoritative inputs change, using the repository's own generation or synchronization mechanism rather than hand-editing generated output.
+- The generic rule covers generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs without hardcoding any consumer repository or technology.
+- When a repository defines a deterministic freshness, idempotence, or diff check for generated artifacts, that check must pass without unexpected diff before `READY_FOR_CI`; missing, stale, or manually approximated required artifacts block the handoff.
+
+### Repository and protocol
+
+- Tightens `READY_FOR_CI v1` so affected versioned derived artifacts must be synchronized on the exact source candidate through repository-owned tooling, alongside the existing complete cheap-development validation contract.
+- Adds regression coverage that preserves this requirement while keeping Qualification of the effective/synthetic merge candidate separate.
+
+### Plugin and packaging
+
+- Bumps the installable plugin from v2.6.3 to v2.6.4 because the shipped Chat Coder and shared delivery protocol changed.
+
+### Migration or compatibility
+
+- Existing consumers remain compatible but should update vendored/installed Chat Coder and `READY_FOR_CI` copies together. Repository-specific generators and artifact paths remain repository-owned configuration, not generic prompt policy.
+- Qualification strategy and `READY_FOR_MERGE` semantics are unchanged.
+
 ## v2.6.3 (2026-09-09)
 
 ### Chat prompts
