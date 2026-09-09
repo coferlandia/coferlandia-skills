@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.6.3 (2026-09-09)
+
+### Chat prompts
+
+- `chat-coder` 1.0.1 -> 1.0.2 makes `READY_FOR_CI` contingent on fresh evidence from every applicable cheap deterministic development check for the exact source candidate, instead of allowing focused iteration tests and a clean review to stand in for the repository's broader development contract.
+- Frontend changes must run the repository's canonical complete frontend unit-test suite plus repository-defined lint/typecheck checks when applicable; backend and other changed surfaces follow the equivalent repository-owned development validation.
+- When Development resumes after Qualification fails, Chat Coder must identify the exact failing command/assertion and validation candidate before correcting code or a demonstrably stale contract, and must never weaken an assertion merely to obtain green CI.
+
+### Repository and protocol
+
+- Tightens `READY_FOR_CI v1` validity so required checks cannot be failing, skipped, unknown, stale, or bound to an older candidate SHA.
+- Keeps Development readiness explicitly separate from Qualification of the effective or synthetic merge candidate.
+- Adds regression coverage for the strengthened Chat Coder and READY_FOR_CI contracts.
+
+### Plugin and packaging
+
+- Bumps the installable plugin from v2.6.2 to v2.6.3 because `prompts/**` and the shared delivery protocol are shipped public artifacts.
+
+### Migration or compatibility
+
+- Existing prompt consumers remain compatible but should update vendored/installed Chat Coder and delivery protocol copies together. Candidates previously declared `READY_FOR_CI` from only focused checks may now correctly remain blocked until the repository's cheap development validation is complete.
+- Qualification strategy and `READY_FOR_MERGE` semantics are unchanged.
+
 ## v2.6.2 (2026-09-09)
 
 ### Chat prompts
@@ -167,7 +190,7 @@
 
 ### Plugin and packaging
 
-- Bumped the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
+- Bumps the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
 - Corrected plugin repository/homepage metadata to `coferlandia/coferlandia-skills` and refreshed marketplace descriptions.
 - Replaced pull-before-package behavior with deterministic packaging of the already-reviewed branch state.
 - The package now includes `RELEASE-NOTES.md` and `SKILLS-GUIDE.md`, excludes repository-local `.agents/**` and `.agent/**`, reopens the archive for verification, and reports a SHA-256 digest.
@@ -367,6 +390,6 @@
 ## v1.0.0 (2026-07-04)
 
 - Established the reusable Coferlandia skill repository protocol.
-- Added Apache-2.0 licensing and repository-level author/license/version policy.
+- Added Apache 2.0 licensing and repository-level author/license/version policy.
 - Added `_protocol/` templates and `validate_skill.py` tooling.
 - Added first four canonical skills under `skills/`.
