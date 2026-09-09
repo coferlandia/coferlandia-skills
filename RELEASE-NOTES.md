@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.6.5 (2026-09-09)
+
+### Chat prompts
+
+- `chat-coder` 1.0.3 -> 1.1.0 makes environment/configuration impact an explicit Development responsibility before `READY_FOR_CI`, including additions, removals, renames, changed defaults/requirements, and semantic changes affecting environment variables, secrets, settings, compose/deploy inputs, or repository-owned environment templates.
+- Chat Coder now reports `Environment change = YES | NO` directly in its terminal report, together with concise operator/deployment action and affected variable names when applicable, so a human does not need to inspect the PR handoff to discover a required production configuration change.
+- `ci` 1.0.0 -> 1.1.0 adds a fail-closed Qualification barrier that re-evaluates the exact candidate against its authoritative base and rejects missing, ambiguous, or candidate-contradicted environment declarations.
+
+### Repository and protocol
+
+- Extends `READY_FOR_CI v1` with durable `Environment change` and `Environment evidence` fields bound to the candidate SHA. `YES` evidence must identify affected inputs, production requirement, non-secret value/default expectations, secret classification, and deployment/operator action.
+- Requires repository-owned environment templates, deployment/runbook documentation, and deterministic environment/configuration checks to be synchronized and passing when applicable, while keeping repository-specific paths and mechanisms outside the generic prompts.
+- Adds regression coverage for the new Chat Coder, CI, and durable handoff contract while preserving Development/Qualification separation.
+
+### Plugin and packaging
+
+- Bumps the installable plugin from v2.6.4 to v2.6.5 because the shipped Chat Coder, CI prompt, and shared delivery protocol changed.
+
+### Migration or compatibility
+
+- Consumers that vendor or install the delivery runtime should update `chat-coder`, `ci`, and `READY_FOR_CI` together. Existing durable handoffs that omit the environment declaration are intentionally not accepted by the strengthened Qualification contract.
+- Repositories remain responsible for their own environment/configuration checker, templates, deployment procedure, and production-secret lifecycle; the central contract does not hardcode consumer-specific files or tooling.
+
 ## v2.6.4 (2026-09-09)
 
 ### Chat prompts

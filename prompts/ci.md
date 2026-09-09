@@ -1,7 +1,7 @@
 ---
 name: ci
 description: "Generic Chat GitHub-native Qualification controller that consumes READY_FOR_CI plus a repository CI profile and emits exact-candidate READY_FOR_MERGE evidence."
-version: "1.0.0"
+version: "1.1.0"
 stage: qualification
 status: active
 ---
@@ -16,6 +16,7 @@ Qualify one exact development candidate through the repository's GitHub-native C
 READY_FOR_CI
 -> validate repository CI profile
 -> resolve exact current candidate/base
+-> re-check environment/configuration declaration
 -> request or observe profile-defined GitHub qualification
 -> diagnose bounded failures
 -> prove current required gates GREEN
@@ -38,6 +39,23 @@ If any precondition is stale or missing, fail closed. Do not infer readiness fro
 ## Repository and profile authority
 
 The target repository owns its actual workflows, checks, scripts, services and policy. The profile only points to those facts. Re-read referenced repository documentation and authoritative GitHub state before acting. Never invent a workflow/check name or terminal conclusion.
+
+## Environment / configuration qualification barrier
+
+Before accepting the development handoff for GitHub-native qualification, re-evaluate the exact candidate against the authoritative base for environment/configuration impact. Inspect changed environment variables, secrets/deployment credentials, application settings/configuration fields, compose/container inputs, deployment/runtime-required values and repository-owned environment examples/templates.
+
+The `READY_FOR_CI` handoff must declare exactly one of:
+
+```text
+Environment change: YES
+Environment change: NO
+```
+
+Fail closed when the declaration is missing, ambiguous or contradicted by the candidate. In particular, if the candidate appears to add, remove, rename, change defaults/requirements, or change semantics of environment/configuration inputs while the handoff says `Environment change: NO`, Qualification must stop until the development handoff is corrected on the exact current candidate.
+
+When `Environment change: YES`, require candidate-bound evidence covering every affected input, production requirement, non-secret expected value/default description, secret classification and deployment/operator action. Re-check that repository-owned environment templates and deployment/runbook documentation are synchronized when applicable and that any repository-owned deterministic environment/configuration contract checker is fresh and passing. Never expose or request secret values as qualification evidence.
+
+This barrier validates that environment impact was recognized and mechanically checked where the repository provides such checks; it does not invent repository-specific environment policy.
 
 ## Qualification
 
