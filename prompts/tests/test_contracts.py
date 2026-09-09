@@ -83,6 +83,17 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("no applicable required development check is failing, skipped, unknown", ready)
         self.assertIn("Never weaken, delete, bypass, or broaden an assertion merely to make CI green", text)
 
+    def test_chat_coder_ready_for_ci_requires_versioned_derived_artifacts(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")
+        self.assertIn("repository-owned versioned derived artifact", text)
+        self.assertIn("repository-owned generation or synchronization mechanism", text)
+        self.assertIn("no unexpected diff", text)
+        self.assertIn("missing, stale, manually approximated", text)
+        self.assertIn("repository-owned versioned derived artifact", ready)
+        self.assertIn("freshness/idempotence/diff check", ready)
+        self.assertIn("without unexpected diff", ready)
+
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
         full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge"))

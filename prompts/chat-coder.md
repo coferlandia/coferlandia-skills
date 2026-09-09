@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.0.2"
+version: "1.0.3"
 stage: development
 status: active
 ---
@@ -58,14 +58,15 @@ For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to
 
 Focused tests are iteration evidence; they are not sufficient by themselves for `READY_FOR_CI` when the repository defines broader cheap deterministic checks for the changed surface.
 
-Immediately before the terminal development review and handoff, discover and run every applicable cheap deterministic development check owned by the repository on the exact candidate that will be handed off. At minimum:
+Immediately before the terminal development review and handoff, discover and run every applicable cheap deterministic development check owned by the repository on the exact candidate that will be handed off. Before those checks, identify repository-owned versioned derived artifacts whose authoritative inputs changed and synchronize them with the repository-owned generation or synchronization mechanism rather than editing generated output by hand. At minimum:
 
+- synchronize every applicable repository-owned versioned derived artifact affected by changed inputs, such as generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs; when the repository defines a deterministic freshness, idempotence, or diff check, rerun it and require no unexpected diff after the expected outputs are part of the candidate;
 - synchronize any repository-owned test inventory or generated test manifest affected by added, removed, or renamed tests;
 - for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
 - for frontend behavior or contract changes, run the repository's canonical complete frontend unit-test suite, plus repository-defined lint and typecheck checks when they are part of the cheap development contract;
 - run any other cheap deterministic contract check that repository instructions, scripts, or the repository CI profile explicitly require before Qualification.
 
-Do not emit `READY_FOR_CI` while an applicable required development check is failing, skipped, unknown, stale, or was run against an older candidate SHA. If a required check cannot be executed in the current environment, report a development blocker instead of representing the candidate as ready.
+Do not emit `READY_FOR_CI` while an applicable required development check is failing, skipped, unknown, stale, or was run against an older candidate SHA. A required versioned derived artifact that is missing, stale, manually approximated instead of produced by the repository-owned mechanism, or would still change under an applicable deterministic generation/freshness check is also a development blocker. If a required check or required artifact synchronization cannot be executed in the current environment, report a development blocker instead of representing the candidate as ready.
 
 These checks establish source-candidate development readiness only. They do not replace Qualification against the repository's effective candidate or synthetic merge candidate.
 

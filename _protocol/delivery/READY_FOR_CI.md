@@ -27,6 +27,7 @@ Validity requires all of the following:
 
 - the recorded Candidate SHA equals the current PR head;
 - development validation evidence was produced against that exact Candidate SHA;
+- every applicable repository-owned versioned derived artifact affected by the candidate is synchronized through the repository-owned generation/synchronization mechanism, and any repository-defined deterministic freshness/idempotence/diff check for it is passing without unexpected diff;
 - every applicable cheap deterministic development check required by repository-owned instructions, scripts, package metadata, CI profile, or executable workflow is fresh and passing;
 - no applicable required development check is failing, skipped, unknown, or represented only by an older candidate's evidence;
 - focused iteration tests are not used as a substitute for a broader cheap development suite when the repository defines one for the changed surface;
