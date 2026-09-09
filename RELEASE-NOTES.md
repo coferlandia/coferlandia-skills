@@ -112,7 +112,7 @@
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
 | local-ci | new | 1.0.0 | Adds generic LOCAL Qualification from durable READY_FOR_CI to candidate/profile-bound READY_FOR_MERGE without GitHub-native fallback or merge coupling. |
-| coferlandia-ci-adapter | new | 1.0.0 | Adds generic repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
+| coferlandia-ci-adapter | new | 1.0.0 | Adds repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
 
 ### Repository and protocol
 
@@ -142,12 +142,12 @@
 
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
-| coferlandia-release-publisher | new | 1.0 | Adds generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
+| coferlandia-release-publisher | new | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
 
 ### Repository and protocol
 
 - Adds a reusable product-release boundary after development/integration: an exact existing commit becomes a formal release without requiring a synthetic declaration commit.
-- Separates semantic release decisions from deterministic Git/GitHub mechanics, including historical targets, prereleases, explicit policy checks, and fail-closed inconsistency handling.
+- Separates semantic release decisions from deterministic Git/GitHub mechanics, including historical targets, release-line ancestry, prereleases, explicit policy checks, and fail-closed inconsistency handling.
 - Preserves repository-local precedence only when a stronger local contract explicitly owns final Commit-to-published-Release; preparation-only release/versioning gates may compose before the generic publisher.
 - Adds Linux/Windows CI coverage for activation, SemVer/policy contracts, real temporary Git histories, GitHub adapter behavior, release planning, and consistency states.
 
@@ -195,7 +195,7 @@
 ### Repository and protocol
 
 - Added configuration operations as a first-class skill family while preserving the boundary between repository preparation and day-to-day operation.
-- Added permanent Linux and Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
+- Added permanent Linux/Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
 - Updated the canonical skill index and human guide with the ownership, composition, and explicit-invocation rules for the new skills.
 - Kept deterministic retrieval non-authoritative: agents must consult the complete generated handbook before concluding that a requested configuration outcome is unsupported.
 
