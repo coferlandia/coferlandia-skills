@@ -94,6 +94,20 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("freshness/idempotence/diff check", ready)
         self.assertIn("without unexpected diff", ready)
 
+    def test_environment_change_contract_is_durable_and_qualified(self):
+        chat = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        ci = (PROMPTS / "ci.md").read_text(encoding="utf-8")
+        ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")
+        self.assertIn("Environment change: YES | NO", chat)
+        self.assertIn("Environment action = <NONE or concise deployment/operator action>", chat)
+        self.assertIn("Environment variables = <NONE or concise affected-variable list", chat)
+        self.assertIn("Environment change: YES | NO", ready)
+        self.assertIn("Environment evidence:", ready)
+        self.assertIn("secret values are never included", ready)
+        self.assertIn("fail closed", ci.lower())
+        self.assertIn("contradicted by the candidate", ci)
+        self.assertIn("repository-owned deterministic environment/configuration contract checker", ci)
+
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
         full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge"))
