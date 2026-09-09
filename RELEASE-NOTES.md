@@ -102,7 +102,7 @@
 ### Repository and protocol
 
 - Adds a reusable product-release boundary after development/integration: an exact existing commit becomes a formal release without requiring a synthetic declaration commit.
-- Separates semantic release decisions from deterministic Git/GitHub mechanics, including historical targets, release-line ancestry, prereleases, explicit policy checks, and fail-closed inconsistency handling.
+- Separates semantic release decisions from deterministic Git/GitHub mechanics, including historical targets, prereleases, explicit policy checks, and fail-closed inconsistency handling.
 - Preserves repository-local precedence only when a stronger local contract explicitly owns final Commit-to-published-Release; preparation-only release/versioning gates may compose before the generic publisher.
 - Adds Linux/Windows CI coverage for activation, SemVer/policy contracts, real temporary Git histories, GitHub adapter behavior, release planning, and consistency states.
 
@@ -190,7 +190,7 @@
 
 ### Plugin and packaging
 
-- Bumps the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
+- Bumped the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
 - Corrected plugin repository/homepage metadata to `coferlandia/coferlandia-skills` and refreshed marketplace descriptions.
 - Replaced pull-before-package behavior with deterministic packaging of the already-reviewed branch state.
 - The package now includes `RELEASE-NOTES.md` and `SKILLS-GUIDE.md`, excludes repository-local `.agents/**` and `.agent/**`, reopens the archive for verification, and reports a SHA-256 digest.
@@ -390,6 +390,6 @@
 ## v1.0.0 (2026-07-04)
 
 - Established the reusable Coferlandia skill repository protocol.
-- Added Apache 2.0 licensing and repository-level author/license/version policy.
+- Added Apache-2.0 licensing and repository-level author/license/version policy.
 - Added `_protocol/` templates and `validate_skill.py` tooling.
 - Added first four canonical skills under `skills/`.
