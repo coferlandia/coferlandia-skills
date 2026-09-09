@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.0.1"
+version: "1.0.2"
 stage: development
 status: active
 ---
@@ -17,7 +17,8 @@ Issue / approved work contract
 -> ownership and current-state study
 -> one implementation branch
 -> TDD / implementation
--> focused validation
+-> focused iteration validation
+-> development readiness validation
 -> focused review
 -> corrections
 -> holistic review
@@ -51,7 +52,24 @@ If the supplied contract has an unresolved required Architecture Gate, stop befo
 
 ## Implementation
 
-For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to the work contract. Run focused validation while iterating and the repository's appropriate development validation before handoff. Never invent a canonical command: discover it from current repository-owned documentation/scripts.
+For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to the work contract. Run focused validation while iterating. Never invent a canonical command: discover validation from current repository-owned documentation, scripts, CI profile, package metadata, or executable workflows.
+
+## Development readiness validation
+
+Focused tests are iteration evidence; they are not sufficient by themselves for `READY_FOR_CI` when the repository defines broader cheap deterministic checks for the changed surface.
+
+Immediately before the terminal development review and handoff, discover and run every applicable cheap deterministic development check owned by the repository on the exact candidate that will be handed off. At minimum:
+
+- synchronize any repository-owned test inventory or generated test manifest affected by added, removed, or renamed tests;
+- for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
+- for frontend behavior or contract changes, run the repository's canonical complete frontend unit-test suite, plus repository-defined lint and typecheck checks when they are part of the cheap development contract;
+- run any other cheap deterministic contract check that repository instructions, scripts, or the repository CI profile explicitly require before Qualification.
+
+Do not emit `READY_FOR_CI` while an applicable required development check is failing, skipped, unknown, stale, or was run against an older candidate SHA. If a required check cannot be executed in the current environment, report a development blocker instead of representing the candidate as ready.
+
+These checks establish source-candidate development readiness only. They do not replace Qualification against the repository's effective candidate or synthetic merge candidate.
+
+If Chat Coder is resumed after a Qualification failure, first identify the exact failing command/assertion and the validation/effective-candidate SHA that produced it. Correct the implementation when it violates the work contract; update a test or contract only when the test is demonstrably stale relative to the approved behavior. Never weaken, delete, bypass, or broaden an assertion merely to make CI green.
 
 ## Review
 
@@ -83,7 +101,7 @@ Branch: <branch>
 Candidate SHA: <exact current PR head>
 Base SHA studied: <exact authoritative base studied>
 Implementation: COMPLETE
-Development validation: <fresh evidence summary>
+Development validation: <fresh evidence for every applicable required development check>
 Review Critical: 0
 Review Important: 0
 Next stage: Qualification
@@ -103,7 +121,7 @@ PR = <number> / Draft
 Branch = <branch>
 Candidate SHA = <sha>
 Base SHA studied = <sha>
-Validation = <summary>
+Validation = <fresh evidence for every applicable required development check>
 Review Critical = 0
 Review Important = 0
 Next owner = explicitly selected Qualification strategy
