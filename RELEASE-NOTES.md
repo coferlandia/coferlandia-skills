@@ -195,7 +195,7 @@
 ### Repository and protocol
 
 - Added configuration operations as a first-class skill family while preserving the boundary between repository preparation and day-to-day operation.
-- Added permanent Linux/Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
+- Added permanent Linux and Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
 - Updated the canonical skill index and human guide with the ownership, composition, and explicit-invocation rules for the new skills.
 - Kept deterministic retrieval non-authoritative: agents must consult the complete generated handbook before concluding that a requested configuration outcome is unsupported.
 
