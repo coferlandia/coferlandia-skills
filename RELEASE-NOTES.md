@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.6.3 (2026-09-09)
+
+### Chat prompts
+
+- `chat-coder` 1.0.1 -> 1.0.2 makes `READY_FOR_CI` contingent on fresh evidence from every applicable cheap deterministic development check for the exact source candidate, instead of allowing focused iteration tests and a clean review to stand in for the repository's broader development contract.
+- Frontend changes must run the repository's canonical complete frontend unit-test suite plus repository-defined lint/typecheck checks when applicable; backend and other changed surfaces follow the equivalent repository-owned development validation.
+- When Development resumes after Qualification fails, Chat Coder must identify the exact failing command/assertion and validation candidate before correcting code or a demonstrably stale contract, and must never weaken an assertion merely to obtain green CI.
+
+### Repository and protocol
+
+- Tightens `READY_FOR_CI v1` validity so required checks cannot be failing, skipped, unknown, stale, or bound to an older candidate SHA.
+- Keeps Development readiness explicitly separate from Qualification of the effective or synthetic merge candidate.
+- Adds regression coverage for the strengthened Chat Coder and READY_FOR_CI contracts.
+
+### Plugin and packaging
+
+- Bumps the installable plugin from v2.6.2 to v2.6.3 because `prompts/**` and the shared delivery protocol are shipped public artifacts.
+
+### Migration or compatibility
+
+- Existing prompt consumers remain compatible but should update vendored/installed Chat Coder and delivery protocol copies together. Candidates previously declared `READY_FOR_CI` from only focused checks may now correctly remain blocked until the repository's cheap development validation is complete.
+- Qualification strategy and `READY_FOR_MERGE` semantics are unchanged.
+
 ## v2.6.2 (2026-09-09)
 
 ### Chat prompts

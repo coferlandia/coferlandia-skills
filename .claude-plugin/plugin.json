@@ -1,6 +1,6 @@
 {
   "name": "coferlandia-skills",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "description": "Coferlandia Agent Skills for supervised planning, architecture, software delivery, local CI qualification, repository CI adaptation, configuration and release operations, durable project knowledge, developer documentation, evidence-based analysis, and deterministic repository workflows.",
   "author": {
     "name": "Coferlandia"
