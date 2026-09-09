@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.6.5 (2026-09-09)
+
+### Chat prompts
+
+- `chat-coder` 1.0.3 -> 1.1.0 makes environment/configuration impact an explicit Development responsibility before `READY_FOR_CI`, including additions, removals, renames, changed defaults/requirements, and semantic changes affecting environment variables, secrets, settings, compose/deploy inputs, or repository-owned environment templates.
+- Chat Coder now reports `Environment change = YES | NO` directly in its terminal report, together with concise operator/deployment action and affected variable names when applicable, so a human does not need to inspect the PR handoff to discover a required production configuration change.
+- `ci` 1.0.0 -> 1.1.0 adds a fail-closed Qualification barrier that re-evaluates the exact candidate against its authoritative base and rejects missing, ambiguous, or candidate-contradicted environment declarations.
+
+### Repository and protocol
+
+- Extends `READY_FOR_CI v1` with durable `Environment change` and `Environment evidence` fields bound to the candidate SHA. `YES` evidence must identify affected inputs, production requirement, non-secret value/default expectations, secret classification, and deployment/operator action.
+- Requires repository-owned environment templates, deployment/runbook documentation, and deterministic environment/configuration checks to be synchronized and passing when applicable, while keeping repository-specific paths and mechanisms outside the generic prompts.
+- Adds regression coverage for the new Chat Coder, CI, and durable handoff contract while preserving Development/Qualification separation.
+
+### Plugin and packaging
+
+- Bumps the installable plugin from v2.6.4 to v2.6.5 because the shipped Chat Coder, CI prompt, and shared delivery protocol changed.
+
+### Migration or compatibility
+
+- Consumers that vendor or install the delivery runtime should update `chat-coder`, `ci`, and `READY_FOR_CI` together. Existing durable handoffs that omit the environment declaration are intentionally not accepted by the strengthened Qualification contract.
+- Repositories remain responsible for their own environment/configuration checker, templates, deployment procedure, and production-secret lifecycle; the central contract does not hardcode consumer-specific files or tooling.
+
 ## v2.6.4 (2026-09-09)
 
 ### Chat prompts
@@ -89,7 +112,7 @@
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
 | local-ci | new | 1.0.0 | Adds generic LOCAL Qualification from durable READY_FOR_CI to candidate/profile-bound READY_FOR_MERGE without GitHub-native fallback or merge coupling. |
-| coferlandia-ci-adapter | new | 1.0.0 | Adds repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
+| coferlandia-ci-adapter | new | 1.0.0 | Adds generic repository CI discovery plus deterministic validation, fingerprinting, drift checking, and rendering of one `.coferlandia/ci/profile.json` shared by Chat and local Qualification. |
 
 ### Repository and protocol
 
@@ -119,12 +142,12 @@
 
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
-| coferlandia-release-publisher | new | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
+| coferlandia-release-publisher | new | 1.0 | Adds generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
 
 ### Repository and protocol
 
 - Adds a reusable product-release boundary after development/integration: an exact existing commit becomes a formal release without requiring a synthetic declaration commit.
-- Separates semantic release decisions from deterministic Git/GitHub mechanics, including historical targets, release-line ancestry, prereleases, explicit policy checks, and fail-closed inconsistency handling.
+- Separates semantic release decisions from deterministic Git/GitHub mechanics, including historical targets, prereleases, explicit policy checks, and fail-closed inconsistency handling.
 - Preserves repository-local precedence only when a stronger local contract explicitly owns final Commit-to-published-Release; preparation-only release/versioning gates may compose before the generic publisher.
 - Adds Linux/Windows CI coverage for activation, SemVer/policy contracts, real temporary Git histories, GitHub adapter behavior, release planning, and consistency states.
 
