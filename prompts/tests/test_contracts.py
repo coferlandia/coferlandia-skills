@@ -64,6 +64,14 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("REQUALIFICATION_REQUIRED", texts["merge"])
         self.assertIn("must not execute CI", texts["merge"])
 
+    def test_chat_coder_claims_unassigned_issue_for_authenticated_user(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("first state-changing action", text)
+        self.assertIn("MUST assign it to the authenticated GitHub user", text)
+        self.assertIn("verify that assignment succeeded", text)
+        self.assertIn("preserve the existing ownership and stop", text)
+        self.assertIn("Assignee = <authenticated GitHub user>", text)
+
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
         full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge"))

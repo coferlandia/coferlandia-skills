@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v2.6.2 (2026-09-09)
+
+### Chat prompts
+
+- `chat-coder` 1.0.0 -> 1.0.1 restores explicit issue ownership at Development entry: an unassigned Issue must be assigned to the authenticated GitHub user as the first state-changing action, the assignment must be re-read and verified, and work stops rather than taking over an Issue owned by somebody else.
+- Restores `Assignee = <authenticated GitHub user>` in the terminal development report and adds regression coverage for the ownership contract.
+
+### Plugin and packaging
+
+- Bumps the installable plugin from v2.6.1 to v2.6.2 because `prompts/**` is a shipped public artifact family.
+- Keeps the prompt registry and composition semantics unchanged; this patch only corrects Chat Coder Development ownership behavior.
+
+### Migration or compatibility
+
+- Existing consumers remain compatible. Vendored or installed prompt catalogs should update to receive the corrected Chat Coder ownership semantics.
+- No Agent Skill behavior changes in this release.
+
 ## v2.6.1 (2026-09-07)
 
 ### Repository and protocol
