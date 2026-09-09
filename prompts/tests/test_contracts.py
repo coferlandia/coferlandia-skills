@@ -72,6 +72,17 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("preserve the existing ownership and stop", text)
         self.assertIn("Assignee = <authenticated GitHub user>", text)
 
+    def test_chat_coder_ready_for_ci_requires_complete_cheap_validation(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")
+        self.assertIn("every applicable cheap deterministic development check", text)
+        self.assertIn("canonical complete frontend unit-test suite", text)
+        self.assertIn("failing, skipped, unknown, stale", text)
+        self.assertIn("effective or synthetic merge candidate", ready)
+        self.assertIn("focused iteration tests are not used as a substitute", ready)
+        self.assertIn("no applicable required development check is failing, skipped, unknown", ready)
+        self.assertIn("Never weaken, delete, bypass, or broaden an assertion merely to make CI green", text)
+
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
         full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge"))
