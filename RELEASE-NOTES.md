@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v2.7.1 (2026-09-10)
+
+### Chat prompts
+
+- `ci` 1.0.0 -> 1.1.0 completes the environment/configuration contract introduced across Development and `READY_FOR_CI` in v2.7.0 by re-evaluating the exact candidate against the authoritative base before GitHub-native Qualification.
+- Qualification now fails closed when `Environment change: YES | NO` is missing, ambiguous, or contradicted by the candidate, and requires candidate-bound non-secret operational evidence when environment/configuration impact is declared.
+- Adds regression coverage for the CI environment/configuration qualification barrier.
+
+### Plugin and packaging
+
+- Bumps the shipped repository/plugin from v2.7.0 to v2.7.1 as a compatible correction completing the v2.7.0 public delivery-controller contract.
+- No public Agent Skill versions change in this release.
+
+### Migration or compatibility
+
+- Consumers that vendor the public prompt family should update `ci.md` together with the v2.7.x `chat-coder` and `READY_FOR_CI` contract.
+- Qualification strategy, required GitHub gates, and `READY_FOR_MERGE` semantics are unchanged.
+
 ## v2.7.0 (2026-09-10)
 
 ### Chat prompts
@@ -122,7 +140,7 @@
 - Adds `prompts/` as a first-class repository-addressable Chat controller family with generic `chat-coder`, `ci`, and `merge` prompts, a small bootstrap/registry, deterministic alias resolution, and exact left-to-right composition.
 - Separates Development, Qualification, and Integration through versioned `READY_FOR_CI`, `READY_FOR_MERGE`, and requalification contracts bound to exact candidate/base/profile identity.
 - Defines `LOCAL` and `GITHUB_NATIVE` as equal Qualification strategies: neither is a fallback for the other, both emit the same READY_FOR_MERGE identity envelope, and `merge` never executes CI implicitly.
-- Adds a shared repository CI profile schema so repo-specific commands, workflows, services, gates, Merge Queue semantics, and exceptional-lane references remain outside generic controllers.
+- Adds a shared repository CI profile schema so repo-specific commands, workflows, scripts, services and policy remain outside generic controllers.
 - Adds pressure coverage proving SecretarIA's existing CI facts are representable in a repository profile without hardcoding them in the generic prompts or Local CI skill.
 - Extends Linux/Windows CI to validate prompt registry/contracts, delivery identity/requalification, Local CI, and CI Adapter behavior on Python 3.11 and 3.13.
 
@@ -238,7 +256,7 @@
 
 ### Plugin and packaging
 
-- Bumped the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
+- Bumps the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
 - Corrected plugin repository/homepage metadata to `coferlandia/coferlandia-skills` and refreshed marketplace descriptions.
 - Replaced pull-before-package behavior with deterministic packaging of the already-reviewed branch state.
 - The package now includes `RELEASE-NOTES.md` and `SKILLS-GUIDE.md`, excludes repository-local `.agents/**` and `.agent/**`, reopens the archive for verification, and reports a SHA-256 digest.
