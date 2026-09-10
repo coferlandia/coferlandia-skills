@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v2.7.2 (2026-09-10)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| local-ci | 1.0.0 | 1.1.0 | Makes the Agent Skill invocation surface itself select LOCAL Qualification, keeps `READY_FOR_CI` from implicitly starting Qualification, and preserves fail-closed local blocking with no GitHub-native fallback. |
+
+### Chat prompts
+
+- `ci` 1.1.0 -> 1.2.0 explicitly binds the controller to `ci` / `gh ci` / `github ci` Chat invocation and makes `GITHUB_NATIVE` a property of that surface rather than a strategy inferred by another router.
+- Reaching `READY_FOR_CI` or discovering Agent Skills does not load the Chat `ci` controller; standalone `chat-coder` still terminates at `READY_FOR_CI`.
+- GitHub-native Qualification now explicitly forbids inventing `workflow_dispatch` when the repository profile declares existing PR-event submission.
+
+### Repository and protocol
+
+- Clarifies that Qualification strategy is selected by the invoked controller surface: `local-ci` means `LOCAL`, explicit Chat `ci` means `GITHUB_NATIVE`; a separate strategy router is unnecessary.
+- Extends contract tests and activation pressure cases to protect surface separation, no implicit stage insertion, and no cross-strategy fallback.
+
+### Plugin and packaging
+
+- Bumps the shipped repository/plugin from v2.7.1 to v2.7.2 as a compatible correction to the v2.6/v2.7 delivery-controller model.
+
+### Migration or compatibility
+
+- Existing consumers remain compatible. Consumers with repository-local strategy routers may simplify them and route Agent Skill Qualification directly to `local-ci` while keeping explicit Chat `ci` as the GitHub-native surface.
+- Repository CI profiles continue to own local commands/services and GitHub submission/gate facts; they do not select the Qualification strategy.
+- LOCAL failures remain local and GITHUB_NATIVE failures remain remote; neither strategy becomes a fallback for the other.
+
 ## v2.7.1 (2026-09-10)
 
 ### Chat prompts
