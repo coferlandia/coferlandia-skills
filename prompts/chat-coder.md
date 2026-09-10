@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.0.3"
+version: "1.2.0"
 stage: development
 status: active
 ---
@@ -58,15 +58,38 @@ For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to
 
 Focused tests are iteration evidence; they are not sufficient by themselves for `READY_FOR_CI` when the repository defines broader cheap deterministic checks for the changed surface.
 
-Immediately before the terminal development review and handoff, discover and run every applicable cheap deterministic development check owned by the repository on the exact candidate that will be handed off. Before those checks, identify repository-owned versioned derived artifacts whose authoritative inputs changed and synchronize them with the repository-owned generation or synchronization mechanism rather than editing generated output by hand. At minimum:
+Immediately before the terminal development review and handoff, discover and run every applicable cheap deterministic development check owned by the repository on the exact candidate that will be handed off. Before those checks, identify repository-owned derived artifacts that repository-owned instructions, tooling, or policy explicitly declare to be versioned contracts and whose authoritative inputs changed; synchronize those artifacts with the repository-owned generation or synchronization mechanism rather than editing generated output by hand. At minimum:
 
-- synchronize every applicable repository-owned versioned derived artifact affected by changed inputs, such as generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs; when the repository defines a deterministic freshness, idempotence, or diff check, rerun it and require no unexpected diff after the expected outputs are part of the candidate;
-- synchronize any repository-owned test inventory or generated test manifest affected by added, removed, or renamed tests;
+- synchronize every applicable repository-owned derived artifact explicitly declared as a versioned contract and affected by changed inputs, such as generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs; when the repository defines a deterministic freshness, idempotence, or diff check for that versioned contract, rerun it and require no unexpected diff after the expected outputs are part of the candidate;
+- do not create, add to Git, or require snapshot freshness for a reproducible diagnostic/report output merely because the repository can generate it; a test inventory, generated test manifest, or equivalent report is a synchronization prerequisite only when repository-owned policy explicitly declares that output to be a versioned contract;
 - for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
 - for frontend behavior or contract changes, run the repository's canonical complete frontend unit-test suite, plus repository-defined lint and typecheck checks when they are part of the cheap development contract;
 - run any other cheap deterministic contract check that repository instructions, scripts, or the repository CI profile explicitly require before Qualification.
 
-Do not emit `READY_FOR_CI` while an applicable required development check is failing, skipped, unknown, stale, or was run against an older candidate SHA. A required versioned derived artifact that is missing, stale, manually approximated instead of produced by the repository-owned mechanism, or would still change under an applicable deterministic generation/freshness check is also a development blocker. If a required check or required artifact synchronization cannot be executed in the current environment, report a development blocker instead of representing the candidate as ready.
+### Environment / configuration impact
+
+Before `READY_FOR_CI`, inspect the exact candidate for additions, removals, renames, changed defaults, changed requirements, or changed semantics affecting environment variables, secrets or deployment-owned credentials, application settings/configuration fields, compose/container inputs, deployment/runtime-required values, or repository-owned environment examples/templates.
+
+Compare the resulting runtime/configuration contract against repository-owned examples, documentation, deployment configuration, validation mechanisms and the authoritative base. Always classify the candidate explicitly as:
+
+```text
+Environment change: YES | NO
+```
+
+`YES` means the candidate changes the environment/configuration contract an operator, deployment or runtime must understand, even when application code provides a development default. When `Environment change: YES`, record every affected variable or configuration input with at least:
+
+```text
+- <name>
+  Change: added | removed | renamed | semantics/default changed
+  Production required: YES | NO | CONDITIONAL
+  Expected value/default: <non-secret description>
+  Secret: YES | NO
+  Deployment action: <required action or NONE>
+```
+
+Never expose secret values. Synchronize `.env.example` or the repository's equivalent environment template when applicable, and update repository-owned deployment/runbook documentation when the operational contract changed. Discover and execute any repository-owned deterministic environment/configuration contract checker. If required environment documentation, synchronization, deployment instructions, or deterministic validation is missing, stale, contradictory or cannot be executed, treat that as a development blocker.
+
+Do not emit `READY_FOR_CI` while an applicable required development check is failing, skipped, unknown, stale, or was run against an older candidate SHA. A required versioned derived artifact that is missing, stale, manually approximated instead of produced by the repository-owned mechanism, or would still change under an applicable deterministic generation/freshness check is also a development blocker. Reproducible diagnostic/report outputs that are not repository-declared versioned contracts are not required candidate files and do not block readiness solely because a committed snapshot is absent or stale. If a required check or required artifact synchronization cannot be executed in the current environment, report a development blocker instead of representing the candidate as ready.
 
 These checks establish source-candidate development readiness only. They do not replace Qualification against the repository's effective candidate or synthetic merge candidate.
 
@@ -103,6 +126,8 @@ Candidate SHA: <exact current PR head>
 Base SHA studied: <exact authoritative base studied>
 Implementation: COMPLETE
 Development validation: <fresh evidence for every applicable required development check>
+Environment change: YES | NO
+Environment evidence: <NONE or concise candidate-bound evidence including affected inputs and deployment actions>
 Review Critical: 0
 Review Important: 0
 Next stage: Qualification
@@ -123,9 +148,14 @@ Branch = <branch>
 Candidate SHA = <sha>
 Base SHA studied = <sha>
 Validation = <fresh evidence for every applicable required development check>
+Environment change = YES | NO
+Environment action = <NONE or concise deployment/operator action>
+Environment variables = <NONE or concise affected-variable list without secret values>
 Review Critical = 0
 Review Important = 0
 Next owner = explicitly selected Qualification strategy
 ```
+
+When `Environment change = YES`, the terminal report must make the operational consequence visible without requiring the user to inspect the PR comment. Do not use ambiguous wording such as "may require" when the candidate-bound analysis can classify the change.
 
 Do not wait for final CI and do not continue into another controller unless the user's invocation explicitly composed that next stage.
