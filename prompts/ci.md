@@ -1,7 +1,7 @@
 ---
 name: ci
-description: "Generic Chat GitHub-native Qualification controller that consumes READY_FOR_CI plus a repository CI profile and emits exact-candidate READY_FOR_MERGE evidence."
-version: "1.1.0"
+description: "Generic Chat GitHub-native Qualification controller, loaded only by explicit `ci`/`gh ci`/`github ci` prompt invocation, that consumes READY_FOR_CI plus a repository CI profile and emits exact-candidate READY_FOR_MERGE evidence."
+version: "1.2.0"
 stage: qualification
 status: active
 ---
@@ -24,6 +24,14 @@ READY_FOR_CI
 ```
 
 This controller **must not merge** and must not silently switch to Local CI.
+
+## Invocation boundary
+
+This is a Chat prompt controller, not an Agent Skill. Load it only when the controlling request explicitly resolves `ci`, `gh ci`, or `github ci` through the prompt registry, including an explicit left-to-right composition that contains that alias.
+
+The existence of `READY_FOR_CI`, discovery of Agent Skills, or completion of a bounded controller such as `chat-coder` does **not** invoke this controller. A standalone `chat-coder` request stops at `READY_FOR_CI`. Agent Skill/local Qualification belongs to `local-ci`; do not load this prompt as an inferred alternative or fallback.
+
+Once this prompt is explicitly invoked, the Qualification strategy is `GITHUB_NATIVE`; do not ask a second strategy-selection question.
 
 ## Entry contract
 
@@ -60,7 +68,7 @@ This barrier validates that environment impact was recognized and mechanically c
 ## Qualification
 
 1. Resolve current PR, exact head, authoritative base and profile fingerprint.
-2. Determine the profile-declared GitHub submission mode. Trigger only the declared workflow/operation when explicit dispatch is required; otherwise observe the repository's existing PR-event qualification.
+2. Determine the profile-declared GitHub submission mode. Trigger only the declared workflow/operation when explicit dispatch is required; otherwise observe the repository's existing PR-event qualification. Never introduce `workflow_dispatch` merely because this controller is GitHub-native when the profile declares existing PR-event submission.
 3. Read current workflow/check evidence for the exact authoritative candidate. Queued, waiting, requested, pending or in-progress is not GREEN.
 4. Evaluate every profile-required gate against its explicit allowed terminal conclusions. Missing, stale, superseded, cancelled or old-SHA evidence never satisfies the gate.
 5. If Merge Queue/`merge_group` is declared authoritative when present, bind qualification to that exact effective candidate rather than reusing older PR-head evidence.
