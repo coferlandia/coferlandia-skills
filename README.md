@@ -60,6 +60,8 @@ GITHUB_NATIVE              LOCAL
             COMPLETE
 ```
 
+The Qualification invocation surface determines the strategy: explicit Chat `ci` selects `GITHUB_NATIVE`, while invoking the `local-ci` Agent Skill selects `LOCAL`. `READY_FOR_CI` alone starts neither surface, and no separate strategy router is required.
+
 Both Qualification strategies consume one repository-owned `.coferlandia/ci/profile.json` produced/maintained by `coferlandia-ci-adapter`. They are alternatives, not fallback paths.
 
 ## Typical orchestrated software-delivery flow
@@ -117,7 +119,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.7.1 — 2026-09-10**
+**v2.7.2 — 2026-09-10**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
