@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## v2.7.0 (2026-09-10)
+
+### Chat prompts
+
+- `chat-coder` 1.0.3 -> 1.2.0 incorporates the generic environment/configuration impact contract already proven in a consumer: Development must explicitly classify `Environment change: YES | NO`, record non-secret evidence and deployment actions when the runtime/configuration contract changes, synchronize repository-owned environment examples/runbooks when applicable, and execute deterministic configuration checks before `READY_FOR_CI`.
+- Clarifies derived-artifact readiness so synchronization applies only to outputs that repository-owned policy, instructions, or tooling explicitly declare to be versioned contracts.
+- Explicitly excludes reproducible diagnostic/report outputs from Git synchronization and snapshot-freshness requirements unless the repository itself declares those outputs to be versioned contracts; test inventories and generated test manifests are therefore not special-cased by the generic controller.
+
+### Repository and protocol
+
+- Extends `READY_FOR_CI v1` with candidate-bound environment classification/evidence and the same fail-closed rules for stale or contradictory operational configuration documentation.
+- Distinguishes authoritative versioned derived contracts from reproducible reports, preserving deterministic freshness requirements for the former while preventing the latter from becoming artificial merge hotspots.
+- Adds regression coverage for both sides of the derived-artifact distinction and for the environment/configuration handoff contract.
+
+### Plugin and packaging
+
+- Bumps the shipped repository/plugin from v2.6.4 to v2.7.0 for the substantial compatible Chat Coder and shared delivery-protocol capability.
+- No public Agent Skill versions change in this release.
+
+### Migration or compatibility
+
+- Consumers should update vendored/installed `chat-coder` and `_protocol/delivery/READY_FOR_CI.md` together.
+- Repository-declared versioned contracts such as generated OpenAPI/schema clients, schemas, code-generation outputs, or intentionally versioned snapshots remain mandatory synchronization targets when their authoritative inputs change.
+- Fully reproducible diagnostics/reports do not need to be committed merely to satisfy Chat Coder; repositories that intentionally want one versioned must declare that contract through repository-owned policy/tooling.
+- Qualification strategy and `READY_FOR_MERGE` semantics are unchanged.
+
 ## v2.6.4 (2026-09-09)
 
 ### Chat prompts
@@ -119,7 +145,7 @@
 
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
-| coferlandia-release-publisher | new | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
+| coferlandia-release-publisher | new | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable release resolution independent of deployment. |
 
 ### Repository and protocol
 
