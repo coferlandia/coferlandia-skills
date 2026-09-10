@@ -140,7 +140,7 @@
 - Adds `prompts/` as a first-class repository-addressable Chat controller family with generic `chat-coder`, `ci`, and `merge` prompts, a small bootstrap/registry, deterministic alias resolution, and exact left-to-right composition.
 - Separates Development, Qualification, and Integration through versioned `READY_FOR_CI`, `READY_FOR_MERGE`, and requalification contracts bound to exact candidate/base/profile identity.
 - Defines `LOCAL` and `GITHUB_NATIVE` as equal Qualification strategies: neither is a fallback for the other, both emit the same READY_FOR_MERGE identity envelope, and `merge` never executes CI implicitly.
-- Adds a shared repository CI profile schema so repo-specific commands, workflows, scripts, services and policy remain outside generic controllers.
+- Adds a shared repository CI profile schema so repo-specific commands, workflows, services, gates, Merge Queue semantics, and exceptional-lane references remain outside generic controllers.
 - Adds pressure coverage proving SecretarIA's existing CI facts are representable in a repository profile without hardcoding them in the generic prompts or Local CI skill.
 - Extends Linux/Windows CI to validate prompt registry/contracts, delivery identity/requalification, Local CI, and CI Adapter behavior on Python 3.11 and 3.13.
 
@@ -256,7 +256,7 @@
 
 ### Plugin and packaging
 
-- Bumps the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
+- Bumped the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
 - Corrected plugin repository/homepage metadata to `coferlandia/coferlandia-skills` and refreshed marketplace descriptions.
 - Replaced pull-before-package behavior with deterministic packaging of the already-reviewed branch state.
 - The package now includes `RELEASE-NOTES.md` and `SKILLS-GUIDE.md`, excludes repository-local `.agents/**` and `.agent/**`, reopens the archive for verification, and reports a SHA-256 digest.
@@ -409,8 +409,7 @@
 
 - **project-documentation-archivist** (`content`) — v2.1.0. Catalog files now go to
   `.coferlandia/catalog/` and archived sources to `.coferlandia/archive/YYYY/` instead
-  of `docs/catalog/` and `docs/archive/`. Standard repo artifacts (README.md, AGENTS.md,
-  RUNBOOK.md) remain at the project root. HISTORY.md, TODO.md, and DECISIONS.md go to
+  of `docs/catalog/` and `docs/archive/`. Standard repo artifacts (README.md, AGENTS.md, RUNBOOK.md) remain at the project root. HISTORY.md, TODO.md, and DECISIONS.md go to
   `.coferlandia/`.
 - **coferlandia-software-dev** (`engineering`) — v2.3.0. Documentation artifacts default
   to `.coferlandia/` when no archivist structure exists in the target repo.
