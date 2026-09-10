@@ -64,6 +64,24 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("REQUALIFICATION_REQUIRED", texts["merge"])
         self.assertIn("must not execute CI", texts["merge"])
 
+    def test_ci_is_explicit_chat_surface_and_never_inferred_from_ready_for_ci(self):
+        text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
+        chat_coder = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("## Invocation boundary", text)
+        self.assertIn("This is a Chat prompt controller, not an Agent Skill", text)
+        self.assertIn("explicitly resolves `ci`, `gh ci`, or `github ci`", text)
+        self.assertIn("does **not** invoke this controller", text)
+        self.assertIn("A standalone `chat-coder` request stops at `READY_FOR_CI`", text)
+        self.assertIn("Agent Skill/local Qualification belongs to `local-ci`", text)
+        self.assertIn("Qualification strategy is `GITHUB_NATIVE`", text)
+        self.assertIn("do not continue into another controller unless the user's invocation explicitly composed that next stage", chat_coder)
+
+    def test_ci_respects_profile_submission_mode_without_inventing_manual_dispatch(self):
+        text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
+        self.assertIn("Trigger only the declared workflow/operation when explicit dispatch is required", text)
+        self.assertIn("otherwise observe the repository's existing PR-event qualification", text)
+        self.assertIn("Never introduce `workflow_dispatch` merely because this controller is GitHub-native", text)
+
     def test_chat_coder_claims_unassigned_issue_for_authenticated_user(self):
         text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
         self.assertIn("first state-changing action", text)

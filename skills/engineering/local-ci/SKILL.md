@@ -1,20 +1,19 @@
 ---
 name: local-ci
 description: >
-  Use when a Coferlandia development candidate already has durable READY_FOR_CI evidence and the
-  controlling authority explicitly wants local CI/qualification in a repository-capable environment.
-  Executes only the repository profile's local qualification contract and emits candidate-bound
-  READY_FOR_MERGE evidence; it does not run GitHub-native CI or merge.
+  Use when a Coferlandia development candidate has durable READY_FOR_CI evidence and Qualification
+  is being performed through an Agent Skills/local execution surface, or when local CI is named
+  explicitly. Invoking this skill selects LOCAL qualification; it never runs GitHub-native CI or merge.
 license: Apache-2.0
 compatibility: >
   Requires read/write access to the target repository, git, Python 3.11+ for profile validation,
   and every runtime/service required by the target repository's .coferlandia/ci/profile.json.
 metadata:
   author: coferlandia
-  version: "1.0.0"
+  version: "1.1.0"
   category: engineering
   status: active
-  tested: "2026-09-07 - contract, activation, profile-boundary, no-fallback, and READY_FOR_MERGE semantics covered by unittest pressure cases."
+  tested: "2026-09-10 - invocation-surface ownership, activation, profile-boundary, no-fallback, environment-blocked, and READY_FOR_MERGE semantics covered by unittest pressure cases."
 ---
 
 ## Context
@@ -25,9 +24,19 @@ metadata:
 READY_FOR_CI -> LOCAL qualification -> READY_FOR_MERGE
 ```
 
-It is an Agent Skill, not the Chat `ci.md` prompt. The two strategies are equal alternatives. This skill **must not run GitHub-native CI** as fallback and **must not merge**.
+It is an Agent Skill, not the Chat `ci.md` prompt. **Invoking this skill selects `LOCAL`; no separate strategy router or strategy-choice step is required after activation.** GitHub-native Qualification belongs to the explicitly invoked Chat `ci` controller and is outside this skill.
+
+This skill **must not run GitHub-native CI** as fallback and **must not merge**.
 
 The target repository's real scripts, services and tools remain authoritative. This skill consumes the single repository definition at `.coferlandia/ci/profile.json`; it does not contain project test commands itself.
+
+## Activation boundary
+
+Activate this skill when the current task is to qualify or resume Qualification of a development candidate through an Agent Skills/local execution surface and current durable `READY_FOR_CI` evidence exists, or when the controlling instruction explicitly names local CI / `local-ci`.
+
+Do not activate merely because a bounded controller such as `chat-coder` reached `READY_FOR_CI`; that controller's terminal boundary still applies. Do not activate for a generic test command, a request to diagnose GitHub Actions, an explicit Chat `ci` / `gh ci` / `github ci` invocation, merge/integration, or release publication.
+
+Once this skill is active, the Qualification strategy is `LOCAL`. Do not ask a second strategy-selection question and do not consult the Chat prompt registry to choose between LOCAL and GITHUB_NATIVE.
 
 ## Preconditions
 
@@ -78,6 +87,7 @@ Read `references/requalification.md` when candidate, base, profile or validation
 - Missing local runtime/service: report `LOCAL_QUALIFICATION_BLOCKED`; do not fall back to GitHub-native CI.
 - Test/product failure: diagnose and correct only in scope, then create fresh candidate-bound evidence.
 - Base/profile drift: stop and reconcile/requalify according to shared rules.
+- Explicit Chat `ci` invocation: this skill is not the selected controller; leave GITHUB_NATIVE handling to the Chat prompt.
 - Exceptional/HOTFIX lane: follow only repository-owned documentation and external authorization. This skill never invents or grants exceptional-lane authority.
 
 ## Expected Output

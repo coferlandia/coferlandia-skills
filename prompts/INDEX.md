@@ -8,6 +8,6 @@ First-class Chat controllers maintained centrally by `coferlandia-skills`.
 | [`ci`](./ci.md) | Qualification / GitHub-native | `ci`, `gh ci`, `github ci` | `READY_FOR_MERGE` |
 | [`merge`](./merge.md) | Integration | `merge` | `COMPLETE` or `REQUALIFICATION_REQUIRED` |
 
-`local ci` intentionally resolves to the public [`local-ci`](../skills/engineering/local-ci/) Agent Skill rather than to `ci.md`.
+`local ci` intentionally resolves to the public [`local-ci`](../skills/engineering/local-ci/) Agent Skill rather than to `ci.md`. The invocation surface owns the Qualification strategy: explicit Chat `ci` is `GITHUB_NATIVE`; the `local-ci` Agent Skill is `LOCAL`. No separate strategy router is required.
 
-Composition is exact and left-to-right. Missing stages are never inserted and qualification strategies never fall back to each other automatically. The machine-readable registry is [`registry.json`](./registry.json).
+Composition is exact and left-to-right. Missing stages are never inserted and qualification strategies never fall back to each other automatically. Reaching `READY_FOR_CI` alone does not invoke either Qualification surface. The machine-readable registry is [`registry.json`](./registry.json).

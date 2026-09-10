@@ -11,6 +11,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 - Planning defines work; development changes code; Qualification proves one exact candidate; Integration merges/closes delivery.
 - Durable project knowledge, operational work state, and cross-project architecture memory have different owners.
 - Chat prompts and local Agent Skills are different execution surfaces even when they implement the same semantic stage.
+- For Qualification, the invocation surface determines the strategy: the `local-ci` Agent Skill is `LOCAL`, while explicit Chat `ci` / `gh ci` / `github ci` is `GITHUB_NATIVE`; no strategy router is required between them.
 
 ## Skill System
 
@@ -37,9 +38,9 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 | [`coferlandia-project-manager`](./skills/ops/coferlandia-project-manager/) | A rough idea, requirement, document, or bug cluster must become a coherent initiative. | Initiative WHAT/WHY, scope, acceptance criteria, execution strategy, and one authoritative Epic or local contract. | Does not perform technical decomposition, implementation, review, or Git integration. |
 | [`software-development`](./skills/engineering/software-development/) | Code work needs analysis, implementation, debugging, executable-plan execution, fixes, or independent review. | Bounded role execution through Analyst, Developer, Debugger, Coding Agent, Fix Agent, and Code Reviewer. | Does not own portfolio planning or orchestrated Git lifecycle operations. |
 | [`project-orchestrator`](./skills/ops/project-orchestrator/) | An approved direct plan or Analyst task graph must run through a controlled local delivery lifecycle. | Contract materialization, claims, Git/worktrees, commits, reviews, traceability, final PR, explicit integration, and cleanup. | Executes approved contracts; it does not silently re-plan or redesign them. |
-| [`local-ci`](./skills/engineering/local-ci/) | A durable READY_FOR_CI candidate must be qualified in a repository-capable local environment. | LOCAL strategy READY_FOR_MERGE evidence for exact candidate/base/profile. | Does not run GitHub-native CI as fallback and does not merge. |
+| [`local-ci`](./skills/engineering/local-ci/) | Qualification is being executed through an Agent Skills/local surface for a durable READY_FOR_CI candidate. | LOCAL strategy READY_FOR_MERGE evidence for exact candidate/base/profile. | Invocation selects LOCAL; missing local environment blocks locally, and the skill never runs GitHub-native CI as fallback or merges. |
 | [`chat-coder`](./prompts/chat-coder.md) | Development is being driven from Chat. | Draft PR plus durable READY_FOR_CI. | Stops before Qualification. |
-| [`ci`](./prompts/ci.md) | GitHub-native Qualification is explicitly selected from Chat. | GITHUB_NATIVE READY_FOR_MERGE evidence. | Does not run Local CI or merge. |
+| [`ci`](./prompts/ci.md) | GitHub-native Qualification is explicitly selected from Chat. | GITHUB_NATIVE READY_FOR_MERGE evidence. | Explicit prompt invocation selects GITHUB_NATIVE; it does not run Local CI or merge. |
 | [`merge`](./prompts/merge.md) | An already-qualified candidate must be integrated from Chat. | Repository-approved integration and COMPLETE. | Never executes CI; stale qualification returns REQUALIFICATION_REQUIRED. |
 | [`coferlandia-release-publisher`](./skills/ops/coferlandia-release-publisher/) | An exact existing commit must become, dry-run, verify, or resolve as a formal product release. | Semantic-version plan, exact annotated tag, GitHub Release, optional artifacts/provenance, consistency verification, and a normalized machine-readable release contract. | Owns Commit → Release only; it does not deploy, roll back production, choose hosts, or decide what version is deployed. |
 
@@ -68,7 +69,7 @@ Configuration tooling:    Config Toolsmith -> Config DevOps
 CI repository adaptation: CI Adapter -> one repo profile -> Chat CI or Local CI
 ```
 
-Delivery composition is exact and left-to-right. Missing stages are not inserted, and `LOCAL`/`GITHUB_NATIVE` Qualification never silently fall back to one another.
+Delivery composition is exact and left-to-right. Missing stages are not inserted, and `LOCAL`/`GITHUB_NATIVE` Qualification never silently fall back to one another. `READY_FOR_CI` is a handoff state, not an instruction to choose or start a Qualification surface.
 
 ## Canonical documents
 

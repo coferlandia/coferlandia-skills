@@ -15,7 +15,12 @@ class LocalCIContractTests(unittest.TestCase):
         self.assertIn("READY_FOR_MERGE", text)
         self.assertIn(".coferlandia/ci/profile.json", text)
         self.assertIn("LOCAL", text)
+        self.assertIn("Invoking this skill selects `LOCAL`", text)
+        self.assertIn("no separate strategy router", text)
         self.assertIn("must not run GitHub-native CI", text)
+        self.assertIn("LOCAL_QUALIFICATION_BLOCKED", text)
+        self.assertIn("Do not activate merely because a bounded controller such as `chat-coder` reached `READY_FOR_CI`", text)
+        self.assertIn("Explicit Chat `ci` invocation", text)
         self.assertIn("must not merge", text)
         for token in ("SecretarIA", "scripts/validate-all.sh", "fast-ci.yml"):
             self.assertNotIn(token, text)
@@ -28,8 +33,11 @@ class LocalCIContractTests(unittest.TestCase):
 
     def test_activation_cases_have_positive_and_negative(self):
         cases = json.loads((SKILL_ROOT / "tests" / "cases.json").read_text(encoding="utf-8"))
-        self.assertGreaterEqual(len(cases["positive"]), 4)
-        self.assertGreaterEqual(len(cases["negative"]), 4)
+        self.assertGreaterEqual(len(cases["positive"]), 5)
+        self.assertGreaterEqual(len(cases["negative"]), 5)
+        self.assertTrue(any("Qualification" in case and "agente local" in case for case in cases["positive"]))
+        self.assertTrue(any("chat coder" in case and "READY_FOR_CI" in case for case in cases["negative"]))
+        self.assertTrue(any("gh ci" in case for case in cases["negative"]))
 
 if __name__ == "__main__":
     unittest.main()
