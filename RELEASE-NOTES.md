@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v2.7.1 (2026-09-10)
+
+### Chat prompts
+
+- `ci` 1.0.0 -> 1.1.0 completes the environment/configuration contract introduced across Development and `READY_FOR_CI` in v2.7.0 by re-evaluating the exact candidate against the authoritative base before GitHub-native Qualification.
+- Qualification now fails closed when `Environment change: YES | NO` is missing, ambiguous, or contradicted by the candidate, and requires candidate-bound non-secret operational evidence when environment/configuration impact is declared.
+- Adds regression coverage for the CI environment/configuration qualification barrier.
+
+### Plugin and packaging
+
+- Bumps the shipped repository/plugin from v2.7.0 to v2.7.1 as a compatible correction completing the v2.7.0 public delivery-controller contract.
+- No public Agent Skill versions change in this release.
+
+### Migration or compatibility
+
+- Consumers that vendor the public prompt family should update `ci.md` together with the v2.7.x `chat-coder` and `READY_FOR_CI` contract.
+- Qualification strategy, required GitHub gates, and `READY_FOR_MERGE` semantics are unchanged.
+
 ## v2.7.0 (2026-09-10)
 
 ### Chat prompts

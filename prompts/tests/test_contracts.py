@@ -112,6 +112,15 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("when `Environment change: NO`", ready)
         self.assertIn("secret values are never included", ready)
 
+    def test_ci_rechecks_environment_declaration_before_qualification(self):
+        text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
+        self.assertIn("## Environment / configuration qualification barrier", text)
+        self.assertIn("re-evaluate the exact candidate against the authoritative base", text)
+        self.assertIn("Environment change: YES", text)
+        self.assertIn("Environment change: NO", text)
+        self.assertIn("Fail closed when the declaration is missing, ambiguous or contradicted by the candidate", text)
+        self.assertIn("Never expose or request secret values as qualification evidence", text)
+
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
         full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge"))
