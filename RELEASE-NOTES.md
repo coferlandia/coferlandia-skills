@@ -145,7 +145,7 @@
 
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
-| coferlandia-release-publisher | new | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable release resolution independent of deployment. |
+| coferlandia-release-publisher | new | 1.0 | Adds a generic Commit-to-Release standard with SemVer planning, exact annotated-tag identity, GitHub Release publication, idempotent recovery, and machine-readable verification/resolution independent of deployment. |
 
 ### Repository and protocol
 
@@ -346,7 +346,7 @@
 ### Repository
 
 - `coferlandia-skills` - bumped the repo-wide release version to include the new
-  skill and its packaging surface.
+  meta skill and its packaging surface.
 
 ## v1.4.0 (2026-07-07)
 
