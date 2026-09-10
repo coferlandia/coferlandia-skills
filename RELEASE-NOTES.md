@@ -409,7 +409,8 @@
 
 - **project-documentation-archivist** (`content`) — v2.1.0. Catalog files now go to
   `.coferlandia/catalog/` and archived sources to `.coferlandia/archive/YYYY/` instead
-  of `docs/catalog/` and `docs/archive/`. Standard repo artifacts (README.md, AGENTS.md, RUNBOOK.md) remain at the project root. HISTORY.md, TODO.md, and DECISIONS.md go to
+  of `docs/catalog/` and `docs/archive/`. Standard repo artifacts (README.md, AGENTS.md,
+  RUNBOOK.md) remain at the project root. HISTORY.md, TODO.md, and DECISIONS.md go to
   `.coferlandia/`.
 - **coferlandia-software-dev** (`engineering`) — v2.3.0. Documentation artifacts default
   to `.coferlandia/` when no archivist structure exists in the target repo.
