@@ -83,16 +83,34 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("no applicable required development check is failing, skipped, unknown", ready)
         self.assertIn("Never weaken, delete, bypass, or broaden an assertion merely to make CI green", text)
 
-    def test_chat_coder_ready_for_ci_requires_versioned_derived_artifacts(self):
+    def test_chat_coder_ready_for_ci_distinguishes_versioned_contracts_from_reports(self):
         text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
         ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")
-        self.assertIn("repository-owned versioned derived artifact", text)
+        self.assertIn("explicitly declared as a versioned contract", text)
         self.assertIn("repository-owned generation or synchronization mechanism", text)
         self.assertIn("no unexpected diff", text)
         self.assertIn("missing, stale, manually approximated", text)
-        self.assertIn("repository-owned versioned derived artifact", ready)
+        self.assertIn("do not create, add to Git, or require snapshot freshness", text)
+        self.assertIn("only when repository-owned policy explicitly declares that output to be a versioned contract", text)
+        self.assertIn("repository-owned policy explicitly declares to be a versioned contract", ready)
         self.assertIn("freshness/idempotence/diff check", ready)
         self.assertIn("without unexpected diff", ready)
+        self.assertIn("not synchronization prerequisites", ready)
+        self.assertIn("not required to be committed or snapshot-fresh", ready)
+
+    def test_chat_coder_ready_for_ci_requires_environment_classification(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")
+        self.assertIn("### Environment / configuration impact", text)
+        self.assertIn("Environment change: YES | NO", text)
+        self.assertIn("Production required: YES | NO | CONDITIONAL", text)
+        self.assertIn("Deployment action: <required action or NONE>", text)
+        self.assertIn("Environment evidence:", text)
+        self.assertIn("Environment change: YES | NO", ready)
+        self.assertIn("Environment evidence:", ready)
+        self.assertIn("when `Environment change: YES`", ready)
+        self.assertIn("when `Environment change: NO`", ready)
+        self.assertIn("secret values are never included", ready)
 
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
