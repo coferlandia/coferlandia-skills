@@ -8,10 +8,13 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 
 - Choose the narrowest skill or prompt that owns the required outcome.
 - Compose controllers only when the task crosses responsibility boundaries.
-- Planning defines work; development changes code; Qualification proves one exact candidate; Integration merges/closes delivery.
+- Planning defines work; development changes code; Qualification proves one exact candidate; Integration merges/closes ordinary delivery; Release qualifies and promotes an aggregate release candidate; publication gives one exact integrated commit a formal release identity.
+- Explicit emergency remediation is separate from ordinary bug development: `hotfix` may orchestrate repository-approved owners but never bypass their safeguards.
 - Durable project knowledge, operational work state, and cross-project architecture memory have different owners.
 - Chat prompts and local Agent Skills are different execution surfaces even when they implement the same semantic stage.
-- For Qualification, the invocation surface determines the strategy: the `local-ci` Agent Skill is `LOCAL`, while explicit Chat `ci` / `gh ci` / `github ci` is `GITHUB_NATIVE`; no strategy router is required between them.
+- For development Qualification, `local-ci` is `LOCAL`, while explicit Chat `ci` is `GITHUB_NATIVE`.
+- For release Qualification, `local-release` is `LOCAL`, while explicit `chat-release` is `GITHUB_NATIVE`.
+- No LOCAL/GITHUB_NATIVE surface silently falls back to the other.
 
 ## Skill System
 
@@ -22,7 +25,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 | [`project-skill-miner`](./skills/meta/project-skill-miner/) | A project contains recurring operational procedures worth preserving as local skills. | Evidence-based skill proposals and approved project-local skills. | Rejects speculative or obsolete procedures unsupported by current project evidence. |
 | [`coferlandia-skill-toolsmith`](./skills/meta/coferlandia-skill-toolsmith/) | A skill should become more deterministic, economical, and automation-friendly. | One unified Python CLI plus a skill contract rewired around it. | Explicit invocation only; semantic judgment remains with the model. |
 | [`coferlandia-config-toolsmith`](./skills/meta/coferlandia-config-toolsmith/) | A project's existing configuration should become safe and economical for agents and developers to operate through one standard interface. | A native or Python-fallback configuration CLI, static contract, adapters, candidate ledger, generated agent handbook, and conformance tests. | Explicit invocation only; it adapts existing native stores and never creates a shadow configuration source. |
-| [`coferlandia-ci-adapter`](./skills/meta/coferlandia-ci-adapter/) | A repository must expose its real local/GitHub Qualification facts to Coferlandia's generic CI controllers. | One validated/fingerprinted `.coferlandia/ci/profile.json` shared by Chat CI and Local CI. | Adapts existing scripts/workflows; it does not run CI, merge, or copy generic controllers into the project. |
+| [`coferlandia-ci-adapter`](./skills/meta/coferlandia-ci-adapter/) | A repository must expose its real local/GitHub Qualification facts to Coferlandia's generic CI controllers. | One validated/fingerprinted `.coferlandia/ci/profile.json` shared by generic Chat and Local qualification/release controllers. | Adapts existing scripts/workflows; it does not run CI, merge, release, or copy generic controllers into the project. |
 
 ## Project Knowledge and Architecture
 
@@ -38,11 +41,14 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 | [`coferlandia-project-manager`](./skills/ops/coferlandia-project-manager/) | A rough idea, requirement, document, or bug cluster must become a coherent initiative. | Initiative WHAT/WHY, scope, acceptance criteria, execution strategy, and one authoritative Epic or local contract. | Does not perform technical decomposition, implementation, review, or Git integration. |
 | [`software-development`](./skills/engineering/software-development/) | Code work needs analysis, implementation, debugging, executable-plan execution, fixes, or independent review. | Bounded role execution through Analyst, Developer, Debugger, Coding Agent, Fix Agent, and Code Reviewer. | Does not own portfolio planning or orchestrated Git lifecycle operations. |
 | [`project-orchestrator`](./skills/ops/project-orchestrator/) | An approved direct plan or Analyst task graph must run through a controlled local delivery lifecycle. | Contract materialization, claims, Git/worktrees, commits, reviews, traceability, final PR, explicit integration, and cleanup. | Executes approved contracts; it does not silently re-plan or redesign them. |
-| [`local-ci`](./skills/engineering/local-ci/) | Qualification is being executed through an Agent Skills/local surface for a durable READY_FOR_CI candidate. | LOCAL strategy READY_FOR_MERGE evidence for exact candidate/base/profile. | Invocation selects LOCAL; missing local environment blocks locally, and the skill never runs GitHub-native CI as fallback or merges. |
+| [`local-ci`](./skills/engineering/local-ci/) | Development Qualification is executed through an Agent Skills/local surface for a durable READY_FOR_CI candidate. | LOCAL strategy READY_FOR_MERGE evidence for exact candidate/base/profile. | Invocation selects LOCAL; it never runs GitHub-native CI as fallback or merges. |
+| [`local-release`](./skills/engineering/local-release/) | One exact release candidate must use the LOCAL release surface. | LOCAL READY_FOR_RELEASE evidence plus repository-approved release completion using the shared publisher. | Never falls back to GitHub-native release Qualification and never deploys. |
 | [`chat-coder`](./prompts/chat-coder.md) | Development is being driven from Chat. | Draft PR plus durable READY_FOR_CI. | Stops before Qualification. |
-| [`ci`](./prompts/ci.md) | GitHub-native Qualification is explicitly selected from Chat. | GITHUB_NATIVE READY_FOR_MERGE evidence. | Explicit prompt invocation selects GITHUB_NATIVE; it does not run Local CI or merge. |
-| [`merge`](./prompts/merge.md) | An already-qualified candidate must be integrated from Chat. | Repository-approved integration and COMPLETE. | Never executes CI; stale qualification returns REQUALIFICATION_REQUIRED. |
-| [`coferlandia-release-publisher`](./skills/ops/coferlandia-release-publisher/) | An exact existing commit must become, dry-run, verify, or resolve as a formal product release. | Semantic-version plan, exact annotated tag, GitHub Release, optional artifacts/provenance, consistency verification, and a normalized machine-readable release contract. | Owns Commit → Release only; it does not deploy, roll back production, choose hosts, or decide what version is deployed. |
+| [`ci`](./prompts/ci.md) | GitHub-native development Qualification is explicitly selected from Chat. | GITHUB_NATIVE READY_FOR_MERGE evidence. | Does not run Local CI or merge. |
+| [`merge`](./prompts/merge.md) | An already-qualified development candidate must be integrated from Chat. | Repository-approved Integration and COMPLETE. | Never executes CI; stale qualification returns REQUALIFICATION_REQUIRED. |
+| [`chat-release`](./prompts/chat-release.md) | One exact release candidate must use GitHub-native release Qualification and promotion. | GITHUB_NATIVE READY_FOR_RELEASE, repository-approved release integration, and publication through the shared publisher. | Does not invoke `ci`, fall back to LOCAL, or deploy. |
+| [`hotfix`](./prompts/hotfix.md) | An explicit urgent bug/incident should take the repository-approved emergency path from Issue/report through production stabilization. | Durable HOTFIX state, exact emergency candidate, and mandatory permanent-fix follow-up when the production correction is only temporary. | Explicit invocation only; delegates Development/Qualification/Integration/publication and fails closed instead of weakening safeguards. |
+| [`coferlandia-release-publisher`](./skills/ops/coferlandia-release-publisher/) | An exact existing commit must become, dry-run, verify, or resolve as a formal product release. | Semantic-version plan, exact annotated tag, GitHub Release, optional artifacts/provenance, consistency verification, and a normalized machine-readable release contract. | Owns Commit -> Release only; it does not qualify a release candidate or deploy. |
 
 ## Configuration Operations
 
@@ -60,22 +66,25 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 
 ```text
 Controlled local delivery: Project Manager -> optional Architect -> Analyst/direct plan -> Orchestrator -> development roles
-Chat delivery:            chat-coder -> ci -> merge
+Chat delivery:             chat-coder -> ci -> merge
 Mixed local qualification: chat-coder -> local-ci -> merge
-Release publication:      validated/integrated commit -> Release Publisher -> separate deployment authority when needed
-Knowledge recovery:       Archivist -> optional Project Skill Miner
-Skill mechanization:      Existing skill -> Skill Toolsmith -> Skill Repository Versioning
-Configuration tooling:    Config Toolsmith -> Config DevOps
-CI repository adaptation: CI Adapter -> one repo profile -> Chat CI or Local CI
+GitHub-native release:     exact release candidate -> chat-release -> Release Publisher internally
+LOCAL release:             exact release candidate -> local-release -> Release Publisher internally
+Emergency remediation:     hotfix -> repository-approved development/qualification/integration -> optional Release Publisher
+Direct publication:        exact integrated commit -> Release Publisher -> separate deployment authority when needed
+Knowledge recovery:        Archivist -> optional Project Skill Miner
+Skill mechanization:       Existing skill -> Skill Toolsmith -> Skill Repository Versioning
+Configuration tooling:     Config Toolsmith -> Config DevOps
+CI repository adaptation:  CI Adapter -> one repo profile -> Chat/Local development or release Qualification
 ```
 
-Delivery composition is exact and left-to-right. Missing stages are not inserted, and `LOCAL`/`GITHUB_NATIVE` Qualification never silently fall back to one another. `READY_FOR_CI` is a handoff state, not an instruction to choose or start a Qualification surface.
+Delivery composition is exact and left-to-right for ordinary development/release surfaces. The explicitly invoked `hotfix` controller is a bounded orchestration surface: it may call repository-approved owners as part of its emergency lifecycle, but it does not absorb or weaken their contracts. Missing stages are not inferred from ordinary work, and `LOCAL`/`GITHUB_NATIVE` strategies never silently fall back to one another. `READY_FOR_CI`, `READY_FOR_MERGE`, `READY_FOR_RELEASE`, and HOTFIX state are evidence, not permission to invent an undeclared next surface.
 
 ## Canonical documents
 
 - [`skills/INDEX.md`](./skills/INDEX.md) is the only Agent Skill inventory and status catalog.
 - [`prompts/INDEX.md`](./prompts/INDEX.md) and [`prompts/registry.json`](./prompts/registry.json) own the Chat controller registry/aliases.
 - Each skill's `SKILL.md` is its complete operational contract.
-- `_protocol/delivery/` owns shared READY_FOR_CI / READY_FOR_MERGE / requalification semantics.
+- `_protocol/delivery/` owns shared READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification semantics.
 - This guide explains selection and composition; it does not redefine behavior.
 - [`AGENTS.md`](./AGENTS.md) remains the entry point for agents maintaining or consuming the repository.

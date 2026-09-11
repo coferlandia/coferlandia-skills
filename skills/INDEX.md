@@ -34,6 +34,7 @@ Code, infrastructure, architecture, debugging.
 | [software-development](./engineering/software-development/) | Routes broad-context Analyst decomposition with single-store outputs, developer/debugger work, executable coding-agent contracts, and independent review while keeping Git authority separate | active |
 | [the-architect](./engineering/the-architect/) | Govern cross-project architecture memory, reusable components, evidence-based assessments, concise release deltas, and optional pre-execution Architecture Gates | active |
 | [local-ci](./engineering/local-ci/) | LOCAL Qualification controller for Agent Skills/local execution: invoking the skill qualifies an exact READY_FOR_CI candidate through the repository profile and never falls back to GitHub-native CI or merge | active |
+| [local-release](./engineering/local-release/) | LOCAL release controller for one exact release candidate: emits READY_FOR_RELEASE, uses repository-approved integration/publication, and never falls back to GitHub-native release Qualification | active |
 
 ## Data
 
@@ -74,4 +75,4 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-09-10*
+*Last updated: 2026-09-11*

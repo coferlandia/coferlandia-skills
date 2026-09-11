@@ -23,14 +23,52 @@ class DeliveryContractTests(unittest.TestCase):
         ready_merge = (Path(__file__).parent / "READY_FOR_MERGE.md").read_text(encoding="utf-8")
         for field in ("Candidate SHA:", "Qualified base SHA:", "Effective candidate:", "Qualification strategy: LOCAL | GITHUB_NATIVE", "CI profile fingerprint:"):
             self.assertIn(field, ready_merge)
+        ready_release = (Path(__file__).parent / "READY_FOR_RELEASE.md").read_text(encoding="utf-8")
+        for field in (
+            "Source ref:",
+            "Target ref:",
+            "Release candidate SHA:",
+            "Qualified base SHA:",
+            "Effective candidate:",
+            "Qualification strategy: LOCAL | GITHUB_NATIVE",
+            "CI profile fingerprint:",
+            "Included work:",
+            "Review Critical: 0",
+            "Review Important: 0",
+        ):
+            self.assertIn(field, ready_release)
+        hotfix = (Path(__file__).parent / "HOTFIX.md").read_text(encoding="utf-8")
+        for field in (
+            "Primary issue:",
+            "Resolution strategy: UNRESOLVED | PERMANENT | TEMPORARY_MITIGATION",
+            "Permanent fix issue:",
+            "Target ref:",
+            "Candidate SHA:",
+            "READY_FOR_CI evidence:",
+            "Reason temporary:",
+            "Temporary surfaces:",
+            "Removal criteria:",
+            "Qualification evidence:",
+            "Release:",
+        ):
+            self.assertIn(field, hotfix)
+        self.assertIn("HOTFIX_READY", hotfix)
+        self.assertIn("HOTFIX_BLOCKED", hotfix)
+        self.assertIn("distinct open follow-up work item", hotfix)
+        self.assertIn("`UNRESOLVED` is allowed only", hotfix)
+        self.assertIn("must never advance to `HOTFIX_READY` or `HOTFIX_COMPLETE`", hotfix)
 
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
-        self.assertIn("PR head changes", text)
+        self.assertIn("Development PR head changes", text)
+        self.assertIn("Release candidate/source SHA changes", text)
         self.assertIn("CI profile fingerprint changes", text)
-        self.assertIn("Authoritative base changes", text)
+        self.assertIn("Authoritative development base changes", text)
+        self.assertIn("Release target/base changes", text)
+        self.assertIn("Release manifest/included-work identity changes", text)
         self.assertIn("Old/cancelled/superseded remote run", text)
         self.assertIn("merge.md` never performs requalification", text)
+        self.assertIn("`chat-release` and `local-release` also fail closed", text)
 
     def test_secretaria_fixture_is_representable_without_controller_hardcoding(self):
         mod = module()
@@ -40,7 +78,7 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertEqual(len(fp), 64)
         generic_controller_text = "\n".join(
             (ROOT / "prompts" / f"{name}.md").read_text(encoding="utf-8")
-            for name in ("chat-coder", "ci", "merge")
+            for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix")
         ) + (ROOT / "skills" / "engineering" / "local-ci" / "SKILL.md").read_text(encoding="utf-8")
         for project_specific in ("scripts/validate-all.sh", ".github/workflows/fast-ci.yml", "docs/development/hotfix-lane.md"):
             self.assertNotIn(project_specific, generic_controller_text)

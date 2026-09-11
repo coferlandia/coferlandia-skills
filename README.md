@@ -2,7 +2,7 @@
 
 Operational contracts and reusable Chat delivery controllers for AI agents working on real software projects.
 
-Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification for its public skills and additionally maintains a small public Chat prompt family for Development, Qualification, and Integration.
+Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification for its public skills and additionally maintains a public Chat prompt family for Development, Qualification, Integration, aggregate Release, and explicit emergency Hotfix orchestration.
 
 ## Is this library for you?
 
@@ -10,7 +10,7 @@ Use Coferlandia Skills when you:
 
 - run AI agents against real repositories, documentation, Git, or GitHub;
 - need repeatable workflows rather than one-off prompts;
-- want planning, architecture, implementation, review, Qualification, and Integration to remain separate;
+- want planning, architecture, implementation, review, Qualification, Integration, Release, and emergency remediation to remain explicit;
 - need durable decisions, traceability, and safe coordination across agents.
 
 It is probably not the right fit when you only need isolated prompt snippets, expect unsupervised publication without evidence or control gates, or want a hosted development platform rather than portable contracts.
@@ -18,9 +18,9 @@ It is probably not the right fit when you only need isolated prompt snippets, ex
 ## Operating philosophy
 
 - **Agent Skills are operational contracts, not prompt fragments.** Each skill defines activation conditions, authority, boundaries, outputs, and completion criteria.
-- **Chat delivery controllers are first-class but distinct.** `chat-coder`, `ci`, and `merge` are centrally maintained prompts for Chat execution surfaces; local Qualification is a skill.
+- **Chat delivery controllers are first-class but distinct.** `chat-coder`, `ci`, `merge`, `chat-release`, and `hotfix` are centrally maintained prompts for Chat execution surfaces; `local-ci` and `local-release` provide the corresponding LOCAL qualification surfaces.
 - **Semantic judgment and deterministic control are separated.** Models reason and produce domain work; code owns mechanical state, validation, and lifecycle operations where reliability matters.
-- **Every responsibility has one owner.** Planning, architecture, implementation, Qualification, Integration, release publication, and durable knowledge are not silently duplicated.
+- **Every responsibility has one owner.** Planning, architecture, implementation, Qualification, Integration, release publication, emergency orchestration, and durable knowledge are not silently duplicated.
 - **Autonomy remains supervised and traceable.** Human or agentic control authorities may approve work, but consequential decisions and evidence remain inspectable.
 - **Controllers compose without becoming inseparable.** They support complete workflows while remaining independently useful.
 
@@ -30,7 +30,7 @@ It is probably not the right fit when you only need isolated prompt snippets, ex
 |---|---|
 | **Skill System** | Discover, create, version, mine, adapt, and mechanize skills/contracts. |
 | **Project Knowledge and Architecture** | Preserve durable project knowledge and govern material architectural decisions across projects. |
-| **Software Delivery** | Turn an initiative into an executable contract, implement it, qualify an exact candidate, review it, and integrate it under explicit control. |
+| **Software Delivery** | Turn an initiative into an executable contract, implement it, qualify exact development/release candidates, integrate them under explicit control, and handle bounded emergency remediation. |
 | **Configuration Operations** | Standardize existing project configuration and operate it safely from agent or guided workflows. |
 | **Evidence and Critical Reasoning** | Evaluate claims through explicit evidence, confidence, and source traceability. |
 
@@ -60,9 +60,47 @@ GITHUB_NATIVE              LOCAL
             COMPLETE
 ```
 
-The Qualification invocation surface determines the strategy: explicit Chat `ci` selects `GITHUB_NATIVE`, while invoking the `local-ci` Agent Skill selects `LOCAL`. `READY_FOR_CI` alone starts neither surface, and no separate strategy router is required.
+The development Qualification invocation surface determines the strategy: explicit Chat `ci` selects `GITHUB_NATIVE`, while invoking the `local-ci` Agent Skill selects `LOCAL`. `READY_FOR_CI` alone starts neither surface, and no separate strategy router is required.
 
-Both Qualification strategies consume one repository-owned `.coferlandia/ci/profile.json` produced/maintained by `coferlandia-ci-adapter`. They are alternatives, not fallback paths.
+Aggregate releases use the same explicit strategy split:
+
+```text
+exact release candidate
+        |
+   +----+----+
+   |         |
+   v         v
+chat-release local-release
+GITHUB_NATIVE LOCAL
+   |         |
+   +-- READY_FOR_RELEASE --+
+              |
+ repository-approved integration
+              |
+ coferlandia-release-publisher
+              |
+           COMPLETE
+```
+
+Emergency remediation is explicit and high-level:
+
+```text
+hotfix #123
+or
+hotfix: <free-form bug report>
+        |
+PERMANENT | TEMPORARY_MITIGATION
+        |
+repository-approved Development / Qualification / Integration
+        |
+formal release/reconciliation when repository policy requires it
+        |
+HOTFIX_COMPLETE | HOTFIX_BLOCKED
+```
+
+A temporary mitigation must create a distinct permanent-fix Issue before it can become `HOTFIX_READY`; production stabilization never masquerades as structural resolution.
+
+Qualification surfaces consume repository-owned CI/release policy such as `.coferlandia/ci/profile.json` where applicable. LOCAL and GITHUB_NATIVE are alternatives, not fallback paths.
 
 ## Typical orchestrated software-delivery flow
 
@@ -89,7 +127,7 @@ Coding Agent -> Independent Review -> Fixes
 Holistic Review -> Pull Request -> Explicit Integration
 ```
 
-The workflows are modular. The Project Manager, Architect, development roles, Archivist, Orchestrator, Chat prompts, CI strategies, and release publisher can be invoked independently when the task requires only one responsibility.
+The workflows are modular. The Project Manager, Architect, development roles, Archivist, Orchestrator, Chat prompts, CI/release strategies, hotfix controller, and release publisher can be invoked independently when the task requires only one responsibility.
 
 ## Documentation map
 
@@ -119,7 +157,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.7.3 — 2026-09-11**
+**v2.8.0 — 2026-09-11**
+
+| Changed skill | Version | Main change |
+|---|---:|---|
+| local-release | 1.0.0 | Adds the LOCAL aggregate release surface: candidate/work-surface initialization, manifest currentization, aggregate review, exact-candidate qualification, `READY_FOR_RELEASE`, repository-approved integration, publisher composition, explicit repair/requalification states, and no GitHub-native Qualification fallback or deployment ownership. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
