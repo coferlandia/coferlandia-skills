@@ -37,6 +37,24 @@ class DeliveryContractTests(unittest.TestCase):
             "Review Important: 0",
         ):
             self.assertIn(field, ready_release)
+        hotfix = (Path(__file__).parent / "HOTFIX.md").read_text(encoding="utf-8")
+        for field in (
+            "Primary issue:",
+            "Resolution strategy: PERMANENT | TEMPORARY_MITIGATION",
+            "Permanent fix issue:",
+            "Target ref:",
+            "Candidate SHA:",
+            "READY_FOR_CI evidence:",
+            "Reason temporary:",
+            "Temporary surfaces:",
+            "Removal criteria:",
+            "Qualification evidence:",
+            "Release:",
+        ):
+            self.assertIn(field, hotfix)
+        self.assertIn("HOTFIX_READY", hotfix)
+        self.assertIn("HOTFIX_BLOCKED", hotfix)
+        self.assertIn("distinct open follow-up work item", hotfix)
 
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
@@ -58,7 +76,7 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertEqual(len(fp), 64)
         generic_controller_text = "\n".join(
             (ROOT / "prompts" / f"{name}.md").read_text(encoding="utf-8")
-            for name in ("chat-coder", "ci", "merge", "chat-release")
+            for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix")
         ) + (ROOT / "skills" / "engineering" / "local-ci" / "SKILL.md").read_text(encoding="utf-8")
         for project_specific in ("scripts/validate-all.sh", ".github/workflows/fast-ci.yml", "docs/development/hotfix-lane.md"):
             self.assertNotIn(project_specific, generic_controller_text)
