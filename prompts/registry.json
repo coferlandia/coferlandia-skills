@@ -24,6 +24,12 @@
       "path": "prompts/chat-release.md",
       "stage": "release",
       "aliases": ["chat release", "chat-release"]
+    },
+    {
+      "id": "hotfix",
+      "path": "prompts/hotfix.md",
+      "stage": "hotfix",
+      "aliases": ["hotfix"]
     }
   ],
   "external_aliases": [
