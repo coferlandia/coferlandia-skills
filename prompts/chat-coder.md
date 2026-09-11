@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.2.1"
+version: "1.3.0"
 stage: development
 status: active
 ---
@@ -34,14 +34,29 @@ Before changing code, read current repository instructions and the work contract
 
 If the requested work is already implemented/merged, verify that fact and report it instead of recreating work.
 
+## Delivery context
+
+The default delivery context is ordinary repository development. Chat Coder must never infer an exceptional lane from bug severity, urgency, labels, incident wording, branch names, or a production-looking failure.
+
+An explicit controlling invocation may delegate a repository-defined delivery context, such as an emergency remediation context, only when all of the following are true:
+
+- the upstream controller was explicitly invoked and owns authority to request that context;
+- durable repository/GitHub evidence identifies the work item and requested context;
+- current repository policy explicitly supports that context and resolves its authoritative development base/target/branch rules;
+- the delegated context does not weaken Development requirements, ownership, TDD, tests, environment/configuration analysis, review, or `READY_FOR_CI` identity.
+
+When those conditions hold, resolve the authoritative base/target from repository policy for the delegated context instead of substituting the repository's ordinary development base. The exceptional context may select a different approved delivery route; it is **not** permission to invent one, bypass safeguards, reduce required development validation, merge, publish, or close work.
+
+If the delegated context is missing durable authority, unsupported by current repository policy, ambiguous, or contradicted by current PR/branch state, stop with a development-context blocker. Do not silently fall back to ordinary development because doing so could send an emergency candidate to the wrong integration target.
+
 ## Entry and ownership
 
-1. Resolve repository, Issue/work contract, authenticated GitHub user and current authoritative base branch.
+1. Resolve repository, Issue/work contract, authenticated GitHub user, any explicitly delegated delivery context, and the current authoritative base/target under repository policy.
 2. Read current Issue ownership/state.
 3. If the Issue has no assignees, the first state-changing action for the work item MUST assign it to the authenticated GitHub user. Re-read the Issue and verify that assignment succeeded before continuing.
 4. If the authenticated GitHub user is already an assignee, continue without changing ownership.
 5. If the Issue has one or more assignees and the authenticated GitHub user is not among them, preserve the existing ownership and stop, reporting an ownership blocker.
-6. Inspect current branch/PR state before creating anything. Reuse the work branch/PR only when it clearly belongs to the same work item and current candidate.
+6. Inspect current branch/PR state before creating anything. Reuse the work branch/PR only when it clearly belongs to the same work item, delivery context, target and current candidate.
 7. Keep implementation in one non-default branch and one Draft PR unless repository policy explicitly requires another approved structure.
 
 ## Study before modification
@@ -146,7 +161,7 @@ Review Important: 0
 Next stage: Qualification
 ```
 
-Immediately before writing it, re-read the PR and prove `Candidate SHA == current PR head SHA`. The handoff is development evidence, not merge authority. Any later head change makes it stale.
+Immediately before writing it, re-read the PR and prove `Candidate SHA == current PR head SHA`. Re-read the PR target and ensure it still matches the repository-authorized target for the active delivery context. The handoff is development evidence, not merge authority. Any later head change makes it stale; a target/context mismatch blocks the handoff until reconciled.
 
 ## Terminal report
 
@@ -156,6 +171,7 @@ Return:
 Development workflow = READY_FOR_CI
 Issue = <identity>
 Assignee = <authenticated GitHub user>
+Delivery context = STANDARD | <explicit repository-approved context>
 PR = <number> / Draft
 Branch = <branch>
 Candidate SHA = <sha>
@@ -171,4 +187,4 @@ Next owner = explicitly selected Qualification strategy
 
 When `Environment change = YES`, the terminal report must make the operational consequence visible without requiring the user to inspect the PR comment. Do not use ambiguous wording such as "may require" when the candidate-bound analysis can classify the change.
 
-Do not wait for final CI and do not continue into another controller unless the user's invocation explicitly composed that next stage.
+Do not wait for final CI and do not continue into another controller unless the user's invocation explicitly composed that next stage or a previously explicit higher-level controller owns the continuation and delegated this Development stage under its durable contract.
