@@ -159,6 +159,10 @@ AGENTS.md        Entry point for agents
 
 **v2.8.0 — 2026-09-11**
 
+| Changed skill | Version | Main change |
+|---|---:|---|
+| local-release | 1.0.0 | Adds the LOCAL aggregate release surface: candidate/work-surface initialization, manifest currentization, aggregate review, exact-candidate qualification, `READY_FOR_RELEASE`, repository-approved integration, publisher composition, explicit repair/requalification states, and no GitHub-native Qualification fallback or deployment ownership. |
+
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
 
