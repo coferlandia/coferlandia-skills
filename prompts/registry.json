@@ -18,10 +18,17 @@
       "path": "prompts/merge.md",
       "stage": "integration",
       "aliases": ["merge"]
+    },
+    {
+      "id": "chat-release",
+      "path": "prompts/chat-release.md",
+      "stage": "release",
+      "aliases": ["chat release", "chat-release"]
     }
   ],
   "external_aliases": [
-    {"alias": "local ci", "kind": "skill", "target": "local-ci"}
+    {"alias": "local ci", "kind": "skill", "target": "local-ci"},
+    {"alias": "local release", "kind": "skill", "target": "local-release"}
   ],
   "composition": {
     "separator": "+",
