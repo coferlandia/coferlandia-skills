@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REQUIRED = {"name", "description", "version", "stage", "status"}
-STAGES = {"development", "qualification", "integration", "release"}
+STAGES = {"development", "qualification", "integration", "release", "hotfix"}
 STATUSES = {"active", "deprecated"}
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
