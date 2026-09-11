@@ -100,7 +100,7 @@
 
 - `chat-coder` 1.0.2 -> 1.0.3 requires Development to identify and synchronize repository-owned versioned derived artifacts whenever their authoritative inputs change, using the repository's own generation or synchronization mechanism rather than hand-editing generated output.
 - The generic rule covers generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs without hardcoding any consumer repository or technology.
-- When a repository defines a deterministic freshness, idempotence, or diff check for generated artifacts, that check must pass without unexpected diff after the expected outputs are part of the candidate; missing, stale, or manually approximated required artifacts block the handoff.
+- When a repository defines a deterministic freshness, idempotence, or diff check for generated artifacts, that check must pass without unexpected diff before `READY_FOR_CI`; missing, stale, or manually approximated required artifacts block the handoff.
 
 ### Repository and protocol
 
@@ -223,7 +223,7 @@
 ### Plugin and packaging
 
 - Bumps the installable plugin from v2.4.0 to v2.5.0 for the additive `coferlandia-release-publisher` public skill.
-- Refreshes plugin discovery metadata and the human skill guide to include deterministic release publication and machine-readable release resolution.
+- Refreshes plugin and marketplace descriptions and keywords to include agent-operable configuration and DevOps workflows.
 - Keeps transient release plans/provenance under `.agent/` and therefore excluded from plugin packaging; optional provenance becomes a GitHub Release asset rather than a required file in the target commit.
 
 ### Migration or compatibility
