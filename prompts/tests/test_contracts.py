@@ -113,6 +113,18 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("preserve the existing ownership and stop", text)
         self.assertIn("Assignee = <authenticated GitHub user>", text)
 
+    def test_chat_coder_accepts_only_explicit_repository_approved_delivery_context(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("The default delivery context is ordinary repository development", text)
+        self.assertIn("must never infer an exceptional lane", text)
+        self.assertIn("An explicit controlling invocation may delegate", text)
+        self.assertIn("current repository policy explicitly supports that context", text)
+        self.assertIn("does not weaken Development requirements", text)
+        self.assertIn("development-context blocker", text)
+        self.assertIn("Do not silently fall back to ordinary development", text)
+        self.assertIn("target/context mismatch blocks the handoff", text)
+        self.assertIn("Delivery context = STANDARD | <explicit repository-approved context>", text)
+
     def test_chat_coder_reconciles_existing_tests_before_adding_coverage(self):
         text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
         self.assertIn("inspect the existing tests that cover the affected surface before adding or modifying tests", text)
