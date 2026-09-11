@@ -14,7 +14,7 @@ metadata:
   version: "1.0.0"
   category: engineering
   status: active
-  tested: "2026-09-11 - LOCAL release ownership, READY_FOR_RELEASE, no GitHub-native fallback, exact-candidate identity, repair boundary, and publisher composition covered by contract tests."
+  tested: "2026-09-11 - LOCAL release ownership, READY_FOR_RELEASE, no GitHub-native fallback, exact-candidate identity, review/profile authority, repair boundary, and publisher composition covered by contract tests."
 ---
 
 ## Context
@@ -50,17 +50,18 @@ Before qualification:
 2. Resolve the exact release source ref, target ref and current release candidate SHA.
 3. Resolve/rebuild the repository-defined release manifest and prove it belongs to that candidate/base identity.
 4. Prove any repository-required reconciliation precondition is satisfied.
-5. Load and validate/fingerprint `.coferlandia/ci/profile.json` when that profile is the repository's qualification authority.
-6. Resolve the repository-declared LOCAL release qualification commands and required local services/environment.
-7. Confirm there is no conflicting release authority or stale candidate state.
+5. Require `.coferlandia/ci/profile.json`, validate it against the central profile contract, and compute the current profile fingerprint.
+6. Resolve the profile/repository-declared LOCAL release qualification commands and required local services/environment.
+7. Resolve the current required release review state and require `Review Critical: 0` and `Review Important: 0` before qualification authority can be emitted.
+8. Confirm there is no conflicting release authority or stale candidate state.
 
-Missing, ambiguous or stale release identity blocks qualification.
+Missing, ambiguous or stale release identity, profile authority, review state, or local qualification contract blocks qualification.
 
 ## LOCAL qualification
 
 1. Keep the exact release candidate unchanged while qualification runs.
 2. Execute only repository-declared local release/FULL qualification commands, in declared order and working directory.
-3. Record exact candidate SHA, qualified target/base SHA, profile fingerprint, release manifest identity and command/result evidence.
+3. Record exact candidate SHA, qualified target/base SHA, profile fingerprint, release manifest identity, review state and command/result evidence.
 4. Current failures are RED. Missing tools/services are blocked, not GREEN.
 5. A material product correction is not made directly inside the release candidate unless repository policy explicitly defines that as its normal development path.
 6. When correction must return through ordinary development, report:
@@ -73,11 +74,11 @@ Required repair path: <repository-defined development path>
 ```
 
 7. A corrected source creates a new release candidate and invalidates old local release evidence; restart qualification from the beginning.
-8. Re-read source/target/profile/manifest/review identity after all local commands pass.
+8. Re-read source/target/profile/manifest/review identity after all local commands pass and require review state to remain Critical = 0 / Important = 0.
 
 ## READY_FOR_RELEASE
 
-Only after the exact release candidate is fully GREEN under the repository's LOCAL release contract, create/update durable evidence matching `_protocol/delivery/READY_FOR_RELEASE.md`:
+Only after the exact release candidate is fully GREEN under the repository's LOCAL release contract and current required review state remains clean, create/update durable evidence matching `_protocol/delivery/READY_FOR_RELEASE.md`:
 
 ```text
 State: READY_FOR_RELEASE
@@ -101,7 +102,7 @@ Any later source SHA, target/base, effective candidate, profile, manifest or req
 
 After `READY_FOR_RELEASE`, integrate only through the repository-approved release mechanism and re-read identity immediately before the consequential operation. Preserve repository-required history/genealogy and safeguards. Never force-push or weaken policy to complete a release.
 
-If the candidate/base/profile/manifest changed before integration, stop and return `RELEASE_REQUALIFICATION_REQUIRED` rather than integrating stale evidence.
+If the candidate/base/profile/manifest/review state changed before integration, stop and return `RELEASE_REQUALIFICATION_REQUIRED` rather than integrating stale evidence.
 
 After integration, resolve the exact resulting target commit and verify repository-required release closeout/reconciliation that belongs to this release lifecycle.
 
@@ -113,9 +114,11 @@ If publication requires an explicit semantic-version decision not already establ
 
 ## Failure boundaries
 
+- Missing/invalid CI profile or stale profile fingerprint: `LOCAL_RELEASE_BLOCKED` or `RELEASE_REQUALIFICATION_REQUIRED` depending on when drift occurred.
+- Missing/unclean required review state: `LOCAL_RELEASE_BLOCKED` before qualification or `RELEASE_REQUALIFICATION_REQUIRED` after evidence was emitted.
 - Missing LOCAL runtime/service: `LOCAL_RELEASE_BLOCKED`; never fall back to `chat-release`.
 - Product/test failure: `RELEASE_REPAIR_REQUIRED`; return through repository-defined development/correction flow.
-- Candidate/base/profile/manifest drift: `RELEASE_REQUALIFICATION_REQUIRED`.
+- Candidate/base/profile/manifest/review drift: `RELEASE_REQUALIFICATION_REQUIRED`.
 - Integration policy unavailable or conflicting: `LOCAL_RELEASE_BLOCKED`.
 - Formal publication failure: preserve the exact integrated commit and use publisher recovery/verification semantics; do not create a synthetic replacement commit.
 - Deployment request: outside this skill; this skill must not deploy.
@@ -131,6 +134,8 @@ Release candidate SHA = <sha>
 Qualified base SHA = <sha>
 CI profile fingerprint = <sha256>
 Release manifest = <durable reference>
+Review Critical = 0
+Review Important = 0
 Qualification evidence = <local commands/results>
 Integrated target SHA = <sha or PENDING>
 Formal release = <release identity or NONE/PENDING per repository policy>
