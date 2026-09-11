@@ -78,7 +78,7 @@ class ReleasePromptContractTests(unittest.TestCase):
         self.assertIn("Build or currentize the release manifest", text)
         self.assertIn("bind it to the exact source candidate and target/base identity", text)
         self.assertIn("source changes while a release PR/manifest already exists", text)
-        self.assertIn("previous qualification evidence stale", text)
+        self.assertIn("mark any previous review/qualification evidence stale", text)
         self.assertIn("RELEASE_INITIALIZATION_BLOCKED", text)
 
 
