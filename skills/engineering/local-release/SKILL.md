@@ -1,7 +1,7 @@
 ---
 name: local-release
 description: >
-  Use when one exact repository release candidate must be qualified and promoted through the LOCAL
+  Use when one exact repository release candidate must be reviewed, qualified, and promoted through the LOCAL
   execution surface. Invoking this skill selects LOCAL release qualification, emits READY_FOR_RELEASE,
   performs only repository-approved release integration/publication, and never falls back to chat-release.
 license: Apache-2.0
@@ -14,15 +14,16 @@ metadata:
   version: "1.0.0"
   category: engineering
   status: active
-  tested: "2026-09-11 - LOCAL release ownership, READY_FOR_RELEASE, no GitHub-native fallback, exact-candidate identity, review/profile authority, repair boundary, and publisher composition covered by contract tests."
+  tested: "2026-09-11 - LOCAL release ownership, aggregate review, READY_FOR_RELEASE, no GitHub-native fallback, exact-candidate identity, review/profile authority, repair boundary, and publisher composition covered by contract tests."
 ---
 
 ## Context
 
-`local-release` is the Agent Skills/local surface for qualifying and promoting one exact release candidate:
+`local-release` is the Agent Skills/local surface for reviewing, qualifying, and promoting one exact release candidate:
 
 ```text
 exact release candidate
+-> aggregate release review
 -> LOCAL release qualification
 -> READY_FOR_RELEASE
 -> repository-approved release integration
@@ -42,17 +43,38 @@ Activate when the user explicitly selects local release / `local-release`, or wh
 
 Do not activate merely because development reached `READY_FOR_MERGE`, because a release PR exists, or because a GitHub-native `chat-release` attempt is unavailable. Do not use this skill as an automatic fallback from `chat-release`.
 
+## Candidate reconstruction
+
+Resolve the exact current release source ref, target ref, source/candidate SHA, target/base SHA, repository-defined release manifest, required reconciliation/ancestry/freeze state, and release integration/publication policy from current repository evidence. Rebuild/currentize the manifest when repository policy assigns that responsibility to the LOCAL release surface.
+
+Any source/base/manifest identity change creates a new release candidate for qualification purposes and invalidates older review/qualification evidence.
+
+## Aggregate release review
+
+Before LOCAL qualification, perform or consume the repository-approved aggregate review of the complete release delta and current manifest. Review the combined candidate rather than trusting previously integrated work items independently.
+
+Cover relevant cross-change interactions, integration/history correctness, public/API/data-contract compatibility, migrations, environment/configuration effects, manifest completeness, operational impact, and repository-declared release risks.
+
+The exact-candidate release review must end with:
+
+```text
+Review Critical: 0
+Review Important: 0
+```
+
+Release-owned metadata/manifest findings may be corrected locally followed by a fresh aggregate review. Product/development findings return `RELEASE_REPAIR_REQUIRED`; do not patch product code inside `local-release` unless repository policy explicitly defines that as the normal development path. A source/base/manifest change invalidates the prior review.
+
 ## Preconditions
 
 Before qualification:
 
 1. Read current repository instructions and authoritative release policy.
-2. Resolve the exact release source ref, target ref and current release candidate SHA.
-3. Resolve/rebuild the repository-defined release manifest and prove it belongs to that candidate/base identity.
-4. Prove any repository-required reconciliation precondition is satisfied.
+2. Prove the exact release source ref, target ref and current release candidate SHA reconstructed above are current.
+3. Prove the repository-defined release manifest belongs to that candidate/base identity.
+4. Prove any repository-required reconciliation/ancestry/freeze precondition is satisfied.
 5. Require `.coferlandia/ci/profile.json`, validate it against the central profile contract, and compute the current profile fingerprint.
 6. Resolve the profile/repository-declared LOCAL release qualification commands and required local services/environment.
-7. Resolve the current required release review state and require `Review Critical: 0` and `Review Important: 0` before qualification authority can be emitted.
+7. Require the current aggregate release review to remain `Review Critical: 0` and `Review Important: 0` for the exact candidate/base/manifest.
 8. Confirm there is no conflicting release authority or stale candidate state.
 
 Missing, ambiguous or stale release identity, profile authority, review state, or local qualification contract blocks qualification.
@@ -73,12 +95,12 @@ Candidate SHA: <stale release candidate>
 Required repair path: <repository-defined development path>
 ```
 
-7. A corrected source creates a new release candidate and invalidates old local release evidence; restart qualification from the beginning.
+7. A corrected source creates a new release candidate and invalidates old local release review/qualification evidence; restart from candidate reconstruction and aggregate review.
 8. Re-read source/target/profile/manifest/review identity after all local commands pass and require review state to remain Critical = 0 / Important = 0.
 
 ## READY_FOR_RELEASE
 
-Only after the exact release candidate is fully GREEN under the repository's LOCAL release contract and current required review state remains clean, create/update durable evidence matching `_protocol/delivery/READY_FOR_RELEASE.md`:
+Only after the exact release candidate is fully GREEN under the repository's LOCAL release contract and current aggregate release review remains clean, create/update durable evidence matching `_protocol/delivery/READY_FOR_RELEASE.md`:
 
 ```text
 State: READY_FOR_RELEASE
@@ -115,9 +137,9 @@ If publication requires an explicit semantic-version decision not already establ
 ## Failure boundaries
 
 - Missing/invalid CI profile or stale profile fingerprint: `LOCAL_RELEASE_BLOCKED` or `RELEASE_REQUALIFICATION_REQUIRED` depending on when drift occurred.
-- Missing/unclean required review state: `LOCAL_RELEASE_BLOCKED` before qualification or `RELEASE_REQUALIFICATION_REQUIRED` after evidence was emitted.
+- Missing/unclean aggregate review state: `LOCAL_RELEASE_BLOCKED` before qualification or `RELEASE_REQUALIFICATION_REQUIRED` after evidence was emitted.
 - Missing LOCAL runtime/service: `LOCAL_RELEASE_BLOCKED`; never fall back to `chat-release`.
-- Product/test failure: `RELEASE_REPAIR_REQUIRED`; return through repository-defined development/correction flow.
+- Product/test/review defect: `RELEASE_REPAIR_REQUIRED`; return through repository-defined development/correction flow.
 - Candidate/base/profile/manifest/review drift: `RELEASE_REQUALIFICATION_REQUIRED`.
 - Integration policy unavailable or conflicting: `LOCAL_RELEASE_BLOCKED`.
 - Formal publication failure: preserve the exact integrated commit and use publisher recovery/verification semantics; do not create a synthetic replacement commit.
