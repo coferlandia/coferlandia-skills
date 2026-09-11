@@ -13,14 +13,17 @@ class PromptContractTests(unittest.TestCase):
         registry = json.loads((PROMPTS / "registry.json").read_text(encoding="utf-8"))
         self.assertEqual(registry["schema_version"], 1)
         ids = [item["id"] for item in registry["prompts"]]
-        self.assertEqual(ids, ["chat-coder", "ci", "merge"])
+        self.assertEqual(ids, ["chat-coder", "ci", "merge", "chat-release"])
         aliases = {alias: item["id"] for item in registry["prompts"] for alias in item["aliases"]}
         self.assertEqual(aliases["chat coder"], "chat-coder")
         self.assertEqual(aliases["gh ci"], "ci")
         self.assertEqual(aliases["merge"], "merge")
+        self.assertEqual(aliases["chat release"], "chat-release")
         external = {item["alias"]: item for item in registry["external_aliases"]}
         self.assertEqual(external["local ci"]["kind"], "skill")
         self.assertEqual(external["local ci"]["target"], "local-ci")
+        self.assertEqual(external["local release"]["kind"], "skill")
+        self.assertEqual(external["local release"]["target"], "local-release")
         self.assertEqual(registry["composition"]["order"], "left-to-right")
         self.assertFalse(registry["composition"]["implicit_stages"])
         self.assertFalse(registry["composition"]["automatic_fallback"])
@@ -45,6 +48,12 @@ class PromptContractTests(unittest.TestCase):
         self.assertEqual(local.returncode, 0, local.stderr or local.stdout)
         payload = json.loads(local.stdout)
         self.assertEqual(payload["sequence"][1], {"alias": "local ci", "kind": "skill", "target": "local-ci"})
+        release = subprocess.run(
+            [sys.executable, str(VALIDATOR), "resolve", "chat release", "--root", str(ROOT), "--json"],
+            text=True, capture_output=True
+        )
+        self.assertEqual(release.returncode, 0, release.stderr or release.stdout)
+        self.assertEqual(json.loads(release.stdout)["sequence"][0]["target"], "chat-release")
 
     def test_prompts_are_generic_and_separated(self):
         banned = [
@@ -52,7 +61,7 @@ class PromptContractTests(unittest.TestCase):
             "coferlandia-ci, docker", "projects/1", "projects/2"
         ]
         texts = {}
-        for name in ("chat-coder", "ci", "merge"):
+        for name in ("chat-coder", "ci", "merge", "chat-release"):
             text = (PROMPTS / f"{name}.md").read_text(encoding="utf-8")
             texts[name] = text
             for token in banned:
@@ -63,6 +72,8 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("must not merge", texts["ci"])
         self.assertIn("REQUALIFICATION_REQUIRED", texts["merge"])
         self.assertIn("must not execute CI", texts["merge"])
+        self.assertIn("READY_FOR_RELEASE", texts["chat-release"])
+        self.assertIn("coferlandia-release-publisher", texts["chat-release"])
 
     def test_ci_is_explicit_chat_surface_and_never_inferred_from_ready_for_ci(self):
         text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
@@ -156,7 +167,7 @@ class PromptContractTests(unittest.TestCase):
 
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
-        full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge"))
+        full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge", "chat-release"))
         self.assertLess(len(bootstrap), full // 3)
 
 if __name__ == "__main__":
