@@ -1,6 +1,6 @@
 ---
 name: chat-release
-description: "Generic Chat GITHUB_NATIVE release controller that qualifies one exact release candidate, integrates it through repository policy, and publishes the resulting exact commit through coferlandia-release-publisher."
+description: "Generic Chat GITHUB_NATIVE release controller that initializes or reuses one release candidate, qualifies it, integrates it through repository policy, and publishes the resulting exact commit through coferlandia-release-publisher."
 version: "1.0.0"
 stage: release
 status: active
@@ -10,11 +10,14 @@ status: active
 
 ## Responsibility
 
-Own one explicit GITHUB_NATIVE release lifecycle for one exact release candidate.
+Own one explicit GITHUB_NATIVE release lifecycle from repository-approved source/target state through one exact published release candidate.
 
 ```text
-release candidate
--> reconstruct source/target/release manifest
+explicit chat-release request
+-> resolve repository release policy/source/target
+-> initialize or reuse release work surface
+-> build/currentize release manifest
+-> bind exact release candidate/base
 -> validate repository CI profile
 -> qualify exact candidate through GitHub-native gates
 -> READY_FOR_RELEASE (strategy = GITHUB_NATIVE)
@@ -36,49 +39,66 @@ Invoking `chat-release` selects release Qualification strategy `GITHUB_NATIVE`. 
 
 A release is not inferred merely because development work is merged, a branch exists, CI is green, or a commit has not yet been tagged.
 
-Unless the user explicitly requests a dry-run/planning-only release, an explicit `chat-release` invocation authorizes this controller's release-side effects: repository-approved release integration plus publication through `coferlandia-release-publisher`. It never grants deployment authority.
+Unless the user explicitly requests a dry-run/planning-only release, an explicit `chat-release` invocation authorizes this controller's release-side effects: initialization/reuse of the repository-approved release work surface, repository-approved release integration, and publication through `coferlandia-release-publisher`. It never grants deployment authority.
 
-## Repository authority and release candidate
+## Repository authority
 
 Repository policy owns the actual release topology. Never hardcode branch names, merge method, workflow/check names, version baseline, deployment target, or test commands.
 
 Reconstruct authoritative state from current repository/GitHub evidence rather than chat history. Resolve at least:
 
-- repository and current release work surface, normally an existing release PR when GitHub integration is used;
-- source ref and target ref;
-- exact source/head Release candidate SHA;
+- repository and repository-defined release source/target refs;
 - authoritative target/base SHA;
-- repository-approved release integration mechanism;
+- repository-approved release work-surface/integration mechanism, including whether GitHub PR integration is required;
 - current `.coferlandia/ci/profile.json` and fingerprint;
-- current release manifest identifying the work included in the candidate;
-- required review state;
+- repository-defined release manifest storage/format and included-work discovery rules;
+- required review policy;
+- repository-declared reconciliation, ancestry, freeze or active-release preconditions;
 - current release publication policy, previous published release, and version lineage when relevant.
 
-The release manifest may be a repository-defined managed comment, file, PR body section, or other durable source. It must be current and attributable to the exact release candidate. Do not invent a generic manifest storage location.
+If source/target identity, qualification policy, integration policy, manifest contract, or candidate-initialization rules are ambiguous, stop fail-closed rather than guessing.
 
-If source/target identity, manifest, qualification policy, or integration policy is ambiguous, stop fail-closed rather than guessing.
+## Release candidate initialization
 
-## Entry contract
+Before Qualification, establish exactly one current release candidate through repository policy.
+
+1. Re-read source ref and target ref and prove all repository-declared pre-release ancestry/reconciliation/freeze conditions are satisfied.
+2. Resolve the exact current source SHA and target/base SHA.
+3. If repository policy uses a GitHub pull request as the release work surface:
+   - search for an existing open release PR matching the exact source/target and repository release identity;
+   - reuse it only when it unambiguously represents the same active release candidate;
+   - when no matching PR exists and policy permits controller creation, create the repository-approved release PR (Draft when policy requires a qualification phase before review-ready state);
+   - if a conflicting/ambiguous active release PR exists, stop rather than creating a competing release.
+4. If repository policy uses another work surface, initialize/reuse only that declared mechanism; do not invent a GitHub PR requirement.
+5. Build or currentize the release manifest from authoritative repository/GitHub delta evidence. At minimum, include the work identities required by repository policy and enough release-impact evidence to support later review/version classification. When available/relevant this commonly includes integrated PRs/work items, migrations, environment/configuration changes, and other release-impacting contracts, but the generic controller must not invent project-specific fields.
+6. Store/update the manifest only in the repository-defined durable location (managed comment, PR body section, file, or equivalent) and bind it to the exact source candidate and target/base identity.
+7. Re-read the initialized work surface. The release candidate SHA is the exact current source/head candidate represented by that work surface, not a value remembered from earlier chat state.
+
+If source changes while a release PR/manifest already exists, currentize the work surface/manifest, mark any previous qualification evidence stale, and treat the new exact source SHA as a new release candidate. Do not silently reuse qualification from the older candidate.
+
+Initialization is release metadata/control-plane work; it does not authorize product-code corrections in the release controller.
+
+## Entry contract after initialization
 
 Require all of:
 
 1. one current exact release candidate with authoritative source and target refs;
-2. a current durable release manifest/reference for that candidate;
+2. a current durable release manifest/reference bound to that candidate/base identity;
 3. a valid `.coferlandia/ci/profile.json` with GitHub qualification facts;
 4. current profile fingerprint;
 5. current required review state with Critical = 0 and Important = 0;
 6. repository policy that permits release integration from the resolved source into the resolved target;
-7. no repository-declared reconciliation, ancestry, freeze, or release-state blocker.
+7. no repository-declared reconciliation, ancestry, freeze, active-release, or release-state blocker.
 
 A repository may impose stronger release preconditions. Consume them without copying project-specific facts into this generic prompt.
 
 ## GitHub-native release Qualification
 
-1. Re-read source ref, target ref, exact Release candidate SHA, target/base SHA, release manifest, review state and CI profile fingerprint.
+1. Re-read source ref, target ref, exact release candidate SHA, target/base SHA, release manifest, work surface, review state and CI profile fingerprint.
 2. Determine the profile-declared GitHub submission mode. Trigger only the declared operation when explicit dispatch is required; otherwise observe existing repository events/checks.
 3. Bind all qualification evidence to the exact candidate/effective candidate required by repository identity policy.
 4. Evaluate every profile-required gate against its allowed terminal conclusions. Queued, waiting, requested, pending, in-progress, cancelled, stale, superseded, old-SHA or old-profile evidence is not GREEN.
-5. Re-read candidate/base/profile/manifest after GitHub gates settle. Any relevant identity drift invalidates qualification.
+5. Re-read candidate/base/profile/manifest/work-surface identity after GitHub gates settle. Any relevant identity drift invalidates qualification.
 
 The repository decides, through its own workflows and routing policy, what constitutes release-grade validation. `chat-release` never substitutes a development-only result for the repository's release gate.
 
@@ -90,7 +110,7 @@ For RED qualification, inspect the exact current run/job/check and classify the 
 - **Release-controller/metadata defect:** correct only release-owned metadata or evidence that is explicitly within this controller's responsibility, then requalify.
 - **Product/development defect:** return `RELEASE_REPAIR_REQUIRED`. Do not edit product code inside this release controller and do not implicitly invoke `chat-coder`, debugger, Local CI, or another development stage. The repository's normal development flow creates a corrected candidate; re-enter `chat-release` afterward.
 
-Any corrected/new source SHA makes previous release Qualification and `READY_FOR_RELEASE` evidence stale.
+Any corrected/new source SHA makes previous release Qualification and `READY_FOR_RELEASE` evidence stale. On reentry, currentize the release PR/work surface and manifest before starting Qualification again.
 
 ## Durable READY_FOR_RELEASE
 
@@ -123,7 +143,7 @@ Next stage: Release integration
 
 ## Release integration
 
-Immediately before integration, re-read source/head, target/base, manifest, profile fingerprint, review state, mergeability and all repository-declared release blockers.
+Immediately before integration, re-read source/head, target/base, manifest, work surface, profile fingerprint, review state, mergeability and all repository-declared release blockers.
 
 If any release identity or required gate authority changed, invalidate `READY_FOR_RELEASE` and return `REQUALIFICATION_REQUIRED` rather than integrating stale evidence.
 
@@ -150,6 +170,7 @@ Reentry always reconstructs current state. If integration already completed but 
 Terminal/resumable states include:
 
 ```text
+RELEASE_INITIALIZATION_BLOCKED
 RELEASE_QUALIFICATION_PENDING
 RELEASE_REPAIR_REQUIRED
 REQUALIFICATION_REQUIRED
