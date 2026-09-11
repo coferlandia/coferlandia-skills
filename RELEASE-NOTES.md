@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## v2.7.3 (2026-09-11)
+
+### Chat prompts
+
+- `chat-coder` 1.2.0 -> 1.2.1 makes affected pre-existing tests part of every behavior/contract change: Development must review them before adding coverage, preserve still-valid behavior, update intentionally changed expectations, and remove tests only when their behavior was intentionally removed or superseded.
+- Requires consolidation/removal of materially duplicate or overlapping tests that add no independent coverage or diagnostic value, prefers updating/extending/parameterizing existing coverage when appropriate, and cleans test-only fixtures/helpers/mocks/snapshots/data made obsolete by the change.
+- Explicitly states that test-count growth is not a goal: the final suite should be the smallest clear set that adequately protects current intended behavior, while tests/assertions may never be weakened or removed merely to make validation pass.
+- Adds regression coverage protecting the test-suite reconciliation and hygiene contract.
+
+### Plugin and packaging
+
+- Bumps the shipped repository/plugin from v2.7.2 to v2.7.3 as a compatible Chat Coder correction.
+- No public Agent Skill versions change in this release.
+
+### Migration or compatibility
+
+- Existing consumers remain compatible. Repositories vendoring the public prompt family should update `chat-coder.md` so behavior changes reconcile existing coverage instead of only accumulating new tests.
+- Qualification strategy, `READY_FOR_CI`, `READY_FOR_MERGE`, and merge semantics are unchanged.
+
 ## v2.7.2 (2026-09-10)
 
 ### Skills
@@ -245,7 +264,7 @@
 ### Repository and protocol
 
 - Added configuration operations as a first-class skill family while preserving the boundary between repository preparation and day-to-day operation.
-- Added permanent Linux and Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
+- Added permanent Linux/Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
 - Updated the canonical skill index and human guide with the ownership, composition, and explicit-invocation rules for the new skills.
 - Kept deterministic retrieval non-authoritative: agents must consult the complete generated handbook before concluding that a requested configuration outcome is unsupported.
 
