@@ -119,11 +119,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.7.2 — 2026-09-10**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| local-ci | 1.1.0 | Makes the Agent Skill invocation surface itself select LOCAL Qualification, keeps `READY_FOR_CI` from implicitly starting Qualification, and preserves fail-closed local blocking with no GitHub-native fallback. |
+**v2.7.3 — 2026-09-11**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

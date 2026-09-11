@@ -90,6 +90,21 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("preserve the existing ownership and stop", text)
         self.assertIn("Assignee = <authenticated GitHub user>", text)
 
+    def test_chat_coder_reconciles_existing_tests_before_adding_coverage(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("inspect the existing tests that cover the affected surface before adding or modifying tests", text)
+        self.assertIn("update tests whose approved expected behavior intentionally changed", text)
+        self.assertIn("remove tests only when the behavior or contract they verify was intentionally removed or superseded", text)
+        self.assertIn("materially duplicate or overlapping tests", text)
+        self.assertIn("parameterizing or consolidating existing tests", text)
+        self.assertIn("test-only fixtures, helpers, mocks, snapshots or data", text)
+        self.assertIn("do not leave obsolete tests skipped, disabled, commented out", text)
+        self.assertIn("Test-count growth is not a goal", text)
+        self.assertIn("smallest clear suite", text)
+        self.assertIn("Never remove, weaken, bypass or broaden a test merely to make validation pass", text)
+        self.assertIn("affected pre-existing tests were reviewed", text)
+        self.assertIn("materially duplicate coverage without independent value", text)
+
     def test_chat_coder_ready_for_ci_requires_complete_cheap_validation(self):
         text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
         ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")

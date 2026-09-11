@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.2.0"
+version: "1.2.1"
 stage: development
 status: active
 ---
@@ -54,12 +54,25 @@ If the supplied contract has an unresolved required Architecture Gate, stop befo
 
 For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to the work contract. Run focused validation while iterating. Never invent a canonical command: discover validation from current repository-owned documentation, scripts, CI profile, package metadata, or executable workflows.
 
+For every behavior or contract change, inspect the existing tests that cover the affected surface before adding or modifying tests. Treat the affected test suite as part of the implementation contract:
+
+- preserve tests for behavior that remains valid;
+- update tests whose approved expected behavior intentionally changed;
+- remove tests only when the behavior or contract they verify was intentionally removed or superseded;
+- consolidate or remove materially duplicate or overlapping tests when they provide no meaningful additional coverage or diagnostic value, while preserving distinct boundary cases, regressions, failure modes and contracts;
+- prefer updating, extending, parameterizing or consolidating existing tests when that provides the required coverage without reducing clarity or diagnostic value;
+- remove test-only fixtures, helpers, mocks, snapshots or data that became unreachable or unused because of the change;
+- do not leave obsolete tests skipped, disabled, commented out, or asserting superseded behavior.
+
+Test-count growth is not a goal. Add new tests only for meaningful missing coverage, and leave the smallest clear suite that adequately describes and protects the intended current behavior. Never remove, weaken, bypass or broaden a test merely to make validation pass.
+
 ## Development readiness validation
 
 Focused tests are iteration evidence; they are not sufficient by themselves for `READY_FOR_CI` when the repository defines broader cheap deterministic checks for the changed surface.
 
 Immediately before the terminal development review and handoff, discover and run every applicable cheap deterministic development check owned by the repository on the exact candidate that will be handed off. Before those checks, identify repository-owned derived artifacts that repository-owned instructions, tooling, or policy explicitly declare to be versioned contracts and whose authoritative inputs changed; synchronize those artifacts with the repository-owned generation or synchronization mechanism rather than editing generated output by hand. At minimum:
 
+- for changed behavior, verify that the affected pre-existing tests were reviewed and that the resulting suite contains no known assertions for superseded behavior, materially duplicate coverage without independent value, or test-only artifacts made obsolete by the change;
 - synchronize every applicable repository-owned derived artifact explicitly declared as a versioned contract and affected by changed inputs, such as generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs; when the repository defines a deterministic freshness, idempotence, or diff check for that versioned contract, rerun it and require no unexpected diff after the expected outputs are part of the candidate;
 - do not create, add to Git, or require snapshot freshness for a reproducible diagnostic/report output merely because the repository can generate it; a test inventory, generated test manifest, or equivalent report is a synchronization prerequisite only when repository-owned policy explicitly declares that output to be a versioned contract;
 - for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
@@ -93,7 +106,7 @@ Do not emit `READY_FOR_CI` while an applicable required development check is fai
 
 These checks establish source-candidate development readiness only. They do not replace Qualification against the repository's effective candidate or synthetic merge candidate.
 
-If Chat Coder is resumed after a Qualification failure, first identify the exact failing command/assertion and the validation/effective-candidate SHA that produced it. Correct the implementation when it violates the work contract; update a test or contract only when the test is demonstrably stale relative to the approved behavior. Never weaken, delete, bypass, or broaden an assertion merely to make CI green.
+If Chat Coder is resumed after a Qualification failure, first identify the exact failing command/assertion and the validation/effective-candidate SHA that produced it. Correct the implementation when it violates the work contract; update or remove a test or contract only when it is demonstrably stale or superseded relative to the approved behavior. Never weaken, delete, bypass, or broaden an assertion merely to make CI green.
 
 ## Review
 
