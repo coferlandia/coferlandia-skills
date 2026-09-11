@@ -73,9 +73,11 @@ Do not fabricate reproduction steps, impact, root cause or certainty. Mark unkno
 
 ## Diagnosis and resolution strategy
 
+After establishing the primary Issue and repository-approved emergency target, create/update the durable HOTFIX record with `State: HOTFIX_PLANNED` and `Resolution strategy: UNRESOLVED` while diagnosis is still in progress. `UNRESOLVED` is evidence of incomplete classification, not an executable hotfix strategy.
+
 Study the smallest relevant surface and establish the best-supported root cause or causal hypothesis before choosing the emergency correction. Prefer a permanent correction when it is small, safe, reviewable and validatable within the repository's hotfix budget.
 
-Classify exactly one:
+Before `HOTFIX_READY`, classify exactly one executable strategy:
 
 ```text
 Resolution strategy: PERMANENT
@@ -89,7 +91,7 @@ Resolution strategy: TEMPORARY_MITIGATION
 
 Choose `TEMPORARY_MITIGATION` only when production can be stabilized safely but the permanent correction would materially increase emergency risk, for example because it requires broad refactoring, architectural redesign, destructive/risky migration, cross-system coordination, unresolved research, or a validation surface too large for the approved hotfix lane.
 
-Urgency alone is not justification for an unsafe workaround. If neither a bounded permanent fix nor a bounded temporary mitigation is defensible, write/update the durable contract as `HOTFIX_BLOCKED` with the concrete blocker and stop.
+Urgency alone is not justification for an unsafe workaround. If neither a bounded permanent fix nor a bounded temporary mitigation is defensible, update the durable contract to `HOTFIX_BLOCKED`, preserve `Resolution strategy: UNRESOLVED`, record the concrete blocker, and stop. Never invent a strategy merely to make the record structurally complete.
 
 ## Mandatory permanent follow-up for temporary mitigation
 
@@ -119,9 +121,9 @@ Create/update an idempotent managed record per `_protocol/delivery/HOTFIX.md` us
 <!-- coferlandia-hotfix:v1 -->
 ```
 
-At planning time record the primary Issue, resolution strategy, follow-up debt, repository-approved target and temporary-removal information.
+At planning time record the primary Issue, current strategy (`UNRESOLVED` while diagnosis is incomplete), follow-up debt, repository-approved target and temporary-removal information.
 
-Before emergency qualification, update it to `HOTFIX_READY` only after the repository-approved development controller has produced current durable `READY_FOR_CI` evidence for the exact hotfix PR head. Bind `Candidate SHA` to that exact head.
+Before emergency qualification, update it to `HOTFIX_READY` only after the strategy is resolved to `PERMANENT` or `TEMPORARY_MITIGATION` and the repository-approved development controller has produced current durable `READY_FOR_CI` evidence for the exact hotfix PR head. Bind `Candidate SHA` to that exact head.
 
 Any head change invalidates `HOTFIX_READY` until development validation/review and the hotfix record are refreshed.
 
@@ -173,6 +175,7 @@ Blocked example:
 ```text
 HOTFIX workflow = HOTFIX_BLOCKED
 Primary issue = <identity>
+Resolution strategy = UNRESOLVED | <resolved strategy if blocking occurred later>
 Reason = <concrete safety/policy/evidence blocker>
 Permanent resolution = <existing follow-up or NONE>
 ```
