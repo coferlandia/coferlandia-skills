@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## v2.8.0 (2026-09-11)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| local-release | new | 1.0.0 | Adds the LOCAL aggregate release-candidate surface: exact-candidate qualification, `READY_FOR_RELEASE`, repository-approved integration, publisher composition, explicit repair/requalification states, and no GitHub-native fallback or deployment ownership. |
+
+### Chat prompts
+
+- Adds `chat-release` 1.0.0 as the explicit GITHUB_NATIVE aggregate release controller. It qualifies one exact release candidate, emits `READY_FOR_RELEASE`, integrates through repository policy, and delegates Commit-to-Release publication to `coferlandia-release-publisher`.
+- Adds `hotfix` 1.0.0 as an explicitly invoked emergency-remediation controller supporting either an existing Issue (`hotfix #123`) or a free-form bug report. It creates/reuses the primary Issue, classifies `PERMANENT` versus `TEMPORARY_MITIGATION`, fails closed with `HOTFIX_BLOCKED` when no bounded remedy is safe, and delegates Development/Qualification/Integration/publication to repository-approved owners.
+- For `TEMPORARY_MITIGATION`, `hotfix` requires a distinct permanent-fix Issue before the candidate can become `HOTFIX_READY`, preserving known/probable root cause, temporary mitigation, deferral rationale, final behavior, temporary surfaces to remove, removal criteria, and regression/prevention expectations. Production may be stabilized while permanent resolution intentionally remains open.
+- `merge` 1.0.0 -> 1.1.0 resolves and verifies the pull request's authoritative target ref instead of generically assuming the repository default branch, enabling consumers with an intermediate integration branch without hardcoding that topology in Coferlandia.
+
+### Repository and protocol
+
+- Adds `READY_FOR_RELEASE v1`, binding release qualification to exact source/target/base/profile/effective-candidate/manifest/review identity for both LOCAL and GITHUB_NATIVE strategies.
+- Adds `HOTFIX v1`, a durable exact-candidate emergency record with `PERMANENT | TEMPORARY_MITIGATION`, mandatory follow-up debt for temporary mitigations, and fail-closed `HOTFIX_BLOCKED` semantics.
+- Extends the prompt registry, validator, bootstrap, shared delivery protocol, agent guidance, and requalification rules with first-class Release and Hotfix lifecycles while preserving ordinary left-to-right development composition and no cross-strategy fallback.
+- Keeps repository-specific branch topology, CI workflows, tests, runners, version policy, deployment and reconciliation outside generic controllers.
+
+### Plugin and packaging
+
+- Adds the public `local-release` Agent Skill and ships the expanded public Chat prompt/protocol catalog.
+- Bumps the repository/plugin from v2.7.3 to v2.8.0 for additive compatible release and emergency-remediation capabilities.
+
+### Migration or compatibility
+
+- Existing standard repositories remain compatible: `chat-coder -> ci/local-ci -> merge` still works when the pull request targets the default branch.
+- Consumer repositories may now define a non-default ordinary integration target through their own policy; generic `merge` follows the authoritative PR target rather than assuming a branch name.
+- Release and hotfix topology, workflows, tests, runners, deployment and reconciliation remain repository-owned; no consumer repository is migrated automatically.
+- LOCAL and GITHUB_NATIVE remain explicit alternatives. `local-release` never falls back to `chat-release`, and GitHub-native release qualification never falls back to LOCAL.
+- A temporary hotfix mitigation is not equivalent to permanent resolution: the permanent-fix Issue remains open after production stabilization until the structural correction is completed through normal work.
+
 ## v2.7.3 (2026-09-11)
 
 ### Chat prompts
