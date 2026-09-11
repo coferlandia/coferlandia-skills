@@ -13,12 +13,13 @@ class PromptContractTests(unittest.TestCase):
         registry = json.loads((PROMPTS / "registry.json").read_text(encoding="utf-8"))
         self.assertEqual(registry["schema_version"], 1)
         ids = [item["id"] for item in registry["prompts"]]
-        self.assertEqual(ids, ["chat-coder", "ci", "merge", "chat-release"])
+        self.assertEqual(ids, ["chat-coder", "ci", "merge", "chat-release", "hotfix"])
         aliases = {alias: item["id"] for item in registry["prompts"] for alias in item["aliases"]}
         self.assertEqual(aliases["chat coder"], "chat-coder")
         self.assertEqual(aliases["gh ci"], "ci")
         self.assertEqual(aliases["merge"], "merge")
         self.assertEqual(aliases["chat release"], "chat-release")
+        self.assertEqual(aliases["hotfix"], "hotfix")
         external = {item["alias"]: item for item in registry["external_aliases"]}
         self.assertEqual(external["local ci"]["kind"], "skill")
         self.assertEqual(external["local ci"]["target"], "local-ci")
@@ -54,6 +55,12 @@ class PromptContractTests(unittest.TestCase):
         )
         self.assertEqual(release.returncode, 0, release.stderr or release.stdout)
         self.assertEqual(json.loads(release.stdout)["sequence"][0]["target"], "chat-release")
+        hotfix = subprocess.run(
+            [sys.executable, str(VALIDATOR), "resolve", "hotfix", "--root", str(ROOT), "--json"],
+            text=True, capture_output=True
+        )
+        self.assertEqual(hotfix.returncode, 0, hotfix.stderr or hotfix.stdout)
+        self.assertEqual(json.loads(hotfix.stdout)["sequence"][0]["target"], "hotfix")
 
     def test_prompts_are_generic_and_separated(self):
         banned = [
@@ -61,7 +68,7 @@ class PromptContractTests(unittest.TestCase):
             "coferlandia-ci, docker", "projects/1", "projects/2"
         ]
         texts = {}
-        for name in ("chat-coder", "ci", "merge", "chat-release"):
+        for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix"):
             text = (PROMPTS / f"{name}.md").read_text(encoding="utf-8")
             texts[name] = text
             for token in banned:
@@ -77,6 +84,8 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("does not generically assert", texts["merge"])
         self.assertIn("READY_FOR_RELEASE", texts["chat-release"])
         self.assertIn("coferlandia-release-publisher", texts["chat-release"])
+        self.assertIn("TEMPORARY_MITIGATION", texts["hotfix"])
+        self.assertIn("HOTFIX_BLOCKED", texts["hotfix"])
 
     def test_ci_is_explicit_chat_surface_and_never_inferred_from_ready_for_ci(self):
         text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
@@ -170,7 +179,7 @@ class PromptContractTests(unittest.TestCase):
 
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
-        full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge", "chat-release"))
+        full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix"))
         self.assertLess(len(bootstrap), full // 3)
 
 if __name__ == "__main__":
