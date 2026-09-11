@@ -40,11 +40,15 @@ class DeliveryContractTests(unittest.TestCase):
 
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
-        self.assertIn("PR head changes", text)
+        self.assertIn("Development PR head changes", text)
+        self.assertIn("Release candidate/source SHA changes", text)
         self.assertIn("CI profile fingerprint changes", text)
-        self.assertIn("Authoritative base changes", text)
+        self.assertIn("Authoritative development base changes", text)
+        self.assertIn("Release target/base changes", text)
+        self.assertIn("Release manifest/included-work identity changes", text)
         self.assertIn("Old/cancelled/superseded remote run", text)
         self.assertIn("merge.md` never performs requalification", text)
+        self.assertIn("`chat-release` and `local-release` also fail closed", text)
 
     def test_secretaria_fixture_is_representable_without_controller_hardcoding(self):
         mod = module()
