@@ -57,9 +57,9 @@ coferlandia-skills/
 ## Using Chat delivery prompts
 
 1. Read `prompts/BOOTSTRAP.md` and `prompts/registry.json`.
-2. Resolve only aliases explicitly requested (`chat coder`, `ci`/`gh ci`, `merge`, or external `local ci`).
-3. Execute compositions left-to-right without inserting missing stages or changing Qualification strategy.
-4. Read `_protocol/delivery/` for shared READY_FOR_CI / READY_FOR_MERGE / requalification contracts.
+2. Resolve only aliases explicitly requested (`chat coder`, `ci`/`gh ci`, `merge`, `chat release`, `hotfix`, or external `local ci` / `local release`).
+3. Ordinary controller compositions execute left-to-right without inserting missing stages or changing Qualification strategy. `hotfix` is an explicit high-level emergency-remediation controller and must never be inferred from an ordinary bug report.
+4. Read `_protocol/delivery/` for shared READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification contracts.
 5. `prompts/` is repository-addressable in V1; do not pretend it is installed as an Agent Skill through the `.plugin` package.
 
 ## Creating or changing a public skill
@@ -74,7 +74,7 @@ coferlandia-skills/
 ## Creating or changing a Chat prompt
 
 1. Read `_protocol/PROMPT_SPEC.md` and `_protocol/PROMPT_QUALITY_STANDARDS.md`.
-2. Keep repository-specific CI facts out of generic prompt bodies; use `.coferlandia/ci/profile.json` in consumer repositories.
+2. Keep repository-specific CI facts out of generic prompt bodies; use `.coferlandia/ci/profile.json` or repository-owned policy in consumer repositories.
 3. Update `prompts/registry.json` only for prompt identity/alias/composition changes.
 4. Run `python _protocol/scripts/validate_prompt.py validate --root .` and the prompt/delivery contract tests.
 5. Treat prompt changes as repository public-surface changes and document them in release notes; do not silently package them as Agent Skills.
