@@ -72,6 +72,9 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("must not merge", texts["ci"])
         self.assertIn("REQUALIFICATION_REQUIRED", texts["merge"])
         self.assertIn("must not execute CI", texts["merge"])
+        self.assertIn("authoritative target ref", texts["merge"])
+        self.assertIn("not generically hardcoded to the repository default branch", texts["merge"])
+        self.assertIn("does not generically assert", texts["merge"])
         self.assertIn("READY_FOR_RELEASE", texts["chat-release"])
         self.assertIn("coferlandia-release-publisher", texts["chat-release"])
 
