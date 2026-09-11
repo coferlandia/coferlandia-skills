@@ -69,6 +69,18 @@ class ReleasePromptContractTests(unittest.TestCase):
         self.assertIn("does not invoke `ci.md`", text)
         self.assertIn("does not fall back to `local-release`", text)
 
+    def test_chat_release_initializes_or_reuses_release_work_surface(self):
+        text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
+        self.assertIn("## Release candidate initialization", text)
+        self.assertIn("search for an existing open release PR", text)
+        self.assertIn("create the repository-approved release PR", text)
+        self.assertIn("conflicting/ambiguous active release PR", text)
+        self.assertIn("Build or currentize the release manifest", text)
+        self.assertIn("bind it to the exact source candidate and target/base identity", text)
+        self.assertIn("source changes while a release PR/manifest already exists", text)
+        self.assertIn("previous qualification evidence stale", text)
+        self.assertIn("RELEASE_INITIALIZATION_BLOCKED", text)
+
 
 if __name__ == "__main__":
     unittest.main()
