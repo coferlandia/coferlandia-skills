@@ -223,7 +223,7 @@
 ### Plugin and packaging
 
 - Bumps the installable plugin from v2.4.0 to v2.5.0 for the additive `coferlandia-release-publisher` public skill.
-- Refreshes plugin and marketplace descriptions and keywords to include agent-operable configuration and DevOps workflows.
+- Refreshes plugin discovery metadata and the human skill guide to include deterministic release publication and machine-readable release resolution.
 - Keeps transient release plans/provenance under `.agent/` and therefore excluded from plugin packaging; optional provenance becomes a GitHub Release asset rather than a required file in the target commit.
 
 ### Migration or compatibility
