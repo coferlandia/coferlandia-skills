@@ -23,6 +23,15 @@ class LocalReleaseContractTests(unittest.TestCase):
         self.assertIn("never falls back to `chat-release`", text)
         self.assertIn("must not invoke GitHub-native Qualification", text)
 
+    def test_local_release_requires_profile_and_clean_review_authority(self):
+        text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Require `.coferlandia/ci/profile.json`", text)
+        self.assertIn("compute the current profile fingerprint", text)
+        self.assertIn("Review Critical: 0", text)
+        self.assertIn("Review Important: 0", text)
+        self.assertIn("required-review change makes the handoff stale", text)
+        self.assertIn("Candidate/base/profile/manifest/review drift", text)
+
     def test_skill_is_listed_in_public_index(self):
         index = (ROOT / "skills" / "INDEX.md").read_text(encoding="utf-8")
         self.assertIn("[local-release](./engineering/local-release/)", index)
