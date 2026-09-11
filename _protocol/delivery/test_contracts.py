@@ -40,7 +40,7 @@ class DeliveryContractTests(unittest.TestCase):
         hotfix = (Path(__file__).parent / "HOTFIX.md").read_text(encoding="utf-8")
         for field in (
             "Primary issue:",
-            "Resolution strategy: PERMANENT | TEMPORARY_MITIGATION",
+            "Resolution strategy: UNRESOLVED | PERMANENT | TEMPORARY_MITIGATION",
             "Permanent fix issue:",
             "Target ref:",
             "Candidate SHA:",
@@ -55,6 +55,8 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("HOTFIX_READY", hotfix)
         self.assertIn("HOTFIX_BLOCKED", hotfix)
         self.assertIn("distinct open follow-up work item", hotfix)
+        self.assertIn("`UNRESOLVED` is allowed only", hotfix)
+        self.assertIn("must never advance to `HOTFIX_READY` or `HOTFIX_COMPLETE`", hotfix)
 
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
