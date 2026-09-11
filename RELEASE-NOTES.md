@@ -100,7 +100,7 @@
 
 - `chat-coder` 1.0.2 -> 1.0.3 requires Development to identify and synchronize repository-owned versioned derived artifacts whenever their authoritative inputs change, using the repository's own generation or synchronization mechanism rather than hand-editing generated output.
 - The generic rule covers generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs without hardcoding any consumer repository or technology.
-- When a repository defines a deterministic freshness, idempotence, or diff check for generated artifacts, that check must pass without unexpected diff before `READY_FOR_CI`; missing, stale, or manually approximated required artifacts block the handoff.
+- When a repository defines a deterministic freshness, idempotence, or diff check for generated artifacts, that check must pass without unexpected diff after the expected outputs are part of the candidate; missing, stale, or manually approximated required artifacts block the handoff.
 
 ### Repository and protocol
 
@@ -264,7 +264,7 @@
 ### Repository and protocol
 
 - Added configuration operations as a first-class skill family while preserving the boundary between repository preparation and day-to-day operation.
-- Added permanent Linux/Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
+- Added permanent Linux and Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
 - Updated the canonical skill index and human guide with the ownership, composition, and explicit-invocation rules for the new skills.
 - Kept deterministic retrieval non-authoritative: agents must consult the complete generated handbook before concluding that a requested configuration outcome is unsupported.
 
