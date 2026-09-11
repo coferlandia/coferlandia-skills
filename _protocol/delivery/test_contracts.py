@@ -23,6 +23,20 @@ class DeliveryContractTests(unittest.TestCase):
         ready_merge = (Path(__file__).parent / "READY_FOR_MERGE.md").read_text(encoding="utf-8")
         for field in ("Candidate SHA:", "Qualified base SHA:", "Effective candidate:", "Qualification strategy: LOCAL | GITHUB_NATIVE", "CI profile fingerprint:"):
             self.assertIn(field, ready_merge)
+        ready_release = (Path(__file__).parent / "READY_FOR_RELEASE.md").read_text(encoding="utf-8")
+        for field in (
+            "Source ref:",
+            "Target ref:",
+            "Release candidate SHA:",
+            "Qualified base SHA:",
+            "Effective candidate:",
+            "Qualification strategy: LOCAL | GITHUB_NATIVE",
+            "CI profile fingerprint:",
+            "Included work:",
+            "Review Critical: 0",
+            "Review Important: 0",
+        ):
+            self.assertIn(field, ready_release)
 
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
@@ -40,7 +54,7 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertEqual(len(fp), 64)
         generic_controller_text = "\n".join(
             (ROOT / "prompts" / f"{name}.md").read_text(encoding="utf-8")
-            for name in ("chat-coder", "ci", "merge")
+            for name in ("chat-coder", "ci", "merge", "chat-release")
         ) + (ROOT / "skills" / "engineering" / "local-ci" / "SKILL.md").read_text(encoding="utf-8")
         for project_specific in ("scripts/validate-all.sh", ".github/workflows/fast-ci.yml", "docs/development/hotfix-lane.md"):
             self.assertNotIn(project_specific, generic_controller_text)
