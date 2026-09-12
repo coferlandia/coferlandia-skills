@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 DEFAULT_POLICY: dict[str, Any] = {
@@ -46,8 +46,16 @@ def _validate_publication_transport(policy: dict[str, Any]) -> None:
     if set(github) != {"mode", "workflow"}:
         raise ValueError(f"{mode} publication requires exactly mode and workflow")
     workflow = github.get("workflow")
-    if not isinstance(workflow, str) or not workflow.startswith(".github/workflows/"):
+    if not isinstance(workflow, str):
         raise ValueError("publication.github.workflow must be a .github/workflows path")
+    workflow_path = PurePosixPath(workflow)
+    if (
+        workflow_path.is_absolute()
+        or ".." in workflow_path.parts
+        or workflow.startswith("./")
+        or not workflow.startswith(".github/workflows/")
+    ):
+        raise ValueError("publication.github.workflow must be a safe .github/workflows path")
     if not workflow.endswith((".yml", ".yaml")):
         raise ValueError("publication.github.workflow must be a YAML workflow")
 
