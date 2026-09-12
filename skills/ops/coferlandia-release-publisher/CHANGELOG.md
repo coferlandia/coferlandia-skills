@@ -1,5 +1,17 @@
 # Changelog — coferlandia-release-publisher
 
+## 1.1.1 — 2026-09-12
+
+### Fixed
+
+- Publication transport policy now accepts optional repository-specific `publication.github.runs_on` metadata used by the CI adapter to select GitHub-hosted or self-hosted publication runners.
+- Runner metadata is validated as a non-empty single-line string or duplicate-free non-empty list of labels without changing Commit -> Release mechanics.
+
+### Compatibility
+
+- Existing policies without `runs_on` remain valid.
+- Publication identity, annotated-tag semantics, GitHub Release creation and idempotent recovery are unchanged.
+
 ## 1.1 — 2026-09-12
 
 ### Added
