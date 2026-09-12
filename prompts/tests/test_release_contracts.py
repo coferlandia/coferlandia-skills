@@ -85,20 +85,22 @@ class ReleasePromptContractTests(unittest.TestCase):
         text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
         for token in (
             "publication.github",
+            "issue-comment",
             "workflow-dispatch",
+            "coferlandia-release-publication-request:v1",
             "target_sha",
             "version",
             "impact",
             "title",
             "notes",
-            "newly created authoritative workflow run",
+            "causally triggered by that exact newly created comment/event",
             "annotated tag and GitHub Release",
             "RELEASE_PUBLICATION_BLOCKED",
         ):
             self.assertIn(token, text)
         self.assertIn("Do not fall back to LOCAL", text)
         self.assertIn("do not mutate publication identity directly from this prompt", text)
-        self.assertIn("Publication evidence = <workflow/run identity>", text)
+        self.assertIn("Publication evidence = <request comment + workflow/run identity>", text)
         self.assertNotIn("gh release create", text)
         self.assertNotIn("git tag -a", text)
 
