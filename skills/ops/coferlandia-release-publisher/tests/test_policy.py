@@ -73,6 +73,8 @@ class PolicyTests(unittest.TestCase):
             {"mode": "workflow-dispatch"},
             {"mode": "workflow-dispatch", "workflow": "release.yml"},
             {"mode": "workflow-dispatch", "workflow": ".github/workflows/release.txt"},
+            {"mode": "workflow-dispatch", "workflow": ".github/workflows/../release.yml"},
+            {"mode": "workflow-dispatch", "workflow": "./.github/workflows/release.yml"},
             {"mode": "none", "workflow": ".github/workflows/release.yml"},
         ]
         for github in invalid_github_values:
