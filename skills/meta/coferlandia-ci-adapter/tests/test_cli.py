@@ -133,6 +133,8 @@ class AdapterCLITests(unittest.TestCase):
                 "admin|maintain",
                 "merge_commit_sha",
                 'test "$merge_sha" = "$TARGET_SHA"',
+                "body.count(marker) != 1",
+                "len(matches) != 1",
                 publisher,
             ):
                 self.assertIn(token, workflow)
