@@ -163,8 +163,8 @@ AGENTS.md        Entry point for agents
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.1.0 | Adds opt-in adaptation of a repository-declared GitHub-native release publication surface while keeping the CI profile scoped to Qualification. |
-| coferlandia-release-publisher | 1.1 | Adds validation/documentation for policy-declared GitHub publication transports while preserving its non-interactive exact Commit -> Release mechanics. |
+| coferlandia-ci-adapter | 1.1.0 | Adds opt-in adaptation of repository-declared GitHub-native release publication policy/workflows while keeping `.coferlandia/ci/profile.json` scoped strictly to Qualification. |
+| coferlandia-release-publisher | 1.1 | Adds validation and explicit non-interactive support for policy-declared GitHub publication transports without changing exact annotated-tag/GitHub-Release publication semantics. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
