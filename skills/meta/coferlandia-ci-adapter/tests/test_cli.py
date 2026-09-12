@@ -131,6 +131,8 @@ class AdapterCLITests(unittest.TestCase):
                 "permissions:",
                 "contents: write",
                 "admin|maintain",
+                "merge_commit_sha",
+                'test "$merge_sha" = "$TARGET_SHA"',
                 publisher,
             ):
                 self.assertIn(token, workflow)
