@@ -2,16 +2,9 @@
 
 ## 1.1.1 — 2026-09-12
 
-### Fixed
+### Changed
 
-- Publication workflows no longer assume `ubuntu-latest` is available for every repository.
-- Added explicit repository-specific `publication.github.runs_on` validation and deterministic workflow rendering, including self-hosted multi-label runners.
-- `publication render` now accepts `--runs-on <label> [<label> ...]` and preserves existing runner policy when the flag is omitted.
-
-### Compatibility
-
-- Existing publication policies without `runs_on` remain valid and continue to default to `ubuntu-latest`.
-- `.coferlandia/ci/profile.json` remains Qualification-only; publication runner selection is not inferred from CI profile state.
+- Makes the GitHub-native publication runner repository-configurable while preserving ubuntu-latest as the compatible default and keeping publication separate from Qualification.
 
 ## 1.1.0 — 2026-09-12
 
