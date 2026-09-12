@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 DEFAULT_POLICY: dict[str, Any] = {
@@ -14,6 +14,7 @@ DEFAULT_POLICY: dict[str, Any] = {
     "provenance": {"manifest": "optional"},
 }
 
+
 def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     result = copy.deepcopy(base)
     for key, value in override.items():
@@ -22,6 +23,42 @@ def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
         else:
             result[key] = value
     return result
+
+
+def _validate_publication_transport(policy: dict[str, Any]) -> None:
+    publication = policy.get("publication")
+    if publication is None:
+        return
+    if not isinstance(publication, dict):
+        raise ValueError("publication must be an object")
+    github = publication.get("github")
+    if github is None:
+        return
+    if not isinstance(github, dict):
+        raise ValueError("publication.github must be an object")
+    mode = github.get("mode")
+    if mode == "none":
+        if set(github) != {"mode"}:
+            raise ValueError("publication.github mode=none accepts no additional fields")
+        return
+    if mode not in {"issue-comment", "workflow-dispatch"}:
+        raise ValueError("publication.github.mode must be none, issue-comment, or workflow-dispatch")
+    if set(github) != {"mode", "workflow"}:
+        raise ValueError(f"{mode} publication requires exactly mode and workflow")
+    workflow = github.get("workflow")
+    if not isinstance(workflow, str):
+        raise ValueError("publication.github.workflow must be a .github/workflows path")
+    workflow_path = PurePosixPath(workflow)
+    if (
+        workflow_path.is_absolute()
+        or ".." in workflow_path.parts
+        or workflow.startswith("./")
+        or not workflow.startswith(".github/workflows/")
+    ):
+        raise ValueError("publication.github.workflow must be a safe .github/workflows path")
+    if not workflow.endswith((".yml", ".yaml")):
+        raise ValueError("publication.github.workflow must be a YAML workflow")
+
 
 def validate_policy(policy: dict[str, Any]) -> dict[str, Any]:
     if policy.get("schema_version") != 1:
@@ -51,7 +88,9 @@ def validate_policy(policy: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("github_release.immutability must be observe, required, or disabled")
     if policy.get("provenance", {}).get("manifest") not in {"optional", "required", "disabled"}:
         raise ValueError("provenance.manifest must be optional, required, or disabled")
+    _validate_publication_transport(policy)
     return policy
+
 
 def load_policy(root: Path, explicit: Path | None = None) -> dict[str, Any]:
     path = explicit if explicit is not None else root / ".coferlandia/release/policy.json"

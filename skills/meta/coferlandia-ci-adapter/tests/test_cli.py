@@ -94,5 +94,68 @@ class AdapterCLITests(unittest.TestCase):
             stored = json.loads(target.read_text(encoding="utf-8"))
             self.assertEqual(stored["fingerprint"], fingerprint)
 
+    def test_publication_render_preserves_repo_fields_and_materializes_workflow(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = root / "policy.json"
+            source.write_text(json.dumps({
+                "schema_version": 1,
+                "publication": {
+                    "publisher_skill": "coferlandia-release-publisher",
+                    "first_release_version": "control-decision-required"
+                }
+            }), encoding="utf-8")
+            publisher = ".agents/skills/coferlandia-release-publisher/scripts/coferlandia-release.py"
+            result = subprocess.run([
+                sys.executable, str(CLI), "publication", "render",
+                "--policy", str(source),
+                "--target-root", str(root),
+                "--publisher-path", publisher,
+                "--json"
+            ], text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+            policy_target = root / ".coferlandia" / "release" / "policy.json"
+            workflow_target = root / ".github" / "workflows" / "coferlandia-release-publish.yml"
+            stored = json.loads(policy_target.read_text(encoding="utf-8"))
+            self.assertEqual(stored["publication"]["publisher_skill"], "coferlandia-release-publisher")
+            self.assertEqual(stored["publication"]["github"]["mode"], "issue-comment")
+            workflow = workflow_target.read_text(encoding="utf-8")
+            for token in (
+                "issue_comment:",
+                "coferlandia-release-publication-request:v1",
+                "target_sha",
+                "version",
+                "impact",
+                "title",
+                "notes",
+                "permissions:",
+                "contents: write",
+                "admin|maintain",
+                "merge_commit_sha",
+                'test "$merge_sha" = "$TARGET_SHA"',
+                "body.count(marker) != 1",
+                "len(matches) != 1",
+                publisher,
+            ):
+                self.assertIn(token, workflow)
+            self.assertNotIn("deploy", workflow.lower())
+
+    def test_publication_render_is_opt_in_and_rejects_unsafe_publisher_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = root / "policy.json"
+            source.write_text(json.dumps({"schema_version": 1}), encoding="utf-8")
+            dry = subprocess.run([
+                sys.executable, str(CLI), "publication", "render",
+                "--policy", str(source),
+                "--target-root", str(root),
+                "--publisher-path", "../publisher.py",
+                "--dry-run", "--json"
+            ], text=True, capture_output=True)
+            self.assertEqual(dry.returncode, 2)
+            self.assertFalse((root / ".coferlandia" / "release" / "policy.json").exists())
+            self.assertFalse((root / ".github" / "workflows" / "coferlandia-release-publish.yml").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

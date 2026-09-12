@@ -22,6 +22,7 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(policy["release_refs"], [])
         self.assertEqual(policy["tag"]["type"], "annotated")
         self.assertEqual(policy["github_release"]["immutability"], "observe")
+        self.assertNotIn("publication", policy)
 
     def test_explicit_policy_wins_over_default_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -46,6 +47,45 @@ class PolicyTests(unittest.TestCase):
             path.write_text(json.dumps(broken), encoding="utf-8")
             with self.assertRaises(ValueError):
                 load_policy(root, path)
+
+    def test_workflow_dispatch_publication_transport_is_validated_without_owning_sibling_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            path = root / "policy.json"
+            policy = json.loads(json.dumps(DEFAULT_POLICY))
+            policy["publication"] = {
+                "publisher_skill": "coferlandia-release-publisher",
+                "first_release_version": "control-decision-required",
+                "github": {
+                    "mode": "workflow-dispatch",
+                    "workflow": ".github/workflows/release-publish.yml",
+                },
+            }
+            path.write_text(json.dumps(policy), encoding="utf-8")
+            loaded = load_policy(root, path)
+        self.assertEqual(loaded["publication"]["publisher_skill"], "coferlandia-release-publisher")
+        self.assertEqual(loaded["publication"]["github"]["workflow"], ".github/workflows/release-publish.yml")
+
+    def test_invalid_publication_transport_fails_closed(self) -> None:
+        invalid_github_values = [
+            "workflow-dispatch",
+            {"mode": "other", "workflow": ".github/workflows/release.yml"},
+            {"mode": "workflow-dispatch"},
+            {"mode": "workflow-dispatch", "workflow": "release.yml"},
+            {"mode": "workflow-dispatch", "workflow": ".github/workflows/release.txt"},
+            {"mode": "workflow-dispatch", "workflow": ".github/workflows/../release.yml"},
+            {"mode": "workflow-dispatch", "workflow": "./.github/workflows/release.yml"},
+            {"mode": "none", "workflow": ".github/workflows/release.yml"},
+        ]
+        for github in invalid_github_values:
+            with self.subTest(github=github), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                path = root / "policy.json"
+                policy = json.loads(json.dumps(DEFAULT_POLICY))
+                policy["publication"] = {"github": github}
+                path.write_text(json.dumps(policy), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    load_policy(root, path)
 
     def test_policy_loading_never_creates_default_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

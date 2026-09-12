@@ -9,13 +9,14 @@ license: Apache-2.0
 compatibility: >
   Requires Python 3.11+, git, GitHub CLI (`gh`) authenticated for the target repository, and
   publication permissions for `publish`. Read-only planning/verification needs only corresponding
-  read access. Optional signed tags require a usable local Git signing configuration.
+  read access. Optional signed tags require a usable local Git signing configuration. The CLI is
+  non-interactive and may run inside a repository-declared GitHub Actions publication workflow.
 metadata:
   author: coferlandia
-  version: "1.0"
+  version: "1.1"
   category: ops
   status: active
-  tested: "2026-09-05 - activation boundaries, SemVer/policy logic, Git identity, GitHub adapter, idempotency, and CLI contracts covered by repository CI tests."
+  tested: "2026-09-12 - activation boundaries, SemVer/policy logic, Git identity, GitHub adapter, idempotency, CLI contracts, and optional GitHub-native publication transport policy covered by repository CI tests."
 ---
 
 ## Context
@@ -38,6 +39,10 @@ and verification belong to `scripts/coferlandia-release.py`. Read `references/re
 before choosing a target/previous release, `references/policy-contract.md` when local policy exists
 or is needed, and `references/consistency-state-machine.md` before recovering a partial/inconsistent
 publication.
+
+The CLI is deliberately non-interactive. A repository may expose it through a policy-declared
+GitHub Actions transport for `chat-release`; that workflow transports already resolved release
+identity into this publisher and does not become a second owner of tag/Release mechanics.
 
 ## Activation and authority
 
@@ -169,6 +174,10 @@ When publication is authorized:
 python <installed-skill>/scripts/coferlandia-release.py publish \
   --input .agent/release-publisher/release-plan.json
 ```
+
+This command is non-interactive and is the same publication primitive used by an approved
+GitHub-native workflow transport. The transport must supply an exact reviewed plan/identity and
+must not reimplement tag or GitHub Release operations itself.
 
 The CLI re-reads authoritative state before the first remote mutation. It fails if the plan is stale,
 the target is no longer eligible, required checks are missing/red, required immutable releases

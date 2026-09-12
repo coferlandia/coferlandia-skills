@@ -29,6 +29,21 @@ The policy file is optional. `--policy <path>` has highest priority; otherwise t
 }
 ```
 
+Repositories may add local controller fields that the generic publisher does not own. One optional generic transport extension is recognized under `publication.github`:
+
+```json
+{
+  "publication": {
+    "github": {
+      "mode": "issue-comment",
+      "workflow": ".github/workflows/coferlandia-release-publish.yml"
+    }
+  }
+}
+```
+
+`mode` may be `none`, `issue-comment`, or `workflow-dispatch`. A workflow mode requires exactly one repository-relative YAML `workflow` below `.github/workflows/`. The publisher validates this transport declaration when present but does not itself trigger the workflow; orchestration belongs to `chat-release` or another explicit controller. Sibling repository fields under `publication` are preserved/ignored by the generic publisher rather than rejected.
+
 ## Semantics
 
 - `versioning.scheme`: generic v1 supports only `semver`.
@@ -40,6 +55,17 @@ The policy file is optional. `--policy <path>` has highest priority; otherwise t
 - `github_release.enabled`: must be true in generic v1.
 - `github_release.immutability`: `disabled`, `observe`, or `required`. `required` uses GitHub's repository immutable-releases status endpoint as a publication preflight. `observe` records the setting when permission permits but does not block merely because it is unobservable.
 - `provenance.manifest`: `disabled`, `optional`, or `required`. In v1 both `optional` and `required` generate/verify the manifest during publication; `required` expresses repository policy rather than making the manifest the primary authority.
+- `publication.github`: optional orchestration transport only. It never changes the publisher's Commit -> Release authority or publication order.
+
+## GitHub-native transport boundary
+
+The transport is deliberately separate from the deterministic publisher engine:
+
+- `issue-comment` is suitable for Chat GitHub surfaces that can create comments but cannot dispatch workflows directly. The repository workflow validates a versioned control marker/request, actor authority and exact target identity before invoking the publisher.
+- `workflow-dispatch` is suitable for clients that expose an explicit Actions dispatch primitive.
+- `none` or absence means there is no declared generic GitHub-native publication transport.
+
+A transport MUST carry already-resolved publication facts into the publisher. It must not infer target SHA, SemVer, semantic impact, title, notes, deployment target, or release authority. Missing/unsupported transport is a controller-level `RELEASE_PUBLICATION_BLOCKED` condition, not permission to run ad-hoc tag/release shell commands.
 
 ## Local publication skill precedence
 
