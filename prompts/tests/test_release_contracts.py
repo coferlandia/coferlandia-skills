@@ -89,6 +89,7 @@ class ReleasePromptContractTests(unittest.TestCase):
             "workflow-dispatch",
             "coferlandia-release-publication-request:v1",
             "target_sha",
+            "merge_commit_sha",
             "version",
             "impact",
             "title",
