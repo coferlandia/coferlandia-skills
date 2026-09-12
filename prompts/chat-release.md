@@ -222,10 +222,12 @@ Immediately before requesting publication:
 2. Verify the declared workflow exists on the repository's publication-capable default/target history and is the workflow named by policy.
 3. Create one new top-level release-work-surface comment containing the marker followed by exactly one fenced `json` object with schema `1` and exactly these fields: `schema`, `target_sha`, `version`, `impact`, `title`, `notes`.
 4. Do not place secrets, tokens, environment credentials, or deployment instructions in the request comment.
-5. The repository workflow must independently authorize the commenting actor, require the release PR to be merged/integrated, parse the request as data rather than shell, checkout the exact SHA, and invoke `coferlandia-release-publisher`.
+5. The repository workflow must independently authorize the commenting actor, require the release PR to be merged/integrated, require the request `target_sha` to equal that same release PR's exact integration commit (`merge_commit_sha` for a GitHub PR work surface), parse the request as data rather than shell, checkout the exact SHA, and invoke `coferlandia-release-publisher`.
 6. Bind publication evidence to the workflow run causally triggered by that exact newly created comment/event. Older runs are not current evidence.
 7. Observe the run to a successful terminal conclusion; queued/pending/cancelled/stale/RED runs are not success.
 8. Independently re-read the resulting annotated tag and GitHub Release and prove both resolve coherently to the exact integrated target SHA and requested release identity.
+
+If the declared workflow does not bind request `target_sha` to the exact release-work-surface integration commit, treat the publication surface as invalid and return `RELEASE_PUBLICATION_BLOCKED` rather than sending a request to a weaker transport.
 
 If reentry sees an existing request comment, inspect its causally associated run and resulting publication state before creating another request. Rely on publisher idempotency/recovery semantics rather than duplicating or moving published identities.
 
