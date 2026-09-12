@@ -41,10 +41,10 @@ def _validate_publication_transport(policy: dict[str, Any]) -> None:
         if set(github) != {"mode"}:
             raise ValueError("publication.github mode=none accepts no additional fields")
         return
-    if mode != "workflow-dispatch":
-        raise ValueError("publication.github.mode must be none or workflow-dispatch")
+    if mode not in {"issue-comment", "workflow-dispatch"}:
+        raise ValueError("publication.github.mode must be none, issue-comment, or workflow-dispatch")
     if set(github) != {"mode", "workflow"}:
-        raise ValueError("workflow-dispatch publication requires exactly mode and workflow")
+        raise ValueError(f"{mode} publication requires exactly mode and workflow")
     workflow = github.get("workflow")
     if not isinstance(workflow, str) or not workflow.startswith(".github/workflows/"):
         raise ValueError("publication.github.workflow must be a .github/workflows path")
