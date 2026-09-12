@@ -91,17 +91,18 @@ The standard generated workflow must:
 1. run only for a newly created `issue_comment` containing the canonical marker on a PR;
 2. require the commenting actor to have repository `admin` or `maintain` permission;
 3. require the referenced PR to already be merged/integrated;
-4. request only `contents: write`, `issues: read`, and `pull-requests: read`;
-5. serialize publication attempts for the release work surface without cancelling an in-progress publication;
-6. parse the marker/JSON request from `$GITHUB_EVENT_PATH` as data rather than shell-evaluating comment text;
-7. validate exact SHA, SemVer, impact, title and notes before checkout;
-8. checkout exactly `target_sha` with full history/tags and push credentials available;
-9. configure a non-interactive Git identity for annotated tag creation;
-10. revalidate `HEAD == target_sha` before publisher invocation;
-11. materialize notes without shell-evaluating their content;
-12. build a deterministic publisher plan from exact request data;
-13. execute `coferlandia-release-publisher publish` from that plan;
-14. never deploy or invoke repository deployment workflows.
+4. require request `target_sha` to equal that same PR's exact `merge_commit_sha`, binding the publication identity to the durable release work surface;
+5. request only `contents: write`, `issues: read`, and `pull-requests: read`;
+6. serialize publication attempts for the release work surface without cancelling an in-progress publication;
+7. parse the marker/JSON request from `$GITHUB_EVENT_PATH` as data rather than shell-evaluating comment text;
+8. validate exact SHA, SemVer, impact, title and notes before checkout;
+9. checkout exactly `target_sha` with full history/tags and push credentials available;
+10. configure a non-interactive Git identity for annotated tag creation;
+11. revalidate `HEAD == target_sha` before publisher invocation;
+12. materialize notes without shell-evaluating their content;
+13. build a deterministic publisher plan from exact request data;
+14. execute `coferlandia-release-publisher publish` from that plan;
+15. never deploy or invoke repository deployment workflows.
 
 The target repository supplies the repository-relative publisher entrypoint during adaptation. The adapter rejects absolute paths and parent traversal.
 
@@ -111,7 +112,7 @@ The target repository supplies the repository-relative publisher entrypoint duri
 
 For `workflow-dispatch`, the same identity and verification rules apply, but it is usable only when the active client actually exposes a dispatch primitive.
 
-A missing workflow, unsupported mode, insufficient actor authority, trigger capability gap, ambiguous run binding, RED workflow, stale SHA, or release/tag mismatch is a publication blocker. None authorizes direct shell mutation or a LOCAL fallback.
+A missing workflow, unsupported mode, insufficient actor authority, trigger capability gap, ambiguous run binding, RED workflow, stale SHA, release-PR integration mismatch, or release/tag mismatch is a publication blocker. None authorizes direct shell mutation or a LOCAL fallback.
 
 ## Adaptation review checklist
 
@@ -122,6 +123,7 @@ Before materializing publication support, verify:
 - the publisher skill is vendored/available at the proposed repository-relative path;
 - the workflow path does not conflict with repository conventions;
 - the repository uses a release PR/work surface compatible with issue comments when `issue-comment` is selected;
+- the release integration mechanism yields a stable PR `merge_commit_sha` equal to the exact commit that should become the formal release identity;
 - GitHub Actions is allowed to create tags/releases with `GITHUB_TOKEN` and `contents: write` under repository rules;
 - expected release authorities have `admin` or `maintain` repository permission;
 - no environment/deployment side effect is attached to the publication workflow;
