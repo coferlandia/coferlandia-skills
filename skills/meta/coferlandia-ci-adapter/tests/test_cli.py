@@ -118,9 +118,21 @@ class AdapterCLITests(unittest.TestCase):
             workflow_target = root / ".github" / "workflows" / "coferlandia-release-publish.yml"
             stored = json.loads(policy_target.read_text(encoding="utf-8"))
             self.assertEqual(stored["publication"]["publisher_skill"], "coferlandia-release-publisher")
-            self.assertEqual(stored["publication"]["github"]["mode"], "workflow-dispatch")
+            self.assertEqual(stored["publication"]["github"]["mode"], "issue-comment")
             workflow = workflow_target.read_text(encoding="utf-8")
-            for token in ("target_sha:", "version:", "impact:", "title:", "notes:", "permissions:", "contents: write", publisher):
+            for token in (
+                "issue_comment:",
+                "coferlandia-release-publication-request:v1",
+                "target_sha",
+                "version",
+                "impact",
+                "title",
+                "notes",
+                "permissions:",
+                "contents: write",
+                "admin|maintain",
+                publisher,
+            ):
                 self.assertIn(token, workflow)
             self.assertNotIn("deploy", workflow.lower())
 
