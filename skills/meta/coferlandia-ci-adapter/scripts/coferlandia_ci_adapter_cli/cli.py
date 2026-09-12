@@ -61,6 +61,11 @@ def parser() -> argparse.ArgumentParser:
     publication_render.add_argument("--target-root", required=True)
     publication_render.add_argument("--publisher-path", required=True)
     publication_render.add_argument("--workflow-path", default=DEFAULT_WORKFLOW_PATH.as_posix())
+    publication_render.add_argument(
+        "--runs-on",
+        nargs="+",
+        help="GitHub Actions runner label or labels for publication; defaults to ubuntu-latest",
+    )
     publication_render.add_argument("--dry-run", action="store_true")
     publication_render.add_argument("--json", action="store_true")
     return p
@@ -98,8 +103,15 @@ def main(argv: list[str] | None = None) -> int:
                 emit({"ok": True, "github": github}, as_json)
                 return 0
 
-            rendered_policy = render_publication_policy(policy, workflow_path=args.workflow_path)
-            workflow = render_workflow(publisher_path=args.publisher_path)
+            rendered_policy = render_publication_policy(
+                policy,
+                workflow_path=args.workflow_path,
+                runs_on=args.runs_on,
+            )
+            workflow = render_workflow(
+                publisher_path=args.publisher_path,
+                runs_on=rendered_policy["publication"]["github"]["runs_on"],
+            )
             target_root = Path(args.target_root).resolve()
             policy_target = (target_root / RELEASE_POLICY_PATH).resolve()
             workflow_target = (target_root / args.workflow_path).resolve()
