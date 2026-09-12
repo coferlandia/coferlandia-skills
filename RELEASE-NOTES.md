@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+## v2.9.0 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.0.0 | 1.1.0 | Adds opt-in adaptation of repository-declared GitHub-native release publication policy/workflows while keeping `.coferlandia/ci/profile.json` scoped strictly to Qualification. |
+| coferlandia-release-publisher | 1.0 | 1.1 | Adds validation and explicit non-interactive support for policy-declared GitHub publication transports without changing exact annotated-tag/GitHub-Release publication semantics. |
+
+### Chat prompts
+
+- `chat-release` 1.0.0 -> 1.1.0 completes the GITHUB_NATIVE publication path after release integration. It resolves `publication.github` independently from the CI profile, transports only explicit release identity, observes one authoritative publication run, and independently verifies the resulting annotated tag and GitHub Release against the exact integrated commit.
+- Adds the standard Chat-compatible `issue-comment` transport: a versioned control comment on the merged release PR carries `schema`, `target_sha`, `version`, `impact`, `title`, and `notes`; a repository workflow validates authority and invokes `coferlandia-release-publisher`.
+- Keeps `workflow-dispatch` as an optional publication transport only for GitHub-native clients that actually expose an Actions dispatch primitive. Missing/unsupported publication surfaces fail closed as `RELEASE_PUBLICATION_BLOCKED`; no LOCAL fallback or direct tag/Release mutation is introduced.
+
+### Repository and protocol
+
+- Defines `publication.github` as a release-policy transport contract separate from `.coferlandia/ci/profile.json`, preserving the boundary between Qualification, Integration, and Publication authority.
+- Standardizes the Chat publication request marker `<!-- coferlandia-release-publication-request:v1 -->` and exact JSON identity envelope.
+- Generated issue-comment publication workflows require repository `admin` or `maintain` authority, require the release PR to already be merged, parse the comment payload as data, checkout the exact target SHA, grant minimal read permissions plus `contents: write`, and never deploy.
+- `coferlandia-ci-adapter` can now validate and materialize the optional release publication policy/workflow while preserving existing repository-owned publication fields and CI-only behavior.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.8.0 to v2.9.0 for the substantial compatible GitHub-native release-publication capability.
+- Ships updated `chat-release`, `coferlandia-ci-adapter`, `coferlandia-release-publisher`, their tests, and publication-contract documentation.
+
+### Migration or compatibility
+
+- Existing repositories using only the CI profile contract remain compatible; publication adaptation is explicit and opt-in.
+- Existing release policies remain compatible when `publication.github` is absent; GITHUB_NATIVE publication simply remains blocked until the repository explicitly declares a supported transport.
+- Repositories adopting the standard Chat-compatible path need a durable release PR/work surface, a vendored/available `coferlandia-release-publisher`, and GitHub Actions permission to create tags/releases with `contents: write`.
+- Publication remains separate from deployment, and neither `chat-release` nor the generated workflow may infer a version, target SHA, deployment target, or other unresolved semantic decision.
+
 ## v2.8.0 (2026-09-11)
 
 ### Skills
@@ -300,7 +334,7 @@
 ### Repository and protocol
 
 - Added configuration operations as a first-class skill family while preserving the boundary between repository preparation and day-to-day operation.
-- Added permanent Linux and Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
+- Added permanent Linux/Windows CI coverage for both new skill suites, contract validation, candidate lifecycle behavior, generated Python facades, Guide Mode, and activation boundaries.
 - Updated the canonical skill index and human guide with the ownership, composition, and explicit-invocation rules for the new skills.
 - Kept deterministic retrieval non-authoritative: agents must consult the complete generated handbook before concluding that a requested configuration outcome is unsupported.
 
