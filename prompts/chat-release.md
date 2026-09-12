@@ -1,7 +1,7 @@
 ---
 name: chat-release
 description: "Generic Chat GITHUB_NATIVE release controller that initializes or reuses one release candidate, reviews and qualifies it, integrates it through repository policy, and publishes the resulting exact commit through coferlandia-release-publisher."
-version: "1.0.0"
+version: "1.1.0"
 stage: release
 status: active
 ---
@@ -25,6 +25,7 @@ explicit chat-release request
 -> revalidate release identity
 -> repository-approved release integration
 -> verify exact resulting target commit
+-> repository-declared GitHub-native publication surface
 -> coferlandia-release-publisher
 -> verify published release
 -> COMPLETE
@@ -55,9 +56,9 @@ Reconstruct authoritative state from current repository/GitHub evidence rather t
 - repository-defined release manifest storage/format and included-work discovery rules;
 - required review policy;
 - repository-declared reconciliation, ancestry, freeze or active-release preconditions;
-- current release publication policy, previous published release, and version lineage when relevant.
+- current release publication policy, including any `publication.github` transport, previous published release, and version lineage when relevant.
 
-If source/target identity, qualification policy, integration policy, manifest contract, or candidate-initialization rules are ambiguous, stop fail-closed rather than guessing.
+If source/target identity, qualification policy, integration policy, manifest contract, candidate-initialization rules, or publication transport are ambiguous, stop fail-closed rather than guessing.
 
 ## Release candidate initialization
 
@@ -175,13 +176,47 @@ The publisher must receive the exact integrated target commit and current reposi
 
 For a first published release, unresolved product maturity/version baseline remains a control decision; do not invent `1.0.0` or another baseline.
 
+### GitHub-native publication transport
+
+After integration, re-read current release policy and resolve `publication.github` independently from `.coferlandia/ci/profile.json`. Qualification and publication are distinct contracts.
+
+Supported generic publication transport:
+
+```json
+{
+  "publication": {
+    "github": {
+      "mode": "workflow-dispatch",
+      "workflow": ".github/workflows/<repository-declared-workflow>.yml"
+    }
+  }
+}
+```
+
+Repository policy may contain additional publication fields owned by the repository or publisher; preserve them. `chat-release` owns only the GitHub-native handoff described here.
+
+For `mode = workflow-dispatch`:
+
+1. Verify the declared workflow exists on the repository's current publication-capable target/default history and exposes the canonical required inputs `target_sha`, `version`, `impact`, `title`, and `notes`.
+2. Re-read the exact integrated target SHA immediately before dispatch. It must equal the publication target selected for the release. Never substitute the pre-integration source candidate.
+3. Require explicit resolved release identity before dispatch: exact target SHA, semantic impact, version, title, and final release notes. The workflow must not infer any of them.
+4. Dispatch only the repository-declared workflow, on the repository-declared/current publication ref, with those canonical inputs. Never dispatch a guessed workflow and never pass secrets as inputs.
+5. Bind the publication attempt to the newly created authoritative workflow run. Do not accept an older run merely because its workflow name or version resembles the current release.
+6. Observe the run to an allowed successful terminal conclusion. Pending, cancelled, stale, superseded, mismatched-input, or failed runs do not publish the release successfully.
+7. On success, independently re-read GitHub refs and Releases. Prove the annotated tag and GitHub Release both resolve coherently to the exact integrated target SHA and requested release identity.
+8. Only after that independent verification may release closeout run.
+
+The workflow is a transport for `coferlandia-release-publisher`; it does not transfer ownership of Commit -> Release mechanics to `chat-release` or to repository-specific shell logic.
+
+If `publication.github` is absent, declares `mode = none`, is invalid, references a missing workflow, cannot be dispatched by the active GitHub-native surface, or cannot be bound unambiguously to one current run, return `RELEASE_PUBLICATION_BLOCKED`. Do not fall back to LOCAL, do not instructively bypass the repository contract with ad-hoc tag/release creation, and do not mutate publication identity directly from this prompt.
+
 After publication, verify the annotated tag and GitHub Release resolve coherently to the exact intended commit. Publication success is not deployment success.
 
 ## Closeout and reentry
 
 Apply only repository-declared release closeout behavior after publication verification, for example release-manifest traceability, issue annotations, branch reconciliation, or release-state cleanup. Generic `chat-release` does not invent those policies.
 
-Reentry always reconstructs current state. If integration already completed but publication is partially complete, use `coferlandia-release-publisher` consistency/recovery semantics rather than recreating or moving published identities.
+Reentry always reconstructs current state. If integration already completed but publication is partially complete, use `coferlandia-release-publisher` consistency/recovery semantics rather than recreating or moving published identities. If a prior GitHub-native publication workflow already ran, bind to and inspect that exact run/release state before considering any new dispatch.
 
 Terminal/resumable states include:
 
@@ -212,6 +247,7 @@ Review Critical = 0
 Review Important = 0
 Qualification evidence = <durable reference>
 Included work = <release manifest/reference>
+Publication evidence = <workflow/run identity>
 Release = <version/tag/GitHub Release identity>
 Deployment = NOT PERFORMED
 ```
