@@ -13,7 +13,7 @@ compatibility: >
   non-interactive and may run inside a repository-declared GitHub Actions publication workflow.
 metadata:
   author: coferlandia
-  version: "1.1.0"
+  version: "1.1"
   category: ops
   status: active
   tested: "2026-09-12 - activation boundaries, SemVer/policy logic, Git identity, GitHub adapter, idempotency, CLI contracts, and optional GitHub-native publication transport policy covered by repository CI tests."
@@ -41,9 +41,8 @@ or is needed, and `references/consistency-state-machine.md` before recovering a 
 publication.
 
 The CLI is deliberately non-interactive. A repository may expose it through a policy-declared
-GitHub Actions `workflow_dispatch` transport for `chat-release`; that workflow transports already
-resolved release identity into this publisher and does not become a second owner of tag/Release
-mechanics.
+GitHub Actions transport for `chat-release`; that workflow transports already resolved release
+identity into this publisher and does not become a second owner of tag/Release mechanics.
 
 ## Activation and authority
 
