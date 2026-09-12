@@ -135,6 +135,16 @@ jobs:
               output.write(f"version={{request['version']}}\\n")
           PY
 
+      - name: Bind request to release PR integration
+        env:
+          TARGET_SHA: ${{{{ steps.request.outputs.target_sha }}}}
+        shell: bash
+        run: |
+          set -euo pipefail
+          merge_sha="$(gh api "repos/$GITHUB_REPOSITORY/pulls/${{{{ github.event.issue.number }}}}" --jq '.merge_commit_sha // empty')"
+          test -n "$merge_sha"
+          test "$merge_sha" = "$TARGET_SHA"
+
       - name: Check out exact publication target
         uses: actions/checkout@v4
         with:
