@@ -25,6 +25,28 @@ def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _validate_runs_on(value: Any) -> None:
+    if isinstance(value, str):
+        if not value.strip() or "\n" in value or "\r" in value:
+            raise ValueError("publication.github.runs_on string must be non-empty and single-line")
+        return
+    if isinstance(value, list):
+        if not value:
+            raise ValueError("publication.github.runs_on list must not be empty")
+        normalized: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise ValueError("publication.github.runs_on labels must be strings")
+            label = item.strip()
+            if not label or "\n" in label or "\r" in label:
+                raise ValueError("publication.github.runs_on labels must be non-empty and single-line")
+            normalized.append(label)
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("publication.github.runs_on contains duplicate labels")
+        return
+    raise ValueError("publication.github.runs_on must be a string or non-empty list of strings")
+
+
 def _validate_publication_transport(policy: dict[str, Any]) -> None:
     publication = policy.get("publication")
     if publication is None:
@@ -43,8 +65,9 @@ def _validate_publication_transport(policy: dict[str, Any]) -> None:
         return
     if mode not in {"issue-comment", "workflow-dispatch"}:
         raise ValueError("publication.github.mode must be none, issue-comment, or workflow-dispatch")
-    if set(github) != {"mode", "workflow"}:
-        raise ValueError(f"{mode} publication requires exactly mode and workflow")
+    allowed = {"mode", "workflow", "runs_on"}
+    if not {"mode", "workflow"}.issubset(github) or not set(github).issubset(allowed):
+        raise ValueError(f"{mode} publication requires mode/workflow and optionally runs_on")
     workflow = github.get("workflow")
     if not isinstance(workflow, str):
         raise ValueError("publication.github.workflow must be a .github/workflows path")
@@ -58,6 +81,8 @@ def _validate_publication_transport(policy: dict[str, Any]) -> None:
         raise ValueError("publication.github.workflow must be a safe .github/workflows path")
     if not workflow.endswith((".yml", ".yaml")):
         raise ValueError("publication.github.workflow must be a YAML workflow")
+    if "runs_on" in github:
+        _validate_runs_on(github["runs_on"])
 
 
 def validate_policy(policy: dict[str, Any]) -> dict[str, Any]:
