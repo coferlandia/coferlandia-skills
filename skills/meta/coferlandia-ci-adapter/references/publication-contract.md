@@ -37,13 +37,32 @@ or the standard Chat-compatible form:
   "publication": {
     "github": {
       "mode": "issue-comment",
-      "workflow": ".github/workflows/coferlandia-release-publish.yml"
+      "workflow": ".github/workflows/coferlandia-release-publish.yml",
+      "runs_on": "ubuntu-latest"
     }
   }
 }
 ```
 
-A client that exposes Actions dispatch may instead use `mode: workflow-dispatch` with the same workflow-path contract. `workflow` must always be a repository-relative YAML path below `.github/workflows/`.
+Repositories using self-hosted publication runners declare the exact GitHub Actions labels explicitly, for example:
+
+```json
+{
+  "publication": {
+    "github": {
+      "mode": "issue-comment",
+      "workflow": ".github/workflows/coferlandia-release-publish.yml",
+      "runs_on": ["self-hosted", "Linux", "ARM64", "coferlandia-ci", "docker"]
+    }
+  }
+}
+```
+
+A client that exposes Actions dispatch may instead use `mode: workflow-dispatch` with the same workflow-path and runner contracts. `workflow` must always be a repository-relative YAML path below `.github/workflows/`.
+
+`runs_on` is optional for backward compatibility. When absent during adaptation, the generated workflow defaults explicitly to `ubuntu-latest`. When repository study shows that GitHub-hosted runners are not the intended publication surface, the adapter MUST materialize the real repository labels instead of assuming a hosted runner. `runs_on` may be one non-empty single-line string or one non-empty duplicate-free list of non-empty single-line strings.
+
+Do not infer publication runner labels from `.coferlandia/ci/profile.json`: Qualification and Publication are separate contracts even when the repository happens to use the same runner pool for both.
 
 Absence of `publication.github` is backward-compatible and means the generic GitHub-native release controller has no declared publication transport. It must stop with `RELEASE_PUBLICATION_BLOCKED`; it must not infer LOCAL fallback or perform ad-hoc tag/release mutation.
 
@@ -89,22 +108,23 @@ The request is durable control-plane evidence, not a secret-bearing channel. Nev
 The standard generated workflow must:
 
 1. run only for a newly created `issue_comment` containing the canonical marker on a PR;
-2. require the commenting actor to have repository `admin` or `maintain` permission;
-3. require the referenced PR to already be merged/integrated;
-4. require request `target_sha` to equal that same PR's exact `merge_commit_sha`, binding the publication identity to the durable release work surface;
-5. request only `contents: write`, `issues: read`, and `pull-requests: read`;
-6. serialize publication attempts for the release work surface without cancelling an in-progress publication;
-7. parse the marker/JSON request from `$GITHUB_EVENT_PATH` as data rather than shell-evaluating comment text;
-8. validate exact SHA, SemVer, impact, title and notes before checkout;
-9. checkout exactly `target_sha` with full history/tags and push credentials available;
-10. configure a non-interactive Git identity for annotated tag creation;
-11. revalidate `HEAD == target_sha` before publisher invocation;
-12. materialize notes without shell-evaluating their content;
-13. build a deterministic publisher plan from exact request data;
-14. execute `coferlandia-release-publisher publish` from that plan;
-15. never deploy or invoke repository deployment workflows.
+2. use the repository-declared `publication.github.runs_on` runner contract, defaulting only when adaptation intentionally accepts `ubuntu-latest`;
+3. require the commenting actor to have repository `admin` or `maintain` permission;
+4. require the referenced PR to already be merged/integrated;
+5. require request `target_sha` to equal that same PR's exact `merge_commit_sha`, binding the publication identity to the durable release work surface;
+6. request only `contents: write`, `issues: read`, and `pull-requests: read`;
+7. serialize publication attempts for the release work surface without cancelling an in-progress publication;
+8. parse the marker/JSON request from `$GITHUB_EVENT_PATH` as data rather than shell-evaluating comment text;
+9. validate exact SHA, SemVer, impact, title and notes before checkout;
+10. checkout exactly `target_sha` with full history/tags and push credentials available;
+11. configure a non-interactive Git identity for annotated tag creation;
+12. revalidate `HEAD == target_sha` before publisher invocation;
+13. materialize notes without shell-evaluating their content;
+14. build a deterministic publisher plan from exact request data;
+15. execute `coferlandia-release-publisher publish` from that plan;
+16. never deploy or invoke repository deployment workflows.
 
-The target repository supplies the repository-relative publisher entrypoint during adaptation. The adapter rejects absolute paths and parent traversal.
+The target repository supplies the repository-relative publisher entrypoint and publication runner contract during adaptation. The adapter rejects absolute publisher paths, parent traversal, empty runner labels, duplicate labels, and multiline labels.
 
 ## Controller behavior
 
@@ -112,7 +132,7 @@ The target repository supplies the repository-relative publisher entrypoint duri
 
 For `workflow-dispatch`, the same identity and verification rules apply, but it is usable only when the active client actually exposes a dispatch primitive.
 
-A missing workflow, unsupported mode, insufficient actor authority, trigger capability gap, ambiguous run binding, RED workflow, stale SHA, release-PR integration mismatch, or release/tag mismatch is a publication blocker. None authorizes direct shell mutation or a LOCAL fallback.
+A missing workflow, unsupported mode, unavailable publication runner, insufficient actor authority, trigger capability gap, ambiguous run binding, RED workflow, stale SHA, release-PR integration mismatch, or release/tag mismatch is a publication blocker. None authorizes direct shell mutation or a LOCAL fallback.
 
 ## Adaptation review checklist
 
@@ -122,6 +142,7 @@ Before materializing publication support, verify:
 - existing sibling `publication` fields will be preserved;
 - the publisher skill is vendored/available at the proposed repository-relative path;
 - the workflow path does not conflict with repository conventions;
+- the publication runner actually available to this repository is known; if self-hosted, capture its exact required labels explicitly;
 - the repository uses a release PR/work surface compatible with issue comments when `issue-comment` is selected;
 - the release integration mechanism yields a stable PR `merge_commit_sha` equal to the exact commit that should become the formal release identity;
 - GitHub Actions is allowed to create tags/releases with `GITHUB_TOKEN` and `contents: write` under repository rules;
