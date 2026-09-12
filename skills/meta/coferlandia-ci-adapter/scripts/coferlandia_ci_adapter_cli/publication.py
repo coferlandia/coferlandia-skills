@@ -110,13 +110,13 @@ jobs:
           marker = {PUBLICATION_REQUEST_MARKER!r}
           event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
           body = event['comment']['body']
-          if marker not in body:
-              raise SystemExit('missing publication request marker')
+          if body.count(marker) != 1:
+              raise SystemExit('publication request must contain exactly one marker')
           tail = body.split(marker, 1)[1]
-          match = re.search(r'```json\\s*(\\{{.*?\\}})\\s*```', tail, re.S)
-          if not match:
-              raise SystemExit('missing publication request JSON block')
-          request = json.loads(match.group(1))
+          matches = re.findall(r'```json\\s*(\\{{.*?\\}})\\s*```', tail, re.S)
+          if len(matches) != 1:
+              raise SystemExit('publication request must contain exactly one JSON block')
+          request = json.loads(matches[0])
           expected = {{'schema', 'target_sha', 'version', 'impact', 'title', 'notes'}}
           if set(request) != expected or request['schema'] != 1:
               raise SystemExit('invalid publication request schema')
@@ -185,8 +185,14 @@ jobs:
 
           marker = {PUBLICATION_REQUEST_MARKER!r}
           event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
-          tail = event['comment']['body'].split(marker, 1)[1]
-          request = json.loads(re.search(r'```json\\s*(\\{{.*?\\}})\\s*```', tail, re.S).group(1))
+          body = event['comment']['body']
+          if body.count(marker) != 1:
+              raise SystemExit('publication request must contain exactly one marker')
+          tail = body.split(marker, 1)[1]
+          matches = re.findall(r'```json\\s*(\\{{.*?\\}})\\s*```', tail, re.S)
+          if len(matches) != 1:
+              raise SystemExit('publication request must contain exactly one JSON block')
+          request = json.loads(matches[0])
           root = Path('.agent/release-publisher')
           root.mkdir(parents=True, exist_ok=True)
           notes = root / 'release-notes.md'
