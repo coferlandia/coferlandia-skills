@@ -2,24 +2,27 @@
 name: coferlandia-ci-adapter
 description: >
   Use when the user or controlling authority asks to adapt a repository to Coferlandia's generic
-  Chat/Local CI controllers by studying its real CI/testing/workflow contract and creating or updating
-  the minimal .coferlandia/ci/profile.json consumed by both strategies. Explicit repository-adaptation
-  work only; it does not execute CI, copy generic prompts/skills, or invent project commands.
+  Chat/Local CI controllers or complete GitHub-native release delivery. Study the repository's real
+  CI/testing/release workflow contracts, maintain the minimal .coferlandia/ci/profile.json, and when
+  explicitly requested materialize the separate repository-declared GitHub-native publication surface.
+  It does not execute CI/releases, copy generic prompts/skills, or invent project commands.
 license: Apache-2.0
 compatibility: >
   Requires read access to the target repository and its GitHub workflows/documentation, Python 3.11+
-  for deterministic profile tooling, and write access only after the profile proposal is approved.
+  for deterministic adapter tooling, and write access only after the proposed adaptation is approved.
 metadata:
   author: coferlandia
-  version: "1.0.0"
+  version: "1.1.0"
   category: meta
   status: active
-  tested: "2026-09-07 - deterministic profile validation/fingerprinting/rendering, unsafe-field rejection, activation boundaries, and repository conformance fixtures covered by unittest."
+  tested: "2026-09-12 - CI profile compatibility plus opt-in GitHub-native release publication policy/workflow validation and deterministic rendering covered by unittest."
 ---
 
 ## Context
 
-This meta-skill adapts one repository to the shared Coferlandia Qualification contract. It does not run CI itself.
+This meta-skill adapts one repository to shared Coferlandia delivery contracts. It does not run CI or publish a release itself.
+
+Qualification remains a distinct contract:
 
 ```text
 repository truth (docs/scripts/workflows/services)
@@ -28,21 +31,31 @@ repository truth (docs/scripts/workflows/services)
              -> local-ci skill
 ```
 
-The repository remains authoritative. The profile is a small, static interface definition at `.coferlandia/ci/profile.json`; it must not become a second CI engine, store current results, or contain secrets.
+When the controlling request explicitly includes complete GitHub-native release delivery, the adapter may additionally materialize a separate publication surface:
+
+```text
+repository release policy
+        -> publication.github transport
+        -> repository GitHub Actions workflow
+        -> coferlandia-release-publisher
+        -> chat-release observes/verifies publication
+```
+
+The repository remains authoritative. `.coferlandia/ci/profile.json` is only the Qualification interface; publication configuration belongs to `.coferlandia/release/policy.json` and MUST NOT be inserted into the CI profile.
 
 ## Activation
 
-Activate when the controlling authority explicitly asks to create/update a Coferlandia CI profile, adapt a repository for the generic CI prompt/skill, or names `coferlandia-ci-adapter` for a target repository.
+Activate when the controlling authority explicitly asks to create/update a Coferlandia CI profile, adapt a repository for the generic CI prompt/skill, adapt the repository for complete Coferlandia GitHub-native delivery, or names `coferlandia-ci-adapter` for a target repository.
 
-Do not activate merely to run tests, diagnose one CI failure, merge a PR, or mine unrelated project skills.
+Do not activate merely to run tests, diagnose one CI failure, merge a PR, publish one release from an already-adapted repository, or mine unrelated project skills.
 
 ## Workflow
 
 ### 1. Study without modification
 
-Read `references/discovery.md`. Inspect current `AGENTS.md`, development/testing docs, canonical validation scripts, package/build metadata, required services, GitHub workflows/checks/gates, merge-group behavior, and exceptional lanes. Prefer executable current behavior over historical prose.
+Read `references/discovery.md`. Inspect current `AGENTS.md`, development/testing/release docs, canonical validation scripts, package/build metadata, required services, GitHub workflows/checks/gates, merge-group behavior, release policy and exceptional lanes. Prefer executable current behavior over historical prose.
 
-Record evidence for:
+Record evidence for Qualification:
 
 ```text
 canonical documentation
@@ -55,15 +68,27 @@ base/profile sensitivity
 exceptional lanes and their external authorization owner
 ```
 
+When GitHub-native release publication is in scope, additionally record:
+
+```text
+release policy location and current publication fields
+publisher skill/path available in the target repository
+repository-approved publication workflow path
+permissions/environment constraints for creating tags and GitHub Releases
+whether publication is intentionally disabled
+```
+
 Do not modify the target repository during discovery.
 
 ### 2. Produce a proposal and approval gate
 
-Propose the exact profile with source evidence and unresolved ambiguities. Do not guess a workflow/check or copy every incidental test command when one canonical repository command already owns full qualification.
+Propose the exact CI profile with source evidence and unresolved ambiguities. Do not guess a workflow/check or copy every incidental test command when one canonical repository command already owns full qualification.
 
-Stop for explicit approval before writing `.coferlandia/ci/profile.json`, unless the user supplied an already-approved exact profile contract.
+When publication adaptation is in scope, separately propose the exact `publication.github` policy block and generated workflow. Keep repository-owned publication siblings such as version-control decisions intact; the adapter owns only the GitHub-native transport block it materializes.
 
-### 3. Validate deterministically
+Stop for explicit approval before writing repository configuration unless the controlling request already authorizes the exact adaptation scope.
+
+### 3. Validate CI deterministically
 
 Place the approved semantic profile in a transient JSON input and run:
 
@@ -74,7 +99,7 @@ python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py 
 
 The CLI rejects unknown top-level fields, secret-bearing keys, empty local qualification, ambiguous gates and invalid merge-group settings.
 
-### 4. Render the canonical repository profile
+### 4. Render the canonical repository CI profile
 
 Preview:
 
@@ -83,47 +108,100 @@ python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py 
   --input <approved-profile.json> --target-root <repo-root> --dry-run --json
 ```
 
-After approval, repeat without `--dry-run`. The only canonical generated profile path is:
+After approval, repeat without `--dry-run`. The canonical generated CI profile path is:
 
 ```text
 .coferlandia/ci/profile.json
 ```
 
-Do not generate repository-local copies of `prompts/ci.md`, `prompts/chat-coder.md`, `prompts/merge.md`, or the `local-ci` skill.
+Do not generate repository-local copies of `prompts/ci.md`, `prompts/chat-coder.md`, `prompts/merge.md`, `prompts/chat-release.md`, or generic skills.
 
-### 5. Verify profile drift and both consumers
+### 5. Adapt GitHub-native release publication when explicitly in scope
 
-Run `profile check` against the stored fingerprint. Then pressure-test both execution surfaces conceptually/with fixtures:
+Read `references/publication-contract.md`. Publication adaptation is opt-in and separate from the CI profile.
+
+Validate an existing release policy without writing:
+
+```bash
+python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py publication validate \
+  --policy <release-policy.json> --json
+```
+
+Preview deterministic materialization:
+
+```bash
+python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py publication render \
+  --policy <release-policy.json> \
+  --target-root <repo-root> \
+  --publisher-path <repo-relative-coferlandia-release-publisher-entrypoint> \
+  --workflow-path .github/workflows/coferlandia-release-publish.yml \
+  --dry-run --json
+```
+
+After approval, repeat without `--dry-run`. This writes only:
+
+```text
+.coferlandia/release/policy.json
+.github/workflows/<approved-publication-workflow>.yml
+```
+
+The adapter preserves existing repository publication fields and sets only:
+
+```json
+{
+  "publication": {
+    "github": {
+      "mode": "workflow-dispatch",
+      "workflow": ".github/workflows/<approved-publication-workflow>.yml"
+    }
+  }
+}
+```
+
+The generated workflow accepts only canonical release identity inputs: `target_sha`, `version`, `impact`, `title`, and `notes`; checks out the exact SHA; grants only `contents: write`; and delegates Commit -> Release mechanics to `coferlandia-release-publisher`. It never deploys.
+
+### 6. Verify drift and both consumers
+
+Run `profile check` against the stored CI fingerprint. Pressure-test the relevant execution surfaces:
 
 - Chat/GitHub-native CI can identify exact gates without local commands.
 - Local CI can identify exact local qualification without hardcoded project knowledge.
 - Both bind output to the same profile fingerprint and shared READY_FOR_MERGE envelope.
 - Exceptional lanes remain externally authorized and repository-owned.
+- When publication adaptation is enabled, `chat-release` can resolve one repository-declared workflow-dispatch surface independently from CI qualification.
+- Missing/disabled publication remains fail-closed; no LOCAL fallback is introduced.
+- The publication workflow uses the exact integrated SHA supplied by `chat-release` and invokes the generic publisher rather than reproducing tag/release shell logic.
 
-### 6. Maintenance
+### 7. Maintenance
 
 Re-run this skill when repository CI facts materially change: canonical command, required service, workflow/gate identity, allowed terminal conclusions, merge-group authority, base sensitivity, or exceptional-lane contract. A changed profile fingerprint invalidates older READY_FOR_MERGE evidence.
 
+When GitHub-native publication has been adapted, also re-run it when release-policy ownership, publisher path, publication workflow path, required permissions, or supported publication transport changes. Publication changes do not alter the CI profile fingerprint unless Qualification facts also changed.
+
 ## Gotchas
 
-- **Copying generic controllers into the project:** prohibited. Adapt through the profile.
+- **Copying generic controllers into the project:** prohibited. Adapt through repository interfaces.
 - **Treating docs as newer than executable truth:** reconcile them; do not encode stale commands.
 - **Storing tokens/secrets/current CI results:** prohibited by contract and deterministic validation.
-- **Inventing a fallback:** the profile exposes both strategies; execution choice stays with the controlling authority.
-- **Encoding merge behavior as CI:** keep Integration policy in repository authority; profile contains only qualification/effective-candidate facts needed to validate evidence.
-- **Auto-authorizing HOTFIX:** prohibited. Record only the repository documentation and external authorization owner.
+- **Inventing a fallback:** execution strategy stays with the controlling authority; GITHUB_NATIVE publication never silently falls back to LOCAL.
+- **Encoding merge or publication behavior as CI:** keep Integration and Publication policy in repository authority; `.coferlandia/ci/profile.json` contains only Qualification/effective-candidate facts needed to validate evidence.
+- **Duplicating release mechanics in a workflow:** prohibited. The workflow transports exact identity to `coferlandia-release-publisher`; it does not reimplement annotated tags or GitHub Releases.
+- **Auto-authorizing HOTFIX or release publication:** prohibited. Adaptation creates capability, not authority to use it.
 
 ## Expected Output
 
 ```text
-CI adapter result
+Coferlandia repository adapter result
 Target repository: <owner/repo>
-Profile: .coferlandia/ci/profile.json
+CI profile: .coferlandia/ci/profile.json
 Profile fingerprint: <sha256>
 Canonical local qualification: <references>
 GitHub qualification gates: <references>
 Merge-group authority: <summary>
 Exceptional lanes: <references | none>
+GitHub-native publication: <not requested | disabled | workflow path>
+Release policy: <path | not touched>
+Publisher entrypoint: <path | not applicable>
 Unresolved ambiguity: <none | items>
 Generic prompt/skill copies generated: no
 Validation: <commands/results>
@@ -131,19 +209,22 @@ Validation: <commands/results>
 
 ## Output Location
 
-Discovery/proposal notes are conversational or follow the target repository's approved `.agent/` planning convention. The only standard target-repository configuration written by this skill is `.coferlandia/ci/profile.json`.
+Discovery/proposal notes are conversational or follow the target repository's approved `.agent/` planning convention. Standard target-repository configuration written by this skill is limited to the CI profile and, when explicitly requested, release publication transport files.
 
 ### Output Exceptions
 
 - `.coferlandia/ci/profile.json` — approved static CI interface definition.
+- `.coferlandia/release/policy.json` — existing/approved release policy with `publication.github` transport materialized when requested.
+- `.github/workflows/<approved-publication-workflow>.yml` — generated GitHub-native publication transport when requested.
 
 ## Scripts Available
 
-- **`scripts/coferlandia-ci-adapter-cli.py`** — validates, fingerprints, checks and atomically renders repository CI profiles. Run `capabilities --json` for the public command catalog.
+- **`scripts/coferlandia-ci-adapter-cli.py`** — validates, fingerprints, checks and atomically renders repository CI profiles; validates and atomically renders optional GitHub-native release publication transport. Run `capabilities --json` for the public command catalog.
 
 ## References
 
 - Read `references/discovery.md` before repository study.
-- Read `references/profile-contract.md` while proposing/reviewing profile fields.
-- Read `references/authority-and-staleness.md` when sources conflict or CI identity changed.
+- Read `references/profile-contract.md` while proposing/reviewing CI profile fields.
+- Read `references/publication-contract.md` when complete GitHub-native release delivery is in scope.
+- Read `references/authority-and-staleness.md` when sources conflict or CI/release identity changed.
 - Read `references/testing.md` before completion/pressure validation.
