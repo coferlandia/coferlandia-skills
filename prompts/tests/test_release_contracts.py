@@ -81,6 +81,27 @@ class ReleasePromptContractTests(unittest.TestCase):
         self.assertIn("mark any previous review/qualification evidence stale", text)
         self.assertIn("RELEASE_INITIALIZATION_BLOCKED", text)
 
+    def test_chat_release_uses_repository_declared_github_native_publication_transport(self):
+        text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
+        for token in (
+            "publication.github",
+            "workflow-dispatch",
+            "target_sha",
+            "version",
+            "impact",
+            "title",
+            "notes",
+            "newly created authoritative workflow run",
+            "annotated tag and GitHub Release",
+            "RELEASE_PUBLICATION_BLOCKED",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("Do not fall back to LOCAL", text)
+        self.assertIn("do not mutate publication identity directly from this prompt", text)
+        self.assertIn("Publication evidence = <workflow/run identity>", text)
+        self.assertNotIn("gh release create", text)
+        self.assertNotIn("git tag -a", text)
+
 
 if __name__ == "__main__":
     unittest.main()
