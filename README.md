@@ -82,6 +82,8 @@ GITHUB_NATIVE LOCAL
            COMPLETE
 ```
 
+For repositories explicitly adapted for complete GitHub-native release delivery, `chat-release` may hand the exact integrated release identity to a repository-declared GitHub Actions publication workflow. The standard Chat-compatible transport is a versioned control comment on the merged release PR; the workflow delegates Commit -> Release mechanics to `coferlandia-release-publisher`, then `chat-release` independently verifies the resulting tag and GitHub Release. Publication remains separate from deployment.
+
 Emergency remediation is explicit and high-level:
 
 ```text
@@ -157,11 +159,12 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.8.0 — 2026-09-11**
+**v2.9.0 — 2026-09-12**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| local-release | 1.0.0 | Adds the LOCAL aggregate release surface: candidate/work-surface initialization, manifest currentization, aggregate review, exact-candidate qualification, `READY_FOR_RELEASE`, repository-approved integration, publisher composition, explicit repair/requalification states, and no GitHub-native Qualification fallback or deployment ownership. |
+| coferlandia-ci-adapter | 1.1.0 | Adds opt-in adaptation of a repository-declared GitHub-native release publication surface while keeping the CI profile scoped to Qualification. |
+| coferlandia-release-publisher | 1.1 | Adds validation/documentation for policy-declared GitHub publication transports while preserving its non-interactive exact Commit -> Release mechanics. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
