@@ -1,5 +1,11 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.1.1 — 2026-09-12
+
+### Changed
+
+- Makes the GitHub-native publication runner repository-configurable while preserving ubuntu-latest as the compatible default and keeping publication separate from Qualification.
+
 ## 1.1.0 — 2026-09-12
 
 ### Added

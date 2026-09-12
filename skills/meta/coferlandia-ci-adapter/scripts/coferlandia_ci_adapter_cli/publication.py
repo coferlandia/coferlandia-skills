@@ -5,6 +5,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 DEFAULT_WORKFLOW_PATH = Path(".github/workflows/coferlandia-release-publish.yml")
+DEFAULT_RUNS_ON: str = "ubuntu-latest"
 RELEASE_POLICY_PATH = Path(".coferlandia/release/policy.json")
 PUBLICATION_REQUEST_MARKER = "<!-- coferlandia-release-publication-request:v1 -->"
 
@@ -19,6 +20,31 @@ def _safe_repo_path(value: str, *, suffixes: tuple[str, ...] | None = None) -> s
     if suffixes and not normalized.endswith(suffixes):
         raise ValueError(f"repository path must end with one of: {', '.join(suffixes)}")
     return normalized
+
+
+def _normalize_runs_on(value: Any) -> str | list[str]:
+    if value is None:
+        return DEFAULT_RUNS_ON
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized or "\n" in normalized or "\r" in normalized:
+            raise ValueError("publication.github.runs_on string must be non-empty and single-line")
+        return normalized
+    if isinstance(value, list):
+        if not value:
+            raise ValueError("publication.github.runs_on list must not be empty")
+        normalized: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise ValueError("publication.github.runs_on labels must be strings")
+            label = item.strip()
+            if not label or "\n" in label or "\r" in label:
+                raise ValueError("publication.github.runs_on labels must be non-empty and single-line")
+            normalized.append(label)
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("publication.github.runs_on contains duplicate labels")
+        return normalized
+    raise ValueError("publication.github.runs_on must be a string or non-empty list of strings")
 
 
 def publication_github(policy: dict[str, Any]) -> dict[str, Any] | None:
@@ -39,12 +65,16 @@ def publication_github(policy: dict[str, Any]) -> dict[str, Any] | None:
         return github
     if mode not in {"issue-comment", "workflow-dispatch"}:
         raise ValueError("publication.github.mode must be none, issue-comment, or workflow-dispatch")
-    if set(github) != {"mode", "workflow"}:
-        raise ValueError(f"{mode} publication requires exactly mode and workflow")
+    allowed = {"mode", "workflow", "runs_on"}
+    if not {"mode", "workflow"}.issubset(github) or not set(github).issubset(allowed):
+        raise ValueError(f"{mode} publication requires mode/workflow and optionally runs_on")
     workflow = _safe_repo_path(str(github.get("workflow", "")), suffixes=(".yml", ".yaml"))
     if not workflow.startswith(".github/workflows/"):
         raise ValueError("publication.github.workflow must be under .github/workflows/")
-    return {"mode": mode, "workflow": workflow}
+    rendered = {"mode": mode, "workflow": workflow}
+    if "runs_on" in github:
+        rendered["runs_on"] = _normalize_runs_on(github["runs_on"])
+    return rendered
 
 
 def load_release_policy(path: Path) -> dict[str, Any]:
@@ -58,8 +88,9 @@ def load_release_policy(path: Path) -> dict[str, Any]:
     return raw
 
 
-def render_workflow(*, publisher_path: str) -> str:
+def render_workflow(*, publisher_path: str, runs_on: Any = None) -> str:
     publisher = _safe_repo_path(publisher_path, suffixes=(".py",))
+    rendered_runs_on = json.dumps(_normalize_runs_on(runs_on), separators=(",", ":"))
     return f'''name: Coferlandia Release Publish
 
 on:
@@ -81,7 +112,7 @@ jobs:
     if: >-
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '{PUBLICATION_REQUEST_MARKER}')
-    runs-on: ubuntu-latest
+    runs-on: {rendered_runs_on}
     env:
       GH_TOKEN: ${{{{ github.token }}}}
     steps:
@@ -223,7 +254,9 @@ jobs:
 '''
 
 
-def render_publication_policy(policy: dict[str, Any], *, workflow_path: str) -> dict[str, Any]:
+def render_publication_policy(
+    policy: dict[str, Any], *, workflow_path: str, runs_on: Any = None
+) -> dict[str, Any]:
     workflow = _safe_repo_path(workflow_path, suffixes=(".yml", ".yaml"))
     if not workflow.startswith(".github/workflows/"):
         raise ValueError("publication workflow must be under .github/workflows/")
@@ -231,7 +264,14 @@ def render_publication_policy(policy: dict[str, Any], *, workflow_path: str) -> 
     publication = rendered.setdefault("publication", {})
     if not isinstance(publication, dict):
         raise ValueError("publication must be an object")
-    publication["github"] = {"mode": "issue-comment", "workflow": workflow}
+    existing_github = publication.get("github")
+    inherited_runs_on = existing_github.get("runs_on") if isinstance(existing_github, dict) else None
+    resolved_runs_on = _normalize_runs_on(runs_on if runs_on is not None else inherited_runs_on)
+    publication["github"] = {
+        "mode": "issue-comment",
+        "workflow": workflow,
+        "runs_on": resolved_runs_on,
+    }
     publication_github(rendered)
     return rendered
 

@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v2.9.1 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.1.0 | 1.1.1 | Makes the GitHub-native publication runner repository-configurable while preserving ubuntu-latest as the compatible default and keeping publication separate from Qualification. |
+| coferlandia-release-publisher | 1.1 | 1.1.1 | Accepts and validates repository publication runner metadata without changing exact Commit-to-Release semantics. |
+
+### Repository and protocol
+
+- Adds optional publication.github.runs_on so repositories can explicitly select GitHub-hosted or self-hosted publication runners without coupling runner choice to .coferlandia/ci/profile.json.
+- Adds deterministic self-hosted multi-label runner rendering and regression coverage after the SecretarIA publication transport exposed the hardcoded ubuntu-latest assumption.
+
+### Plugin and packaging
+
+- Bumps the plugin from v2.9.0 to v2.9.1 for the compatible publication-runner hotfix.
+
+### Migration or compatibility
+
+- Existing publication policies without runs_on remain compatible and continue to default to ubuntu-latest; repositories requiring self-hosted publication must declare their exact runner labels during adaptation.
+
 ## v2.9.0 (2026-09-12)
 
 ### Skills

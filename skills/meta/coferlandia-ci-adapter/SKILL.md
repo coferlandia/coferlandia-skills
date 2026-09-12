@@ -12,10 +12,10 @@ compatibility: >
   for deterministic adapter tooling, and write access only after the proposed adaptation is approved.
 metadata:
   author: coferlandia
-  version: "1.1.0"
+  version: "1.1.1"
   category: meta
   status: active
-  tested: "2026-09-12 - CI profile compatibility plus opt-in GitHub-native release publication policy/workflow validation and deterministic rendering covered by unittest."
+  tested: "2026-09-12 - CI profile compatibility plus opt-in GitHub-native release publication policy/workflow validation, configurable publication runners, and deterministic rendering covered by unittest."
 ---
 
 ## Context
@@ -74,10 +74,13 @@ When GitHub-native release publication is in scope, additionally record:
 release policy location and current publication fields
 publisher skill/path available in the target repository
 repository-approved publication workflow path
+publication-capable GitHub Actions runner label(s)
 release PR/work surface usable for durable control comments
 permissions/environment constraints for creating tags and GitHub Releases
 whether publication is intentionally disabled
 ```
+
+Do not assume `ubuntu-latest` is available. Determine the publication runner from current repository workflow/runner evidence. Do not infer publication runner labels from `.coferlandia/ci/profile.json`; Qualification and Publication remain separate contracts even when they happen to use the same runner pool.
 
 Do not modify the target repository during discovery.
 
@@ -85,7 +88,7 @@ Do not modify the target repository during discovery.
 
 Propose the exact CI profile with source evidence and unresolved ambiguities. Do not guess a workflow/check or copy every incidental test command when one canonical repository command already owns full qualification.
 
-When publication adaptation is in scope, separately propose the exact `publication.github` policy block and generated workflow. Keep repository-owned publication siblings such as version-control decisions intact; the adapter owns only the GitHub-native transport block it materializes.
+When publication adaptation is in scope, separately propose the exact `publication.github` policy block, publication runner contract, and generated workflow. Keep repository-owned publication siblings such as version-control decisions intact; the adapter owns only the GitHub-native transport block it materializes.
 
 Stop for explicit approval before writing repository configuration unless the controlling request already authorizes the exact adaptation scope.
 
@@ -136,8 +139,11 @@ python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py 
   --target-root <repo-root> \
   --publisher-path <repo-relative-coferlandia-release-publisher-entrypoint> \
   --workflow-path .github/workflows/coferlandia-release-publish.yml \
+  --runs-on <runner-label> [<runner-label> ...] \
   --dry-run --json
 ```
+
+Omit `--runs-on` only when repository study confirms the compatible default `ubuntu-latest` is intentionally valid. If the current policy already declares `publication.github.runs_on`, rendering without the flag preserves that value.
 
 After approval, repeat without `--dry-run`. This writes only:
 
@@ -153,11 +159,14 @@ The adapter preserves existing repository publication fields and materializes th
   "publication": {
     "github": {
       "mode": "issue-comment",
-      "workflow": ".github/workflows/<approved-publication-workflow>.yml"
+      "workflow": ".github/workflows/<approved-publication-workflow>.yml",
+      "runs_on": ["<repository-approved-runner-label>"]
     }
   }
 }
 ```
+
+`runs_on` may be a single non-empty runner string or a non-empty duplicate-free list of labels. The generated workflow uses the same value deterministically. When `runs_on` is absent, the adapter remains backward compatible and defaults to `ubuntu-latest`.
 
 The generated workflow listens for the canonical `<!-- coferlandia-release-publication-request:v1 -->` marker on a newly created release-PR comment. The request carries only `schema`, `target_sha`, `version`, `impact`, `title`, and `notes`. The workflow independently requires `admin|maintain` authority, requires the PR to be merged, parses the request as data, checks out the exact SHA, grants only the minimal read permissions plus `contents: write`, and delegates Commit -> Release mechanics to `coferlandia-release-publisher`. It never deploys.
 
@@ -174,13 +183,13 @@ Run `profile check` against the stored CI fingerprint. Pressure-test the relevan
 - When publication adaptation is enabled, `chat-release` can resolve one repository-declared publication surface independently from CI qualification.
 - For `issue-comment`, Chat can create the canonical request on the release PR and bind the resulting run to that exact request.
 - Missing/disabled publication remains fail-closed; no LOCAL fallback is introduced.
-- The publication workflow uses the exact integrated SHA supplied by `chat-release` and invokes the generic publisher rather than reproducing tag/release shell logic.
+- The publication workflow uses the repository-approved runner contract, exact integrated SHA supplied by `chat-release`, and invokes the generic publisher rather than reproducing tag/release shell logic.
 
 ### 7. Maintenance
 
 Re-run this skill when repository CI facts materially change: canonical command, required service, workflow/gate identity, allowed terminal conclusions, merge-group authority, base sensitivity, or exceptional-lane contract. A changed profile fingerprint invalidates older READY_FOR_MERGE evidence.
 
-When GitHub-native publication has been adapted, also re-run it when release-policy ownership, publisher path, publication workflow path, release work-surface contract, required permissions, or supported publication transport changes. Publication changes do not alter the CI profile fingerprint unless Qualification facts also changed.
+When GitHub-native publication has been adapted, also re-run it when release-policy ownership, publisher path, publication workflow path, publication runner labels, release work-surface contract, required permissions, or supported publication transport changes. Publication changes do not alter the CI profile fingerprint unless Qualification facts also changed.
 
 ## Gotchas
 
@@ -189,6 +198,8 @@ When GitHub-native publication has been adapted, also re-run it when release-pol
 - **Storing tokens/secrets/current CI results:** prohibited by contract and deterministic validation.
 - **Inventing a fallback:** execution strategy stays with the controlling authority; GITHUB_NATIVE publication never silently falls back to LOCAL.
 - **Encoding merge or publication behavior as CI:** keep Integration and Publication policy in repository authority; `.coferlandia/ci/profile.json` contains only Qualification/effective-candidate facts needed to validate evidence.
+- **Assuming `ubuntu-latest`:** prohibited when repository evidence requires another publication runner. Declare `publication.github.runs_on` explicitly instead.
+- **Inferring publication runners from the CI profile:** prohibited. Publication runner selection is repository-owned release transport configuration.
 - **Duplicating release mechanics in a workflow:** prohibited. The workflow transports exact identity to `coferlandia-release-publisher`; it does not reimplement annotated tags or GitHub Releases.
 - **Trusting arbitrary comment authors:** prohibited. The generated issue-comment workflow independently checks repository permission and merged-PR state before any publication mutation.
 - **Auto-authorizing HOTFIX or release publication:** prohibited. Adaptation creates capability, not authority to use it.
@@ -205,6 +216,7 @@ GitHub qualification gates: <references>
 Merge-group authority: <summary>
 Exceptional lanes: <references | none>
 GitHub-native publication: <not requested | disabled | issue-comment workflow path>
+Publication runner: <default ubuntu-latest | repository labels | not applicable>
 Release policy: <path | not touched>
 Publisher entrypoint: <path | not applicable>
 Unresolved ambiguity: <none | items>

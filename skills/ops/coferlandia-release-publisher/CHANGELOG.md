@@ -1,5 +1,11 @@
 # Changelog — coferlandia-release-publisher
 
+## 1.1.1 — 2026-09-12
+
+### Changed
+
+- Accepts and validates repository publication runner metadata without changing exact Commit-to-Release semantics.
+
 ## 1.1 — 2026-09-12
 
 ### Added

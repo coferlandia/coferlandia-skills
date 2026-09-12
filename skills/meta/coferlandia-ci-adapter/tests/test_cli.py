@@ -119,6 +119,7 @@ class AdapterCLITests(unittest.TestCase):
             stored = json.loads(policy_target.read_text(encoding="utf-8"))
             self.assertEqual(stored["publication"]["publisher_skill"], "coferlandia-release-publisher")
             self.assertEqual(stored["publication"]["github"]["mode"], "issue-comment")
+            self.assertEqual(stored["publication"]["github"]["runs_on"], "ubuntu-latest")
             workflow = workflow_target.read_text(encoding="utf-8")
             for token in (
                 "issue_comment:",
@@ -130,6 +131,7 @@ class AdapterCLITests(unittest.TestCase):
                 "notes",
                 "permissions:",
                 "contents: write",
+                'runs-on: "ubuntu-latest"',
                 "admin|maintain",
                 "merge_commit_sha",
                 'test "$merge_sha" = "$TARGET_SHA"',
@@ -139,6 +141,51 @@ class AdapterCLITests(unittest.TestCase):
             ):
                 self.assertIn(token, workflow)
             self.assertNotIn("deploy", workflow.lower())
+
+    def test_publication_render_supports_explicit_self_hosted_runner_labels(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = root / "policy.json"
+            source.write_text(json.dumps({
+                "schema_version": 1,
+                "publication": {"publisher_skill": "coferlandia-release-publisher"}
+            }), encoding="utf-8")
+            publisher = ".agents/skills/coferlandia-release-publisher/scripts/coferlandia-release.py"
+            labels = ["self-hosted", "Linux", "ARM64", "coferlandia-ci", "docker"]
+            result = subprocess.run([
+                sys.executable, str(CLI), "publication", "render",
+                "--policy", str(source),
+                "--target-root", str(root),
+                "--publisher-path", publisher,
+                "--runs-on", *labels,
+                "--json"
+            ], text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+            stored = json.loads((root / ".coferlandia" / "release" / "policy.json").read_text(encoding="utf-8"))
+            self.assertEqual(stored["publication"]["github"]["runs_on"], labels)
+            workflow = (root / ".github" / "workflows" / "coferlandia-release-publish.yml").read_text(encoding="utf-8")
+            self.assertIn('runs-on: ["self-hosted","Linux","ARM64","coferlandia-ci","docker"]', workflow)
+
+    def test_publication_validate_rejects_ambiguous_runner_labels(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = root / "policy.json"
+            source.write_text(json.dumps({
+                "schema_version": 1,
+                "publication": {
+                    "github": {
+                        "mode": "issue-comment",
+                        "workflow": ".github/workflows/coferlandia-release-publish.yml",
+                        "runs_on": ["self-hosted", "self-hosted"]
+                    }
+                }
+            }), encoding="utf-8")
+            result = subprocess.run([
+                sys.executable, str(CLI), "publication", "validate",
+                "--policy", str(source), "--json"
+            ], text=True, capture_output=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("duplicate", result.stdout)
 
     def test_publication_render_is_opt_in_and_rejects_unsafe_publisher_path(self):
         with tempfile.TemporaryDirectory() as td:
