@@ -22,6 +22,8 @@ metadata:
 
 Use this skill to adapt repository-specific CI and release-delivery facts to Coferlandia's generic controllers without copying generic controller behavior into the repository.
 
+Do not generate repository-local copies of generic Coferlandia prompts or skills. Adapt only the repository-owned CI profile, release policy, and publication workflow surfaces described here.
+
 The boundaries are deliberate:
 
 ```text
