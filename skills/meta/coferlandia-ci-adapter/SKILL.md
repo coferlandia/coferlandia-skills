@@ -74,6 +74,7 @@ When GitHub-native release publication is in scope, additionally record:
 release policy location and current publication fields
 publisher skill/path available in the target repository
 repository-approved publication workflow path
+release PR/work surface usable for durable control comments
 permissions/environment constraints for creating tags and GitHub Releases
 whether publication is intentionally disabled
 ```
@@ -114,7 +115,7 @@ After approval, repeat without `--dry-run`. The canonical generated CI profile p
 .coferlandia/ci/profile.json
 ```
 
-Do not generate repository-local copies of `prompts/ci.md`, `prompts/chat-coder.md`, `prompts/merge.md`, `prompts/chat-release.md`, or generic skills.
+Do not generate repository-local copies of generic prompts or skills.
 
 ### 5. Adapt GitHub-native release publication when explicitly in scope
 
@@ -145,22 +146,24 @@ After approval, repeat without `--dry-run`. This writes only:
 .github/workflows/<approved-publication-workflow>.yml
 ```
 
-The adapter preserves existing repository publication fields and sets only:
+The adapter preserves existing repository publication fields and materializes the Chat-compatible transport:
 
 ```json
 {
   "publication": {
     "github": {
-      "mode": "workflow-dispatch",
+      "mode": "issue-comment",
       "workflow": ".github/workflows/<approved-publication-workflow>.yml"
     }
   }
 }
 ```
 
-The generated workflow accepts only canonical release identity inputs: `target_sha`, `version`, `impact`, `title`, and `notes`; checks out the exact SHA; grants only `contents: write`; and delegates Commit -> Release mechanics to `coferlandia-release-publisher`. It never deploys.
+The generated workflow listens for the canonical `<!-- coferlandia-release-publication-request:v1 -->` marker on a newly created release-PR comment. The request carries only `schema`, `target_sha`, `version`, `impact`, `title`, and `notes`. The workflow independently requires `admin|maintain` authority, requires the PR to be merged, parses the request as data, checks out the exact SHA, grants only the minimal read permissions plus `contents: write`, and delegates Commit -> Release mechanics to `coferlandia-release-publisher`. It never deploys.
 
-### 6. Verify drift and both consumers
+`workflow-dispatch` remains a valid policy transport for clients that actually expose an Actions dispatch primitive, but this adapter's standard generated Chat surface is `issue-comment` because it is executable through the generic Chat GitHub connector.
+
+### 6. Verify drift and consumers
 
 Run `profile check` against the stored CI fingerprint. Pressure-test the relevant execution surfaces:
 
@@ -168,7 +171,8 @@ Run `profile check` against the stored CI fingerprint. Pressure-test the relevan
 - Local CI can identify exact local qualification without hardcoded project knowledge.
 - Both bind output to the same profile fingerprint and shared READY_FOR_MERGE envelope.
 - Exceptional lanes remain externally authorized and repository-owned.
-- When publication adaptation is enabled, `chat-release` can resolve one repository-declared workflow-dispatch surface independently from CI qualification.
+- When publication adaptation is enabled, `chat-release` can resolve one repository-declared publication surface independently from CI qualification.
+- For `issue-comment`, Chat can create the canonical request on the release PR and bind the resulting run to that exact request.
 - Missing/disabled publication remains fail-closed; no LOCAL fallback is introduced.
 - The publication workflow uses the exact integrated SHA supplied by `chat-release` and invokes the generic publisher rather than reproducing tag/release shell logic.
 
@@ -176,7 +180,7 @@ Run `profile check` against the stored CI fingerprint. Pressure-test the relevan
 
 Re-run this skill when repository CI facts materially change: canonical command, required service, workflow/gate identity, allowed terminal conclusions, merge-group authority, base sensitivity, or exceptional-lane contract. A changed profile fingerprint invalidates older READY_FOR_MERGE evidence.
 
-When GitHub-native publication has been adapted, also re-run it when release-policy ownership, publisher path, publication workflow path, required permissions, or supported publication transport changes. Publication changes do not alter the CI profile fingerprint unless Qualification facts also changed.
+When GitHub-native publication has been adapted, also re-run it when release-policy ownership, publisher path, publication workflow path, release work-surface contract, required permissions, or supported publication transport changes. Publication changes do not alter the CI profile fingerprint unless Qualification facts also changed.
 
 ## Gotchas
 
@@ -186,6 +190,7 @@ When GitHub-native publication has been adapted, also re-run it when release-pol
 - **Inventing a fallback:** execution strategy stays with the controlling authority; GITHUB_NATIVE publication never silently falls back to LOCAL.
 - **Encoding merge or publication behavior as CI:** keep Integration and Publication policy in repository authority; `.coferlandia/ci/profile.json` contains only Qualification/effective-candidate facts needed to validate evidence.
 - **Duplicating release mechanics in a workflow:** prohibited. The workflow transports exact identity to `coferlandia-release-publisher`; it does not reimplement annotated tags or GitHub Releases.
+- **Trusting arbitrary comment authors:** prohibited. The generated issue-comment workflow independently checks repository permission and merged-PR state before any publication mutation.
 - **Auto-authorizing HOTFIX or release publication:** prohibited. Adaptation creates capability, not authority to use it.
 
 ## Expected Output
@@ -199,7 +204,7 @@ Canonical local qualification: <references>
 GitHub qualification gates: <references>
 Merge-group authority: <summary>
 Exceptional lanes: <references | none>
-GitHub-native publication: <not requested | disabled | workflow path>
+GitHub-native publication: <not requested | disabled | issue-comment workflow path>
 Release policy: <path | not touched>
 Publisher entrypoint: <path | not applicable>
 Unresolved ambiguity: <none | items>
