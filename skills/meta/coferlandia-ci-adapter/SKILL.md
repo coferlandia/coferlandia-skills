@@ -20,7 +20,7 @@ metadata:
 
 ## Context
 
-This meta-skill adapts one repository to shared Coferlandia delivery contracts. It does not run CI or publish a release itself.
+This meta-skill adapts one repository to shared Coferlandia delivery contracts. It does not run CI itself and does not publish a release.
 
 Qualification remains a distinct contract:
 
