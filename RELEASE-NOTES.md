@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## v2.11.2 (2026-09-13)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.3.1 | 1.3.2 | Keeps remote Development validation scoped and cheap instead of defaulting to canonical FULL/Qualification suites. |
+
+### Repository and protocol
+
+- Clarifies that the Development/Qualification boundary includes execution cost as well as authority: remote Development should prefer repository-owned affected/scoped checks and fail closed when scope cannot be resolved.
+- Removes the misleading adapter example that modeled `validate-all.sh` as a Development command and replaces it with a Development-specific scoped validator.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.11.1 to v2.11.2 for the compatible Development-validation guidance correction.
+
+### Migration or compatibility
+
+- Existing Development contracts, schema version 1, fingerprints and renderer behavior remain compatible. This release changes protocol/adapter guidance only; repositories should remap expensive FULL commands out of Development when a cheaper deterministic affected surface exists.
+
 ## v2.11.1 (2026-09-12)
 
 ### Skills
@@ -616,8 +637,11 @@
 
 ### Repository
 
-- `coferlandia-skills` — bumped the repo-wide release version to include the new
-  meta skill and its test/fixture surface.
+- `skills/INDEX.md` — added the new `coferlandia-project-skill-miner` entry and
+  updated the inventory date.
+- Added a fixture-backed activation test set for the new skill, including current,
+  dangerous, ambiguous, and stale documented procedures to verify proposal-vs-approval
+  behavior.
 
 ## v1.6.0 (2026-07-12)
 
@@ -719,7 +743,6 @@
 - **coferlandia-software-dev** (`engineering`) — v1.0.0. Initial development process skill: mandatory study → plan → implement → review → test/docs/commit workflow.
 - **using-coferlandia-skills** (`meta`) — v1.0.0. First meta-skill: checks `skills/INDEX.md` and invokes matching skills before responding to any task.
 - **skill-repository-versioning** (`meta`) — v1.0.0. Pre-commit checklist: update index, classify change, bump per-skill vs. repo-wide release versions correctly.
-- **project-documentation-archivist** (`content`) — v2.0.0. Evidence-first project knowledge base with managed blocks, deterministic source indexing, open questions, module manifests, and incremental processing.
 - **sagan-scientific-debunker** (`content`) — v1.1.0. Adds systematic structured claim analysis and stronger source hierarchy.
 
 ### Protocol
