@@ -159,12 +159,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.9.1 — 2026-09-12**
+**v2.10.0 — 2026-09-12**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.1.1 | Makes the GitHub-native publication runner repository-configurable while preserving ubuntu-latest as the compatible default and keeping publication separate from Qualification. |
-| coferlandia-release-publisher | 1.1.1 | Accepts and validates repository publication runner metadata without changing exact Commit-to-Release semantics. |
+| coferlandia-ci-adapter | 1.2.0 | Adds deterministic repository-owned remote Development validation adaptation while preserving separate Qualification and publication contracts. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

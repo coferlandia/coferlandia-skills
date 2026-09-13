@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## v2.10.0 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.1.1 | 1.2.0 | Adds deterministic repository-owned remote Development validation adaptation while preserving separate Qualification and publication contracts. |
+
+### Chat prompts
+
+- `chat-coder` 1.3.0 -> 1.4.0 can complete required Development validation through a repository-owned remote execution surface when the active client cannot run the checks locally. It prefers direct execution, validates exact-candidate remote evidence, may delegate bounded bootstrap to `coferlandia-ci-adapter`, and still stops at `READY_FOR_CI`.
+
+### Repository and protocol
+
+- Adds `DEVELOPMENT_VALIDATION v1` and a JSON schema for a separate `.coferlandia/development/validation.json` contract that owns Development commands, working directory, required services/environment names, runner labels, shell, exact pull-request-head binding, and one success-only Development gate.
+- Generated Development workflows run only for Draft pull requests, explicitly checkout and verify the exact PR head SHA, execute repository-declared commands with `contents: read`, record the Development contract fingerprint, and never emit Qualification or merge authority.
+- Extends `READY_FOR_CI v1` so repository-owned remote Development evidence is valid only when candidate SHA, current Development fingerprint, declared gate, and allowed terminal conclusion all match.
+- Keeps `.coferlandia/ci/profile.json` strictly scoped to Qualification; remote Development GREEN never satisfies `READY_FOR_MERGE` or an effective/synthetic merge candidate.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.9.1 to v2.10.0 for the additive compatible remote Development execution and adapter-bootstrap capability.
+- Ships `chat-coder` 1.4.0, `coferlandia-ci-adapter` 1.2.0, the shared Development validation protocol/schema, and regression coverage.
+
+### Migration or compatibility
+
+- Existing repositories remain compatible and may continue using direct/local Development validation. Remote Development adaptation is additive and repository-owned.
+- Repositories adopting the remote surface must explicitly declare their own safe GitHub Actions runner labels, shell and Development commands; no SecretarIA-specific stack, branch, runner or command is embedded in Coferlandia Skills.
+- Self-hosted runner isolation, installed tooling and ambient environment remain repository/operator responsibilities; the generated workflow does not inject secret values.
+
 ## v2.9.1 (2026-09-12)
 
 ### Skills
@@ -405,7 +435,7 @@
 ### Migration or compatibility
 
 - Existing consumers should reinstall or update the plugin to receive the accumulated v2.2.0 skill set.
-- Repository contributors must run the local release-maintenance gate before final commit, pull-request readiness, or integration when a shipped surface changed; intermediate implementation commits remain allowed.
+- Repository contributors must run the local release-maintenance gate before final commit, pull-request readiness, or integration when a shipped surface changed; intermediate implementation commits remain allowed under the defined boundary.
 - The public `skill-repository-versioning` skill remains reusable in other repositories and delegates when a repository provides a stronger local release workflow.
 
 ## v2.0.0 (2026-07-27)

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coferlandia.dev/schemas/development-validation-v1.json",
+  "title": "Coferlandia Remote Development Validation Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "documentation",
+    "working_directory",
+    "commands",
+    "required_services",
+    "environment",
+    "github"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+    "documentation": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "working_directory": {"type": "string", "minLength": 1},
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "command", "purpose"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "command": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "required_services": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "environment": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+      "uniqueItems": true
+    },
+    "github": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["submission", "candidate_binding", "runner_labels", "shell", "gate"],
+      "properties": {
+        "submission": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "workflow"],
+          "properties": {
+            "mode": {"const": "existing-pr-events"},
+            "workflow": {"type": "string", "pattern": "^\\.github/workflows/.+\\.ya?ml$"}
+          }
+        },
+        "candidate_binding": {"const": "pull-request-head"},
+        "runner_labels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "shell": {"enum": ["bash", "pwsh"]},
+        "gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "allowed_conclusions"],
+          "properties": {
+            "name": {"type": "string", "minLength": 1},
+            "allowed_conclusions": {"const": ["success"]}
+          }
+        }
+      }
+    },
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
