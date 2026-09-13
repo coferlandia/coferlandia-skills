@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## v2.11.0 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.2.2 | 1.3.0 | Adds repository-owned declarative GitHub Actions setup for deterministic remote Development toolchains while preserving the v1 contract and stage boundaries. |
+
+### Repository and protocol
+
+- Extends `DEVELOPMENT_VALIDATION v1` with optional ordered `github.setup` actions that run after exact candidate/fingerprint recording and before repository-owned Development commands.
+- Setup actions are repository-owned static `owner/repo@ref` references with bounded flat scalar inputs; local/dynamic actions, nested or multiline inputs, dynamic expressions and private-value transport are rejected.
+- Setup declarations participate in the Development fingerprint, so changing toolchain actions or inputs invalidates older remote evidence for the handoff that relied on it.
+- Keeps Development separate from Qualification and Publication; setup never grants `READY_FOR_CI`, `READY_FOR_MERGE`, merge, release or deployment authority.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.10.4 to v2.11.0 for the additive compatible repository-owned Development toolchain capability.
+- Ships `coferlandia-ci-adapter` 1.3.0 plus the updated Development protocol/schema and renderer regression coverage.
+
+### Migration or compatibility
+
+- Existing `DEVELOPMENT_VALIDATION v1` contracts that omit `github.setup` remain valid and keep their existing rendering semantics.
+- Repositories whose remote Development commands need Python, Node.js or other project runtimes may declare repository-approved setup actions instead of baking project-specific toolchains into generic runner images or wrapper scripts.
+- Toolchain versions must come from repository-owned manifests, workflows or current development documentation; the adapter does not infer them from the runner image.
+
 ## v2.10.4 (2026-09-12)
 
 ### Skills

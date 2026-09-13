@@ -11,10 +11,10 @@ compatibility: >
   for deterministic adapter tooling, and write access only after the adaptation scope is authorized.
 metadata:
   author: coferlandia
-  version: "1.2.2"
+  version: "1.3.0"
   category: meta
   status: active
-  tested: "2026-09-12 - CI profile, remote Development validation, configurable publication runners, isolated publication control-plane execution, and opt-in GitHub-native release publication rendering covered by unittest."
+  tested: "2026-09-12 - CI profile, remote Development validation with declarative toolchain setup, configurable publication runners, isolated publication control-plane execution, and opt-in GitHub-native release publication rendering covered by unittest."
 ---
 
 ## Context
@@ -39,7 +39,7 @@ Publication
         -> coferlandia-release-publisher
 ```
 
-Do not generate repository-local copies of generic Coferlandia prompts or skills. The repository remains authoritative for commands, services, runner labels, shell, documentation and policy.
+Do not generate repository-local copies of generic Coferlandia prompts or skills. The repository remains authoritative for commands, services, runner labels, shell, toolchain setup, documentation and policy.
 
 ## Activation
 
@@ -67,11 +67,13 @@ applicable cheap deterministic Development commands
 working directory
 required services
 environment variable names only (never values)
+project-specific runtime/toolchain versions required by those commands
+repository-approved setup actions when deterministic job-local provisioning is needed
 GitHub Actions availability
 approved runner labels
 approved shell
 Draft-PR event compatibility
-whether candidate code can safely execute on the selected runner
+whether candidate/setup code can safely execute on the selected runner
 ```
 
 When GitHub-native release publication is in scope, establish its publication-capable runner label(s) separately. Do not assume `ubuntu-latest` is available and do not infer publication runner labels from Qualification or Development configuration merely because a repository happens to share a runner pool.
@@ -80,7 +82,7 @@ Do not modify the target repository during discovery.
 
 ## Approval and scope
 
-Propose the exact interface being adapted and its source evidence. Do not guess commands, runner labels, check names, or workflow semantics. Stop for explicit approval before writing unless the controlling invocation already authorized the exact adaptation surface.
+Propose the exact interface being adapted and its source evidence. Do not guess commands, toolchain versions, setup actions, runner labels, check names, or workflow semantics. Stop for explicit approval before writing unless the controlling invocation already authorized the exact adaptation surface.
 
 Changing one interface does not implicitly authorize changing another.
 
@@ -120,7 +122,10 @@ A Development contract owns repository-specific facts:
 - exact `pull-request-head` candidate binding;
 - runner labels;
 - `bash` or `pwsh` shell;
+- optional ordered `github.setup` actions for project-specific job-local toolchains;
 - one Development gate whose only GREEN conclusion is `success`.
+
+Existing v1 contracts without `github.setup` remain valid. When setup is needed, declare only repository-approved static `owner/repo@ref` actions with flat scalar `with` inputs. The adapter rejects local/dynamic actions, nested or multiline inputs, dynamic expressions, sensitive-key inputs and per-step private-value transport.
 
 Validate/fingerprint an approved source:
 
@@ -149,13 +154,16 @@ The generated workflow:
 - checks out `github.event.pull_request.head.sha` explicitly and verifies `HEAD`;
 - grants candidate-controlled code only `contents: read` GitHub permission;
 - uses the repository-declared runner labels and shell;
+- records the exact candidate SHA and Development contract fingerprint before project setup/execution;
+- executes repository-declared setup actions, when present, in declared order;
 - executes only the repository-declared ordered Development commands;
-- records the exact candidate SHA and Development contract fingerprint;
 - never emits `READY_FOR_CI`, `READY_FOR_MERGE`, or any Qualification authority.
 
 The renderer never injects secret values. Self-hosted runner isolation, preinstalled tooling and any ambient runner environment remain repository/operator responsibilities.
 
-Rendering is deterministic and idempotent: the same semantic contract produces the same fingerprint, stored contract and workflow text.
+Setup actions are executable code and remain subject to repository runner-safety policy. Generic runners provide the execution substrate; project-specific runtime versions belong to `github.setup` when deterministic provisioning is needed.
+
+Rendering is deterministic and idempotent: the same semantic contract produces the same fingerprint, stored contract and workflow text. Setup input keys render in deterministic sorted order.
 
 ## GitHub-native release publication
 
@@ -195,13 +203,16 @@ After adaptation, pressure-test the relevant consumers:
 - Exceptional lanes remain externally authorized.
 - Publication remains separately resolved, uses its repository-approved runner contract, and fails closed.
 
-Re-run the adapter when any material repository fact changes: Development commands, runner labels, shell, required services/environment names, Development workflow identity, Qualification commands/gates, merge-group semantics, publication policy/runner labels or exceptional lanes. A changed Development fingerprint invalidates older remote Development evidence for the handoff that relied on it.
+Re-run the adapter when any material repository fact changes: Development commands, setup actions/inputs, runner labels, shell, required services/environment names, Development workflow identity, Qualification commands/gates, merge-group semantics, publication policy/runner labels or exceptional lanes. A changed Development fingerprint invalidates older remote Development evidence for the handoff that relied on it.
 
 ## Gotchas
 
 - **Copying generic controllers into the project:** prohibited.
 - **Using Fast/Qualification CI as Development validation because local execution is unavailable:** prohibited unless that check is independently declared by repository policy as the Development gate.
 - **Hardcoding one repository's stack or runner labels into the adapter:** prohibited.
+- **Baking every project's runtime versions into the generic runner image:** wrong; declare repository-owned job-local setup when deterministic provisioning is required.
+- **Guessing a runtime/toolchain version from the runner:** prohibited; derive it from repository-owned evidence.
+- **Using local/dynamic setup actions or private-value inputs in the Development contract:** prohibited.
 - **Storing tokens, secret values, credentials or current run results in contracts:** prohibited.
 - **Treating a successful remote Development gate as merge authority:** prohibited.
 - **Assuming `ubuntu-latest` for publication:** prohibited when repository evidence requires another runner; declare the publication runner explicitly.
@@ -241,7 +252,7 @@ Discovery/proposal notes remain conversational or use the target repository's ap
 
 ## Scripts Available
 
-- **`scripts/coferlandia-ci-adapter-cli.py`** — validates, fingerprints, checks and atomically renders CI profiles and remote Development contracts; validates/renders optional GitHub-native publication transport including repository-owned runner labels. Run `capabilities --json` for the command catalog.
+- **`scripts/coferlandia-ci-adapter-cli.py`** — validates, fingerprints, checks and atomically renders CI profiles and remote Development contracts including optional repository-owned toolchain setup; validates/renders optional GitHub-native publication transport including repository-owned runner labels. Run `capabilities --json` for the command catalog.
 
 ## References
 
