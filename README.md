@@ -163,8 +163,7 @@ AGENTS.md        Entry point for agents
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.2.1 | Removes the generated GitHub-native publication workflow dependency on a preinstalled GitHub CLI by using Python standard-library GitHub REST calls while preserving runner, authority and exact-SHA controls. |
-| coferlandia-release-publisher | 1.1.2 | Replaces GitHub CLI subprocess calls with a Python standard-library GitHub REST transport using GITHUB_TOKEN or GH_TOKEN without changing fail-closed release semantics. |
+| coferlandia-release-publisher | 1.1.3 | Fixes draft release discovery so publication can safely resume from an existing annotated tag plus matching draft when GitHub omits drafts from the release-by-tag endpoint. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
