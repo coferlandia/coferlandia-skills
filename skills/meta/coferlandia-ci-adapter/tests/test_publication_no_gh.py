@@ -30,6 +30,12 @@ class PublicationWorkflowTests(unittest.TestCase):
         self.assertIn("merge_sha=${{ steps.authority.outputs.merge_sha }}", workflow.replace('MERGE_SHA: ${{ steps.authority.outputs.merge_sha }}', 'merge_sha=${{ steps.authority.outputs.merge_sha }}'))
         self.assertIn("actions/setup-python@v5", workflow)
         self.assertLess(workflow.index("actions/setup-python@v5"), workflow.index("Require release authority"))
+        self.assertIn("Check out exact publication control plane", workflow)
+        self.assertIn("ref: ${{ github.sha }}", workflow)
+        self.assertIn("path: control-plane", workflow)
+        self.assertIn("path: release-target", workflow)
+        self.assertIn("working-directory: release-target", workflow)
+        self.assertIn("$GITHUB_WORKSPACE/control-plane/.agents/skills/coferlandia-release-publisher/scripts/coferlandia-release.py", workflow)
         self.assertIn('runs-on: ["self-hosted","Linux","ARM64","coferlandia-ci","docker"]', workflow)
         self.assertNotIn("deploy", workflow.lower())
 
