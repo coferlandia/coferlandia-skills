@@ -194,7 +194,7 @@
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
 | coferlandia-ci-adapter | 1.0.0 | 1.1.0 | Adds opt-in adaptation of repository-declared GitHub-native release publication policy/workflows while keeping `.coferlandia/ci/profile.json` scoped strictly to Qualification. |
-| coferlandia-release-publisher | 1.0 | 1.1 | Adds validation and explicit non-interactive support for policy-declared GitHub publication transports without changing exact annotated-tag/GitHub-Release publication semantics. |
+| coferlandia-release-publisher | 1.0 | 1.1 | Adds validation and explicit non-interactive support for policy-declared GitHub publication transports without changing exact annotated-tag/GitHub-Release semantics. |
 
 ### Chat prompts
 
@@ -760,5 +760,5 @@
 
 - Established the reusable Coferlandia skill repository protocol.
 - Added Apache-2.0 licensing and repository-level author/license/version policy.
-- Added `_protocol/` templates, `validate_skill.py` tooling.
+- Added `_protocol/` templates and `validate_skill.py` tooling.
 - Added first four canonical skills under `skills/`.
