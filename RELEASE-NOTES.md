@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v2.12.0 (2026-09-13)
+
+### Repository and protocol
+
+- Makes standalone `chat coder` / `chat-coder` a registry-declared convenience flow that resolves Development -> GITHUB_NATIVE Qualification -> Integration before execution while preserving each stage's authority boundary and durable handoffs.
+- Adds `chat dev` / `chat-dev` as the explicit Development-only alias for callers that intentionally want to stop at `READY_FOR_CI`.
+- Extends prompt registry validation/resolution with fail-closed `standalone_defaults`; explicit `+` compositions suppress defaults, READY state never infers another stage, and LOCAL/GITHUB_NATIVE fallback remains prohibited.
+- Adds `WAITING_CI` as a factual non-terminal GitHub Actions state and continues automatically to `merge` when the already-resolved sequence includes Integration.
+- Aligns prompt distribution documentation with current packaging: public prompts ship with the plugin and may also be vendored under consumer prompt directories such as `.agents/prompts/`.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.11.2 to v2.12.0 for the additive standalone Chat Coder delivery sequence, prompt resolver contract, and updated Chat prompt catalog.
+
+### Migration or compatibility
+
+- Standalone `chat coder` now completes GitHub-native Qualification and Integration by default; use `chat dev` when the intended terminal state is `READY_FOR_CI`.
+- Explicit composed flows remain exact and take precedence over standalone defaults, so `chat coder + local ci + merge` continues to select LOCAL Qualification with no hidden GitHub-native stage.
+- Consumers that vendor Chat prompts should synchronize `BOOTSTRAP.md`, `registry.json`, `chat-coder.md`, `ci.md`, and `INDEX.md` together with the resolver semantics.
+
 ## v2.11.2 (2026-09-13)
 
 ### Skills
