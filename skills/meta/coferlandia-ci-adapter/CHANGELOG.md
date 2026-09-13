@@ -1,5 +1,11 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.2.1 — 2026-09-12
+
+### Changed
+
+- Removes the generated GitHub-native publication workflow dependency on a preinstalled GitHub CLI by using Python standard-library GitHub REST calls while preserving runner, authority and exact-SHA controls.
+
 ## 1.2.0 — 2026-09-12
 
 ### Added

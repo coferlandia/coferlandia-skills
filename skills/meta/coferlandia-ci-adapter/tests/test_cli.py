@@ -132,14 +132,16 @@ class AdapterCLITests(unittest.TestCase):
                 "permissions:",
                 "contents: write",
                 'runs-on: "ubuntu-latest"',
-                "admin|maintain",
+                "'admin', 'maintain'",
                 "merge_commit_sha",
-                'test "$merge_sha" = "$TARGET_SHA"',
+                'test "$MERGE_SHA" = "$TARGET_SHA"',
                 "body.count(marker) != 1",
                 "len(matches) != 1",
+                "from urllib.request import Request, urlopen",
                 publisher,
             ):
                 self.assertIn(token, workflow)
+            self.assertNotIn("gh api", workflow)
             self.assertNotIn("deploy", workflow.lower())
 
     def test_publication_render_supports_explicit_self_hosted_runner_labels(self):

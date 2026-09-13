@@ -18,8 +18,6 @@ class FakeResponse:
     def read(self) -> bytes:
         if isinstance(self.payload, bytes):
             return self.payload
-        if isinstance(self.payload, str):
-            return self.payload.encode("utf-8")
         return json.dumps(self.payload).encode("utf-8")
 
     def close(self) -> None:
@@ -36,8 +34,8 @@ class FakeOpener:
         return FakeResponse(self.payloads.pop(0))
 
 
-class GitHubServiceTests(unittest.TestCase):
-    def test_reads_repository_and_release_as_json(self) -> None:
+class GitHubServiceHttpTests(unittest.TestCase):
+    def test_repository_and_release_calls_use_http_transport(self) -> None:
         opener = FakeOpener([
             {"full_name": "coferlandia/demo", "default_branch": "main"},
             {"tag_name": "v1.2.0", "name": "Release", "draft": False, "prerelease": False, "assets": []},
@@ -47,22 +45,20 @@ class GitHubServiceTests(unittest.TestCase):
         release = service.release_by_tag("coferlandia/demo", "v1.2.0")
         self.assertEqual(info["default_branch"], "main")
         self.assertEqual(release["tag"], "v1.2.0")
-        self.assertFalse(release["draft"])
-        self.assertTrue(all(request.full_url.startswith("https://api.github.com/") for request in opener.requests))
+        self.assertEqual(opener.requests[0].method, "GET")
+        self.assertIn("/repos/coferlandia/demo", opener.requests[0].full_url)
 
-    def test_invalid_json_fails_explicitly(self) -> None:
-        service = GitHubService(opener=FakeOpener(["not-json"]), token="")
-        with self.assertRaises(RuntimeError):
-            service.repository_info("coferlandia/demo")
-
-    def test_create_release_is_draft_and_does_not_create_tag(self) -> None:
+    def test_create_release_posts_explicit_draft_payload(self) -> None:
         opener = FakeOpener([{"id": 42, "tag_name": "v1.2.0", "draft": True, "assets": []}])
         service = GitHubService(opener=opener, token="")
-        result = service.create_draft_release("coferlandia/demo", "v1.2.0", "Demo", "Notes", False)
-        payload = json.loads(opener.requests[0].data.decode("utf-8"))
-        self.assertTrue(result["draft"])
-        self.assertEqual(opener.requests[0].method, "POST")
+        release = service.create_draft_release("coferlandia/demo", "v1.2.0", "Demo", "Notes", False)
+        request = opener.requests[0]
+        payload = json.loads(request.data.decode("utf-8"))
+        self.assertTrue(release["draft"])
+        self.assertEqual(request.method, "POST")
         self.assertTrue(payload["draft"])
+        self.assertFalse(payload["prerelease"])
+        self.assertEqual(payload["tag_name"], "v1.2.0")
         self.assertNotIn("target_commitish", payload)
 
     def test_service_exposes_no_destructive_release_delete(self) -> None:

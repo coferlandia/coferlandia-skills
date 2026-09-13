@@ -1,5 +1,11 @@
 # Changelog — coferlandia-release-publisher
 
+## 1.1.2 — 2026-09-12
+
+### Changed
+
+- Replaces GitHub CLI subprocess calls with a Python standard-library GitHub REST transport using GITHUB_TOKEN or GH_TOKEN without changing fail-closed release semantics.
+
 ## 1.1.1 — 2026-09-12
 
 ### Changed
