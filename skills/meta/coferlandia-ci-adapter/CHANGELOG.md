@@ -1,5 +1,16 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.3.2 — 2026-09-13
+
+### Changed
+
+- Tightens remote Development adaptation guidance so a repository's canonical FULL/Qualification suite is not selected merely because it is the easiest existing command to execute remotely.
+- Prefers repository-owned affected/scoped Development routing and requires unresolved scope to fail closed instead of silently escalating to FULL validation.
+
+### Compatibility
+
+- No Development schema or renderer behavior changes. Existing contracts remain valid; this patch strengthens adapter guidance and examples only.
+
 ## 1.3.1 — 2026-09-12
 
 ### Added
