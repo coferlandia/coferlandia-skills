@@ -159,12 +159,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.10.1 — 2026-09-12**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| coferlandia-ci-adapter | 1.2.1 | Removes the generated GitHub-native publication workflow dependency on a preinstalled GitHub CLI by using Python standard-library GitHub REST calls while preserving runner, authority and exact-SHA controls. |
-| coferlandia-release-publisher | 1.1.2 | Replaces GitHub CLI subprocess calls with a Python standard-library GitHub REST transport using GITHUB_TOKEN or GH_TOKEN without changing fail-closed release semantics. |
+**v2.10.2 — 2026-09-12**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
