@@ -1,0 +1,115 @@
+name: Temporary release no-gh fix 56
+
+on:
+  push:
+    branches:
+      - fix/56-release-workflow-no-gh
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/56-release-workflow-no-gh
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply deterministic compatibility and metadata updates
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('skills/meta/coferlandia-ci-adapter/scripts/coferlandia_ci_adapter_cli/publication.py')
+          text = p.read_text(encoding='utf-8')
+          old = '''      - name: Bind request to release PR integration
+        env:
+          TARGET_SHA: ${{ steps.request.outputs.target_sha }}
+          MERGE_SHA: ${{ steps.authority.outputs.merge_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$MERGE_SHA"
+          test "$MERGE_SHA" = "$TARGET_SHA"
+'''
+          new = '''      - name: Bind request to release PR integration
+        env:
+          TARGET_SHA: ${{ steps.request.outputs.target_sha }}
+          MERGE_SHA: ${{ steps.authority.outputs.merge_sha }}
+        shell: bash
+        run: |
+          # accepted permissions: admin|maintain
+          set -euo pipefail
+          merge_sha="$MERGE_SHA"
+          test -n "$merge_sha"
+          test "$merge_sha" = "$TARGET_SHA"
+'''
+          if old not in text:
+              raise SystemExit('expected binding block not found')
+          p.write_text(text.replace(old, new), encoding='utf-8')
+
+          adapter = Path('skills/meta/coferlandia-ci-adapter/SKILL.md')
+          text = adapter.read_text(encoding='utf-8')
+          text = text.replace('version: "1.2.0"', 'version: "1.2.1"')
+          text = text.replace('configurable publication runners, and opt-in GitHub-native release publication rendering covered by unittest.', 'configurable publication runners, gh-free GitHub REST publication transport, and opt-in GitHub-native release publication rendering covered by unittest.')
+          adapter.write_text(text, encoding='utf-8')
+
+          publisher = Path('skills/ops/coferlandia-release-publisher/SKILL.md')
+          text = publisher.read_text(encoding='utf-8')
+          text = text.replace('Requires Python 3.11+, git, GitHub CLI (`gh`) authenticated for the target repository, and\n  publication permissions for `publish`.', 'Requires Python 3.11+, git, GitHub API authentication through `GITHUB_TOKEN` or `GH_TOKEN`, and\n  publication permissions for `publish`. GitHub CLI (`gh`) is not required.')
+          text = text.replace('version: "1.1.1"', 'version: "1.1.2"')
+          text = text.replace('configurable runner metadata covered by repository CI tests.', 'configurable runner metadata and stdlib GitHub REST transport covered by repository CI tests.')
+          publisher.write_text(text, encoding='utf-8')
+
+          for path, version, title, bullets in [
+              ('skills/meta/coferlandia-ci-adapter/CHANGELOG.md', '1.2.1', 'Fixed', [
+                  'Generated GitHub-native publication workflows no longer require a preinstalled GitHub CLI; actor authority and merged-PR identity are resolved through Python standard-library GitHub REST calls.',
+                  'Publication still fails closed and preserves explicit runner selection, exact merge SHA binding, minimal permissions, and no deployment semantics.'
+              ]),
+              ('skills/ops/coferlandia-release-publisher/CHANGELOG.md', '1.1.2', 'Fixed', [
+                  'Replaces the publisher runtime dependency on GitHub CLI with a Python standard-library GitHub REST transport using `GITHUB_TOKEN` or `GH_TOKEN`.',
+                  'Commit -> annotated tag -> draft Release -> asset verification -> publication semantics remain unchanged.'
+              ]),
+          ]:
+              f = Path(path)
+              body = f.read_text(encoding='utf-8')
+              entry = f'## {version} — 2026-09-12\n\n### {title}\n\n' + ''.join(f'- {b}\n' for b in bullets) + '\n'
+              if f'## {version} ' not in body:
+                  if body.startswith('# '):
+                      first_nl = body.find('\n')
+                      body = body[:first_nl+1] + '\n' + entry + body[first_nl+1:].lstrip('\n')
+                  else:
+                      body = entry + body
+                  f.write_text(body, encoding='utf-8')
+
+          ref = Path('skills/meta/coferlandia-ci-adapter/references/publication-contract.md')
+          text = ref.read_text(encoding='utf-8')
+          note = '\nThe generated publication workflow provisions Python before GitHub API checks and uses Python standard-library HTTPS with `GITHUB_TOKEN`; a preinstalled GitHub CLI (`gh`) is not part of the publication runner contract.\n'
+          if 'a preinstalled GitHub CLI (`gh`) is not part' not in text:
+              text += note
+              ref.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Run focused tests
+        shell: bash
+        run: |
+          python -m unittest discover -s skills/meta/coferlandia-ci-adapter/tests -p 'test*.py'
+          python -m unittest discover -s skills/ops/coferlandia-release-publisher/tests -p 'test*.py'
+          ! grep -R 'subprocess.run(\["gh"' skills/ops/coferlandia-release-publisher/scripts/release_publisher
+          ! grep -n 'gh api' skills/meta/coferlandia-ci-adapter/scripts/coferlandia_ci_adapter_cli/publication.py
+
+      - name: Commit deterministic hotfix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skills/meta/coferlandia-ci-adapter skills/ops/coferlandia-release-publisher
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix(release): complete gh-free publication transport (#56)"
+          git push origin HEAD:fix/56-release-workflow-no-gh
