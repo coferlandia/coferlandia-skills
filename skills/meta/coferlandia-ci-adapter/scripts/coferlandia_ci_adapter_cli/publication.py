@@ -91,7 +91,7 @@ def load_release_policy(path: Path) -> dict[str, Any]:
 def render_workflow(*, publisher_path: str, runs_on: Any = None) -> str:
     publisher = _safe_repo_path(publisher_path, suffixes=(".py",))
     rendered_runs_on = json.dumps(_normalize_runs_on(runs_on), separators=(",", ":"))
-    return f'''name: Coferlandia Release Publish
+    return f"""name: Coferlandia Release Publish
 
 on:
   issue_comment:
@@ -114,19 +114,55 @@ jobs:
       contains(github.event.comment.body, '{PUBLICATION_REQUEST_MARKER}')
     runs-on: {rendered_runs_on}
     env:
-      GH_TOKEN: ${{{{ github.token }}}}
+      GITHUB_TOKEN: ${{{{ github.token }}}}
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Require release authority
+        id: authority
         shell: bash
+        env:
+          RELEASE_PR_NUMBER: ${{{{ github.event.issue.number }}}}
         run: |
-          set -euo pipefail
-          permission="$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$GITHUB_ACTOR/permission" --jq .permission)"
-          case "$permission" in
-            admin|maintain) ;;
-            *) echo "actor $GITHUB_ACTOR has insufficient release permission: $permission" >&2; exit 2 ;;
-          esac
-          merged_at="$(gh api "repos/$GITHUB_REPOSITORY/pulls/${{{{ github.event.issue.number }}}}" --jq '.merged_at // empty')"
-          test -n "$merged_at"
+          python - <<'PY'
+          import json
+          import os
+          from urllib.parse import quote
+          from urllib.request import Request, urlopen
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          actor = os.environ['GITHUB_ACTOR']
+          token = os.environ['GITHUB_TOKEN']
+          pr_number = os.environ['RELEASE_PR_NUMBER']
+
+          def api(path):
+              request = Request(
+                  f'https://api.github.com/repos/{{repo}}/{{path}}',
+                  headers={{
+                      'Accept': 'application/vnd.github+json',
+                      'Authorization': f'Bearer {{token}}',
+                      'User-Agent': 'coferlandia-release-publication',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                  }},
+              )
+              with urlopen(request, timeout=30) as response:
+                  return json.load(response)
+
+          permission = api(f'collaborators/{{quote(actor, safe="")}}/permission').get('permission')
+          if permission not in {{'admin', 'maintain'}}:
+              raise SystemExit(f'actor {{actor}} has insufficient release permission: {{permission}}')
+          pr = api(f'pulls/{{pr_number}}')
+          if not pr.get('merged_at'):
+              raise SystemExit('release PR is not merged')
+          merge_sha = pr.get('merge_commit_sha')
+          if not merge_sha:
+              raise SystemExit('release PR has no merge_commit_sha')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'merge_sha={{merge_sha}}\\n')
+          PY
 
       - name: Parse immutable publication request
         id: request
@@ -169,12 +205,12 @@ jobs:
       - name: Bind request to release PR integration
         env:
           TARGET_SHA: ${{{{ steps.request.outputs.target_sha }}}}
+          MERGE_SHA: ${{{{ steps.authority.outputs.merge_sha }}}}
         shell: bash
         run: |
           set -euo pipefail
-          merge_sha="$(gh api "repos/$GITHUB_REPOSITORY/pulls/${{{{ github.event.issue.number }}}}" --jq '.merge_commit_sha // empty')"
-          test -n "$merge_sha"
-          test "$merge_sha" = "$TARGET_SHA"
+          test -n "$MERGE_SHA"
+          test "$MERGE_SHA" = "$TARGET_SHA"
 
       - name: Check out exact publication target
         uses: actions/checkout@v4
@@ -182,11 +218,6 @@ jobs:
           ref: ${{{{ steps.request.outputs.target_sha }}}}
           fetch-depth: 0
           persist-credentials: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
 
       - name: Configure release identity
         shell: bash
@@ -203,7 +234,6 @@ jobs:
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
           git fetch --tags --force origin
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
-
       - name: Materialize request and deterministic release plan
         shell: bash
         run: |
@@ -251,7 +281,7 @@ jobs:
             --policy .coferlandia/release/policy.json \
             publish \
             --input .agent/release-publisher/release-plan.json
-'''
+"""
 
 
 def render_publication_policy(
