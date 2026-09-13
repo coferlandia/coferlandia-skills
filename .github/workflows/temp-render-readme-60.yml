@@ -1,0 +1,31 @@
+name: Temporary README Render 60
+
+on:
+  push:
+    branches:
+      - fix/60-release-draft-resume
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/60-release-draft-resume
+          fetch-depth: 0
+      - name: Render canonical latest-release block
+        shell: bash
+        run: |
+          python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py render-readme --write
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "docs(release): render v2.10.2 summary (#60)"
+          git push origin HEAD:fix/60-release-draft-resume
