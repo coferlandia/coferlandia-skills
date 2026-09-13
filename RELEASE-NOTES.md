@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v2.10.1 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.2.0 | 1.2.1 | Removes the generated GitHub-native publication workflow dependency on a preinstalled GitHub CLI by using Python standard-library GitHub REST calls while preserving runner, authority and exact-SHA controls. |
+| coferlandia-release-publisher | 1.1.1 | 1.1.2 | Replaces GitHub CLI subprocess calls with a Python standard-library GitHub REST transport using GITHUB_TOKEN or GH_TOKEN without changing fail-closed release semantics. |
+
+### Plugin and packaging
+
+- Publication no longer requires GitHub CLI on the selected runner; Python 3.11+ and GitHub token authorization are sufficient.
+
+### Migration or compatibility
+
+- Compatible patch: existing repository publication policies and runner declarations remain valid.
+
 ## v2.10.0 (2026-09-12)
 
 ### Skills
