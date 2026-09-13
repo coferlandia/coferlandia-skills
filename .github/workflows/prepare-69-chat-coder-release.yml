@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   prepare:
-    if: github.event.head_commit.message == 'chore: run Chat Coder release preparation'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
