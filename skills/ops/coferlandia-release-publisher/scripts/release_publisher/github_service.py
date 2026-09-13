@@ -146,6 +146,7 @@ class GitHubService:
             "html_url": data.get("html_url"),
             "assets": [cls._normalize_asset(item) for item in data.get("assets", [])],
         }
+
     def list_releases(self, repository: str) -> list[dict[str, Any]]:
         owner, repo = self._split(repository)
         releases: list[dict[str, Any]] = []
@@ -167,7 +168,12 @@ class GitHubService:
             f"repos/{owner}/{repo}/releases/tags/{quote(tag, safe='')}",
             allow_not_found=True,
         )
-        return self._normalize_release(data) if data else None
+        if data:
+            return self._normalize_release(data)
+        # GitHub's release-by-tag endpoint omits draft releases. Fall back to the
+        # paginated release collection so publication can resume from TAG + DRAFT
+        # without creating a duplicate draft or moving the existing tag.
+        return next((release for release in self.list_releases(repository) if release.get("tag") == tag), None)
 
     def release_by_id(self, repository: str, release_id: int) -> dict[str, Any]:
         owner, repo = self._split(repository)

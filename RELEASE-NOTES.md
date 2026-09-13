@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## v2.10.2 (2026-09-12)
+## v2.10.3 (2026-09-12)
 
 ### Repository and protocol
 
@@ -12,13 +12,30 @@
 
 ### Plugin and packaging
 
-- Bumps the shipped repository/plugin from v2.10.1 to v2.10.2 as a compatible Integration closeout correction.
+- Bumps the shipped repository/plugin from v2.10.2 to v2.10.3 as a compatible Integration closeout correction.
 - No public Agent Skill versions change in this release.
 
 ### Migration or compatibility
 
 - Existing consumers remain compatible. Repositories vendoring Chat delivery prompts should update `merge.md` so Integration explicitly closes the associated work item instead of depending on GitHub default-branch closing-keyword behavior.
 - Repository-owned authoritative target-ref policy remains unchanged; no branch name or GitHub Project identifier is hardcoded.
+
+## v2.10.2 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-release-publisher | 1.1.2 | 1.1.3 | Fixes draft release discovery so publication can safely resume from an existing annotated tag plus matching draft when GitHub omits drafts from the release-by-tag endpoint. |
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.10.1 to v2.10.2 for the compatible release-publisher recovery fix.
+- Corrects the publisher compatibility contract to require GitHub token authorization rather than a preinstalled GitHub CLI.
+
+### Migration or compatibility
+
+- Compatible patch: existing release policies, tags and matching draft Releases remain valid; partial `TAG + DRAFT` state resumes without recreating or moving release identity.
 
 ## v2.10.1 (2026-09-12)
 

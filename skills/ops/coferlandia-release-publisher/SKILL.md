@@ -7,16 +7,16 @@ description: >
   production rollback, service restart, or ordinary internal version-file changes.
 license: Apache-2.0
 compatibility: >
-  Requires Python 3.11+, git, GitHub CLI (`gh`) authenticated for the target repository, and
-  publication permissions for `publish`. Read-only planning/verification needs only corresponding
-  read access. Optional signed tags require a usable local Git signing configuration. The CLI is
-  non-interactive and may run inside a repository-declared GitHub Actions publication workflow.
+  Requires Python 3.11+, git, GitHub token authorization for the target repository, and publication
+  permissions for `publish`. Read-only planning/verification needs only corresponding read access.
+  Optional signed tags require a usable local Git signing configuration. The CLI is non-interactive
+  and may run inside a repository-declared GitHub Actions publication workflow.
 metadata:
   author: coferlandia
-  version: "1.1.2"
+  version: "1.1.3"
   category: ops
   status: active
-  tested: "2026-09-12 - activation boundaries, SemVer/policy logic, Git identity, GitHub adapter, idempotency, CLI contracts, optional GitHub-native publication transport policy, and configurable runner metadata covered by repository CI tests."
+  tested: "2026-09-12 - activation boundaries, SemVer/policy logic, Git identity, GitHub REST adapter, draft-resume idempotency, CLI contracts, optional GitHub-native publication transport policy, and configurable runner metadata covered by repository CI tests."
 ---
 
 ## Context
