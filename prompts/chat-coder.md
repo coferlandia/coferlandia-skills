@@ -209,7 +209,7 @@ Environment action = <NONE or concise deployment/operator action>
 Environment variables = <NONE or concise affected-variable list without secret values>
 Review Critical = 0
 Review Important = 0
-Next owner = GITHUB_NATIVE | LOCAL | NONE according to the resolved sequence
+Next owner = <next resolved controller/surface or NONE>
 ```
 
 When `Environment change = YES`, the terminal report must make the operational consequence visible without requiring the user to inspect the PR comment. Do not use ambiguous wording such as "may require" when the candidate-bound analysis can classify the change.
