@@ -637,11 +637,8 @@
 
 ### Repository
 
-- `skills/INDEX.md` — added the new `coferlandia-project-skill-miner` entry and
-  updated the inventory date.
-- Added a fixture-backed activation test set for the new skill, including current,
-  dangerous, ambiguous, and stale documented procedures to verify proposal-vs-approval
-  behavior.
+- `coferlandia-skills` — bumped the repo-wide release version to include the new
+  meta skill and its test/fixture surface.
 
 ## v1.6.0 (2026-07-12)
 
@@ -743,6 +740,7 @@
 - **coferlandia-software-dev** (`engineering`) — v1.0.0. Initial development process skill: mandatory study → plan → implement → review → test/docs/commit workflow.
 - **using-coferlandia-skills** (`meta`) — v1.0.0. First meta-skill: checks `skills/INDEX.md` and invokes matching skills before responding to any task.
 - **skill-repository-versioning** (`meta`) — v1.0.0. Pre-commit checklist: update index, classify change, bump per-skill vs. repo-wide release versions correctly.
+- **project-documentation-archivist** (`content`) — v2.0.0. Evidence-first project knowledge base with managed blocks, deterministic source indexing, open questions, module manifests, and incremental processing.
 - **sagan-scientific-debunker** (`content`) — v1.1.0. Adds systematic structured claim analysis and stronger source hierarchy.
 
 ### Protocol
@@ -762,5 +760,5 @@
 
 - Established the reusable Coferlandia skill repository protocol.
 - Added Apache-2.0 licensing and repository-level author/license/version policy.
-- Added `_protocol/` templates and `validate_skill.py` tooling.
+- Added `_protocol/` templates, `validate_skill.py` tooling.
 - Added first four canonical skills under `skills/`.
