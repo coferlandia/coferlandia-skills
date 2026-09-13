@@ -1,7 +1,7 @@
 ---
 name: merge
-description: "Generic Chat Integration controller that consumes current READY_FOR_MERGE evidence, integrates through repository-approved GitHub policy into the PR's authoritative target ref, verifies delivery, and returns COMPLETE."
-version: "1.1.0"
+description: "Generic Chat Integration controller that consumes current READY_FOR_MERGE evidence, integrates through repository-approved GitHub policy into the PR's authoritative target ref, verifies delivery, explicitly closes the associated work item, and returns COMPLETE."
+version: "1.1.1"
 stage: integration
 status: active
 ---
@@ -10,7 +10,7 @@ status: active
 
 ## Responsibility
 
-Integrate an already-qualified exact candidate into the pull request's current authoritative target ref and verify repository delivery.
+Integrate an already-qualified exact candidate into the pull request's current authoritative target ref, verify repository delivery, and close the associated work item as part of Integration closeout.
 
 ```text
 READY_FOR_MERGE
@@ -18,7 +18,8 @@ READY_FOR_MERGE
 -> resolve current authoritative target ref from repository/PR policy
 -> repository-approved integration
 -> verify resulting target-ref state
--> close work item / Project Done when supported
+-> explicitly close associated work item if still open
+-> Project Done when supported/configured
 -> COMPLETE
 ```
 
@@ -57,15 +58,32 @@ Use the strongest repository-approved GitHub integration mechanism available. Re
 
 Never force-push, rewrite history, bypass required repository safeguards or weaken current policy merely to merge.
 
-## Delivery verification
+## Delivery verification and closeout
 
 After integration, prove the intended candidate/change reached the exact authoritative target ref that was qualified and integrated. Verify any repository-required post-merge delivery checks that are explicitly part of Integration policy. Do not invent a generic post-merge CI requirement.
 
-Then, when tooling/policy supports it:
+Work-item closure is a required Integration closeout side effect, not a best-effort consequence of pull-request text:
 
-- close the Issue/work item if not already closed;
-- move its GitHub Project item to Done;
-- verify final PR merged state and resulting target-ref SHA.
+- re-read the associated Issue/work item from the `READY_FOR_MERGE` identity;
+- if it is already closed, verify that state and continue;
+- if it is open, explicitly close it through the available Issue/work-item mutation surface after the integration is verified;
+- do **not** rely on `Closes`, `Fixes`, `Resolves`, linked-PR metadata, or repository-default-branch behavior to perform that closure;
+- a merge into a repository-approved non-default integration target is sufficient to trigger this explicit closeout when that target is the authoritative development/integration outcome;
+- after the close operation, re-read the work item and verify it is closed before reporting `COMPLETE`.
+
+GitHub Project projection remains separate from Issue closure. When a Project is configured and the active tooling/policy supports it, move the item to Done and verify the projection. Lack of optional Project mutation support does not reopen an otherwise completed Issue.
+
+If the associated work item is still open and the active Integration surface cannot close it, or if the explicit close operation fails, return:
+
+```text
+CLOSEOUT_BLOCKED
+Issue: <identity> / still open
+PR: <number> / merged
+Target ref: <authoritative PR base ref>
+Reason: <missing capability or close failure>
+```
+
+Do not report `COMPLETE` while required work-item closure is unverified.
 
 Closing the work item means the repository-defined development/integration outcome is complete. It does not generically assert that the target ref is production or that the change has been formally released/deployed; repositories with a separate release lifecycle record that later through their release policy.
 
@@ -73,11 +91,11 @@ Green qualification alone is not completion; a merged PR alone is not completion
 
 ## Terminal report
 
-Return:
+On successful Integration and closeout, return:
 
 ```text
 Workflow execution = COMPLETE
-Issue = <identity> / closed or verified repository state
+Issue = <identity> / closed
 PR = <number> / merged
 Candidate SHA = <qualified head>
 Target ref = <authoritative PR base ref>
@@ -87,3 +105,5 @@ Qualification evidence = <durable reference>
 Project = Done | not configured | unsupported
 Delivery verification = PASS
 ```
+
+`REQUALIFICATION_REQUIRED` is the pre-integration stale-evidence terminal. `CLOSEOUT_BLOCKED` is the post-integration terminal when the candidate reached the authoritative target but required work-item closure could not be verified.
