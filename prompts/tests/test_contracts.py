@@ -87,6 +87,17 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("TEMPORARY_MITIGATION", texts["hotfix"])
         self.assertIn("HOTFIX_BLOCKED", texts["hotfix"])
 
+    def test_merge_explicitly_closes_work_item_after_authoritative_integration(self):
+        text = (PROMPTS / "merge.md").read_text(encoding="utf-8")
+        self.assertIn("Work-item closure is a required Integration closeout side effect", text)
+        self.assertIn("explicitly close it through the available Issue/work-item mutation surface", text)
+        self.assertIn("do **not** rely on `Closes`, `Fixes`, `Resolves`", text)
+        self.assertIn("non-default integration target", text)
+        self.assertIn("after the close operation, re-read the work item and verify it is closed", text)
+        self.assertIn("CLOSEOUT_BLOCKED", text)
+        self.assertIn("Do not report `COMPLETE` while required work-item closure is unverified", text)
+        self.assertIn("Issue = <identity> / closed", text)
+
     def test_ci_is_explicit_chat_surface_and_never_inferred_from_ready_for_ci(self):
         text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
         chat_coder = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")

@@ -4,19 +4,21 @@
 
 ## v2.10.3 (2026-09-12)
 
-### Skills
+### Repository and protocol
 
-| Skill | Previous | Current | Summary |
-|---|---:|---:|---|
-| coferlandia-ci-adapter | 1.2.1 | 1.2.2 | Separates the publication control-plane checkout from the immutable release target so current publisher fixes can recover an older partial release without changing release identity. |
+- `merge` 1.1.0 -> 1.1.1 makes associated Issue/work-item closure an explicit required Integration side effect after verified integration into the authoritative target ref, including approved non-default integration branches.
+- Adds `CLOSEOUT_BLOCKED` when post-integration work-item closure cannot be performed or verified, while keeping GitHub Project Done projection separate and optional.
+- Adds regression coverage and catalog/guide documentation for explicit Integration closeout semantics.
 
 ### Plugin and packaging
 
-- Bumps the repository/plugin from v2.10.2 to v2.10.3 for the compatible publication recovery transport fix.
+- Bumps the shipped repository/plugin from v2.10.2 to v2.10.3 as a compatible Integration closeout correction.
+- No public Agent Skill versions change in this release.
 
 ### Migration or compatibility
 
-- Compatible patch: existing release policy and publication request schema are unchanged.
+- Existing consumers remain compatible. Repositories vendoring Chat delivery prompts should update `merge.md` so Integration explicitly closes the associated work item instead of depending on GitHub default-branch closing-keyword behavior.
+- Repository-owned authoritative target-ref policy remains unchanged; no branch name or GitHub Project identifier is hardcoded.
 
 ## v2.10.2 (2026-09-12)
 

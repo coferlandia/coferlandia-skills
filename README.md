@@ -161,10 +161,6 @@ AGENTS.md        Entry point for agents
 
 **v2.10.3 — 2026-09-12**
 
-| Changed skill | Version | Main change |
-|---|---:|---|
-| coferlandia-ci-adapter | 1.2.2 | Separates the publication control-plane checkout from the immutable release target so current publisher fixes can recover an older partial release without changing release identity. |
-
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
 
