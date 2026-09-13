@@ -159,7 +159,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.10.1 — 2026-09-12**
+**v2.10.2 — 2026-09-12**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
