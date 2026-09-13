@@ -18,7 +18,9 @@ jobs:
           ref: fix/66-release-publication-retry
           fetch-depth: 0
       - name: Apply final review fixes
-        run: python .github/scripts/finalize_66.py
+        run: |
+          python .github/scripts/finalize_66.py
+          python .github/scripts/finalize_66_tests.py
       - name: Run focused regression tests
         run: |
           python skills/meta/coferlandia-ci-adapter/tests/test_publication_no_gh.py
