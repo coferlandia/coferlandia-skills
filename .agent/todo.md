@@ -1,0 +1,5 @@
+- Make merge closeout explicit and mandatory for associated Issue after verified integration.
+- Do not rely on GitHub closing keywords/default branch behavior.
+- Add regression test.
+- Bump prompt/repository patch release metadata.
+- Remove transient .agent files before final commit/PR.
