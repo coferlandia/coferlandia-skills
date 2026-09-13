@@ -24,4 +24,39 @@ Rules: standalone `chat coder` / `chat-coder` resolves by default to `chat-coder
 
 For the standalone Chat Coder default, `READY_FOR_CI` and `READY_FOR_MERGE` are internal durable handoffs rather than user-facing stop points. Continue through the resolved sequence without asking for confirmation. Return `COMPLETE` after verified Integration, `WAITING_CI` only when authoritative GitHub Actions remain non-terminal beyond the active execution, or a precise blocked state with the exact stage and reason. Never report success while a required GitHub gate is pending, stale, skipped, cancelled, or red.
 
+Normalize the final user-facing status for standalone Chat Coder so the user never has to infer where the workflow stopped. Preserve the underlying controller state as evidence:
+
+```text
+Chat Coder = COMPLETE
+Issue = <identity> / closed
+PR = <number> / merged
+Merge SHA = <sha>
+```
+
+or, when external CI is still authoritative but non-terminal:
+
+```text
+Chat Coder = WAITING_CI
+Stage = Qualification
+Issue = <identity>
+PR = <number>
+Candidate SHA = <sha>
+Run/check = <authoritative identifier>
+Current status = <non-terminal status>
+Next action = resume the same Chat Coder request; do not require a different controller command
+```
+
+or, for any condition that prevents safe continuation:
+
+```text
+Chat Coder = BLOCKED
+Stage = Development | Qualification | Integration
+Controller state = <exact underlying state>
+Issue = <identity>
+PR = <number or NONE>
+Candidate SHA = <sha or NONE>
+Reason = <specific blocker>
+Next action = <specific action required>
+```
+
 Qualification surface ownership remains deterministic: resolved `ci` selects development `GITHUB_NATIVE`, `local ci` selects development `LOCAL`, `chat release` selects release `GITHUB_NATIVE`, and `local release` selects release `LOCAL`. Reaching `READY_FOR_CI`, `READY_FOR_MERGE`, or `READY_FOR_RELEASE` by itself does not select or invoke another controller.
