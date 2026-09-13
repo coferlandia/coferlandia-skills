@@ -18,7 +18,9 @@ jobs:
           ref: fix/66-release-publication-retry
           fetch-depth: 0
       - name: Apply hardening
-        run: python .github/scripts/harden_66.py
+        run: |
+          python .github/scripts/harden_66.py
+          python .github/scripts/harden_66_followup.py
       - name: Run focused regression tests
         run: |
           python skills/meta/coferlandia-ci-adapter/tests/test_publication_no_gh.py
