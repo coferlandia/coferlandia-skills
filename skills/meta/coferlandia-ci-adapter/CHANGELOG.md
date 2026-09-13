@@ -1,5 +1,22 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.3.0 — 2026-09-12
+
+### Added
+
+- Adds optional ordered repository-owned `github.setup` actions to remote Development validation so project-specific toolchains can be provisioned deterministically before Development commands.
+- Validates static external action references and bounded flat scalar inputs, renders setup deterministically, and binds setup changes into the Development fingerprint.
+- Adds Python/Node setup examples plus regression coverage for backwards-compatible contracts without setup and rejection of local/dynamic actions or ambiguous inputs.
+
+### Boundaries
+
+- Setup remains Development-only and never grants Qualification, merge, publication or deployment authority.
+- Generic runners remain stack-agnostic; project runtime versions and approved setup actions remain repository-owned facts.
+
+### Compatibility
+
+- Existing `DEVELOPMENT_VALIDATION v1` contracts that omit `github.setup` remain valid without migration.
+
 ## 1.2.2 — 2026-09-12
 
 ### Fixed

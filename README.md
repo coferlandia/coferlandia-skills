@@ -159,11 +159,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.10.4 — 2026-09-12**
+**v2.11.0 — 2026-09-12**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.2.2 | Separates the publication control-plane checkout from the immutable release target so current publisher fixes can recover an older partial release without changing release identity. |
+| coferlandia-ci-adapter | 1.3.0 | Adds repository-owned declarative GitHub Actions setup for deterministic remote Development toolchains while preserving the v1 contract and stage boundaries. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

@@ -11,6 +11,8 @@ from typing import Any
 DEVELOPMENT_CONTRACT_PATH = Path(".coferlandia/development/validation.json")
 DEFAULT_DEVELOPMENT_WORKFLOW_PATH = Path(".github/workflows/coferlandia-development-validation.yml")
 ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+ACTION_USES_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[A-Za-z0-9_./-]+$")
+WITH_KEY_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 FORBIDDEN_KEY_PARTS = {"secret", "password", "passwd", "token", "credential", "private_key"}
 ALLOWED_TOP = {
@@ -62,6 +64,41 @@ def _validate_commands(commands: object) -> None:
     _require(len(ids) == len(set(ids)), "command ids must be unique")
 
 
+def _validate_setup(setup: object) -> None:
+    _require(isinstance(setup, list), "github.setup must be a list")
+    names: list[str] = []
+    for index, item in enumerate(setup):
+        label = f"github.setup[{index}]"
+        _require(isinstance(item, dict), f"{label} must be an object")
+        fields = set(item)
+        _require({"name", "uses"} <= fields <= {"name", "uses", "with"}, f"{label} fields are invalid")
+        name = item["name"]
+        uses = item["uses"]
+        _require(isinstance(name, str) and name.strip(), f"{label}.name must be a non-empty string")
+        _require(
+            isinstance(uses, str) and ACTION_USES_RE.fullmatch(uses) is not None,
+            f"{label}.uses must be a static owner/repo@ref action",
+        )
+        names.append(name)
+
+        inputs = item.get("with", {})
+        _require(isinstance(inputs, dict), f"{label}.with must be an object")
+        for key, value in inputs.items():
+            _require(
+                isinstance(key, str) and WITH_KEY_RE.fullmatch(key) is not None,
+                f"{label}.with keys must be simple action input names",
+            )
+            _require(
+                isinstance(value, (str, int, bool)) and not isinstance(value, float),
+                f"{label}.with.{key} must be a string, integer, or boolean",
+            )
+            if isinstance(value, str):
+                _require(value != "", f"{label}.with.{key} must not be empty")
+                _require("${{" not in value, f"{label}.with.{key} must not contain GitHub expressions")
+                _require("\n" not in value and "\r" not in value, f"{label}.with.{key} must be a single-line value")
+    _require(len(names) == len(set(names)), "github.setup names must be unique")
+
+
 def validate_development_contract(contract: dict, *, verify_fingerprint: bool = False) -> None:
     _require(isinstance(contract, dict), "development contract must be an object")
     unknown = set(contract) - ALLOWED_TOP
@@ -101,9 +138,11 @@ def validate_development_contract(contract: dict, *, verify_fingerprint: bool = 
     _require(len(environment) == len(set(environment)), "environment entries must be unique")
 
     github = contract.get("github")
+    required_github_fields = {"submission", "candidate_binding", "runner_labels", "shell", "gate"}
+    allowed_github_fields = required_github_fields | {"setup"}
     _require(
         isinstance(github, dict)
-        and set(github) == {"submission", "candidate_binding", "runner_labels", "shell", "gate"},
+        and required_github_fields <= set(github) <= allowed_github_fields,
         "github fields are invalid",
     )
     submission = github["submission"]
@@ -126,6 +165,7 @@ def validate_development_contract(contract: dict, *, verify_fingerprint: bool = 
     )
     _require(len(labels) == len(set(labels)), "github.runner_labels entries must be unique")
     _require(github["shell"] in {"bash", "pwsh"}, "github.shell must be bash or pwsh")
+    _validate_setup(github.get("setup", []))
 
     gate = github["gate"]
     _require(isinstance(gate, dict) and set(gate) == {"name", "allowed_conclusions"}, "github.gate fields are invalid")
@@ -176,6 +216,10 @@ def _yaml_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
+def _yaml_scalar(value: str | int | bool) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
 def _indent_command(command: str, spaces: int = 10) -> str:
     prefix = " " * spaces
     return "\n".join(prefix + line for line in command.splitlines())
@@ -220,6 +264,17 @@ def render_development_workflow(contract: dict) -> str:
             '$line = "Candidate SHA: ${{ github.event.pull_request.head.sha }}"; Write-Output $line; Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $line'
         )
     lines.append(_indent_command(summary))
+
+    for setup in github.get("setup", []):
+        lines.extend([
+            f"      - name: {_yaml_string(setup['name'])}",
+            f"        uses: {_yaml_string(setup['uses'])}",
+        ])
+        if setup.get("with"):
+            lines.append("        with:")
+            for key in sorted(setup["with"]):
+                lines.append(f"          {key}: {_yaml_scalar(setup['with'][key])}")
+
     for command in rendered["commands"]:
         lines.extend([
             f"      - name: {_yaml_string(command['purpose'])}", f"        shell: {shell}",
