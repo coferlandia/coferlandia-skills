@@ -80,6 +80,8 @@ CI repository adaptation:  CI Adapter -> one repo profile -> Chat/Local developm
 
 Delivery composition is exact and left-to-right for ordinary development/release surfaces. The explicitly invoked `hotfix` controller is a bounded orchestration surface: it may call repository-approved owners as part of its emergency lifecycle, but it does not absorb or weaken their contracts. Missing stages are not inferred from ordinary work, and `LOCAL`/`GITHUB_NATIVE` strategies never silently fall back to one another. `READY_FOR_CI`, `READY_FOR_MERGE`, `READY_FOR_RELEASE`, and HOTFIX state are evidence, not permission to invent an undeclared next surface.
 
+For ordinary delivery, Integration completion is tied to the repository-approved target ref rather than to the repository default branch: after a verified merge to that target, `merge` explicitly closes and re-verifies the associated work item before returning `COMPLETE`.
+
 ## Canonical documents
 
 - [`skills/INDEX.md`](./skills/INDEX.md) is the only Agent Skill inventory and status catalog.
