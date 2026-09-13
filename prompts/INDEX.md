@@ -6,7 +6,7 @@ First-class Chat controllers maintained centrally by `coferlandia-skills`.
 |---|---|---|---|
 | [`chat-coder`](./chat-coder.md) | Development | `chat coder`, `chat-coder` | `READY_FOR_CI` |
 | [`ci`](./ci.md) | Qualification / GitHub-native | `ci`, `gh ci`, `github ci` | `READY_FOR_MERGE` |
-| [`merge`](./merge.md) | Integration | `merge` | `COMPLETE` or `REQUALIFICATION_REQUIRED` |
+| [`merge`](./merge.md) | Integration | `merge` | `COMPLETE`, `REQUALIFICATION_REQUIRED`, or `CLOSEOUT_BLOCKED` |
 | [`chat-release`](./chat-release.md) | Release / GitHub-native | `chat release`, `chat-release` | `COMPLETE` or resumable release state |
 | [`hotfix`](./hotfix.md) | Explicit emergency remediation | `hotfix` | `HOTFIX_COMPLETE`, resumable state, or `HOTFIX_BLOCKED` |
 
