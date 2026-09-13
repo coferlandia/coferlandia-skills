@@ -73,6 +73,13 @@ class PromptContractTests(unittest.TestCase):
             ["chat-coder", "ci", "merge"],
         )
 
+        normalized = self.run_resolve("  Chat   Coder  ")
+        self.assertTrue(normalized["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in normalized["sequence"]],
+            ["chat-coder", "ci", "merge"],
+        )
+
         hyphenated = self.run_resolve("chat-coder")
         self.assertTrue(hyphenated["defaulted"])
         self.assertEqual(
@@ -92,6 +99,13 @@ class PromptContractTests(unittest.TestCase):
         self.assertEqual(
             [item["target"] for item in explicit["sequence"]],
             ["chat-coder", "ci", "merge"],
+        )
+
+        explicit_incomplete = self.run_resolve("chat coder + merge")
+        self.assertFalse(explicit_incomplete["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in explicit_incomplete["sequence"]],
+            ["chat-coder", "merge"],
         )
 
         local = self.run_resolve("chat coder + local ci + merge")
@@ -203,8 +217,19 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("standalone `chat dev` / `chat-dev` resolves only this Development stage", chat_coder)
         self.assertIn("explicit `+` composition", chat_coder)
         self.assertIn("internal durable handoff", chat_coder)
+        self.assertIn("Next owner = <next resolved controller/surface or NONE>", chat_coder)
         self.assertIn("standalone `chat coder` / `chat-coder` resolves by default", bootstrap)
         self.assertIn("Explicit controller compositions execute left-to-right without applying standalone defaults", bootstrap)
+
+    def test_standalone_chat_coder_has_unambiguous_top_level_status(self):
+        bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
+        self.assertIn("Chat Coder = COMPLETE", bootstrap)
+        self.assertIn("Chat Coder = WAITING_CI", bootstrap)
+        self.assertIn("Chat Coder = BLOCKED", bootstrap)
+        self.assertIn("Stage = Development | Qualification | Integration", bootstrap)
+        self.assertIn("Controller state = <exact underlying state>", bootstrap)
+        self.assertIn("Next action = <specific action required>", bootstrap)
+        self.assertIn("do not require a different controller command", bootstrap)
 
     def test_ci_reports_nonterminal_waiting_state_without_claiming_green(self):
         text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
