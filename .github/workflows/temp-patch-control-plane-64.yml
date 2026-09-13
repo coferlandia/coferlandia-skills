@@ -1,0 +1,147 @@
+name: Temporary Control Plane Patch 64
+
+on:
+  push:
+    branches:
+      - fix/64-publication-control-plane
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/64-publication-control-plane
+          fetch-depth: 0
+      - name: Patch publication workflow template and regression contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('skills/meta/coferlandia-ci-adapter/scripts/coferlandia_ci_adapter_cli/publication.py')
+          text = path.read_text(encoding='utf-8')
+
+          old_checkout = '''      - name: Check out exact publication target
+        uses: actions/checkout@v4
+        with:
+          ref: ${{{{ steps.request.outputs.target_sha }}}}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Configure release identity
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Revalidate exact checkout
+        env:
+          TARGET_SHA: ${{{{ steps.request.outputs.target_sha }}}}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          git fetch --tags --force origin
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+'''
+          new_checkout = '''      - name: Check out exact publication control plane
+        uses: actions/checkout@v4
+        with:
+          ref: ${{{{ github.sha }}}}
+          path: control-plane
+          persist-credentials: false
+
+      - name: Check out exact publication target
+        uses: actions/checkout@v4
+        with:
+          ref: ${{{{ steps.request.outputs.target_sha }}}}
+          path: release-target
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Revalidate publication control plane
+        working-directory: control-plane
+        env:
+          CONTROL_PLANE_SHA: ${{{{ github.sha }}}}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CONTROL_PLANE_SHA"
+
+      - name: Configure release identity
+        working-directory: release-target
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Revalidate exact checkout
+        working-directory: release-target
+        env:
+          TARGET_SHA: ${{{{ steps.request.outputs.target_sha }}}}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          git fetch --tags --force origin
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+'''
+          if old_checkout not in text:
+              raise SystemExit('checkout template block not found')
+          text = text.replace(old_checkout, new_checkout, 1)
+
+          old_materialize = '''      - name: Materialize request and deterministic release plan
+        shell: bash
+        run: |
+'''
+          new_materialize = '''      - name: Materialize request and deterministic release plan
+        working-directory: release-target
+        shell: bash
+        run: |
+'''
+          if old_materialize not in text:
+              raise SystemExit('materialize block not found')
+          text = text.replace(old_materialize, new_materialize, 1)
+
+          old_subprocess = "              'python', {publisher!r},\n"
+          new_subprocess = "              'python', str(Path(os.environ['GITHUB_WORKSPACE']) / 'control-plane' / {publisher!r}),\n"
+          if old_subprocess not in text:
+              raise SystemExit('publisher subprocess line not found')
+          text = text.replace(old_subprocess, new_subprocess, 1)
+
+          old_publish = '''      - name: Publish through Coferlandia release publisher
+        shell: bash
+        run: |
+          python {publisher} \\
+'''
+          new_publish = '''      - name: Publish through Coferlandia release publisher
+        working-directory: release-target
+        shell: bash
+        run: |
+          python "$GITHUB_WORKSPACE/control-plane/{publisher}" \\
+'''
+          if old_publish not in text:
+              raise SystemExit('publish block not found')
+          text = text.replace(old_publish, new_publish, 1)
+          path.write_text(text, encoding='utf-8')
+
+          test_path = Path('skills/meta/coferlandia-ci-adapter/tests/test_publication_no_gh.py')
+          test = test_path.read_text(encoding='utf-8')
+          needle = '''        self.assertIn("actions/setup-python@v5", workflow)\n        self.assertLess(workflow.index("actions/setup-python@v5"), workflow.index("Require release authority"))\n        self.assertIn('runs-on: ["self-hosted","Linux","ARM64","coferlandia-ci","docker"]', workflow)\n'''
+          replacement = '''        self.assertIn("actions/setup-python@v5", workflow)\n        self.assertLess(workflow.index("actions/setup-python@v5"), workflow.index("Require release authority"))\n        self.assertIn("Check out exact publication control plane", workflow)\n        self.assertIn("ref: ${{ github.sha }}", workflow)\n        self.assertIn("path: control-plane", workflow)\n        self.assertIn("path: release-target", workflow)\n        self.assertIn("working-directory: release-target", workflow)\n        self.assertIn("$GITHUB_WORKSPACE/control-plane/.agents/skills/coferlandia-release-publisher/scripts/coferlandia-release.py", workflow)\n        self.assertIn('runs-on: ["self-hosted","Linux","ARM64","coferlandia-ci","docker"]', workflow)\n'''
+          if needle not in test:
+              raise SystemExit('test insertion point not found')
+          test_path.write_text(test.replace(needle, replacement, 1), encoding='utf-8')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skills/meta/coferlandia-ci-adapter/scripts/coferlandia_ci_adapter_cli/publication.py \
+            skills/meta/coferlandia-ci-adapter/tests/test_publication_no_gh.py
+          git commit -m "fix(release): isolate publication control plane (#64)"
+          git push origin HEAD:fix/64-publication-control-plane
