@@ -22,6 +22,8 @@ Use the standard gate name `Development Validation / Gate` unless repository pol
 
 The workflow path must live under `.github/workflows/` and the candidate binding is always `pull-request-head`.
 
+Before declaring commands, compare them with the repository's Qualification/FULL validation. Do not reuse a canonical full-suite command merely because it already exists. Prefer affected/scoped Development routing when available, and fail closed if the changed surface cannot be resolved deterministically. A shared script is valid only when repository policy explicitly owns it for Development and its normal runtime remains suitable for iterative feedback.
+
 ## Declarative toolchain setup
 
 `github.setup` is optional, so existing v1 contracts remain valid unchanged. Use it when the repository's Development commands require a project-specific toolchain that should not be permanently baked into a generic runner image, for example Python, Node.js, .NET, Java or Go.
@@ -49,8 +51,8 @@ The adapter does not decide which language/runtime/version a repository needs. D
   "commands": [
     {
       "id": "validate",
-      "command": "bash scripts/validate-all.sh",
-      "purpose": "Run canonical Development validation"
+      "command": "bash scripts/validate-development.sh",
+      "purpose": "Run scoped Development validation"
     }
   ],
   "required_services": [],

@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## v2.11.2 (2026-09-13)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.3.1 | 1.3.2 | Keeps remote Development validation scoped and cheap instead of defaulting to canonical FULL/Qualification suites. |
+
+### Repository and protocol
+
+- Clarifies that the Development/Qualification boundary includes execution cost as well as authority: remote Development should prefer repository-owned affected/scoped checks and fail closed when scope cannot be resolved.
+- Removes the misleading adapter example that modeled `validate-all.sh` as a Development command and replaces it with a Development-specific scoped validator.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.11.1 to v2.11.2 for the compatible Development-validation guidance correction.
+
+### Migration or compatibility
+
+- Existing Development contracts, schema version 1, fingerprints and renderer behavior remain compatible. This release changes protocol/adapter guidance only; repositories should remap expensive FULL commands out of Development when a cheaper deterministic affected surface exists.
+
 ## v2.11.1 (2026-09-12)
 
 ### Skills
@@ -173,7 +194,7 @@
 | Skill | Previous | Current | Summary |
 |---|---:|---:|---|
 | coferlandia-ci-adapter | 1.0.0 | 1.1.0 | Adds opt-in adaptation of repository-declared GitHub-native release publication policy/workflows while keeping `.coferlandia/ci/profile.json` scoped strictly to Qualification. |
-| coferlandia-release-publisher | 1.0 | 1.1 | Adds validation and explicit non-interactive support for policy-declared GitHub publication transports without changing exact annotated-tag/GitHub-Release publication semantics. |
+| coferlandia-release-publisher | 1.0 | 1.1 | Adds validation and explicit non-interactive support for policy-declared GitHub publication transports without changing exact annotated-tag/GitHub-Release semantics. |
 
 ### Chat prompts
 

@@ -29,6 +29,14 @@ A conforming contract identifies:
 
 No private values, credentials, current run IDs or current conclusions belong in the contract.
 
+## Development scope and cost boundary
+
+The Development contract must preserve the Development/Qualification boundary in both semantics and cost. Do not select a repository's canonical FULL/Qualification suite merely because it is the easiest existing command to invoke remotely.
+
+Prefer repository-owned affected/scoped routing when it exists. Development should run the smallest deterministic set of checks that covers the changed surface and must fail closed when that scope cannot be resolved; unresolved scope is not permission to silently fall back to FULL.
+
+A script shared with Qualification is acceptable only when repository policy independently declares it as a Development check and its normal execution cost is genuinely compatible with iterative Development feedback. Remote execution being available does not make an otherwise expensive Qualification suite a suitable Development gate.
+
 ## Execution precedence
 
 A Development controller resolves validation in this order:
