@@ -1,0 +1,1 @@
+Issue closure after Integration: strengthen the generic merge controller so an already-associated work item is explicitly closed after verified integration into the PR's authoritative target ref, including non-default branches such as dev. Do not rely on GitHub closing-keyword/default-branch semantics. Add regression coverage and release metadata.
