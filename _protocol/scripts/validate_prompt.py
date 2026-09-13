@@ -38,21 +38,13 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
     return data
 
 
-def load_registry(root: Path) -> dict:
-    path = root / "prompts" / "registry.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema_version") != 1:
-        raise ValueError("registry schema_version must be 1")
-    prompts = data.get("prompts")
-    if not isinstance(prompts, list) or not prompts:
-        raise ValueError("registry prompts must be a non-empty list")
+def normalize_alias(value: str) -> str:
+    return " ".join(value.strip().lower().split())
+
+
+def _alias_table(data: dict) -> dict[str, tuple[str, str]]:
     aliases: dict[str, tuple[str, str]] = {}
-    for item in prompts:
-        for key in ("id", "path", "stage", "aliases"):
-            if key not in item:
-                raise ValueError(f"registry prompt missing {key}")
-        if item["stage"] not in STAGES:
-            raise ValueError(f"invalid stage: {item['stage']}")
+    for item in data["prompts"]:
         for alias in item["aliases"]:
             normalized = normalize_alias(alias)
             if normalized in aliases:
@@ -63,6 +55,24 @@ def load_registry(root: Path) -> dict:
         if normalized in aliases:
             raise ValueError(f"duplicate alias: {item['alias']}")
         aliases[normalized] = (item["kind"], item["target"])
+    return aliases
+
+
+def load_registry(root: Path) -> dict:
+    path = root / "prompts" / "registry.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if data.get("schema_version") != 1:
+        raise ValueError("registry schema_version must be 1")
+    prompts = data.get("prompts")
+    if not isinstance(prompts, list) or not prompts:
+        raise ValueError("registry prompts must be a non-empty list")
+    for item in prompts:
+        for key in ("id", "path", "stage", "aliases"):
+            if key not in item:
+                raise ValueError(f"registry prompt missing {key}")
+        if item["stage"] not in STAGES:
+            raise ValueError(f"invalid stage: {item['stage']}")
+    aliases = _alias_table(data)
     composition = data.get("composition", {})
     if composition.get("order") != "left-to-right":
         raise ValueError("composition order must be left-to-right")
@@ -70,11 +80,34 @@ def load_registry(root: Path) -> dict:
         raise ValueError("implicit stages must be disabled")
     if composition.get("automatic_fallback") is not False:
         raise ValueError("automatic fallback must be disabled")
+
+    standalone_defaults = composition.get("standalone_defaults", {})
+    if not isinstance(standalone_defaults, dict):
+        raise ValueError("composition standalone_defaults must be an object")
+    for raw_source, raw_sequence in standalone_defaults.items():
+        source = normalize_alias(raw_source)
+        if source != raw_source:
+            raise ValueError(f"standalone default alias must be normalized: {raw_source}")
+        source_target = aliases.get(source)
+        if source_target is None:
+            raise ValueError(f"standalone default references unknown alias: {raw_source}")
+        if not isinstance(raw_sequence, list) or not raw_sequence:
+            raise ValueError(f"standalone default must be a non-empty list: {raw_source}")
+        resolved: list[str] = []
+        for raw_alias in raw_sequence:
+            if not isinstance(raw_alias, str) or not normalize_alias(raw_alias):
+                raise ValueError(f"standalone default contains invalid alias: {raw_source}")
+            alias = normalize_alias(raw_alias)
+            if alias not in aliases:
+                raise ValueError(
+                    f"standalone default {raw_source} references unknown alias: {raw_alias}"
+                )
+            resolved.append(alias)
+        if aliases[resolved[0]] != source_target:
+            raise ValueError(
+                f"standalone default {raw_source} must start with its source controller"
+            )
     return data
-
-
-def normalize_alias(value: str) -> str:
-    return " ".join(value.strip().lower().split())
 
 
 def validate(root: Path) -> dict:
@@ -125,13 +158,22 @@ def resolve(root: Path, expression: str) -> dict:
     parts = [normalize_alias(part) for part in expression.split(sep)]
     if any(not part for part in parts):
         raise ValueError("empty stage in composition")
+
+    defaulted = False
+    if len(parts) == 1:
+        standalone_defaults = registry["composition"].get("standalone_defaults", {})
+        expanded = standalone_defaults.get(parts[0])
+        if expanded:
+            parts = [normalize_alias(part) for part in expanded]
+            defaulted = True
+
     sequence = []
     for part in parts:
         target = table.get(part)
         if target is None:
             raise ValueError(f"unknown delivery alias: {part}")
         sequence.append({"alias": part, **target})
-    return {"ok": True, "sequence": sequence}
+    return {"ok": True, "defaulted": defaulted, "sequence": sequence}
 
 
 def main() -> int:
@@ -166,6 +208,7 @@ def main() -> int:
         else:
             print(f"ERROR: {exc}", file=sys.stderr)
         return 2
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
