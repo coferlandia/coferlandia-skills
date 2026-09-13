@@ -211,13 +211,13 @@ def render_development_workflow(contract: dict) -> str:
     ]
     if shell == "bash":
         summary = (
-            f'echo "Development contract fingerprint: {fingerprint}" >> "$GITHUB_STEP_SUMMARY"\n'
-            'echo "Candidate SHA: ${{ github.event.pull_request.head.sha }}" >> "$GITHUB_STEP_SUMMARY"'
+            f'echo "Development contract fingerprint: {fingerprint}" | tee -a "$GITHUB_STEP_SUMMARY"\n'
+            'echo "Candidate SHA: ${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"'
         )
     else:
         summary = (
-            f'Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "Development contract fingerprint: {fingerprint}"\n'
-            'Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "Candidate SHA: ${{ github.event.pull_request.head.sha }}"'
+            f'$line = "Development contract fingerprint: {fingerprint}"; Write-Output $line; Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $line\n'
+            '$line = "Candidate SHA: ${{ github.event.pull_request.head.sha }}"; Write-Output $line; Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $line'
         )
     lines.append(_indent_command(summary))
     for command in rendered["commands"]:

@@ -95,11 +95,22 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
                 "permissions:", "contents: read", "ref: ${{ github.event.pull_request.head.sha }}",
                 'actual="$(git rev-parse HEAD)"', 'test "$actual" = "$EXPECTED_SHA"',
                 'runs-on: ["self-hosted", "Linux", "ARM64"]', 'name: "Development Validation / Gate"',
-                "Development contract fingerprint:", "python -m unittest", "python -m compileall -q .",
+                "Development contract fingerprint:", 'tee -a "$GITHUB_STEP_SUMMARY"',
+                "python -m unittest", "python -m compileall -q .",
             ):
                 self.assertIn(token, first_workflow)
             for forbidden in ("pull_request_target", "contents: write", "READY_FOR_MERGE", "workflow_dispatch", "merge_group"):
                 self.assertNotIn(forbidden, first_workflow)
+
+    def test_pwsh_workflow_logs_candidate_identity_and_fingerprint(self):
+        module = load_module()
+        contract = sample()
+        contract["github"]["shell"] = "pwsh"
+        workflow = module.render_development_workflow(contract)
+        self.assertIn("Write-Output $line", workflow)
+        self.assertIn("Add-Content -Path $env:GITHUB_STEP_SUMMARY", workflow)
+        self.assertIn("Development contract fingerprint:", workflow)
+        self.assertIn("Candidate SHA: ${{ github.event.pull_request.head.sha }}", workflow)
 
     def test_cli_check_rejects_stale_fingerprint(self):
         with tempfile.TemporaryDirectory() as td:
