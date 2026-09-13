@@ -1,5 +1,15 @@
 # Changelog — coferlandia-release-publisher
 
+## 1.1.3 — 2026-09-12
+
+### Fixed
+
+- Resolves matching draft GitHub Releases by tag through the paginated release collection when GitHub's release-by-tag endpoint omits drafts, allowing publication to resume safely from an existing annotated tag plus draft without recreating either identity.
+
+### Compatibility
+
+- Publication remains fail-closed and idempotent: matching partial state resumes, while conflicting tag/release identity is still rejected.
+
 ## 1.1.2 — 2026-09-12
 
 ### Changed
