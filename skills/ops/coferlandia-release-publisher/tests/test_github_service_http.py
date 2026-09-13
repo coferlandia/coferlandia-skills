@@ -11,6 +11,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from release_publisher.github_service import GitHubService
+from release_publisher.model import ReleaseError
 
 
 class FakeResponse:
@@ -72,6 +73,23 @@ class GitHubServiceHttpTests(unittest.TestCase):
         self.assertEqual(release["id"], 42)
         self.assertIn("/releases/tags/v1.2.0", opener.requests[0].full_url)
         self.assertIn("/releases?", opener.requests[1].full_url)
+
+
+    def test_release_by_tag_rejects_ambiguous_draft_collection(self) -> None:
+        not_found = HTTPError(
+            "https://api.github.com/repos/coferlandia/demo/releases/tags/v1.2.0",
+            404, "Not Found", hdrs=None, fp=io.BytesIO(b"{}"),
+        )
+        opener = FakeOpener([
+            not_found,
+            [
+                {"id": 41, "tag_name": "v1.2.0", "name": "Draft A", "draft": True, "prerelease": False, "assets": []},
+                {"id": 42, "tag_name": "v1.2.0", "name": "Draft B", "draft": True, "prerelease": False, "assets": []},
+            ],
+        ])
+        service = GitHubService(opener=opener, token="")
+        with self.assertRaisesRegex(ReleaseError, "multiple GitHub Releases"):
+            service.release_by_tag("coferlandia/demo", "v1.2.0")
 
     def test_create_release_posts_explicit_draft_payload(self) -> None:
         opener = FakeOpener([{"id": 42, "tag_name": "v1.2.0", "draft": True, "assets": []}])

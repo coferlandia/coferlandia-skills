@@ -210,6 +210,15 @@ def _asset_digest(asset: dict[str, Any]) -> str | None:
     digest = asset.get("sha256")
     return digest if isinstance(digest, str) and len(digest) == 64 else None
 
+def _resolved_asset_digest(github: GitHubService, repository: str, asset: dict[str, Any]) -> str | None:
+    digest = _asset_digest(asset)
+    if digest:
+        return digest
+    asset_id = asset.get("id")
+    if not asset_id:
+        return None
+    return hashlib.sha256(github.download_asset_bytes(repository, int(asset_id))).hexdigest()
+
 def _verify_or_upload_artifacts(github: GitHubService, repository: str, release: dict[str, Any], artifacts: list[dict[str, Any]]) -> dict[str, Any]:
     current = {item["name"]: item for item in release.get("assets", [])}
     for artifact in artifacts:
@@ -219,11 +228,11 @@ def _verify_or_upload_artifacts(github: GitHubService, repository: str, release:
             raise ReleaseError(f"artifact changed since dry-run: {artifact['name']}")
         existing = current.get(artifact["name"])
         if existing:
-            if _asset_digest(existing) != artifact["sha256"]:
+            if _resolved_asset_digest(github, repository, existing) != artifact["sha256"]:
                 raise ReleaseError(f"release asset conflicts with planned digest: {artifact['name']}")
             continue
         uploaded = github.upload_asset(repository, int(release["id"]), path, artifact["name"])
-        if uploaded.get("name") != artifact["name"] or _asset_digest(uploaded) != artifact["sha256"]:
+        if uploaded.get("name") != artifact["name"] or _resolved_asset_digest(github, repository, uploaded) != artifact["sha256"]:
             raise ReleaseError(f"uploaded release asset could not be verified: {artifact['name']}")
         release = github.release_by_id(repository, int(release["id"]))
         current = {item["name"]: item for item in release.get("assets", [])}
@@ -256,11 +265,11 @@ def _ensure_manifest(root: Path, github: GitHubService, plan: ReleasePlan, relea
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     existing = next((item for item in release.get("assets", []) if item.get("name") == "release-manifest.json"), None)
     if existing:
-        if _asset_digest(existing) != digest:
+        if _resolved_asset_digest(github, plan.repository, existing) != digest:
             raise ReleaseError("existing release-manifest.json conflicts with planned provenance")
         return release
     uploaded = github.upload_asset(plan.repository, int(release["id"]), path, "release-manifest.json")
-    if uploaded.get("name") != "release-manifest.json" or _asset_digest(uploaded) != digest:
+    if uploaded.get("name") != "release-manifest.json" or _resolved_asset_digest(github, plan.repository, uploaded) != digest:
         raise ReleaseError("uploaded release-manifest.json could not be verified")
     return github.release_by_id(plan.repository, int(release["id"]))
 
@@ -274,7 +283,7 @@ def _read_manifest(github: GitHubService, repository: str, release: dict[str, An
         raise ReleaseError("release-manifest.json could not be read as JSON") from exc
     return value if isinstance(value, dict) else None
 
-def _verify_manifest_artifacts(release: dict[str, Any], manifest: dict[str, Any] | None) -> list[str]:
+def _verify_manifest_artifacts(github: GitHubService, repository: str, release: dict[str, Any], manifest: dict[str, Any] | None) -> list[str]:
     if not manifest:
         return []
     errors: list[str] = []
@@ -285,7 +294,7 @@ def _verify_manifest_artifacts(release: dict[str, Any], manifest: dict[str, Any]
         asset = current.get(name)
         if not asset:
             errors.append(f"release artifact declared by provenance is missing: {name}")
-        elif _asset_digest(asset) != expected:
+        elif _resolved_asset_digest(github, repository, asset) != expected:
             errors.append(f"release artifact digest disagrees with provenance: {name}")
     return errors
 
@@ -305,7 +314,7 @@ def _release_plan_errors(github: GitHubService, plan: ReleasePlan, release: dict
             existing = current.get(artifact["name"])
             if not existing:
                 errors.append(f"release artifact from reviewed plan is missing: {artifact['name']}")
-            elif _asset_digest(existing) != artifact["sha256"]:
+            elif _resolved_asset_digest(github, plan.repository, existing) != artifact["sha256"]:
                 errors.append(f"release artifact digest disagrees with reviewed plan: {artifact['name']}")
     if require_manifest and plan.provenance in {"optional", "required"}:
         manifest = _read_manifest(github, plan.repository, release)
@@ -345,7 +354,7 @@ def verify_release(root: Path, repository: str, tag: str, policy: dict[str, Any]
     if manifest and manifest.get("policy_fingerprint") and manifest.get("policy_fingerprint") != fingerprint(policy):
         errors.append("release manifest was validated under a different release policy")
     if release:
-        errors.extend(_verify_manifest_artifacts(release, manifest))
+        errors.extend(_verify_manifest_artifacts(github, repository, release, manifest))
     previous = discover_previous_release(git, [item for item in github.list_releases(repository) if item.get("tag") != tag], target, prefix) if target and version else None
     immutability = None
     mode = policy["github_release"]["immutability"]

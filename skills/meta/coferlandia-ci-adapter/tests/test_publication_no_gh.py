@@ -40,8 +40,10 @@ class PublicationWorkflowTests(unittest.TestCase):
         self.assertNotIn("deploy", workflow.lower())
         self.assertIn("Retry the existing Coferlandia publication request.", workflow)
         self.assertIn("issues/{issue_number}/comments?per_page=100&page={page}", workflow)
-        self.assertIn("comment.get('id', 0) < current_id", workflow)
-        self.assertIn("retry requested but no prior publication request exists", workflow)
+        self.assertIn("comment_id >= current_id", workflow)
+        self.assertIn("permission_for(author) not in {'admin', 'maintain'}", workflow)
+        self.assertIn("retry requested but no prior authorized valid publication request exists", workflow)
+        self.assertIn("request_comment_id={request_comment_id}", workflow)
         self.assertIn("coferlandia-publication-request.json", workflow)
         self.assertNotIn("types: [created, edited]", workflow)
 

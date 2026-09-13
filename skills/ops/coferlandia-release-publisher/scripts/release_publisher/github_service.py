@@ -173,7 +173,10 @@ class GitHubService:
         # GitHub's release-by-tag endpoint omits draft releases. Fall back to the
         # paginated release collection so publication can resume from TAG + DRAFT
         # without creating a duplicate draft or moving the existing tag.
-        return next((release for release in self.list_releases(repository) if release.get("tag") == tag), None)
+        matches = [release for release in self.list_releases(repository) if release.get("tag") == tag]
+        if len(matches) > 1:
+            raise ReleaseError(f"multiple GitHub Releases use tag {tag}")
+        return matches[0] if matches else None
 
     def release_by_id(self, repository: str, release_id: int) -> dict[str, Any]:
         owner, repo = self._split(repository)
@@ -241,7 +244,7 @@ class GitHubService:
         )
         return self._normalize_release(data)
 
-    def download_text_asset(self, repository: str, asset_id: int) -> str:
+    def download_asset_bytes(self, repository: str, asset_id: int) -> bytes:
         owner, repo = self._split(repository)
         raw = self._request_bytes(
             "GET",
@@ -250,4 +253,7 @@ class GitHubService:
         )
         if raw is None:
             raise ReleaseError("GitHub asset download returned no response")
-        return raw.decode("utf-8")
+        return raw
+
+    def download_text_asset(self, repository: str, asset_id: int) -> str:
+        return self.download_asset_bytes(repository, asset_id).decode("utf-8")

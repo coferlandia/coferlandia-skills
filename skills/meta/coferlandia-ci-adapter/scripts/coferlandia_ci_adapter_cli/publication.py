@@ -175,66 +175,107 @@ jobs:
           import os
           import re
           from pathlib import Path
+          from urllib.error import HTTPError
+          from urllib.parse import quote
           from urllib.request import Request, urlopen
 
           marker = {PUBLICATION_REQUEST_MARKER!r}
           retry_command = {PUBLICATION_RETRY_COMMAND!r}
+          def parse_request(candidate_body):
+              if not isinstance(candidate_body, str) or candidate_body.count(marker) != 1:
+                  raise ValueError('publication request must contain exactly one marker')
+              tail = candidate_body.split(marker, 1)[1]
+              matches = re.findall(r'```json\\s*(.+?)\\s*```', tail, re.S)
+              if len(matches) != 1:
+                  raise ValueError('publication request must contain exactly one JSON block')
+              try:
+                  request = json.loads(matches[0])
+              except json.JSONDecodeError as exc:
+                  raise ValueError('publication request JSON is invalid') from exc
+              expected = {{'schema', 'target_sha', 'version', 'impact', 'title', 'notes'}}
+              if not isinstance(request, dict) or set(request) != expected or request.get('schema') != 1:
+                  raise ValueError('invalid publication request schema')
+              if not re.fullmatch(r'[0-9a-f]{{40}}', request['target_sha']):
+                  raise ValueError('target_sha must be an exact 40-character lowercase SHA')
+              if not re.fullmatch(r'[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?', request['version']):
+                  raise ValueError('version must be explicit SemVer without tag prefix')
+              if request['impact'] not in {{'patch', 'minor', 'major'}}:
+                  raise ValueError('impact must be patch, minor, or major')
+              if not isinstance(request['title'], str) or not request['title'].strip():
+                  raise ValueError('title must be non-empty')
+              if not isinstance(request['notes'], str) or not request['notes'].strip():
+                  raise ValueError('notes must be non-empty')
+              return request
+
           event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
           body = event['comment']['body']
-          if body.strip() == retry_command:
+          request_comment_id = event['comment']['id']
+          if body == retry_command:
               repo = os.environ['GITHUB_REPOSITORY']
               token = os.environ['GITHUB_TOKEN']
               issue_number = event['issue']['number']
               current_id = event['comment']['id']
-              candidates = []
-              page = 1
-              while True:
-                  api_url = f'https://api.github.com/repos/{{repo}}/issues/{{issue_number}}/comments?per_page=100&page={{page}}'
-                  api_request = Request(api_url, headers={{
+
+              def api_json(url):
+                  api_request = Request(url, headers={{
                       'Accept': 'application/vnd.github+json',
                       'Authorization': f'Bearer {{token}}',
                       'User-Agent': 'coferlandia-release-publication',
                       'X-GitHub-Api-Version': '2022-11-28',
                   }})
                   with urlopen(api_request, timeout=30) as response:
-                      comments = json.load(response)
-                  if not comments:
-                      break
-                  candidates.extend(
-                      comment for comment in comments
-                      if comment.get('id', 0) < current_id and marker in comment.get('body', '')
-                  )
-                  if len(comments) < 100:
+                      return json.load(response)
+
+              def permission_for(login):
+                  url = f'https://api.github.com/repos/{{repo}}/collaborators/{{quote(login, safe="")}}/permission'
+                  try:
+                      value = api_json(url)
+                  except HTTPError as exc:
+                      if exc.code in {{403, 404}}:
+                          return None
+                      raise
+                  return value.get('permission')
+
+              comments = []
+              page = 1
+              while True:
+                  page_items = api_json(f'https://api.github.com/repos/{{repo}}/issues/{{issue_number}}/comments?per_page=100&page={{page}}')
+                  if not isinstance(page_items, list):
+                      raise SystemExit('GitHub issue comments response must be a list')
+                  comments.extend(page_items)
+                  if len(page_items) < 100:
                       break
                   page += 1
-              if not candidates:
-                  raise SystemExit('retry requested but no prior publication request exists')
-              body = max(candidates, key=lambda comment: comment['id'])['body']
-          if body.count(marker) != 1:
-              raise SystemExit('publication request must contain exactly one marker')
-          tail = body.split(marker, 1)[1]
-          matches = re.findall(r'```json\\s*(\\{{.*?\\}})\\s*```', tail, re.S)
-          if len(matches) != 1:
-              raise SystemExit('publication request must contain exactly one JSON block')
-          request = json.loads(matches[0])
-          expected = {{'schema', 'target_sha', 'version', 'impact', 'title', 'notes'}}
-          if set(request) != expected or request['schema'] != 1:
-              raise SystemExit('invalid publication request schema')
-          if not re.fullmatch(r'[0-9a-f]{{40}}', request['target_sha']):
-              raise SystemExit('target_sha must be an exact 40-character lowercase SHA')
-          if not re.fullmatch(r'[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?', request['version']):
-              raise SystemExit('version must be explicit SemVer without tag prefix')
-          if request['impact'] not in {{'patch', 'minor', 'major'}}:
-              raise SystemExit('impact must be patch, minor, or major')
-          if not isinstance(request['title'], str) or not request['title'].strip():
-              raise SystemExit('title must be non-empty')
-          if not isinstance(request['notes'], str) or not request['notes'].strip():
-              raise SystemExit('notes must be non-empty')
+
+              request = None
+              for comment in sorted(comments, key=lambda item: item.get('id', 0), reverse=True):
+                  comment_id = comment.get('id', 0)
+                  candidate_body = comment.get('body', '')
+                  if comment_id >= current_id or marker not in candidate_body:
+                      continue
+                  author = (comment.get('user') or {{}}).get('login')
+                  if not author or permission_for(author) not in {{'admin', 'maintain'}}:
+                      continue
+                  try:
+                      candidate = parse_request(candidate_body)
+                  except ValueError:
+                      continue
+                  request = candidate
+                  request_comment_id = comment_id
+                  break
+              if request is None:
+                  raise SystemExit('retry requested but no prior authorized valid publication request exists')
+          else:
+              try:
+                  request = parse_request(body)
+              except ValueError as exc:
+                  raise SystemExit(str(exc)) from exc
           request_path = Path(os.environ['RUNNER_TEMP']) / 'coferlandia-publication-request.json'
           request_path.write_text(json.dumps(request, sort_keys=True), encoding='utf-8')
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
               output.write(f"target_sha={{request['target_sha']}}\\n")
               output.write(f"version={{request['version']}}\\n")
+              output.write(f"request_comment_id={{request_comment_id}}\\n")
           PY
 
       - name: Bind request to release PR integration
