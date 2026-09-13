@@ -27,7 +27,7 @@ coferlandia-skills/
 ├── RELEASE-NOTES.md       ← Repository/plugin release history
 ├── SKILLS-GUIDE.md        ← Human-oriented catalog
 ├── LICENSE                ← Apache License 2.0
-├── prompts/               ← Repository-addressable Chat delivery controllers; not Agent Skills plugin payload in V1
+├── prompts/               ← Public Chat delivery controllers; shipped with the plugin/package but not Agent Skills
 ├── .claude-plugin/        ← Agent Skills plugin and marketplace metadata
 ├── .agents/skills/        ← Repository-local maintenance skills; never shipped
 ├── _protocol/             ← Creation, quality, delivery, versioning, and release protocol
@@ -44,7 +44,7 @@ coferlandia-skills/
 
 1. Read `skills/meta/using-project-skills/` and invoke any matching public skill before responding or acting.
 2. Also inspect `.agents/skills/` for a repository-local skill that more specifically owns the requested repository operation.
-3. When the request explicitly invokes a Chat delivery controller, resolve it through `prompts/registry.json` and load only the requested prompt(s).
+3. When the request explicitly invokes a Chat delivery controller, resolve it through `prompts/registry.json` and load only the resolved prompt(s).
 4. A repository-local skill overrides a weaker generic public workflow when it explicitly owns the same operation.
 
 ## Using an existing public skill
@@ -57,10 +57,10 @@ coferlandia-skills/
 ## Using Chat delivery prompts
 
 1. Read `prompts/BOOTSTRAP.md` and `prompts/registry.json`.
-2. Resolve only aliases explicitly requested (`chat coder`, `ci`/`gh ci`, `merge`, `chat release`, `hotfix`, or external `local ci` / `local release`).
-3. Ordinary controller compositions execute left-to-right without inserting missing stages or changing Qualification strategy. `hotfix` is an explicit high-level emergency-remediation controller and must never be inferred from an ordinary bug report.
+2. Resolve only aliases explicitly requested (`chat coder`, `chat dev`, `ci`/`gh ci`, `merge`, `chat release`, `hotfix`, or external `local ci` / `local release`). A single standalone alias may expand only through `composition.standalone_defaults` declared in the registry.
+3. Explicit `+` controller compositions execute left-to-right exactly as written and suppress standalone defaults; do not infer missing stages from READY state or change Qualification strategy. `hotfix` is an explicit high-level emergency-remediation controller and must never be inferred from an ordinary bug report.
 4. Read `_protocol/delivery/` for shared READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification contracts.
-5. `prompts/` is repository-addressable in V1; do not pretend it is installed as an Agent Skill through the `.plugin` package.
+5. `prompts/` ships as a public prompt artifact family alongside Agent Skills, but it is not itself an Agent Skill surface; load it through the prompt catalog rather than Agent Skill discovery.
 
 ## Creating or changing a public skill
 
@@ -77,7 +77,7 @@ coferlandia-skills/
 2. Keep repository-specific CI facts out of generic prompt bodies; use `.coferlandia/ci/profile.json` or repository-owned policy in consumer repositories.
 3. Update `prompts/registry.json` only for prompt identity/alias/composition changes.
 4. Run `python _protocol/scripts/validate_prompt.py validate --root .` and the prompt/delivery contract tests.
-5. Treat prompt changes as repository public-surface changes and document them in release notes; do not silently package them as Agent Skills.
+5. Treat prompt changes as repository public-surface changes, document them in release notes, and ship them as the prompt catalog without reclassifying them as Agent Skills.
 
 ---
 
@@ -116,12 +116,12 @@ The gate applies before:
 
 It does **not** require every intermediate RED/GREEN/refactor checkpoint commit to represent a complete release.
 
-When a final diff touches any shipped Agent Skill surface (`skills/**`, `_protocol/**`, `.claude-plugin/**`, public installation/discovery documentation, packaging, or license):
+When a final diff touches any shipped public surface (`skills/**`, `prompts/**`, `_protocol/**`, `.claude-plugin/**`, public installation/discovery documentation, packaging, or license):
 
 1. Read and invoke `.agents/skills/coferlandia-release-maintainer/SKILL.md`.
 2. Inspect the complete diff against the intended integration base.
 3. Classify every affected public skill and the repository/plugin semantic impact.
-4. Synchronize skill versions, per-skill changelogs, plugin version, release notes, and the README managed summary.
+4. Synchronize skill versions when applicable, per-skill changelogs when applicable, plugin version, release notes, and the README managed summary.
 5. Run:
 
 ```bash
@@ -140,7 +140,7 @@ python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release
 
 7. Do not commit, mark ready, or integrate while any release gate, validation, review, or package verification finding remains unresolved.
 
-The Agent Skills package must exclude `.agents/**`, `.agent/**`, Git state, caches, temporary plans, secrets, and the repository-addressable `prompts/` family in V1. Packaging must never run `git pull`; it packages the already-reviewed Agent Skills state.
+The installable plugin package must exclude `.agents/**`, `.agent/**`, Git state, caches, temporary plans, secrets, and other repository-local material. It includes the public `prompts/` catalog alongside public Agent Skills while preserving Prompt and Agent Skill semantics as distinct artifact families. Packaging must never run `git pull`; it packages the already-reviewed branch state.
 
 ---
 

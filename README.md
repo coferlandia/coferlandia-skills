@@ -42,25 +42,25 @@ See the [Skills Guide](./SKILLS-GUIDE.md) for the human-oriented catalog, select
 Issue
   |
   v
-chat-coder (Chat Development)
+standalone chat coder
   |
-READY_FOR_CI
+  v
+chat-coder (Development)
   |
-  +---------------------------+
-  |                           |
-  v                           v
-ci prompt                  local-ci skill
-GITHUB_NATIVE              LOCAL
-  |                           |
-  +--------- READY_FOR_MERGE -+
-               |
-               v
-            merge prompt
-               |
-            COMPLETE
+READY_FOR_CI (internal durable handoff)
+  |
+  v
+ci (GITHUB_NATIVE Qualification)
+  |
+READY_FOR_MERGE (internal durable handoff)
+  |
+  v
+merge (Integration + Issue closeout)
+  |
+COMPLETE
 ```
 
-The development Qualification invocation surface determines the strategy: explicit Chat `ci` selects `GITHUB_NATIVE`, while invoking the `local-ci` Agent Skill selects `LOCAL`. `READY_FOR_CI` alone starts neither surface, and no separate strategy router is required.
+Standalone `chat coder` / `chat-coder` is the simple GitHub-native path: the prompt registry resolves Development -> `ci` -> `merge` before execution starts, so the user does not need separate CI and merge commands. The stages keep their existing authority boundaries and durable handoffs. Use `chat dev` / `chat-dev` to stop after Development at `READY_FOR_CI`, or compose explicitly (for example `chat coder + local ci + merge`) when another Qualification surface is intended. Explicit composition always overrides the standalone default, and no strategy silently falls back to another.
 
 Aggregate releases use the same explicit strategy split:
 
@@ -159,11 +159,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.11.2 — 2026-09-13**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| coferlandia-ci-adapter | 1.3.2 | Keeps remote Development validation scoped and cheap instead of defaulting to canonical FULL/Qualification suites. |
+**v2.12.0 — 2026-09-13**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

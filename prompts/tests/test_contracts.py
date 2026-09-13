@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -8,7 +9,25 @@ ROOT = Path(__file__).resolve().parents[2]
 PROMPTS = ROOT / "prompts"
 VALIDATOR = ROOT / "_protocol" / "scripts" / "validate_prompt.py"
 
+
 class PromptContractTests(unittest.TestCase):
+    def run_resolve(self, expression: str, root: Path = ROOT) -> dict:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(root / "_protocol" / "scripts" / "validate_prompt.py"),
+                "resolve",
+                expression,
+                "--root",
+                str(root),
+                "--json",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+        return json.loads(result.stdout)
+
     def test_registry_contract(self):
         registry = json.loads((PROMPTS / "registry.json").read_text(encoding="utf-8"))
         self.assertEqual(registry["schema_version"], 1)
@@ -16,6 +35,7 @@ class PromptContractTests(unittest.TestCase):
         self.assertEqual(ids, ["chat-coder", "ci", "merge", "chat-release", "hotfix"])
         aliases = {alias: item["id"] for item in registry["prompts"] for alias in item["aliases"]}
         self.assertEqual(aliases["chat coder"], "chat-coder")
+        self.assertEqual(aliases["chat dev"], "chat-coder")
         self.assertEqual(aliases["gh ci"], "ci")
         self.assertEqual(aliases["merge"], "merge")
         self.assertEqual(aliases["chat release"], "chat-release")
@@ -25,47 +45,132 @@ class PromptContractTests(unittest.TestCase):
         self.assertEqual(external["local ci"]["target"], "local-ci")
         self.assertEqual(external["local release"]["kind"], "skill")
         self.assertEqual(external["local release"]["target"], "local-release")
-        self.assertEqual(registry["composition"]["order"], "left-to-right")
-        self.assertFalse(registry["composition"]["implicit_stages"])
-        self.assertFalse(registry["composition"]["automatic_fallback"])
+        composition = registry["composition"]
+        self.assertEqual(composition["order"], "left-to-right")
+        self.assertFalse(composition["implicit_stages"])
+        self.assertFalse(composition["automatic_fallback"])
+        self.assertEqual(
+            composition["standalone_defaults"]["chat coder"],
+            ["chat coder", "gh ci", "merge"],
+        )
+        self.assertEqual(
+            composition["standalone_defaults"]["chat-coder"],
+            ["chat-coder", "gh ci", "merge"],
+        )
 
     def test_validator_and_alias_resolution(self):
         result = subprocess.run(
             [sys.executable, str(VALIDATOR), "validate", "--root", str(ROOT), "--json"],
-            text=True, capture_output=True
+            text=True,
+            capture_output=True,
         )
         self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
-        resolved = subprocess.run(
-            [sys.executable, str(VALIDATOR), "resolve", "chat coder + gh ci + merge", "--root", str(ROOT), "--json"],
-            text=True, capture_output=True
+
+        standalone = self.run_resolve("chat coder")
+        self.assertTrue(standalone["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in standalone["sequence"]],
+            ["chat-coder", "ci", "merge"],
         )
-        self.assertEqual(resolved.returncode, 0, resolved.stderr or resolved.stdout)
-        payload = json.loads(resolved.stdout)
-        self.assertEqual([x["target"] for x in payload["sequence"]], ["chat-coder", "ci", "merge"])
-        local = subprocess.run(
-            [sys.executable, str(VALIDATOR), "resolve", "chat coder + local ci + merge", "--root", str(ROOT), "--json"],
-            text=True, capture_output=True
+
+        normalized = self.run_resolve("  Chat   Coder  ")
+        self.assertTrue(normalized["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in normalized["sequence"]],
+            ["chat-coder", "ci", "merge"],
         )
-        self.assertEqual(local.returncode, 0, local.stderr or local.stdout)
-        payload = json.loads(local.stdout)
-        self.assertEqual(payload["sequence"][1], {"alias": "local ci", "kind": "skill", "target": "local-ci"})
-        release = subprocess.run(
-            [sys.executable, str(VALIDATOR), "resolve", "chat release", "--root", str(ROOT), "--json"],
-            text=True, capture_output=True
+
+        hyphenated = self.run_resolve("chat-coder")
+        self.assertTrue(hyphenated["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in hyphenated["sequence"]],
+            ["chat-coder", "ci", "merge"],
         )
-        self.assertEqual(release.returncode, 0, release.stderr or release.stdout)
-        self.assertEqual(json.loads(release.stdout)["sequence"][0]["target"], "chat-release")
-        hotfix = subprocess.run(
-            [sys.executable, str(VALIDATOR), "resolve", "hotfix", "--root", str(ROOT), "--json"],
-            text=True, capture_output=True
+
+        development_only = self.run_resolve("chat dev")
+        self.assertFalse(development_only["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in development_only["sequence"]],
+            ["chat-coder"],
         )
-        self.assertEqual(hotfix.returncode, 0, hotfix.stderr or hotfix.stdout)
-        self.assertEqual(json.loads(hotfix.stdout)["sequence"][0]["target"], "hotfix")
+
+        explicit = self.run_resolve("chat coder + gh ci + merge")
+        self.assertFalse(explicit["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in explicit["sequence"]],
+            ["chat-coder", "ci", "merge"],
+        )
+
+        explicit_incomplete = self.run_resolve("chat coder + merge")
+        self.assertFalse(explicit_incomplete["defaulted"])
+        self.assertEqual(
+            [item["target"] for item in explicit_incomplete["sequence"]],
+            ["chat-coder", "merge"],
+        )
+
+        local = self.run_resolve("chat coder + local ci + merge")
+        self.assertFalse(local["defaulted"])
+        self.assertEqual(local["sequence"][1], {"alias": "local ci", "kind": "skill", "target": "local-ci"})
+        self.assertEqual(
+            [item["target"] for item in local["sequence"]],
+            ["chat-coder", "local-ci", "merge"],
+        )
+
+        release = self.run_resolve("chat release")
+        self.assertFalse(release["defaulted"])
+        self.assertEqual(release["sequence"][0]["target"], "chat-release")
+
+        hotfix = self.run_resolve("hotfix")
+        self.assertFalse(hotfix["defaulted"])
+        self.assertEqual(hotfix["sequence"][0]["target"], "hotfix")
+
+    def test_standalone_default_schema_fails_closed(self):
+        validator_text = VALIDATOR.read_text(encoding="utf-8")
+        registry = json.loads((PROMPTS / "registry.json").read_text(encoding="utf-8"))
+        cases = [
+            ({"missing alias": ["chat coder", "gh ci", "merge"]}, "unknown alias"),
+            ({"chat coder": []}, "non-empty list"),
+            ({"chat coder": ["gh ci", "merge"]}, "must start with its source controller"),
+            ({"chat coder": ["chat coder", "unknown stage"]}, "references unknown alias"),
+        ]
+        for defaults, expected in cases:
+            with self.subTest(defaults=defaults), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "prompts").mkdir()
+                (root / "_protocol" / "scripts").mkdir(parents=True)
+                bad = json.loads(json.dumps(registry))
+                bad["composition"]["standalone_defaults"] = defaults
+                (root / "prompts" / "registry.json").write_text(
+                    json.dumps(bad), encoding="utf-8"
+                )
+                (root / "_protocol" / "scripts" / "validate_prompt.py").write_text(
+                    validator_text, encoding="utf-8"
+                )
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(root / "_protocol" / "scripts" / "validate_prompt.py"),
+                        "resolve",
+                        "chat coder",
+                        "--root",
+                        str(root),
+                        "--json",
+                    ],
+                    text=True,
+                    capture_output=True,
+                )
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(expected, result.stdout)
 
     def test_prompts_are_generic_and_separated(self):
         banned = [
-            "SecretarIA", "secretaria-ci-delivery", "scripts/validate-all.sh", "fast-ci.yml",
-            "coferlandia-ci, docker", "projects/1", "projects/2"
+            "SecretarIA",
+            "secretaria-ci-delivery",
+            "scripts/validate-all.sh",
+            "fast-ci.yml",
+            "coferlandia-ci, docker",
+            "projects/1",
+            "projects/2",
         ]
         texts = {}
         for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix"):
@@ -98,17 +203,42 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("Do not report `COMPLETE` while required work-item closure is unverified", text)
         self.assertIn("Issue = <identity> / closed", text)
 
-    def test_ci_is_explicit_chat_surface_and_never_inferred_from_ready_for_ci(self):
+    def test_ci_is_resolved_explicitly_or_by_declared_chat_coder_default(self):
         text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
         chat_coder = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
         self.assertIn("## Invocation boundary", text)
         self.assertIn("This is a Chat prompt controller, not an Agent Skill", text)
-        self.assertIn("explicitly resolves `ci`, `gh ci`, or `github ci`", text)
-        self.assertIn("does **not** invoke this controller", text)
-        self.assertIn("A standalone `chat-coder` request stops at `READY_FOR_CI`", text)
-        self.assertIn("Agent Skill/local Qualification belongs to `local-ci`", text)
+        self.assertIn("registry-declared standalone `chat coder`", text)
+        self.assertIn("does **not** by itself invoke this controller", text)
+        self.assertIn("Standalone `chat dev` / `chat-dev` stops at `READY_FOR_CI`", text)
         self.assertIn("Qualification strategy is `GITHUB_NATIVE`", text)
-        self.assertIn("do not continue into another controller unless the user's invocation explicitly composed that next stage", chat_coder)
+        self.assertIn("standalone `chat coder` / `chat-coder` resolves", chat_coder)
+        self.assertIn("standalone `chat dev` / `chat-dev` resolves only this Development stage", chat_coder)
+        self.assertIn("explicit `+` composition", chat_coder)
+        self.assertIn("internal durable handoff", chat_coder)
+        self.assertIn("Next owner = <next resolved controller/surface or NONE>", chat_coder)
+        self.assertIn("standalone `chat coder` / `chat-coder` resolves by default", bootstrap)
+        self.assertIn("Explicit controller compositions execute left-to-right without applying standalone defaults", bootstrap)
+
+    def test_standalone_chat_coder_has_unambiguous_top_level_status(self):
+        bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
+        self.assertIn("Chat Coder = COMPLETE", bootstrap)
+        self.assertIn("Chat Coder = WAITING_CI", bootstrap)
+        self.assertIn("Chat Coder = BLOCKED", bootstrap)
+        self.assertIn("Stage = Development | Qualification | Integration", bootstrap)
+        self.assertIn("Controller state = <exact underlying state>", bootstrap)
+        self.assertIn("Next action = <specific action required>", bootstrap)
+        self.assertIn("do not require a different controller command", bootstrap)
+
+    def test_ci_reports_nonterminal_waiting_state_without_claiming_green(self):
+        text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
+        self.assertIn("## Non-terminal GitHub Actions state", text)
+        self.assertIn("Qualification workflow = WAITING_CI", text)
+        self.assertIn("is a non-terminal Qualification state, not success", text)
+        self.assertIn("continue observing the authoritative exact-SHA gate", text)
+        self.assertIn("A stale or superseded run never becomes evidence", text)
+        self.assertIn("yield immediately to `merge` without asking the user for confirmation", text)
 
     def test_ci_respects_profile_submission_mode_without_inventing_manual_dispatch(self):
         text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
@@ -202,8 +332,12 @@ class PromptContractTests(unittest.TestCase):
 
     def test_bootstrap_is_small(self):
         bootstrap = (PROMPTS / "BOOTSTRAP.md").read_text(encoding="utf-8")
-        full = sum(len((PROMPTS / f"{name}.md").read_text(encoding="utf-8")) for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix"))
+        full = sum(
+            len((PROMPTS / f"{name}.md").read_text(encoding="utf-8"))
+            for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix")
+        )
         self.assertLess(len(bootstrap), full // 3)
+
 
 if __name__ == "__main__":
     unittest.main()

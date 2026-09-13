@@ -12,7 +12,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 - Explicit emergency remediation is separate from ordinary bug development: `hotfix` may orchestrate repository-approved owners but never bypass their safeguards.
 - Durable project knowledge, operational work state, and cross-project architecture memory have different owners.
 - Chat prompts and local Agent Skills are different execution surfaces even when they implement the same semantic stage.
-- For development Qualification, `local-ci` is `LOCAL`, while explicit Chat `ci` is `GITHUB_NATIVE`.
+- For development Qualification, `local-ci` is `LOCAL`, while resolved Chat `ci` is `GITHUB_NATIVE`; standalone `chat coder` resolves that GitHub-native stage through its declared default sequence.
 - For release Qualification, `local-release` is `LOCAL`, while explicit `chat-release` is `GITHUB_NATIVE`.
 - No LOCAL/GITHUB_NATIVE surface silently falls back to the other.
 
@@ -43,8 +43,8 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 | [`project-orchestrator`](./skills/ops/project-orchestrator/) | An approved direct plan or Analyst task graph must run through a controlled local delivery lifecycle. | Contract materialization, claims, Git/worktrees, commits, reviews, traceability, final PR, explicit integration, and cleanup. | Executes approved contracts; it does not silently re-plan or redesign them. |
 | [`local-ci`](./skills/engineering/local-ci/) | Development Qualification is executed through an Agent Skills/local surface for a durable READY_FOR_CI candidate. | LOCAL strategy READY_FOR_MERGE evidence for exact candidate/base/profile. | Invocation selects LOCAL; it never runs GitHub-native CI as fallback or merges. |
 | [`local-release`](./skills/engineering/local-release/) | One exact release candidate must use the LOCAL release surface. | LOCAL READY_FOR_RELEASE evidence plus repository-approved release completion using the shared publisher. | Never falls back to GitHub-native release Qualification and never deploys. |
-| [`chat-coder`](./prompts/chat-coder.md) | Development is being driven from Chat. | Draft PR plus durable READY_FOR_CI. | Stops before Qualification. |
-| [`ci`](./prompts/ci.md) | GitHub-native development Qualification is explicitly selected from Chat. | GITHUB_NATIVE READY_FOR_MERGE evidence. | Does not run Local CI or merge. |
+| [`chat-coder`](./prompts/chat-coder.md) | Development is being driven from Chat. | Standalone `chat coder` completes Development -> GITHUB_NATIVE Qualification -> Integration; `chat dev` produces the Draft PR plus durable READY_FOR_CI only. | Stage authority remains separated; explicit `+` composition overrides the standalone default. |
+| [`ci`](./prompts/ci.md) | GitHub-native development Qualification is resolved from Chat, either directly, by explicit composition, or by the standalone Chat Coder default. | GITHUB_NATIVE READY_FOR_MERGE evidence. | Does not run Local CI or merge. |
 | [`merge`](./prompts/merge.md) | An already-qualified development candidate must be integrated from Chat. | Repository-approved Integration, explicit work-item closeout, and COMPLETE. | Never executes CI; stale qualification returns REQUALIFICATION_REQUIRED and failed post-merge Issue closure returns CLOSEOUT_BLOCKED. |
 | [`chat-release`](./prompts/chat-release.md) | One exact release candidate must use GitHub-native release Qualification and promotion. | GITHUB_NATIVE READY_FOR_RELEASE, repository-approved release integration, and publication through the shared publisher. | Does not invoke `ci`, fall back to LOCAL, or deploy. |
 | [`hotfix`](./prompts/hotfix.md) | An explicit urgent bug/incident should take the repository-approved emergency path from Issue/report through production stabilization. | Durable HOTFIX state, exact emergency candidate, and mandatory permanent-fix follow-up when the production correction is only temporary. | Explicit invocation only; delegates Development/Qualification/Integration/publication and fails closed instead of weakening safeguards. |
@@ -66,8 +66,8 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 
 ```text
 Controlled local delivery: Project Manager -> optional Architect -> Analyst/direct plan -> Orchestrator -> development roles
-Chat delivery:             chat-coder -> ci -> merge
-Mixed local qualification: chat-coder -> local-ci -> merge
+Chat delivery:             chat coder (default -> chat-coder -> ci -> merge)
+Mixed local qualification: chat coder + local ci + merge
 GitHub-native release:     exact release candidate -> chat-release -> Release Publisher internally
 LOCAL release:             exact release candidate -> local-release -> Release Publisher internally
 Emergency remediation:     hotfix -> repository-approved development/qualification/integration -> optional Release Publisher
@@ -78,7 +78,7 @@ Configuration tooling:     Config Toolsmith -> Config DevOps
 CI repository adaptation:  CI Adapter -> one repo profile -> Chat/Local development or release Qualification
 ```
 
-Delivery composition is exact and left-to-right for ordinary development/release surfaces. The explicitly invoked `hotfix` controller is a bounded orchestration surface: it may call repository-approved owners as part of its emergency lifecycle, but it does not absorb or weaken their contracts. Missing stages are not inferred from ordinary work, and `LOCAL`/`GITHUB_NATIVE` strategies never silently fall back to one another. `READY_FOR_CI`, `READY_FOR_MERGE`, `READY_FOR_RELEASE`, and HOTFIX state are evidence, not permission to invent an undeclared next surface.
+Explicit `+` delivery composition is exact and left-to-right for ordinary development/release surfaces. A single standalone alias may expand only through a sequence declared in the prompt registry; standalone `chat coder` uses that mechanism for Development -> GITHUB_NATIVE Qualification -> Integration, while `chat dev` remains Development-only. The explicitly invoked `hotfix` controller is a bounded orchestration surface: it may call repository-approved owners as part of its emergency lifecycle, but it does not absorb or weaken their contracts. Missing stages are never inferred from READY state, and `LOCAL`/`GITHUB_NATIVE` strategies never silently fall back to one another. `READY_FOR_CI`, `READY_FOR_MERGE`, `READY_FOR_RELEASE`, and HOTFIX state are evidence, not permission to invent an undeclared next surface.
 
 For ordinary delivery, Integration completion is tied to the repository-approved target ref rather than to the repository default branch: after a verified merge to that target, `merge` explicitly closes and re-verifies the associated work item before returning `COMPLETE`.
 

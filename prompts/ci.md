@@ -1,7 +1,7 @@
 ---
 name: ci
-description: "Generic Chat GitHub-native Qualification controller, loaded only by explicit `ci`/`gh ci`/`github ci` prompt invocation, that consumes READY_FOR_CI plus a repository CI profile and emits exact-candidate READY_FOR_MERGE evidence."
-version: "1.2.0"
+description: "Generic Chat GitHub-native Qualification controller resolved directly, by explicit composition, or by the declared standalone Chat Coder default pipeline."
+version: "1.3.0"
 stage: qualification
 status: active
 ---
@@ -27,11 +27,15 @@ This controller **must not merge** and must not silently switch to Local CI.
 
 ## Invocation boundary
 
-This is a Chat prompt controller, not an Agent Skill. Load it only when the controlling request explicitly resolves `ci`, `gh ci`, or `github ci` through the prompt registry, including an explicit left-to-right composition that contains that alias.
+This is a Chat prompt controller, not an Agent Skill. Load it only when the current resolved sequence selects `ci`, whether that selection came from:
 
-The existence of `READY_FOR_CI`, discovery of Agent Skills, or completion of a bounded controller such as `chat-coder` does **not** invoke this controller. A standalone `chat-coder` request stops at `READY_FOR_CI`. Agent Skill/local Qualification belongs to `local-ci`; do not load this prompt as an inferred alternative or fallback.
+- a direct `ci`, `gh ci`, or `github ci` invocation;
+- an explicit left-to-right composition containing that alias; or
+- the registry-declared standalone `chat coder` / `chat-coder` default sequence.
 
-Once this prompt is explicitly invoked, the Qualification strategy is `GITHUB_NATIVE`; do not ask a second strategy-selection question.
+The existence of `READY_FOR_CI`, discovery of Agent Skills, or completion of a bounded Development stage does **not** by itself invoke this controller. Standalone `chat dev` / `chat-dev` stops at `READY_FOR_CI`. The Chat Coder default invokes this stage because the registry resolved it before Development began, not because a handoff state was discovered afterward. Agent Skill/local Qualification belongs to `local-ci`; do not load this prompt as an inferred alternative or fallback.
+
+Once this prompt is resolved, the Qualification strategy is `GITHUB_NATIVE`; do not ask a second strategy-selection question.
 
 ## Entry contract
 
@@ -73,6 +77,25 @@ This barrier validates that environment impact was recognized and mechanically c
 4. Evaluate every profile-required gate against its explicit allowed terminal conclusions. Missing, stale, superseded, cancelled or old-SHA evidence never satisfies the gate.
 5. If Merge Queue/`merge_group` is declared authoritative when present, bind qualification to that exact effective candidate rather than reusing older PR-head evidence.
 
+### Non-terminal GitHub Actions state
+
+Queued, waiting, requested, pending, or in-progress evidence is a non-terminal Qualification state, not success and not automatically a blocker. During the active execution, continue observing the authoritative exact-SHA gate when the available GitHub surface permits it. Do not ask the user to issue a separate `ci` command merely because a required run is still progressing.
+
+If the required external GitHub Actions work remains non-terminal beyond what the active execution can observe, return a resumable state with no success claim:
+
+```text
+Qualification workflow = WAITING_CI
+Issue = <identity>
+PR = <number>
+Candidate SHA = <sha>
+Qualification strategy = GITHUB_NATIVE
+Run/check = <authoritative identifier>
+Current status = queued | waiting | requested | pending | in_progress
+Next stage after GREEN = Merge | terminal READY_FOR_MERGE
+```
+
+On reentry, reconstruct the exact PR/head/profile/run state from GitHub rather than trusting the old waiting report. A stale or superseded run never becomes evidence for the current candidate.
+
 ## Failure loop
 
 For a current RED gate, inspect the exact failing run/job/check. Classify repository/product defect versus transient/provider failure. When Chat capabilities and the approved work contract allow a bounded correction, use systematic debugging, add/regress the failing behavior where appropriate, perform fresh focused validation/review, push a new candidate through the repository-approved development flow, refresh `READY_FOR_CI`, and restart GitHub-native qualification for that new SHA.
@@ -108,4 +131,6 @@ Re-read PR/base/profile immediately before writing the handoff. If any identity 
 
 ## Terminal report
 
-Return `READY_FOR_MERGE` with exact candidate/base/profile/evidence, or a resumable waiting/failure state. Do not invoke `merge.md` unless the user's original composition explicitly requested it.
+When Qualification is the terminal resolved stage, return `READY_FOR_MERGE` with exact candidate/base/profile/evidence, `WAITING_CI` for a still-authoritative non-terminal external run, or a precise failure/blocker state.
+
+When the resolved sequence contains `merge` next, including the standalone Chat Coder default, treat `READY_FOR_MERGE` as an internal durable handoff and yield immediately to `merge` without asking the user for confirmation. Never invoke `merge` merely because `READY_FOR_MERGE` exists; it must already be the next resolved stage.

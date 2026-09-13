@@ -5,7 +5,7 @@
       "id": "chat-coder",
       "path": "prompts/chat-coder.md",
       "stage": "development",
-      "aliases": ["chat coder", "chat-coder"]
+      "aliases": ["chat coder", "chat-coder", "chat dev", "chat-dev"]
     },
     {
       "id": "ci",
@@ -40,6 +40,10 @@
     "separator": "+",
     "order": "left-to-right",
     "implicit_stages": false,
-    "automatic_fallback": false
+    "automatic_fallback": false,
+    "standalone_defaults": {
+      "chat coder": ["chat coder", "gh ci", "merge"],
+      "chat-coder": ["chat-coder", "gh ci", "merge"]
+    }
   }
 }
