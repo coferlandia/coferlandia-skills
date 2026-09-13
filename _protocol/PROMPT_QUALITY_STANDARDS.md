@@ -7,7 +7,7 @@ A Coferlandia Chat controller must:
 3. reconstruct state from repository/GitHub evidence rather than chat memory;
 4. fail closed on stale candidate/profile evidence;
 5. avoid repository-specific paths, tests, workflows, Project IDs and runner labels;
-6. preserve explicit user composition without implicit stages or fallback;
+6. preserve explicit user composition exactly, allowing only registry-declared standalone alias defaults and never inferred missing stages or strategy fallback;
 7. keep consequential Git/GitHub side effects inside its declared responsibility;
 8. reference shared delivery contracts rather than creating incompatible local schemas;
 9. include reentry/failure behavior and a factual terminal report;
