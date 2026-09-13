@@ -140,7 +140,7 @@ The workflows are modular. The Project Manager, Architect, development roles, Ar
 | [`skills/INDEX.md`](./skills/INDEX.md) | Canonical inventory, category, status, and location of every Agent Skill. |
 | [`prompts/INDEX.md`](./prompts/INDEX.md) | Public Chat delivery prompt catalog. |
 | [`prompts/registry.json`](./prompts/registry.json) | Machine-readable Chat aliases/composition registry. |
-| [`AGENTS.md`](./AGENTS.md) | Entry point for agents. |
+| [`AGENTS.md`](./AGENTS.md) | Entry point and maintenance rules for AI agents. |
 | Each `SKILL.md` | Complete operational contract for one Agent Skill. |
 | Each skill `CHANGELOG.md` | Version history for one public skill. |
 
