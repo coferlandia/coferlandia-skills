@@ -4,11 +4,11 @@
 
 ### Added
 
-- Adds an authorized text-only retry command for GitHub-native publication recovery. Retry resolves the latest prior immutable publication request from the same PR and replays it through the normal publisher path.
+- Adds an authorized text-only retry command for GitHub-native publication recovery. Retry resolves the latest prior syntactically valid request authored by a current repository admin/maintainer on the same PR and replays it through the normal publisher path.
 
 ### Safety
 
-- Retry comments cannot supply or override release payload fields; actor authorization, merged-PR binding, exact target SHA validation, isolated control-plane execution and fail-closed publisher semantics remain unchanged.
+- Retry comments cannot supply or override release payload fields; both the retry actor and the replayed request author must have release authority, malformed/unauthorized candidate requests are skipped, and merged-PR binding, exact target SHA validation, isolated control-plane execution and fail-closed publisher semantics remain unchanged.
 
 ## 1.3.0 — 2026-09-12
 

@@ -168,12 +168,15 @@ class GitHubService:
             f"repos/{owner}/{repo}/releases/tags/{quote(tag, safe='')}",
             allow_not_found=True,
         )
-        if data:
-            return self._normalize_release(data)
-        # GitHub's release-by-tag endpoint omits draft releases. Fall back to the
-        # paginated release collection so publication can resume from TAG + DRAFT
-        # without creating a duplicate draft or moving the existing tag.
+        primary = self._normalize_release(data) if data else None
+        # The direct endpoint omits drafts. Always inspect the collection as well so
+        # recovery fails closed if another release object already uses the same tag.
         matches = [release for release in self.list_releases(repository) if release.get("tag") == tag]
+        if primary is not None:
+            conflicts = [release for release in matches if release.get("id") != primary.get("id")]
+            if conflicts:
+                raise ReleaseError(f"multiple GitHub Releases use tag {tag}")
+            return primary
         if len(matches) > 1:
             raise ReleaseError(f"multiple GitHub Releases use tag {tag}")
         return matches[0] if matches else None
