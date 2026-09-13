@@ -1,7 +1,7 @@
 ---
 name: chat-coder
-description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.4.0"
+description: "Generic Chat Development controller used by the standalone GitHub-native Chat Coder pipeline or by explicit Development-only/composed delivery flows."
+version: "1.5.0"
 stage: development
 status: active
 ---
@@ -27,6 +27,19 @@ Issue / approved work contract
 ```
 
 This controller **must not perform Qualification**, must not mark a candidate `READY_FOR_MERGE`, must not merge, close the Issue, project completion, or perform delivery closeout.
+
+## Invocation and default orchestration
+
+This file owns the Development stage only. `prompts/registry.json` owns how the user-facing alias is resolved around it:
+
+- standalone `chat coder` / `chat-coder` resolves to this Development stage, then `ci` with `GITHUB_NATIVE` Qualification, then `merge`;
+- standalone `chat dev` / `chat-dev` resolves only this Development stage and terminates at durable `READY_FOR_CI`;
+- any explicit `+` composition executes exactly as written and suppresses the standalone default sequence;
+- delegation from an explicitly invoked higher-level controller, such as `hotfix`, is stage-scoped and never activates the standalone default merely because it uses this Development controller.
+
+The registry-declared standalone default is orchestration, not an expansion of this stage's authority. Qualification remains owned by `ci` or `local-ci`, and Integration remains owned by `merge`.
+
+When this stage is the first step of the standalone Chat Coder default, `READY_FOR_CI` is an internal durable handoff. After writing and revalidating that handoff, yield immediately to the resolved `ci` stage without asking the user for another command or presenting Development readiness as top-level completion. When this stage is terminal because the user invoked `chat dev` or an explicit composition ending here, return the Development terminal report normally.
 
 ## Repository authority
 
@@ -179,7 +192,7 @@ Immediately before writing it, re-read the PR and prove `Candidate SHA == curren
 
 ## Terminal report
 
-Return:
+When Development is the terminal resolved stage, return:
 
 ```text
 Development workflow = READY_FOR_CI
@@ -196,9 +209,9 @@ Environment action = <NONE or concise deployment/operator action>
 Environment variables = <NONE or concise affected-variable list without secret values>
 Review Critical = 0
 Review Important = 0
-Next owner = explicitly selected Qualification strategy
+Next owner = GITHUB_NATIVE | LOCAL | NONE according to the resolved sequence
 ```
 
 When `Environment change = YES`, the terminal report must make the operational consequence visible without requiring the user to inspect the PR comment. Do not use ambiguous wording such as "may require" when the candidate-bound analysis can classify the change.
 
-Do not wait for final CI and do not continue into another controller unless the user's invocation explicitly composed that next stage or a previously explicit higher-level controller owns the continuation and delegated this Development stage under its durable contract.
+When a resolved downstream stage follows, the same candidate-bound report is internal handoff evidence rather than top-level completion. Do not wait for final CI inside Development and do not perform another controller's responsibility; continue only by yielding to the next stage already resolved by the registry, an explicit composition, or a previously explicit higher-level controller.
