@@ -13,10 +13,10 @@ compatibility: >
   and may run inside a repository-declared GitHub Actions publication workflow.
 metadata:
   author: coferlandia
-  version: "1.1.3"
+  version: "1.1.4"
   category: ops
   status: active
-  tested: "2026-09-12 - activation boundaries, SemVer/policy logic, Git identity, GitHub REST adapter, draft-resume idempotency, CLI contracts, optional GitHub-native publication transport policy, and configurable runner metadata covered by repository CI tests."
+  tested: "2026-09-12 - activation boundaries, SemVer/policy logic, Git identity, GitHub REST adapter, draft-resume idempotency, duplicate release identity rejection, asset digest fallback verification, CLI contracts, optional GitHub-native publication transport policy, and configurable runner metadata covered by repository CI tests."
 ---
 
 ## Context

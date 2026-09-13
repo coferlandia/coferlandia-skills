@@ -1,5 +1,16 @@
 # Changelog — coferlandia-release-publisher
 
+## 1.1.4 — 2026-09-13
+
+### Fixed
+
+- Fails closed when more than one GitHub Release object resolves to the same tag, including the case where the direct release-by-tag endpoint returns a published release while the collection also contains a conflicting draft.
+- Verifies release asset and provenance digests by downloading asset bytes when GitHub omits digest metadata, avoiding dependence on a specific REST response shape.
+
+### Compatibility
+
+- Exact tag, commit, title, notes, prerelease and provenance identity semantics are unchanged. Matching partial releases remain idempotently resumable.
+
 ## 1.1.3 — 2026-09-12
 
 ### Fixed

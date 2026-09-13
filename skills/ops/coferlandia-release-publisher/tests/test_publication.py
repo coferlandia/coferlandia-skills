@@ -202,5 +202,34 @@ class PublicationLifecycleTests(unittest.TestCase):
             self.assertTrue(any("prerelease flag" in error for error in drift["errors"]))
 
 
+class NoDigestGitHub(StatefulGitHub):
+    def upload_asset(self, repository, release_id, path: Path, name=None):
+        asset = super().upload_asset(repository, release_id, path, name)
+        stored = next(item for item in self.releases if item["id"] == release_id)["assets"][-1]
+        asset.pop("sha256", None)
+        stored.pop("sha256", None)
+        return asset
+
+    def download_asset_bytes(self, repository, asset_id):
+        return self.contents[asset_id].encode("utf-8")
+
+
+class AssetDigestFallbackTests(unittest.TestCase):
+    def test_provenance_publish_succeeds_when_asset_digest_metadata_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            git, github = StatefulGit(), NoDigestGitHub()
+            policy = copy.deepcopy(DEFAULT_POLICY)
+            inspection = inspect_release(root, "coferlandia/demo", "HEAD", policy, git=git, github=github)
+            plan = build_plan(
+                root, "coferlandia/demo", inspection, policy,
+                impact="minor", version="1.0.0", title="Initial release",
+                release_notes="Summary", provenance="optional", git=git, github=github,
+            )
+            result = publish_release(root, plan, git=git, github=github)
+            self.assertEqual(result["status"], "published")
+            self.assertEqual(result["release"]["consistency"], "pass")
+
+
 if __name__ == "__main__":
     unittest.main()

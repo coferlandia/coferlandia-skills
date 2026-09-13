@@ -38,9 +38,11 @@ class FakeOpener:
 
 class GitHubServiceTests(unittest.TestCase):
     def test_reads_repository_and_release_as_json(self) -> None:
+        release_payload = {"id": 7, "tag_name": "v1.2.0", "name": "Release", "draft": False, "prerelease": False, "assets": []}
         opener = FakeOpener([
             {"full_name": "coferlandia/demo", "default_branch": "main"},
-            {"tag_name": "v1.2.0", "name": "Release", "draft": False, "prerelease": False, "assets": []},
+            release_payload,
+            [release_payload],
         ])
         service = GitHubService(opener=opener, token="")
         info = service.repository_info("coferlandia/demo")

@@ -168,12 +168,18 @@ class GitHubService:
             f"repos/{owner}/{repo}/releases/tags/{quote(tag, safe='')}",
             allow_not_found=True,
         )
-        if data:
-            return self._normalize_release(data)
-        # GitHub's release-by-tag endpoint omits draft releases. Fall back to the
-        # paginated release collection so publication can resume from TAG + DRAFT
-        # without creating a duplicate draft or moving the existing tag.
-        return next((release for release in self.list_releases(repository) if release.get("tag") == tag), None)
+        primary = self._normalize_release(data) if data else None
+        # The direct endpoint omits drafts. Always inspect the collection as well so
+        # recovery fails closed if another release object already uses the same tag.
+        matches = [release for release in self.list_releases(repository) if release.get("tag") == tag]
+        if primary is not None:
+            conflicts = [release for release in matches if release.get("id") != primary.get("id")]
+            if conflicts:
+                raise ReleaseError(f"multiple GitHub Releases use tag {tag}")
+            return primary
+        if len(matches) > 1:
+            raise ReleaseError(f"multiple GitHub Releases use tag {tag}")
+        return matches[0] if matches else None
 
     def release_by_id(self, repository: str, release_id: int) -> dict[str, Any]:
         owner, repo = self._split(repository)
@@ -241,7 +247,7 @@ class GitHubService:
         )
         return self._normalize_release(data)
 
-    def download_text_asset(self, repository: str, asset_id: int) -> str:
+    def download_asset_bytes(self, repository: str, asset_id: int) -> bytes:
         owner, repo = self._split(repository)
         raw = self._request_bytes(
             "GET",
@@ -250,4 +256,7 @@ class GitHubService:
         )
         if raw is None:
             raise ReleaseError("GitHub asset download returned no response")
-        return raw.decode("utf-8")
+        return raw
+
+    def download_text_asset(self, repository: str, asset_id: int) -> str:
+        return self.download_asset_bytes(repository, asset_id).decode("utf-8")

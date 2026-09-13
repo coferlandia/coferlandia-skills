@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v2.11.1 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.3.0 | 1.3.1 | Adds safe replay of the latest prior immutable publication request through a text-only authorized retry command. |
+| coferlandia-release-publisher | 1.1.3 | 1.1.4 | Hardens partial-release recovery with duplicate release-identity rejection and digest verification fallback by downloaded asset bytes. |
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.11.0 to v2.11.1 for the compatible publication-recovery transport improvement.
+
+### Migration or compatibility
+
+- Existing publication requests and policies remain valid. Retry is additive, accepts no release identity overrides, replays only prior authorized valid requests, and the publisher remains fail-closed on ambiguous release identity.
+
 ## v2.11.0 (2026-09-12)
 
 ### Skills

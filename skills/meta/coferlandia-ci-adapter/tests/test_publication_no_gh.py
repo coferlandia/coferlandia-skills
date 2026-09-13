@@ -38,6 +38,14 @@ class PublicationWorkflowTests(unittest.TestCase):
         self.assertIn("$GITHUB_WORKSPACE/control-plane/.agents/skills/coferlandia-release-publisher/scripts/coferlandia-release.py", workflow)
         self.assertIn('runs-on: ["self-hosted","Linux","ARM64","coferlandia-ci","docker"]', workflow)
         self.assertNotIn("deploy", workflow.lower())
+        self.assertIn("Retry the existing Coferlandia publication request.", workflow)
+        self.assertIn("issues/{issue_number}/comments?per_page=100&page={page}", workflow)
+        self.assertIn("comment_id >= current_id", workflow)
+        self.assertIn("permission_for(author) not in {'admin', 'maintain'}", workflow)
+        self.assertIn("retry requested but no prior authorized valid publication request exists", workflow)
+        self.assertIn("request_comment_id={request_comment_id}", workflow)
+        self.assertIn("coferlandia-publication-request.json", workflow)
+        self.assertNotIn("types: [created, edited]", workflow)
 
 
 if __name__ == "__main__":
