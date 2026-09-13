@@ -17,19 +17,19 @@ jobs:
         with:
           ref: fix/66-release-publication-retry
           fetch-depth: 0
-      - name: Apply hardening
-        run: |
-          python .github/scripts/harden_66.py
-          python .github/scripts/harden_66_followup.py
+      - name: Apply final review fixes
+        run: python .github/scripts/finalize_66.py
       - name: Run focused regression tests
         run: |
           python skills/meta/coferlandia-ci-adapter/tests/test_publication_no_gh.py
           python skills/meta/coferlandia-ci-adapter/tests/test_publication_retry_runtime.py
           python -m unittest discover -s skills/ops/coferlandia-release-publisher/tests -p 'test_*.py'
-      - name: Commit hardened flow
+      - name: Regenerate release projection
+        run: python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py render-readme --write
+      - name: Commit reviewed flow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add skills/meta/coferlandia-ci-adapter skills/ops/coferlandia-release-publisher
-          git commit -m "fix(release): harden publication recovery flow (#66)"
+          git add .claude-plugin/plugin.json README.md RELEASE-NOTES.md skills/meta/coferlandia-ci-adapter skills/ops/coferlandia-release-publisher
+          git commit -m "fix(release): finalize hardened publication recovery (#66)"
           git push origin HEAD:fix/66-release-publication-retry
