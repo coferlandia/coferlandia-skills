@@ -14,6 +14,8 @@ First-class Chat controllers maintained centrally by `coferlandia-skills`.
 
 Development Qualification and Release Qualification are separate responsibilities. `READY_FOR_CI`/`READY_FOR_MERGE` belong to a development candidate; `READY_FOR_RELEASE` belongs to one exact release candidate. Formal Commit -> Release publication mechanics remain owned by `coferlandia-release-publisher` and may be composed by a release controller.
 
+Integration closeout is explicit: after `merge` verifies that the qualified candidate reached the repository-approved authoritative target ref, it must verify the associated work item is closed, closing it directly when still open rather than depending on GitHub default-branch closing-keyword semantics. Failure to verify that closeout returns `CLOSEOUT_BLOCKED` instead of `COMPLETE`.
+
 `hotfix` is intentionally a higher-level explicit emergency controller. It accepts an existing Issue or a free-form bug report, creates/reuses the primary work item, classifies `PERMANENT` versus `TEMPORARY_MITIGATION`, requires a permanent-fix follow-up Issue for temporary mitigations, and delegates Development/Qualification/Integration/publication to repository-approved owners. A normal bug report never implicitly selects the hotfix lane.
 
 Composition is exact and left-to-right. Missing stages are never inserted and LOCAL/GITHUB_NATIVE strategies never fall back to each other automatically. Reaching a handoff state alone does not invoke its next controller. The machine-readable registry is [`registry.json`](./registry.json).
