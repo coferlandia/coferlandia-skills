@@ -1,6 +1,6 @@
 {
   "name": "coferlandia-skills",
-  "version": "2.11.0",
+  "version": "2.11.1",
   "description": "Coferlandia Agent Skills and Chat delivery controllers for supervised planning, architecture, software delivery, local/GitHub-native qualification, aggregate releases, emergency hotfix remediation, repository CI adaptation, configuration and release operations, durable project knowledge, developer documentation, evidence-based analysis, and deterministic repository workflows.",
   "author": {
     "name": "Coferlandia"

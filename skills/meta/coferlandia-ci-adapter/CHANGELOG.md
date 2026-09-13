@@ -1,5 +1,15 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.3.1 — 2026-09-12
+
+### Added
+
+- Adds an authorized text-only retry command for GitHub-native publication recovery. Retry resolves the latest prior immutable publication request from the same PR and replays it through the normal publisher path.
+
+### Safety
+
+- Retry comments cannot supply or override release payload fields; actor authorization, merged-PR binding, exact target SHA validation, isolated control-plane execution and fail-closed publisher semantics remain unchanged.
+
 ## 1.3.0 — 2026-09-12
 
 ### Added

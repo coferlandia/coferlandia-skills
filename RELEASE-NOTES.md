@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v2.11.1 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.3.0 | 1.3.1 | Adds safe replay of the latest prior immutable publication request through a text-only authorized retry command. |
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.11.0 to v2.11.1 for the compatible publication-recovery transport improvement.
+
+### Migration or compatibility
+
+- Existing publication requests and policies remain valid. Retry is additive and never accepts release identity overrides.
+
 ## v2.11.0 (2026-09-12)
 
 ### Skills

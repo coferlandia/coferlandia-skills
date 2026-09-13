@@ -159,11 +159,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.11.0 — 2026-09-12**
+**v2.11.1 — 2026-09-12**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.3.0 | Adds repository-owned declarative GitHub Actions setup for deterministic remote Development toolchains while preserving the v1 contract and stage boundaries. |
+| coferlandia-ci-adapter | 1.3.1 | Adds safe replay of the latest prior immutable publication request through a text-only authorized retry command. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

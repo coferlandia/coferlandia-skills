@@ -11,10 +11,10 @@ compatibility: >
   for deterministic adapter tooling, and write access only after the adaptation scope is authorized.
 metadata:
   author: coferlandia
-  version: "1.3.0"
+  version: "1.3.1"
   category: meta
   status: active
-  tested: "2026-09-12 - CI profile, remote Development validation with declarative toolchain setup, configurable publication runners, isolated publication control-plane execution, and opt-in GitHub-native release publication rendering covered by unittest."
+  tested: "2026-09-12 - CI profile, remote Development validation with declarative toolchain setup, configurable publication runners, isolated publication control-plane execution, immutable request retry recovery, and opt-in GitHub-native release publication rendering covered by unittest."
 ---
 
 ## Context

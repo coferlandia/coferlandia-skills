@@ -8,6 +8,7 @@ DEFAULT_WORKFLOW_PATH = Path(".github/workflows/coferlandia-release-publish.yml"
 DEFAULT_RUNS_ON: str = "ubuntu-latest"
 RELEASE_POLICY_PATH = Path(".coferlandia/release/policy.json")
 PUBLICATION_REQUEST_MARKER = "<!-- coferlandia-release-publication-request:v1 -->"
+PUBLICATION_RETRY_COMMAND = "Retry the existing Coferlandia publication request."
 
 
 def _safe_repo_path(value: str, *, suffixes: tuple[str, ...] | None = None) -> str:
@@ -111,7 +112,8 @@ jobs:
     name: Publish exact release
     if: >-
       github.event.issue.pull_request &&
-      contains(github.event.comment.body, '{PUBLICATION_REQUEST_MARKER}')
+      (contains(github.event.comment.body, '{PUBLICATION_REQUEST_MARKER}') ||
+       github.event.comment.body == '{PUBLICATION_RETRY_COMMAND}')
     runs-on: {rendered_runs_on}
     env:
       GITHUB_TOKEN: ${{{{ github.token }}}}
@@ -173,10 +175,41 @@ jobs:
           import os
           import re
           from pathlib import Path
+          from urllib.request import Request, urlopen
 
           marker = {PUBLICATION_REQUEST_MARKER!r}
+          retry_command = {PUBLICATION_RETRY_COMMAND!r}
           event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
           body = event['comment']['body']
+          if body.strip() == retry_command:
+              repo = os.environ['GITHUB_REPOSITORY']
+              token = os.environ['GITHUB_TOKEN']
+              issue_number = event['issue']['number']
+              current_id = event['comment']['id']
+              candidates = []
+              page = 1
+              while True:
+                  api_url = f'https://api.github.com/repos/{{repo}}/issues/{{issue_number}}/comments?per_page=100&page={{page}}'
+                  api_request = Request(api_url, headers={{
+                      'Accept': 'application/vnd.github+json',
+                      'Authorization': f'Bearer {{token}}',
+                      'User-Agent': 'coferlandia-release-publication',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                  }})
+                  with urlopen(api_request, timeout=30) as response:
+                      comments = json.load(response)
+                  if not comments:
+                      break
+                  candidates.extend(
+                      comment for comment in comments
+                      if comment.get('id', 0) < current_id and marker in comment.get('body', '')
+                  )
+                  if len(comments) < 100:
+                      break
+                  page += 1
+              if not candidates:
+                  raise SystemExit('retry requested but no prior publication request exists')
+              body = max(candidates, key=lambda comment: comment['id'])['body']
           if body.count(marker) != 1:
               raise SystemExit('publication request must contain exactly one marker')
           tail = body.split(marker, 1)[1]
@@ -197,6 +230,8 @@ jobs:
               raise SystemExit('title must be non-empty')
           if not isinstance(request['notes'], str) or not request['notes'].strip():
               raise SystemExit('notes must be non-empty')
+          request_path = Path(os.environ['RUNNER_TEMP']) / 'coferlandia-publication-request.json'
+          request_path.write_text(json.dumps(request, sort_keys=True), encoding='utf-8')
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
               output.write(f"target_sha={{request['target_sha']}}\\n")
               output.write(f"version={{request['version']}}\\n")
@@ -265,16 +300,8 @@ jobs:
           import subprocess
           from pathlib import Path
 
-          marker = {PUBLICATION_REQUEST_MARKER!r}
-          event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
-          body = event['comment']['body']
-          if body.count(marker) != 1:
-              raise SystemExit('publication request must contain exactly one marker')
-          tail = body.split(marker, 1)[1]
-          matches = re.findall(r'```json\\s*(\\{{.*?\\}})\\s*```', tail, re.S)
-          if len(matches) != 1:
-              raise SystemExit('publication request must contain exactly one JSON block')
-          request = json.loads(matches[0])
+          request_path = Path(os.environ['RUNNER_TEMP']) / 'coferlandia-publication-request.json'
+          request = json.loads(request_path.read_text(encoding='utf-8'))
           root = Path('.agent/release-publisher')
           root.mkdir(parents=True, exist_ok=True)
           notes = root / 'release-notes.md'
