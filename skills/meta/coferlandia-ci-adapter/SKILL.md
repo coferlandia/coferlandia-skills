@@ -2,223 +2,226 @@
 name: coferlandia-ci-adapter
 description: >
   Use when the user or controlling authority asks to adapt a repository to Coferlandia's generic
-  Chat/Local CI controllers or complete GitHub-native release delivery. Study the repository's real
-  CI/testing/release workflow contracts, maintain the minimal .coferlandia/ci/profile.json, and when
-  explicitly requested materialize the separate repository-declared GitHub-native publication surface.
-  It does not execute CI/releases, copy generic prompts/skills, or invent project commands.
+  Chat/Local CI controllers, repository-owned remote Development validation, or complete GitHub-native
+  release delivery. Study the repository's real validation/CI/release contracts and materialize only
+  the approved repository interfaces; do not invent project commands.
 license: Apache-2.0
 compatibility: >
-  Requires read access to the target repository and its GitHub workflows/documentation, Python 3.11+
-  for deterministic adapter tooling, and write access only after the proposed adaptation is approved.
+  Requires read access to the target repository and its validation/workflow documentation, Python 3.11+
+  for deterministic adapter tooling, and write access only after the adaptation scope is authorized.
 metadata:
   author: coferlandia
-  version: "1.1.1"
+  version: "1.2.0"
   category: meta
   status: active
-  tested: "2026-09-12 - CI profile compatibility plus opt-in GitHub-native release publication policy/workflow validation, configurable publication runners, and deterministic rendering covered by unittest."
+  tested: "2026-09-12 - CI profile, remote Development validation, configurable publication runners, and opt-in GitHub-native release publication rendering covered by unittest."
 ---
 
 ## Context
 
-This meta-skill adapts one repository to shared Coferlandia delivery contracts. It does not run CI itself and does not publish a release.
+This meta-skill adapts repository-specific facts to shared Coferlandia delivery controllers. It does not run CI itself, does not publish a release, and does not authorize merge.
 
-Qualification remains a distinct contract:
-
-```text
-repository truth (docs/scripts/workflows/services)
-        -> approved minimal CI profile
-             -> Chat ci.md
-             -> local-ci skill
-```
-
-When the controlling request explicitly includes complete GitHub-native release delivery, the adapter may additionally materialize a separate publication surface:
+Keep the three interfaces separate:
 
 ```text
-repository release policy
-        -> publication.github transport
-        -> repository GitHub Actions workflow
+Development
+  .coferlandia/development/validation.json
+  .github/workflows/<development-validation>.yml
+        -> source-candidate Development evidence only
+
+Qualification
+  .coferlandia/ci/profile.json
+        -> Chat ci / local-ci
+
+Publication
+  .coferlandia/release/policy.json
+  .github/workflows/<release-publication>.yml
         -> coferlandia-release-publisher
-        -> chat-release observes/verifies publication
 ```
 
-The repository remains authoritative. `.coferlandia/ci/profile.json` is only the Qualification interface; publication configuration belongs to `.coferlandia/release/policy.json` and MUST NOT be inserted into the CI profile.
+Do not generate repository-local copies of generic Coferlandia prompts or skills. The repository remains authoritative for commands, services, runner labels, shell, documentation and policy.
 
 ## Activation
 
-Activate when the controlling authority explicitly asks to create/update a Coferlandia CI profile, adapt a repository for the generic CI prompt/skill, adapt the repository for complete Coferlandia GitHub-native delivery, or names `coferlandia-ci-adapter` for a target repository.
+Activate when the controlling authority explicitly asks to:
 
-Do not activate merely to run tests, diagnose one CI failure, merge a PR, publish one release from an already-adapted repository, or mine unrelated project skills.
+- create or update the Coferlandia CI profile;
+- adapt a repository for generic GitHub-native or local Qualification;
+- add or repair repository-owned remote Development validation;
+- bootstrap the remote Development surface delegated by Chat Coder;
+- adapt complete GitHub-native release publication; or
+- use `coferlandia-ci-adapter` for a target repository.
 
-## Workflow
+Do not activate merely to run tests, diagnose one failure, merge a PR, publish one release, or infer a missing delivery stage.
 
-### 1. Study without modification
+A Chat Coder delegation to bootstrap the minimum remote Development surface is explicit adaptation authority for that bounded purpose. It is not authority to alter Qualification, publication, deployment, product behavior, or unrelated workflows.
 
-Read `references/discovery.md`. Inspect current `AGENTS.md`, development/testing/release docs, canonical validation scripts, package/build metadata, required services, GitHub workflows/checks/gates, merge-group behavior, release policy and exceptional lanes. Prefer executable current behavior over historical prose.
+## Repository study
 
-Record evidence for Qualification:
+Read `references/discovery.md`. Inspect current repository instructions, development/testing docs, canonical scripts, package/build metadata, required services, current GitHub workflows/checks, runner requirements, release policy and exceptional lanes. Prefer executable current behavior over historical prose.
 
-```text
-canonical documentation
-local working directory and qualification command(s)
-required local services/environment
-GitHub submission mode/workflow
-required authoritative gates + allowed conclusions
-merge_group semantics
-base/profile sensitivity
-exceptional lanes and their external authorization owner
-```
-
-When GitHub-native release publication is in scope, additionally record:
+For remote Development validation, additionally establish:
 
 ```text
-release policy location and current publication fields
-publisher skill/path available in the target repository
-repository-approved publication workflow path
-publication-capable GitHub Actions runner label(s)
-release PR/work surface usable for durable control comments
-permissions/environment constraints for creating tags and GitHub Releases
-whether publication is intentionally disabled
+applicable cheap deterministic Development commands
+working directory
+required services
+environment variable names only (never values)
+GitHub Actions availability
+approved runner labels
+approved shell
+Draft-PR event compatibility
+whether candidate code can safely execute on the selected runner
 ```
 
-Do not assume `ubuntu-latest` is available. Determine the publication runner from current repository workflow/runner evidence. Do not infer publication runner labels from `.coferlandia/ci/profile.json`; Qualification and Publication remain separate contracts even when they happen to use the same runner pool.
+When GitHub-native release publication is in scope, establish its publication-capable runner label(s) separately. Do not assume `ubuntu-latest` is available and do not infer publication runner labels from Qualification or Development configuration merely because a repository happens to share a runner pool.
 
 Do not modify the target repository during discovery.
 
-### 2. Produce a proposal and approval gate
+## Approval and scope
 
-Propose the exact CI profile with source evidence and unresolved ambiguities. Do not guess a workflow/check or copy every incidental test command when one canonical repository command already owns full qualification.
+Propose the exact interface being adapted and its source evidence. Do not guess commands, runner labels, check names, or workflow semantics. Stop for explicit approval before writing unless the controlling invocation already authorized the exact adaptation surface.
 
-When publication adaptation is in scope, separately propose the exact `publication.github` policy block, publication runner contract, and generated workflow. Keep repository-owned publication siblings such as version-control decisions intact; the adapter owns only the GitHub-native transport block it materializes.
+Changing one interface does not implicitly authorize changing another.
 
-Stop for explicit approval before writing repository configuration unless the controlling request already authorizes the exact adaptation scope.
+## CI Qualification profile
 
-### 3. Validate CI deterministically
-
-Place the approved semantic profile in a transient JSON input and run:
-
-```bash
-python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile validate --profile <input> --json
-python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile fingerprint --profile <input> --json
-```
-
-The CLI rejects unknown top-level fields, secret-bearing keys, empty local qualification, ambiguous gates and invalid merge-group settings.
-
-### 4. Render the canonical repository CI profile
-
-Preview:
-
-```bash
-python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile render \
-  --input <approved-profile.json> --target-root <repo-root> --dry-run --json
-```
-
-After approval, repeat without `--dry-run`. The canonical generated CI profile path is:
+The Qualification interface remains:
 
 ```text
 .coferlandia/ci/profile.json
 ```
 
-Do not generate repository-local copies of generic prompts or skills.
+Use the existing `profile validate`, `profile fingerprint`, `profile check`, and `profile render` commands. `.coferlandia/ci/profile.json` remains Qualification-only; never place Development execution or release publication fields there.
 
-### 5. Adapt GitHub-native release publication when explicitly in scope
+## Remote Development validation
 
-Read `references/publication-contract.md`. Publication adaptation is opt-in and separate from the CI profile.
+Read `references/development-validation-contract.md` and `_protocol/delivery/DEVELOPMENT_VALIDATION.md`.
 
-Validate an existing release policy without writing:
+The canonical repository contract is:
+
+```text
+.coferlandia/development/validation.json
+```
+
+The standard generated workflow path is:
+
+```text
+.github/workflows/coferlandia-development-validation.yml
+```
+
+A Development contract owns repository-specific facts:
+
+- repository identity and supporting documentation;
+- working directory;
+- ordered Development commands;
+- required services and environment variable names;
+- GitHub PR-event submission;
+- exact `pull-request-head` candidate binding;
+- runner labels;
+- `bash` or `pwsh` shell;
+- one Development gate whose only GREEN conclusion is `success`.
+
+Validate/fingerprint an approved source:
+
+```bash
+python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py development validate \
+  --contract <development.json> --json
+
+python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py development fingerprint \
+  --contract <development.json> --json
+```
+
+Preview materialization:
+
+```bash
+python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py development render \
+  --input <approved-development.json> \
+  --target-root <repo-root> \
+  --dry-run --json
+```
+
+After approval, repeat without `--dry-run`.
+
+The generated workflow:
+
+- listens only to Draft-PR lifecycle events needed for Development;
+- checks out `github.event.pull_request.head.sha` explicitly and verifies `HEAD`;
+- grants candidate-controlled code only `contents: read` GitHub permission;
+- uses the repository-declared runner labels and shell;
+- executes only the repository-declared ordered Development commands;
+- records the exact candidate SHA and Development contract fingerprint;
+- never emits `READY_FOR_CI`, `READY_FOR_MERGE`, or any Qualification authority.
+
+The renderer never injects secret values. Self-hosted runner isolation, preinstalled tooling and any ambient runner environment remain repository/operator responsibilities.
+
+Rendering is deterministic and idempotent: the same semantic contract produces the same fingerprint, stored contract and workflow text.
+
+## GitHub-native release publication
+
+Publication adaptation remains opt-in and separate from Development and Qualification. Read `references/publication-contract.md`.
+
+Validate:
 
 ```bash
 python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py publication validate \
   --policy <release-policy.json> --json
 ```
 
-Preview deterministic materialization:
+Render only when explicitly in scope:
 
 ```bash
 python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py publication render \
   --policy <release-policy.json> \
   --target-root <repo-root> \
-  --publisher-path <repo-relative-coferlandia-release-publisher-entrypoint> \
-  --workflow-path .github/workflows/coferlandia-release-publish.yml \
+  --publisher-path <repo-relative-publisher-entrypoint> \
+  --workflow-path .github/workflows/<approved-publication-workflow>.yml \
   --runs-on <runner-label> [<runner-label> ...] \
   --dry-run --json
 ```
 
-Omit `--runs-on` only when repository study confirms the compatible default `ubuntu-latest` is intentionally valid. If the current policy already declares `publication.github.runs_on`, rendering without the flag preserves that value.
+Omit `--runs-on` only when repository study confirms the compatible default `ubuntu-latest` is intentionally valid. If current policy already declares `publication.github.runs_on`, rendering without the flag preserves that value. `runs_on` may be one non-empty runner string or a non-empty duplicate-free list of labels.
 
-After approval, repeat without `--dry-run`. This writes only:
+Publication configuration belongs to `.coferlandia/release/policy.json`, not to either Development or Qualification contracts. The publication workflow retains its exact integrated-SHA, actor-authorization and minimal `contents: write` release transport boundaries and never deploys.
 
-```text
-.coferlandia/release/policy.json
-.github/workflows/<approved-publication-workflow>.yml
-```
+## Drift and consumers
 
-The adapter preserves existing repository publication fields and materializes the Chat-compatible transport:
+After adaptation, pressure-test the relevant consumers:
 
-```json
-{
-  "publication": {
-    "github": {
-      "mode": "issue-comment",
-      "workflow": ".github/workflows/<approved-publication-workflow>.yml",
-      "runs_on": ["<repository-approved-runner-label>"]
-    }
-  }
-}
-```
+- Chat Coder can distinguish local Development execution from repository-owned remote Development execution.
+- Remote Development evidence binds to the exact Draft PR head and contract fingerprint.
+- Remote Development GREEN is not treated as Qualification GREEN.
+- Chat/GitHub-native CI and Local CI still resolve Qualification only from `.coferlandia/ci/profile.json`.
+- Exceptional lanes remain externally authorized.
+- Publication remains separately resolved, uses its repository-approved runner contract, and fails closed.
 
-`runs_on` may be a single non-empty runner string or a non-empty duplicate-free list of labels. The generated workflow uses the same value deterministically. When `runs_on` is absent, the adapter remains backward compatible and defaults to `ubuntu-latest`.
-
-The generated workflow listens for the canonical `<!-- coferlandia-release-publication-request:v1 -->` marker on a newly created release-PR comment. The request carries only `schema`, `target_sha`, `version`, `impact`, `title`, and `notes`. The workflow independently requires `admin|maintain` authority, requires the PR to be merged, parses the request as data, checks out the exact SHA, grants only the minimal read permissions plus `contents: write`, and delegates Commit -> Release mechanics to `coferlandia-release-publisher`. It never deploys.
-
-`workflow-dispatch` remains a valid policy transport for clients that actually expose an Actions dispatch primitive, but this adapter's standard generated Chat surface is `issue-comment` because it is executable through the generic Chat GitHub connector.
-
-### 6. Verify drift and consumers
-
-Run `profile check` against the stored CI fingerprint. Pressure-test the relevant execution surfaces:
-
-- Chat/GitHub-native CI can identify exact gates without local commands.
-- Local CI can identify exact local qualification without hardcoded project knowledge.
-- Both bind output to the same profile fingerprint and shared READY_FOR_MERGE envelope.
-- Exceptional lanes remain externally authorized and repository-owned.
-- When publication adaptation is enabled, `chat-release` can resolve one repository-declared publication surface independently from CI qualification.
-- For `issue-comment`, Chat can create the canonical request on the release PR and bind the resulting run to that exact request.
-- Missing/disabled publication remains fail-closed; no LOCAL fallback is introduced.
-- The publication workflow uses the repository-approved runner contract, exact integrated SHA supplied by `chat-release`, and invokes the generic publisher rather than reproducing tag/release shell logic.
-
-### 7. Maintenance
-
-Re-run this skill when repository CI facts materially change: canonical command, required service, workflow/gate identity, allowed terminal conclusions, merge-group authority, base sensitivity, or exceptional-lane contract. A changed profile fingerprint invalidates older READY_FOR_MERGE evidence.
-
-When GitHub-native publication has been adapted, also re-run it when release-policy ownership, publisher path, publication workflow path, publication runner labels, release work-surface contract, required permissions, or supported publication transport changes. Publication changes do not alter the CI profile fingerprint unless Qualification facts also changed.
+Re-run the adapter when any material repository fact changes: Development commands, runner labels, shell, required services/environment names, Development workflow identity, Qualification commands/gates, merge-group semantics, publication policy/runner labels or exceptional lanes. A changed Development fingerprint invalidates older remote Development evidence for the handoff that relied on it.
 
 ## Gotchas
 
-- **Copying generic controllers into the project:** prohibited. Adapt through repository interfaces.
-- **Treating docs as newer than executable truth:** reconcile them; do not encode stale commands.
-- **Storing tokens/secrets/current CI results:** prohibited by contract and deterministic validation.
-- **Inventing a fallback:** execution strategy stays with the controlling authority; GITHUB_NATIVE publication never silently falls back to LOCAL.
-- **Encoding merge or publication behavior as CI:** keep Integration and Publication policy in repository authority; `.coferlandia/ci/profile.json` contains only Qualification/effective-candidate facts needed to validate evidence.
-- **Assuming `ubuntu-latest`:** prohibited when repository evidence requires another publication runner. Declare `publication.github.runs_on` explicitly instead.
-- **Inferring publication runners from the CI profile:** prohibited. Publication runner selection is repository-owned release transport configuration.
-- **Duplicating release mechanics in a workflow:** prohibited. The workflow transports exact identity to `coferlandia-release-publisher`; it does not reimplement annotated tags or GitHub Releases.
-- **Trusting arbitrary comment authors:** prohibited. The generated issue-comment workflow independently checks repository permission and merged-PR state before any publication mutation.
-- **Auto-authorizing HOTFIX or release publication:** prohibited. Adaptation creates capability, not authority to use it.
+- **Copying generic controllers into the project:** prohibited.
+- **Using Fast/Qualification CI as Development validation because local execution is unavailable:** prohibited unless that check is independently declared by repository policy as the Development gate.
+- **Hardcoding one repository's stack or runner labels into the adapter:** prohibited.
+- **Storing tokens, secret values, credentials or current run results in contracts:** prohibited.
+- **Treating a successful remote Development gate as merge authority:** prohibited.
+- **Assuming `ubuntu-latest` for publication:** prohibited when repository evidence requires another runner; declare the publication runner explicitly.
+- **Inferring runner labels across stages:** prohibited. Development, Qualification and Publication each own their declared execution contract.
+- **Auto-authorizing exceptional lanes or release publication:** prohibited.
+- **Trusting a stale remote run:** candidate SHA and Development fingerprint must still match.
 
 ## Expected Output
 
 ```text
 Coferlandia repository adapter result
 Target repository: <owner/repo>
-CI profile: .coferlandia/ci/profile.json
-Profile fingerprint: <sha256>
-Canonical local qualification: <references>
-GitHub qualification gates: <references>
-Merge-group authority: <summary>
-Exceptional lanes: <references | none>
-GitHub-native publication: <not requested | disabled | issue-comment workflow path>
+Development validation: <not requested | existing | adapted>
+Development contract: <path | not touched>
+Development fingerprint: <sha256 | not applicable>
+Development workflow/gate: <path + gate | not applicable>
+CI profile: <path | not touched>
+CI profile fingerprint: <sha256 | not applicable>
+GitHub-native publication: <not requested | disabled | workflow path>
 Publication runner: <default ubuntu-latest | repository labels | not applicable>
-Release policy: <path | not touched>
-Publisher entrypoint: <path | not applicable>
 Unresolved ambiguity: <none | items>
 Generic prompt/skill copies generated: no
 Validation: <commands/results>
@@ -226,22 +229,25 @@ Validation: <commands/results>
 
 ## Output Location
 
-Discovery/proposal notes are conversational or follow the target repository's approved `.agent/` planning convention. Standard target-repository configuration written by this skill is limited to the CI profile and, when explicitly requested, release publication transport files.
+Standard target-repository configuration written by this skill is limited to the explicitly approved interfaces:
 
-### Output Exceptions
+- `.coferlandia/development/validation.json`
+- its approved `.github/workflows/<development-validation>.yml`
+- `.coferlandia/ci/profile.json`
+- `.coferlandia/release/policy.json`
+- its approved `.github/workflows/<publication>.yml`
 
-- `.coferlandia/ci/profile.json` — approved static CI interface definition.
-- `.coferlandia/release/policy.json` — existing/approved release policy with `publication.github` transport materialized when requested.
-- `.github/workflows/<approved-publication-workflow>.yml` — generated GitHub-native publication transport when requested.
+Discovery/proposal notes remain conversational or use the target repository's approved planning convention.
 
 ## Scripts Available
 
-- **`scripts/coferlandia-ci-adapter-cli.py`** — validates, fingerprints, checks and atomically renders repository CI profiles; validates and atomically renders optional GitHub-native release publication transport. Run `capabilities --json` for the public command catalog.
+- **`scripts/coferlandia-ci-adapter-cli.py`** — validates, fingerprints, checks and atomically renders CI profiles and remote Development contracts; validates/renders optional GitHub-native publication transport including repository-owned runner labels. Run `capabilities --json` for the command catalog.
 
 ## References
 
 - Read `references/discovery.md` before repository study.
-- Read `references/profile-contract.md` while proposing/reviewing CI profile fields.
-- Read `references/publication-contract.md` when complete GitHub-native release delivery is in scope.
-- Read `references/authority-and-staleness.md` when sources conflict or CI/release identity changed.
+- Read `references/profile-contract.md` for Qualification profile fields.
+- Read `references/development-validation-contract.md` for remote Development adaptation.
+- Read `references/publication-contract.md` for GitHub-native publication.
+- Read `references/authority-and-staleness.md` when identities or sources conflict.
 - Read `references/testing.md` before completion/pressure validation.

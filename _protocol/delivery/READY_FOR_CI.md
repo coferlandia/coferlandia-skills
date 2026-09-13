@@ -29,9 +29,11 @@ Validity requires all of the following:
 
 - the recorded Candidate SHA equals the current PR head;
 - development validation evidence was produced against that exact Candidate SHA;
+- Development checks may execute directly or through repository-owned Remote Development validation as defined by `DEVELOPMENT_VALIDATION.md`; when remote evidence is used it must bind the exact Candidate SHA, current Development contract fingerprint, declared Development gate and an allowed terminal conclusion;
+- a remote Development gate is Development evidence only and never substitutes for Qualification, an effective/synthetic merge candidate, or `READY_FOR_MERGE`;
 - every applicable repository-owned derived artifact that repository-owned policy explicitly declares to be a versioned contract and that is affected by the candidate is synchronized through the repository-owned generation/synchronization mechanism, and any repository-defined deterministic freshness/idempotence/diff check for that versioned contract is passing without unexpected diff;
 - reproducible diagnostic/report outputs that are not repository-declared versioned contracts are not synchronization prerequisites and are not required to be committed or snapshot-fresh;
-- every applicable cheap deterministic development check required by repository-owned instructions, scripts, package metadata, CI profile, or executable workflow is fresh and passing;
+- every applicable cheap deterministic development check required by repository-owned instructions, scripts, package metadata, Development validation contract, CI profile, or executable workflow is fresh and passing;
 - no applicable required development check is failing, skipped, unknown, or represented only by an older candidate's evidence;
 - focused iteration tests are not used as a substitute for a broader cheap development suite when the repository defines one for the changed surface;
 - `Environment change` is explicitly `YES` or `NO`, never omitted or inferred;
@@ -40,6 +42,6 @@ Validity requires all of the following:
 - secret values are never included in the handoff;
 - Implementation is COMPLETE and Review Critical / Review Important are both zero.
 
-A new head invalidates this handoff. Base movement does not retroactively change what was studied, but the selected Qualification strategy must reconcile current base/effective-candidate rules before producing `READY_FOR_MERGE`.
+A new head invalidates this handoff. A changed remote Development fingerprint invalidates remote Development evidence. Base movement does not retroactively change what was studied, but the selected Qualification strategy must reconcile current base/effective-candidate rules before producing `READY_FOR_MERGE`.
 
 `READY_FOR_CI` proves source-candidate development readiness only. It does not prove that an effective or synthetic merge candidate passes Qualification, and it must never be treated as merge authority.

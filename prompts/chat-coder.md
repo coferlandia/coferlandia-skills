@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat development controller that turns one repository work item into an exact reviewed Draft PR candidate and durable READY_FOR_CI handoff."
-version: "1.3.0"
+version: "1.4.0"
 stage: development
 status: active
 ---
@@ -67,7 +67,7 @@ If the supplied contract has an unresolved required Architecture Gate, stop befo
 
 ## Implementation
 
-For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to the work contract. Run focused validation while iterating. Never invent a canonical command: discover validation from current repository-owned documentation, scripts, CI profile, package metadata, or executable workflows.
+For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to the work contract. Run focused validation while iterating. Never invent a canonical command: discover validation from current repository-owned documentation, scripts, package metadata, Development validation contract, CI profile, or executable workflows.
 
 For every behavior or contract change, inspect the existing tests that cover the affected surface before adding or modifying tests. Treat the affected test suite as part of the implementation contract:
 
@@ -92,7 +92,21 @@ Immediately before the terminal development review and handoff, discover and run
 - do not create, add to Git, or require snapshot freshness for a reproducible diagnostic/report output merely because the repository can generate it; a test inventory, generated test manifest, or equivalent report is a synchronization prerequisite only when repository-owned policy explicitly declares that output to be a versioned contract;
 - for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
 - for frontend behavior or contract changes, run the repository's canonical complete frontend unit-test suite, plus repository-defined lint and typecheck checks when they are part of the cheap development contract;
-- run any other cheap deterministic contract check that repository instructions, scripts, or the repository CI profile explicitly require before Qualification.
+- run any other cheap deterministic contract check that repository instructions, scripts, or repository-owned Development/CI contracts explicitly require before Qualification.
+
+### Execution backends for Development validation
+
+Development requirements do not weaken merely because the active Chat client cannot execute them locally. Resolve where the required checks can run using `_protocol/delivery/DEVELOPMENT_VALIDATION.md` when that shared protocol is available:
+
+1. Prefer direct execution in the active development environment when it can correctly run every applicable required check.
+2. If direct execution is unavailable, look for a current repository-owned remote Development contract, canonically `.coferlandia/development/validation.json`, and validate its fingerprint and declared GitHub workflow/gate.
+3. When that contract is absent and an installed `coferlandia-ci-adapter` supports remote Development adaptation, Chat Coder may explicitly delegate only the minimum bootstrap needed to execute its required Development checks. Derive commands, services, runner labels, shell and paths from repository truth; never invent them.
+4. If the remote surface uses existing Draft-PR events, create or reuse the one allowed Draft PR before remote validation even though terminal review and `READY_FOR_CI` are still pending.
+5. Observe only the declared Development gate for the exact current PR head SHA and current Development contract fingerprint. Pending, skipped, cancelled, stale, superseded, old-SHA or old-fingerprint evidence is not GREEN.
+6. If the Development gate is RED, inspect its exact failing job/log, make only bounded in-scope corrections, produce a new candidate, and repeat Development validation.
+7. Block only when no authorized Development execution backend can produce fresh evidence for the exact candidate, or when the repository facts needed to adapt a missing remote surface are ambiguous.
+
+Remote Development validation is still **Development**. It must not invoke or reuse Qualification merely as a workaround, select a Qualification strategy, satisfy `.coferlandia/ci/profile.json`, emit `READY_FOR_MERGE`, merge, publish or deploy. A remote workflow itself never writes the durable `READY_FOR_CI`; Chat Coder evaluates the evidence and owns that handoff after review.
 
 ### Environment / configuration impact
 
@@ -115,11 +129,11 @@ Environment change: YES | NO
   Deployment action: <required action or NONE>
 ```
 
-Never expose secret values. Synchronize `.env.example` or the repository's equivalent environment template when applicable, and update repository-owned deployment/runbook documentation when the operational contract changed. Discover and execute any repository-owned deterministic environment/configuration contract checker. If required environment documentation, synchronization, deployment instructions, or deterministic validation is missing, stale, contradictory or cannot be executed, treat that as a development blocker.
+Never expose secret values. Synchronize `.env.example` or the repository's equivalent environment template when applicable, and update repository-owned deployment/runbook documentation when the operational contract changed. Discover and execute any repository-owned deterministic environment/configuration contract checker. If required environment documentation, synchronization, deployment instructions, or deterministic validation is missing, stale, contradictory or no authorized Development execution backend can execute it, treat that as a development blocker.
 
-Do not emit `READY_FOR_CI` while an applicable required development check is failing, skipped, unknown, stale, or was run against an older candidate SHA. A required versioned derived artifact that is missing, stale, manually approximated instead of produced by the repository-owned mechanism, or would still change under an applicable deterministic generation/freshness check is also a development blocker. Reproducible diagnostic/report outputs that are not repository-declared versioned contracts are not required candidate files and do not block readiness solely because a committed snapshot is absent or stale. If a required check or required artifact synchronization cannot be executed in the current environment, report a development blocker instead of representing the candidate as ready.
+Do not emit `READY_FOR_CI` while an applicable required development check is failing, skipped, unknown, stale, or was run against an older candidate SHA. A required versioned derived artifact that is missing, stale, manually approximated instead of produced by the repository-owned mechanism, or would still change under an applicable deterministic generation/freshness check is also a development blocker. Reproducible diagnostic/report outputs that are not repository-declared versioned contracts are not required candidate files and do not block readiness solely because a committed snapshot is absent or stale. When local execution is unavailable, require fresh repository-owned remote Development evidence rather than reporting readiness without execution.
 
-These checks establish source-candidate development readiness only. They do not replace Qualification against the repository's effective candidate or synthetic merge candidate.
+These checks establish source-candidate development readiness only. They do not replace Qualification against the repository's effective or synthetic merge candidate.
 
 If Chat Coder is resumed after a Qualification failure, first identify the exact failing command/assertion and the validation/effective-candidate SHA that produced it. Correct the implementation when it violates the work contract; update or remove a test or contract only when it is demonstrably stale or superseded relative to the approved behavior. Never weaken, delete, bypass, or broaden an assertion merely to make CI green.
 
@@ -153,7 +167,7 @@ Branch: <branch>
 Candidate SHA: <exact current PR head>
 Base SHA studied: <exact authoritative base studied>
 Implementation: COMPLETE
-Development validation: <fresh evidence for every applicable required development check>
+Development validation: <fresh evidence for every applicable required development check, including remote run/gate + Development fingerprint when used>
 Environment change: YES | NO
 Environment evidence: <NONE or concise candidate-bound evidence including affected inputs and deployment actions>
 Review Critical: 0
