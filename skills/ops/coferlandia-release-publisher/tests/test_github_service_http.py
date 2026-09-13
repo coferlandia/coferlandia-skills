@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import io
 import json
 import sys
 import unittest
 from pathlib import Path
+from urllib.error import HTTPError
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
@@ -31,7 +33,10 @@ class FakeOpener:
 
     def __call__(self, request, timeout=30):
         self.requests.append(request)
-        return FakeResponse(self.payloads.pop(0))
+        payload = self.payloads.pop(0)
+        if isinstance(payload, Exception):
+            raise payload
+        return FakeResponse(payload)
 
 
 class GitHubServiceHttpTests(unittest.TestCase):
@@ -47,6 +52,26 @@ class GitHubServiceHttpTests(unittest.TestCase):
         self.assertEqual(release["tag"], "v1.2.0")
         self.assertEqual(opener.requests[0].method, "GET")
         self.assertIn("/repos/coferlandia/demo", opener.requests[0].full_url)
+
+    def test_release_by_tag_falls_back_to_collection_for_draft(self) -> None:
+        not_found = HTTPError(
+            "https://api.github.com/repos/coferlandia/demo/releases/tags/v1.2.0",
+            404,
+            "Not Found",
+            hdrs=None,
+            fp=io.BytesIO(b"{}"),
+        )
+        opener = FakeOpener([
+            not_found,
+            [{"id": 42, "tag_name": "v1.2.0", "name": "Draft", "draft": True, "prerelease": False, "assets": []}],
+        ])
+        service = GitHubService(opener=opener, token="")
+        release = service.release_by_tag("coferlandia/demo", "v1.2.0")
+        self.assertIsNotNone(release)
+        self.assertTrue(release["draft"])
+        self.assertEqual(release["id"], 42)
+        self.assertIn("/releases/tags/v1.2.0", opener.requests[0].full_url)
+        self.assertIn("/releases?", opener.requests[1].full_url)
 
     def test_create_release_posts_explicit_draft_payload(self) -> None:
         opener = FakeOpener([{"id": 42, "tag_name": "v1.2.0", "draft": True, "assets": []}])
