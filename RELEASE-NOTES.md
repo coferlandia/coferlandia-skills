@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v2.10.4 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.2.1 | 1.2.2 | Separates the publication control-plane checkout from the immutable release target so current publisher fixes can recover an older partial release without changing release identity. |
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.10.3 to v2.10.4 for the compatible publication recovery transport fix.
+
+### Migration or compatibility
+
+- Existing `publication.github` policy, request schema, runner declarations and exact release-target identity remain compatible.
+- Generated publication workflows now execute control-plane code from the exact default-branch workflow revision while all release Git operations remain bound to the requested historical target SHA.
+
 ## v2.10.3 (2026-09-12)
 
 ### Repository and protocol

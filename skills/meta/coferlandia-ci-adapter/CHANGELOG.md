@@ -1,5 +1,15 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.2.2 — 2026-09-12
+
+### Fixed
+
+- Separates the exact publication control-plane checkout from the immutable release-target checkout, so a patched publisher can safely resume a historical partial release without moving its tag or changing the target commit.
+
+### Compatibility
+
+- Existing `publication.github` policy remains unchanged; generated workflows still bind publication to the merged release PR SHA and use the repository-declared runner labels.
+
 ## 1.2.1 — 2026-09-12
 
 ### Changed

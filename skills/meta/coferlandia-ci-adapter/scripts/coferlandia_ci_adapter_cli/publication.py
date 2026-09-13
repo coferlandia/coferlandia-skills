@@ -212,20 +212,39 @@ jobs:
           test -n "$MERGE_SHA"
           test "$MERGE_SHA" = "$TARGET_SHA"
 
+      - name: Check out exact publication control plane
+        uses: actions/checkout@v4
+        with:
+          ref: ${{{{ github.sha }}}}
+          path: control-plane
+          persist-credentials: false
+
       - name: Check out exact publication target
         uses: actions/checkout@v4
         with:
           ref: ${{{{ steps.request.outputs.target_sha }}}}
+          path: release-target
           fetch-depth: 0
           persist-credentials: true
 
+      - name: Revalidate publication control plane
+        working-directory: control-plane
+        env:
+          CONTROL_PLANE_SHA: ${{{{ github.sha }}}}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CONTROL_PLANE_SHA"
+
       - name: Configure release identity
+        working-directory: release-target
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Revalidate exact checkout
+        working-directory: release-target
         env:
           TARGET_SHA: ${{{{ steps.request.outputs.target_sha }}}}
         shell: bash
@@ -234,7 +253,9 @@ jobs:
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
           git fetch --tags --force origin
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+
       - name: Materialize request and deterministic release plan
+        working-directory: release-target
         shell: bash
         run: |
           python - <<'PY'
@@ -259,8 +280,9 @@ jobs:
           notes = root / 'release-notes.md'
           notes.write_text(request['notes'], encoding='utf-8')
           plan = root / 'release-plan.json'
+          publisher_script = Path(os.environ['GITHUB_WORKSPACE']) / 'control-plane' / {publisher!r}
           subprocess.run([
-              'python', {publisher!r},
+              'python', str(publisher_script),
               '--repository', os.environ['GITHUB_REPOSITORY'],
               '--policy', '.coferlandia/release/policy.json',
               'plan',
@@ -274,9 +296,10 @@ jobs:
           PY
 
       - name: Publish through Coferlandia release publisher
+        working-directory: release-target
         shell: bash
         run: |
-          python {publisher} \
+          python "$GITHUB_WORKSPACE/control-plane/{publisher}" \
             --repository "$GITHUB_REPOSITORY" \
             --policy .coferlandia/release/policy.json \
             publish \
