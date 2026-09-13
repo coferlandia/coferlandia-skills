@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v2.10.3 (2026-09-12)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.2.1 | 1.2.2 | Separates the publication control-plane checkout from the immutable release target so current publisher fixes can recover an older partial release without changing release identity. |
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.10.2 to v2.10.3 for the compatible publication recovery transport fix.
+
+### Migration or compatibility
+
+- Compatible patch: existing release policy and publication request schema are unchanged.
+
 ## v2.10.2 (2026-09-12)
 
 ### Skills

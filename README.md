@@ -159,11 +159,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.10.2 — 2026-09-12**
+**v2.10.3 — 2026-09-12**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-release-publisher | 1.1.3 | Fixes draft release discovery so publication can safely resume from an existing annotated tag plus matching draft when GitHub omits drafts from the release-by-tag endpoint. |
+| coferlandia-ci-adapter | 1.2.2 | Separates the publication control-plane checkout from the immutable release target so current publisher fixes can recover an older partial release without changing release identity. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
