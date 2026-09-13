@@ -1,5 +1,12 @@
 # Changelog — coferlandia-release-publisher
 
+## 1.1.2 — 2026-09-12
+
+### Fixed
+
+- Replaces the publisher runtime dependency on GitHub CLI with Python standard-library GitHub REST transport using `GITHUB_TOKEN` or `GH_TOKEN`.
+- Preserves annotated-tag, draft Release, asset verification, publication, and fail-closed semantics.
+
 ## 1.1.1 — 2026-09-12
 
 ### Changed

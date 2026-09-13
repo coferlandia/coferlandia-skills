@@ -1,5 +1,12 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.2.1 — 2026-09-12
+
+### Fixed
+
+- Generated GitHub-native publication workflows no longer require a preinstalled GitHub CLI; authority and merged-PR identity checks use Python standard-library GitHub REST calls.
+- Preserves explicit runner selection, exact merge-SHA binding, minimal permissions, fail-closed behavior, and no deployment semantics.
+
 ## 1.2.0 — 2026-09-12
 
 ### Added
