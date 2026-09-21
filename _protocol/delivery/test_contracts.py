@@ -26,6 +26,8 @@ class DeliveryContractTests(unittest.TestCase):
         ready_release = (Path(__file__).parent / "READY_FOR_RELEASE.md").read_text(encoding="utf-8")
         for field in (
             "Source ref:",
+            "Source snapshot SHA:",
+            "Candidate ref:",
             "Target ref:",
             "Release candidate SHA:",
             "Qualified base SHA:",
@@ -61,7 +63,9 @@ class DeliveryContractTests(unittest.TestCase):
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
         self.assertIn("Development PR head changes", text)
-        self.assertIn("Release candidate/source SHA changes", text)
+        self.assertIn("Live-source release source/candidate SHA changes", text)
+        self.assertIn("Frozen/materialized release source ref advances while candidate ref/SHA stays unchanged", text)
+        self.assertIn("Frozen/materialized release candidate ref/SHA changes or is explicitly refreshed", text)
         self.assertIn("CI profile fingerprint changes", text)
         self.assertIn("Authoritative development base changes", text)
         self.assertIn("Release target/base changes", text)
@@ -69,6 +73,7 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("Old/cancelled/superseded remote run", text)
         self.assertIn("merge.md` never performs requalification", text)
         self.assertIn("`chat-release` and `local-release` also fail closed", text)
+        self.assertIn("deliberately decouples the active release from later normal source-ref advancement", text)
 
     def test_secretaria_fixture_is_representable_without_controller_hardcoding(self):
         mod = module()
