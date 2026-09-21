@@ -75,7 +75,7 @@ Before Qualification, establish exactly one current release candidate through re
    - search for an existing open release PR matching the exact target plus the repository-declared active candidate identity;
    - for a materialized/frozen candidate, require the PR head to be the stable candidate ref/work-surface head rather than the mutable source ref;
    - reuse it only when it unambiguously represents the same active release candidate;
-   - when no matching PR exists and policy permits controller creation, initialize the repository-approved candidate identity first, then create the release PR (Draft when policy requires a qualification phase before review-ready state);
+   - when no matching PR exists and policy permits controller creation, initialize the repository-approved candidate identity first, then create the repository-approved release PR (Draft when policy requires a qualification phase before review-ready state);
    - if a conflicting/ambiguous active release PR exists, stop rather than creating a competing release.
 5. If repository policy uses another work surface, initialize/reuse only that declared mechanism; do not invent a GitHub PR requirement.
 6. Build or currentize the release manifest from authoritative repository/GitHub delta evidence. Bind it to the source snapshot SHA, exact release candidate SHA, candidate ref/work-surface identity when one exists, and target/base identity. At minimum, include the work identities required by repository policy and enough release-impact evidence to support later review/version classification.
