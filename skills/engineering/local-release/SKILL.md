@@ -88,7 +88,7 @@ Review Critical: 0
 Review Important: 0
 ```
 
-Release-owned metadata/manifest findings may be corrected within this skill followed by a fresh aggregate review. Product/development findings return `RELEASE_REPAIR_REQUIRED`; do not patch product code inside `local-release` unless repository policy explicitly defines that as the normal development path. A source/base/manifest change invalidates the prior review.
+Release-owned metadata/manifest findings may be corrected within this skill followed by a fresh aggregate review. Product/development findings return `RELEASE_REPAIR_REQUIRED`; do not patch product code inside `local-release` unless repository policy explicitly defines that as the normal development path. A candidate/base/manifest identity change invalidates the prior review; ordinary source-ref advancement in frozen/materialized mode does not.
 
 ## Qualification preconditions
 
