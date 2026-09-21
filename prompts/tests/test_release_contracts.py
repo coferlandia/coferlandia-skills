@@ -76,10 +76,21 @@ class ReleasePromptContractTests(unittest.TestCase):
         self.assertIn("create the repository-approved release PR", text)
         self.assertIn("conflicting/ambiguous active release PR", text)
         self.assertIn("Build or currentize the release manifest", text)
-        self.assertIn("bind it to the exact source candidate and target/base identity", text)
-        self.assertIn("source changes while a release PR/manifest already exists", text)
-        self.assertIn("mark any previous review/qualification evidence stale", text)
+        self.assertIn("source snapshot", text)
+        self.assertIn("Materialized/frozen candidate", text)
+        self.assertIn("Live-source candidate", text)
+        self.assertIn("normal advancement of the source ref does **not** move", text)
+        self.assertIn("source-ref advancement after initialization is ordinary concurrent development", text)
+        self.assertIn("Candidate ref/SHA movement", text)
         self.assertIn("RELEASE_INITIALIZATION_BLOCKED", text)
+
+    def test_chat_release_frozen_candidate_keeps_source_drift_non_authoritative(self):
+        text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
+        self.assertIn("Source snapshot SHA:", text)
+        self.assertIn("Candidate ref:", text)
+        self.assertIn("do not require the mutable source ref to still point at the candidate SHA", text)
+        self.assertIn("Source-ref advancement alone is not drift", text)
+        self.assertIn("explicit new release candidate initialization", text)
 
     def test_chat_release_uses_repository_declared_github_native_publication_transport(self):
         text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
