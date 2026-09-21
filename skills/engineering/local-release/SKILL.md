@@ -62,7 +62,7 @@ Before review/Qualification, establish exactly one current release candidate thr
    - search for an existing open release PR matching the target and repository-declared active candidate identity;
    - for a materialized/frozen candidate, require the PR head to be the stable candidate identity rather than the mutable source ref;
    - reuse it only when it unambiguously represents the same release;
-   - when none exists and policy permits controller creation, initialize the approved candidate identity first and then create the release PR (Draft when the repository keeps release qualification/review pre-integration);
+   - when none exists and policy permits controller creation, initialize the approved candidate identity first and then create the repository-approved release PR (Draft when the repository keeps release qualification/review pre-integration);
    - stop rather than creating a competing release if an ambiguous/conflicting active release exists.
 5. If repository policy uses another work surface, initialize/reuse only that declared mechanism.
 6. Build or currentize the repository-defined release manifest from authoritative source-snapshot-vs-target delta evidence, including the work identities and release-impact information required by repository policy.
