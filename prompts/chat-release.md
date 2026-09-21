@@ -101,18 +101,18 @@ Review Critical: 0
 Review Important: 0
 ```
 
-A release-owned metadata/manifest finding may be corrected within this controller, followed by a fresh aggregate review. A product/development finding returns `RELEASE_REPAIR_REQUIRED`; do not patch product code inside the release controller. If any correction changes the source candidate, base authority, or manifest identity, previous review and qualification evidence are stale.
+A release-owned metadata/manifest finding may be corrected within this controller, followed by a fresh aggregate review. A product/development finding returns `RELEASE_REPAIR_REQUIRED`; do not patch product code inside the release controller. If any correction or explicit refresh changes the release candidate identity, base authority, or manifest identity, previous review and qualification evidence are stale.
 
 ## Entry contract after initialization/review
 
 Require all of:
 
-1. one current exact release candidate with authoritative source and target refs;
+1. one current exact release candidate with authoritative source snapshot/candidate identity and target ref;
 2. a current durable release manifest/reference bound to that candidate/base identity;
 3. a valid `.coferlandia/ci/profile.json` with GitHub qualification facts;
 4. current profile fingerprint;
 5. current aggregate release review with Critical = 0 and Important = 0 for the exact candidate/base/manifest;
-6. repository policy that permits release integration from the resolved source into the resolved target;
+6. repository policy that permits release integration from the resolved candidate identity into the resolved target;
 7. no repository-declared reconciliation, ancestry, freeze, active-release, or release-state blocker.
 
 A repository may impose stronger release preconditions. Consume them without copying project-specific facts into this generic prompt.
