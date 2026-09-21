@@ -4,7 +4,9 @@
 |---|---|---|---|---|
 | Development PR head changes | stale | stale | n/a unless it is also the release candidate | refresh development/review evidence, then rerun selected development Qualification |
 | Material correction during development Qualification | replaced | stale | n/a unless release candidate changes | new READY_FOR_CI, then same explicitly selected development Qualification unless authority chooses otherwise |
-| Release candidate/source SHA changes | n/a | n/a | stale | rebuild/currentize release manifest and rerun the same explicitly selected release Qualification |
+| Live-source release source/candidate SHA changes | n/a | n/a | stale | rebuild/currentize release manifest and rerun the same explicitly selected release Qualification |
+| Frozen/materialized release source ref advances while candidate ref/SHA stays unchanged | n/a | n/a | unchanged | continue the active release; do not currentize or requalify solely because concurrent development advanced the source ref |
+| Frozen/materialized release candidate ref/SHA changes or is explicitly refreshed | n/a | n/a | stale | bind the new candidate identity, rebuild/currentize the manifest/review, and rerun the selected release Qualification |
 | CI profile fingerprint changes | development-valid | stale | stale | rerun the selected development or release Qualification that owns the affected handoff |
 | Relevant workflow/gate contract changes | development-valid | stale | stale | rerun the selected Qualification |
 | Authoritative development base changes | retained as historical development evidence | stale by default | n/a unless it changes release authority | reconcile/requalify unless profile proves an alternative effective-candidate rule |
@@ -17,4 +19,6 @@
 
 `merge.md` never performs requalification. It returns `REQUALIFICATION_REQUIRED` with the exact invalidating identity/evidence and stops.
 
-`chat-release` and `local-release` also fail closed on stale release evidence. They may reconstruct current release state, but they must not treat a stale `READY_FOR_RELEASE` handoff as integration or publication authority. Product/development corrections create a new release candidate and return through the repository's normal development flow before release Qualification runs again.
+`chat-release` and `local-release` also fail closed on stale release evidence. They may reconstruct current release state, but they must not treat a stale `READY_FOR_RELEASE` handoff as integration or publication authority.
+
+Repository policy owns whether release identity is live-source or materialized/frozen. A frozen candidate deliberately decouples the active release from later normal source-ref advancement; it does not weaken target/base, manifest, profile/gate, review or exact-candidate checks. Product/development corrections require an explicit candidate refresh/new candidate and return through the repository's normal development flow before release Qualification runs again.

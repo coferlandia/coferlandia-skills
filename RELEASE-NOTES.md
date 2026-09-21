@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v2.13.0 (2026-09-21)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| local-release | 1.0.0 | 1.1.0 | Adds repository-declared frozen/materialized release candidates so ongoing source development no longer invalidates an already selected exact candidate. |
+
+### Chat prompts
+
+- `chat-release` 1.1.0 -> 1.2.0 adds the same candidate-snapshot semantics for GITHUB_NATIVE release qualification: a repository may materialize a stable candidate ref/work-surface head from one exact source snapshot, then qualify/integrate that candidate while the original source ref continues to advance.
+- Live-source repositories remain supported and retain the previous fail-closed behavior where source-head movement creates a new candidate.
+
+### Repository and protocol
+
+- Splits mutable release source identity from active release-candidate identity in `READY_FOR_RELEASE v1` and the requalification matrix without weakening exact candidate, target/base, manifest, profile/gate, review, or publication checks.
+- Adds optional `Source snapshot SHA` and `Candidate ref` identity extensions for repositories that materialize/freeze candidates.
+- Makes source-ref advancement explicitly non-invalidating only when repository policy has already bound a distinct frozen candidate; intentional repair/candidate refresh remains a new qualification identity.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.12.0 to v2.13.0 for the substantial compatible frozen-release-candidate capability.
+
+### Migration or compatibility
+
+- Existing consumers that do not declare a distinct materialized candidate keep live-source semantics and require no migration.
+- Repositories that want concurrent development during release should declare a stable candidate materialization mechanism in repository policy and make the release work surface integrate that candidate rather than the mutable source ref.
+- Consumers vendoring release controllers should synchronize `chat-release.md`, `local-release`, and the shared `_protocol/delivery/` contracts together.
+
 ## v2.12.0 (2026-09-13)
 
 ### Repository and protocol

@@ -1,7 +1,7 @@
 ---
 name: chat-release
 description: "Generic Chat GITHUB_NATIVE release controller that initializes or reuses one release candidate, reviews and qualifies it, integrates it through repository policy, and publishes the resulting exact commit through coferlandia-release-publisher."
-version: "1.1.0"
+version: "1.2.0"
 stage: release
 status: active
 ---
@@ -50,6 +50,8 @@ Repository policy owns the actual release topology. Never hardcode branch names,
 Reconstruct authoritative state from current repository/GitHub evidence rather than chat history. Resolve at least:
 
 - repository and repository-defined release source/target refs;
+- repository-declared candidate identity mode, including any stable/materialized candidate ref or work-surface head distinct from the mutable source ref;
+- exact source snapshot SHA captured when the candidate is initialized;
 - authoritative target/base SHA;
 - repository-approved release work-surface/integration mechanism, including whether GitHub PR integration is required;
 - current `.coferlandia/ci/profile.json` and fingerprint;
@@ -62,21 +64,27 @@ If source/target identity, qualification policy, integration policy, manifest co
 
 ## Release candidate initialization
 
-Before Qualification, establish exactly one current release candidate through repository policy.
+Before Qualification, establish exactly one current release candidate through repository policy. The release source ref is discovery/input authority; after initialization, the exact release candidate identity is the authority for this release attempt.
 
 1. Re-read source ref and target ref and prove all repository-declared pre-release ancestry/reconciliation/freeze conditions are satisfied.
-2. Resolve the exact current source SHA and target/base SHA.
-3. If repository policy uses a GitHub pull request as the release work surface:
-   - search for an existing open release PR matching the exact source/target and repository release identity;
+2. Resolve the exact current source SHA as the source snapshot and the exact target/base SHA.
+3. Resolve the repository-declared candidate identity mode:
+   - **Materialized/frozen candidate:** repository policy declares a stable candidate ref, branch, work-surface head, or equivalent identity distinct from the mutable source ref. Initialize or reuse that candidate at the selected source snapshot SHA. Once bound, normal advancement of the source ref does **not** move, replace, currentize, or invalidate this release candidate.
+   - **Live-source candidate:** repository policy does not materialize a distinct stable candidate. The source ref itself remains candidate authority, so later source-head movement creates a new candidate and invalidates candidate-bound evidence as before.
+4. If repository policy uses a GitHub pull request as the release work surface:
+   - search for an existing open release PR matching the exact target plus the repository-declared active candidate identity;
+   - for a materialized/frozen candidate, require the PR head to be the stable candidate ref/work-surface head rather than the mutable source ref;
    - reuse it only when it unambiguously represents the same active release candidate;
-   - when no matching PR exists and policy permits controller creation, create the repository-approved release PR (Draft when policy requires a qualification phase before review-ready state);
+   - when no matching PR exists and policy permits controller creation, initialize the repository-approved candidate identity first, then create the repository-approved release PR (Draft when policy requires a qualification phase before review-ready state);
    - if a conflicting/ambiguous active release PR exists, stop rather than creating a competing release.
-4. If repository policy uses another work surface, initialize/reuse only that declared mechanism; do not invent a GitHub PR requirement.
-5. Build or currentize the release manifest from authoritative repository/GitHub delta evidence. At minimum, include the work identities required by repository policy and enough release-impact evidence to support later review/version classification. When available/relevant this commonly includes integrated PRs/work items, migrations, environment/configuration changes, and other release-impacting contracts, but the generic controller must not invent project-specific fields.
-6. Store/update the manifest only in the repository-defined durable location (managed comment, PR body section, file, or equivalent) and bind it to the exact source candidate and target/base identity.
-7. Re-read the initialized work surface. The release candidate SHA is the exact current source/head candidate represented by that work surface, not a value remembered from earlier chat state.
+5. If repository policy uses another work surface, initialize/reuse only that declared mechanism; do not invent a GitHub PR requirement.
+6. Build or currentize the release manifest from authoritative repository/GitHub delta evidence. Bind it to the source snapshot SHA, exact release candidate SHA, candidate ref/work-surface identity when one exists, and target/base identity. At minimum, include the work identities required by repository policy and enough release-impact evidence to support later review/version classification.
+7. Store/update the manifest only in the repository-defined durable location (managed comment, PR body section, file, or equivalent).
+8. Re-read the initialized work surface. The release candidate SHA is the exact candidate represented by that work surface. For a frozen candidate it is **not** replaced merely because the original source ref has advanced.
 
-If source changes while a release PR/manifest already exists, currentize the work surface/manifest, mark any previous review/qualification evidence stale, and treat the new exact source SHA as a new release candidate. Do not silently reuse evidence from the older candidate.
+For a materialized/frozen candidate, source-ref advancement after initialization is ordinary concurrent development and is not release identity drift. Candidate ref/SHA movement, an explicit candidate refresh after repair, target/base movement, manifest identity change, profile/gate change, or review change still invalidates the affected evidence.
+
+For a live-source candidate, source-head movement still creates a new release candidate, currentizes the work surface/manifest, and makes previous review/qualification evidence stale.
 
 Initialization is release metadata/control-plane work; it does not authorize product-code corrections in the release controller.
 
@@ -93,29 +101,29 @@ Review Critical: 0
 Review Important: 0
 ```
 
-A release-owned metadata/manifest finding may be corrected within this controller, followed by a fresh aggregate review. A product/development finding returns `RELEASE_REPAIR_REQUIRED`; do not patch product code inside the release controller. If any correction changes the source candidate, base authority, or manifest identity, previous review and qualification evidence are stale.
+A release-owned metadata/manifest finding may be corrected within this controller, followed by a fresh aggregate review. A product/development finding returns `RELEASE_REPAIR_REQUIRED`; do not patch product code inside the release controller. If any correction or explicit refresh changes the release candidate identity, base authority, or manifest identity, previous review and qualification evidence are stale.
 
 ## Entry contract after initialization/review
 
 Require all of:
 
-1. one current exact release candidate with authoritative source and target refs;
+1. one current exact release candidate with authoritative source snapshot/candidate identity and target ref;
 2. a current durable release manifest/reference bound to that candidate/base identity;
 3. a valid `.coferlandia/ci/profile.json` with GitHub qualification facts;
 4. current profile fingerprint;
 5. current aggregate release review with Critical = 0 and Important = 0 for the exact candidate/base/manifest;
-6. repository policy that permits release integration from the resolved source into the resolved target;
+6. repository policy that permits release integration from the resolved candidate identity into the resolved target;
 7. no repository-declared reconciliation, ancestry, freeze, active-release, or release-state blocker.
 
 A repository may impose stronger release preconditions. Consume them without copying project-specific facts into this generic prompt.
 
 ## GitHub-native release Qualification
 
-1. Re-read source ref, target ref, exact release candidate SHA, target/base SHA, release manifest, work surface, review state and CI profile fingerprint.
+1. Re-read source ref, source snapshot SHA, candidate ref/work-surface identity when applicable, target ref, exact release candidate SHA, target/base SHA, release manifest, review state and CI profile fingerprint. For a materialized/frozen candidate, do not require the mutable source ref to still point at the candidate SHA.
 2. Determine the profile-declared GitHub submission mode. Trigger only the declared operation when explicit dispatch is required; otherwise observe existing repository events/checks.
 3. Bind all qualification evidence to the exact candidate/effective candidate required by repository identity policy.
 4. Evaluate every profile-required gate against its allowed terminal conclusions. Queued, waiting, requested, pending, in-progress, cancelled, stale, superseded, old-SHA or old-profile evidence is not GREEN.
-5. Re-read candidate/base/profile/manifest/work-surface/review identity after GitHub gates settle. Any relevant identity drift invalidates qualification.
+5. Re-read candidate/base/profile/manifest/work-surface/review identity after GitHub gates settle. Any relevant candidate identity drift invalidates qualification. Source-ref advancement alone is not drift when repository policy has materialized a frozen candidate.
 
 The repository decides, through its own workflows and routing policy, what constitutes release-grade validation. `chat-release` never substitutes a development-only result for the repository's release gate.
 
@@ -127,7 +135,7 @@ For RED qualification, inspect the exact current run/job/check and classify the 
 - **Release-controller/metadata defect:** correct only release-owned metadata or evidence that is explicitly within this controller's responsibility, perform fresh aggregate review when affected, then requalify.
 - **Product/development defect:** return `RELEASE_REPAIR_REQUIRED`. Do not edit product code inside this release controller and do not implicitly invoke `chat-coder`, debugger, Local CI, or another development stage. The repository's normal development flow creates a corrected candidate; re-enter `chat-release` afterward.
 
-Any corrected/new source SHA makes previous release review, Qualification and `READY_FOR_RELEASE` evidence stale. On reentry, currentize the release PR/work surface and manifest, perform fresh aggregate review, and start Qualification again.
+A product repair requires an explicit new release candidate initialization from the corrected source state. That intentional candidate refresh makes previous release review, Qualification and `READY_FOR_RELEASE` evidence stale. Do not silently move a frozen candidate merely because the source ref advanced.
 
 ## Durable READY_FOR_RELEASE
 
@@ -143,8 +151,10 @@ Record:
 State: READY_FOR_RELEASE
 Schema: 1
 Source ref: <source ref>
+Source snapshot SHA: <source SHA selected when this candidate was initialized>
+Candidate ref: <stable/materialized candidate ref or NONE for live-source mode>
 Target ref: <target ref>
-Release candidate SHA: <exact source/head SHA>
+Release candidate SHA: <exact candidate SHA>
 Qualified base SHA: <target/base SHA used by qualification>
 Effective candidate: <candidate used by authoritative gates>
 Qualification strategy: GITHUB_NATIVE
@@ -160,9 +170,9 @@ Next stage: Release integration
 
 ## Release integration
 
-Immediately before integration, re-read source/head, target/base, manifest, work surface, profile fingerprint, review state, mergeability and all repository-declared release blockers.
+Immediately before integration, re-read candidate ref/work-surface identity, exact candidate SHA, target/base, manifest, profile fingerprint, review state, mergeability and all repository-declared release blockers. Re-read the original source ref only for repository-declared reconciliation or policy checks; for a materialized/frozen candidate, its normal advancement is not an identity mismatch.
 
-If any release identity, review state, or required gate authority changed, invalidate `READY_FOR_RELEASE` and return `REQUALIFICATION_REQUIRED` rather than integrating stale evidence.
+If the candidate identity, target/base authority, manifest, review state, profile or required gate authority changed, invalidate `READY_FOR_RELEASE` and return `REQUALIFICATION_REQUIRED` rather than integrating stale evidence.
 
 Use the strongest repository-approved integration mechanism. Respect the repository's required merge strategy and history policy. Never force-push, rewrite protected history, silently squash when repository release policy forbids it, or bypass current safeguards.
 
@@ -268,6 +278,8 @@ On success return factual evidence:
 Release workflow = COMPLETE
 Qualification strategy = GITHUB_NATIVE
 Source ref = <ref>
+Source snapshot SHA = <sha>
+Candidate ref = <ref or NONE>
 Target ref = <ref>
 Release candidate SHA = <sha>
 Integrated target SHA = <sha>

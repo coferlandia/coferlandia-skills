@@ -31,7 +31,18 @@ class LocalReleaseContractTests(unittest.TestCase):
         self.assertIn("create the repository-approved release PR", text)
         self.assertIn("ambiguous/conflicting active release", text)
         self.assertIn("Build or currentize the repository-defined release manifest", text)
-        self.assertIn("bind it to exact source candidate and target/base identity", text)
+        self.assertIn("Materialized/frozen candidate", text)
+        self.assertIn("Live-source candidate", text)
+        self.assertIn("source-ref advancement after initialization is ordinary concurrent development", text)
+        self.assertIn("source snapshot SHA", text)
+
+    def test_frozen_candidate_does_not_follow_mutable_source_ref(self):
+        text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Source snapshot SHA:", text)
+        self.assertIn("Candidate ref:", text)
+        self.assertIn("mutable source ref is allowed to advance independently", text)
+        self.assertIn("Do not silently move a frozen candidate", text)
+        self.assertIn("source-ref advancement alone is not stale", text)
 
     def test_local_release_requires_profile_and_aggregate_review_authority(self):
         text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
