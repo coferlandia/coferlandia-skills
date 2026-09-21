@@ -161,6 +161,10 @@ AGENTS.md        Entry point for agents
 
 **v2.13.0 — 2026-09-21**
 
+| Changed skill | Version | Main change |
+|---|---:|---|
+| local-release | 1.1.0 | Adds repository-declared frozen/materialized release candidates so ongoing source development no longer invalidates an already selected exact candidate. |
+
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
 
