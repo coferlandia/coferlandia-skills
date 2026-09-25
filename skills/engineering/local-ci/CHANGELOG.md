@@ -1,5 +1,12 @@
 # Changelog — local-ci
 
+## 1.2.0 — 2026-09-25
+
+### Changed
+
+- Requires the durable READY_FOR_CI candidate to already be synchronized with the authoritative development base when the repository profile is base-sensitive.
+- Fails fast with `DEVELOPMENT_CURRENTIZATION_REQUIRED` before expensive LOCAL qualification when the base moved, returning branch mutation/currentization to Development instead of performing it inside Qualification.
+
 ## 1.1.0 — 2026-09-10
 
 ### Changed
