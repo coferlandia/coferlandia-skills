@@ -165,7 +165,7 @@ AGENTS.md        Entry point for agents
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| local-ci | 1.2.0 | Requires base-sensitive READY_FOR_CI candidates to be currentized in Development before expensive Qualification begins. |
+| local-ci | 1.2.0 | Refuses expensive LOCAL qualification when a base-sensitive READY_FOR_CI candidate is no longer synchronized with the current authoritative development base. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
