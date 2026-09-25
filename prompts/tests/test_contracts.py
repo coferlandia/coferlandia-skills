@@ -307,6 +307,23 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("not synchronization prerequisites", ready)
         self.assertIn("not required to be committed or snapshot-fresh", ready)
 
+    def test_ready_for_ci_currentizes_base_before_expensive_qualification(self):
+        chat_coder = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        ci = (PROMPTS / "ci.md").read_text(encoding="utf-8")
+        ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")
+        local_ci = (ROOT / "skills" / "engineering" / "local-ci" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Authoritative-base currentization before handoff", chat_coder)
+        self.assertIn("Base SHA synchronized", chat_coder)
+        self.assertIn("post-currentization validation", chat_coder)
+        self.assertIn("DEVELOPMENT_CURRENTIZATION_BLOCKED", chat_coder)
+        self.assertIn("Current-base qualification barrier", ci)
+        self.assertIn("DEVELOPMENT_CURRENTIZATION_REQUIRED", ci)
+        self.assertIn("do **not** currentize the branch inside Qualification", ci)
+        self.assertIn("Base SHA synchronized:", ready)
+        self.assertIn("base-sensitive selected Qualification profile", ready)
+        self.assertIn("DEVELOPMENT_CURRENTIZATION_REQUIRED", local_ci)
+        self.assertIn("must not currentize or mutate the candidate inside Qualification", local_ci)
+
     def test_chat_coder_ready_for_ci_requires_environment_classification(self):
         text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
         ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")

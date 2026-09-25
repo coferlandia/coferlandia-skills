@@ -16,6 +16,7 @@ PR: <number>
 Branch: <branch>
 Candidate SHA: <exact PR head>
 Base SHA studied: <exact authoritative base studied during development>
+Base SHA synchronized: <exact authoritative development base reconciled into the candidate immediately before handoff>
 Implementation: COMPLETE
 Development validation: <fresh evidence for every applicable required development check>
 Environment change: YES | NO
@@ -28,6 +29,8 @@ Next stage: Qualification
 Validity requires all of the following:
 
 - the recorded Candidate SHA equals the current PR head;
+- `Base SHA synchronized` identifies the exact authoritative development base reconciled into that candidate immediately before handoff;
+- repository-approved Git evidence proves the candidate contains/reconciles the recorded synchronized base;
 - development validation evidence was produced against that exact Candidate SHA;
 - Development checks may execute directly or through repository-owned Remote Development validation as defined by `DEVELOPMENT_VALIDATION.md`; when remote evidence is used it must bind the exact Candidate SHA, current Development contract fingerprint, declared Development gate and an allowed terminal conclusion;
 - a remote Development gate is Development evidence only and never substitutes for Qualification, an effective/synthetic merge candidate, or `READY_FOR_MERGE`;
@@ -42,6 +45,6 @@ Validity requires all of the following:
 - secret values are never included in the handoff;
 - Implementation is COMPLETE and Review Critical / Review Important are both zero.
 
-A new head invalidates this handoff. A changed remote Development fingerprint invalidates remote Development evidence. Base movement does not retroactively change what was studied, but the selected Qualification strategy must reconcile current base/effective-candidate rules before producing `READY_FOR_MERGE`.
+A new head invalidates this handoff. A changed remote Development fingerprint invalidates remote Development evidence. `Base SHA studied` remains historical evidence of what Development originally analyzed, while `Base SHA synchronized` is the base identity actually currentized into the handed-off candidate. For a base-sensitive selected Qualification profile, movement of the authoritative development base after handoff makes `READY_FOR_CI` stale for Qualification until Development currentizes the candidate again, refreshes required cheap validation/review, and rewrites the handoff. Base-insensitive profiles follow their explicit repository identity policy.
 
 `READY_FOR_CI` proves source-candidate development readiness only. It does not prove that an effective or synthetic merge candidate passes Qualification, and it must never be treated as merge authority.

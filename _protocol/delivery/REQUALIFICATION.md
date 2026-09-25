@@ -9,7 +9,7 @@
 | Frozen/materialized release candidate ref/SHA changes or is explicitly refreshed | n/a | n/a | stale | bind the new candidate identity, rebuild/currentize the manifest/review, and rerun the selected release Qualification |
 | CI profile fingerprint changes | development-valid | stale | stale | rerun the selected development or release Qualification that owns the affected handoff |
 | Relevant workflow/gate contract changes | development-valid | stale | stale | rerun the selected Qualification |
-| Authoritative development base changes | retained as historical development evidence | stale by default | n/a unless it changes release authority | reconcile/requalify unless profile proves an alternative effective-candidate rule |
+| Authoritative development base changes | stale for Qualification when the selected profile is base-sensitive; retained only as historical evidence otherwise | stale by default | n/a unless it changes release authority | return to Development, currentize the candidate to the new authoritative base, refresh cheap validation/review and READY_FOR_CI, then rerun the selected Qualification; base-insensitive profiles follow their explicit identity rule |
 | Release target/base changes | n/a | n/a | stale | reconcile release topology/manifest and rerun release Qualification |
 | Release manifest/included-work identity changes | n/a | n/a | stale | rebuild/currentize manifest and rerun release Qualification |
 | Current Merge Queue/merge_group becomes authoritative | unchanged | evaluate against current effective candidate | evaluate when repository release policy uses it | require qualification evidence for repository-defined effective candidate |

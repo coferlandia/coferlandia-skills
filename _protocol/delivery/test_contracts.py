@@ -18,7 +18,7 @@ def module():
 class DeliveryContractTests(unittest.TestCase):
     def test_shared_handoffs_have_required_identity(self):
         ready_ci = (Path(__file__).parent / "READY_FOR_CI.md").read_text(encoding="utf-8")
-        for field in ("Issue:", "PR:", "Branch:", "Candidate SHA:", "Base SHA studied:", "Review Critical: 0", "Review Important: 0"):
+        for field in ("Issue:", "PR:", "Branch:", "Candidate SHA:", "Base SHA studied:", "Base SHA synchronized:", "Review Critical: 0", "Review Important: 0"):
             self.assertIn(field, ready_ci)
         ready_merge = (Path(__file__).parent / "READY_FOR_MERGE.md").read_text(encoding="utf-8")
         for field in ("Candidate SHA:", "Qualified base SHA:", "Effective candidate:", "Qualification strategy: LOCAL | GITHUB_NATIVE", "CI profile fingerprint:"):
@@ -68,6 +68,8 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("Frozen/materialized release candidate ref/SHA changes or is explicitly refreshed", text)
         self.assertIn("CI profile fingerprint changes", text)
         self.assertIn("Authoritative development base changes", text)
+        self.assertIn("return to Development, currentize the candidate", text)
+        self.assertIn("stale for Qualification when the selected profile is base-sensitive", text)
         self.assertIn("Release target/base changes", text)
         self.assertIn("Release manifest/included-work identity changes", text)
         self.assertIn("Old/cancelled/superseded remote run", text)

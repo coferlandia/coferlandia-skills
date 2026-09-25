@@ -47,6 +47,8 @@ standalone chat coder
   v
 chat-coder (Development)
   |
+authoritative-base currentization + cheap post-sync validation/review
+  |
 READY_FOR_CI (internal durable handoff)
   |
   v
@@ -159,11 +161,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.13.0 — 2026-09-21**
+**v2.14.0 — 2026-09-25**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| local-release | 1.1.0 | Adds repository-declared frozen/materialized release candidates so ongoing source development no longer invalidates an already selected exact candidate. |
+| local-ci | 1.2.0 | Refuses expensive LOCAL qualification when a base-sensitive READY_FOR_CI candidate is no longer synchronized with the current authoritative development base. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

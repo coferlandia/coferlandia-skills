@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v2.14.0 (2026-09-25)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| local-ci | 1.1.0 | 1.2.0 | Refuses expensive LOCAL qualification when a base-sensitive READY_FOR_CI candidate is no longer synchronized with the current authoritative development base. |
+
+### Chat prompts
+
+- `chat-coder` 1.5.0 -> 1.6.0 moves authoritative-base currentization into Development before the durable READY_FOR_CI handoff, then requires fresh cheap post-currentization validation and final review on the exact handed-off candidate.
+- `ci` 1.3.0 -> 1.4.0 adds a current-base barrier before GitHub-native submission/triggering; base-sensitive drift returns `DEVELOPMENT_CURRENTIZATION_REQUIRED` instead of spending Qualification capacity on a knowingly stale candidate.
+
+### Repository and protocol
+
+- Extends `READY_FOR_CI v1` in place, without changing its marker or schema number, with required `Base SHA synchronized` identity.
+- Distinguishes historical `Base SHA studied` from the authoritative base actually reconciled into the candidate immediately before handoff.
+- Changes requalification semantics so base-sensitive development-base movement invalidates READY_FOR_CI for Qualification and sends the candidate back through Development currentization, cheap validation, and review.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.13.0 to v2.14.0 for the compatible delivery-order correction and updated LOCAL/GITHUB_NATIVE qualification barriers.
+
+### Migration or compatibility
+
+- The durable marker remains `<!-- coferlandia-ready-for-ci:v1 -->` and `Schema: 1`; consumers do not create a v2 protocol.
+- Existing READY_FOR_CI comments that lack `Base SHA synchronized` are stale under the updated contract and must be refreshed by Development before Qualification.
+- Consumers vendoring Chat delivery controllers should synchronize `chat-coder.md`, `ci.md`, `local-ci`, and the shared delivery protocol together.
+
 ## v2.13.0 (2026-09-21)
 
 ### Skills
