@@ -10,7 +10,7 @@ compatibility: >
   and every runtime/service required by the target repository's .coferlandia/ci/profile.json.
 metadata:
   author: coferlandia
-  version: "1.1.0"
+  version: "1.2.0"
   category: engineering
   status: active
   tested: "2026-09-10 - invocation-surface ownership, activation, profile-boundary, no-fallback, environment-blocked, and READY_FOR_MERGE semantics covered by unittest pressure cases."
@@ -45,13 +45,14 @@ Once this skill is active, the Qualification strategy is `LOCAL`. Do not ask a s
 3. Prove handoff Candidate SHA equals current PR head/current assigned candidate.
 4. Load `.coferlandia/ci/profile.json` and validate/fingerprint it with `coferlandia-ci-adapter` tooling when available.
 5. Confirm the profile has a non-empty `local.qualification_commands` list and required environment/services are available.
+6. Require `Base SHA synchronized` from the handoff. For `identity.base_sensitive = true`, re-read the current authoritative base and prove it still equals that synchronized SHA and is reconciled into the candidate before starting any expensive local command.
 
-A stale/missing handoff or invalid profile blocks qualification. Do not substitute older local results or remote CI evidence.
+A stale/missing handoff or invalid profile blocks qualification. Do not substitute older local results or remote CI evidence. Base-sensitive drift is `DEVELOPMENT_CURRENTIZATION_REQUIRED`: Local CI must not currentize or mutate the candidate inside Qualification. Return to the already-resolved upstream Development flow when one exists; otherwise report the state and stop.
 
 ## Workflow
 
 1. Keep work on the exact candidate branch/worktree assigned by the repository's active development workflow.
-2. Reconcile current authoritative base according to the profile identity rules before executing qualification.
+2. Re-read current authoritative base according to the profile identity rules and verify it matches the Development-currentized handoff. Do not change the candidate here.
 3. Start/verify only services explicitly required by the profile; never invent infrastructure requirements.
 4. Execute `local.qualification_commands` in declared order from `local.working_directory`. Record exact command, candidate SHA, start/result and relevant summarized output.
 5. If a command fails, use focused diagnosis/systematic debugging. Make only bounded in-scope corrections permitted by the work contract and active development role.
@@ -93,7 +94,7 @@ Read `references/requalification.md` when candidate, base, profile or validation
 ## Expected Output
 
 ```text
-Qualification state = READY_FOR_MERGE | LOCAL_QUALIFICATION_BLOCKED | FAILED
+Qualification state = READY_FOR_MERGE | DEVELOPMENT_CURRENTIZATION_REQUIRED | LOCAL_QUALIFICATION_BLOCKED | FAILED
 Strategy = LOCAL
 Issue = <identity>
 PR = <number>

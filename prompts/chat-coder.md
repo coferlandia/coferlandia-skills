@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat Development controller used by the standalone GitHub-native Chat Coder pipeline or by explicit Development-only/composed delivery flows."
-version: "1.5.0"
+version: "1.6.0"
 stage: development
 status: active
 ---
@@ -23,6 +23,8 @@ Issue / approved work contract
 -> corrections
 -> holistic review
 -> Draft PR
+-> authoritative-base currentization
+-> post-currentization Development validation and final review
 -> durable READY_FOR_CI
 ```
 
@@ -162,6 +164,20 @@ Review Critical = 0
 Review Important = 0
 ```
 
+## Authoritative-base currentization before handoff
+
+Development must hand Qualification a candidate that is already reconciled with the repository's current authoritative development base. Do this **before** durable `READY_FOR_CI`, not inside Qualification:
+
+1. Re-read the authoritative development base ref and exact SHA after the candidate has passed its ordinary Development checks/review.
+2. Determine whether the current candidate already contains/reconciles that exact base according to repository-approved Git policy. Never invent merge/rebase/update-branch policy.
+3. If currentization changes the PR head, treat all older candidate-bound Development validation and review evidence as stale. Resolve conflicts within the approved work contract, then rerun every applicable cheap deterministic Development check affected by the currentization and perform the terminal exact-candidate review again.
+4. Re-read the authoritative base immediately before handoff. For repositories whose Qualification identity is base-sensitive, the candidate must still be synchronized with that exact base SHA. Record it as `Base SHA synchronized`.
+5. Only after currentization, post-currentization validation, and final review are current may the exact PR head be frozen as the Development candidate and receive `READY_FOR_CI`.
+
+If the candidate cannot be safely currentized with the available repository-approved Git surface, stop with `DEVELOPMENT_CURRENTIZATION_BLOCKED`. Do not spend Qualification capacity on a knowingly stale candidate.
+
+Base movement after the handoff does not authorize Qualification against stale identity. A selected Qualification surface must re-check current-base identity before starting expensive qualification and return to Development currentization when the repository profile is base-sensitive.
+
 ## Durable READY_FOR_CI handoff
 
 Create or update one idempotent managed PR comment using the shared contract in `_protocol/delivery/READY_FOR_CI.md` and marker:
@@ -179,6 +195,7 @@ PR: <number>
 Branch: <branch>
 Candidate SHA: <exact current PR head>
 Base SHA studied: <exact authoritative base studied>
+Base SHA synchronized: <exact authoritative base reconciled into the candidate immediately before handoff>
 Implementation: COMPLETE
 Development validation: <fresh evidence for every applicable required development check, including remote run/gate + Development fingerprint when used>
 Environment change: YES | NO
@@ -203,7 +220,8 @@ PR = <number> / Draft
 Branch = <branch>
 Candidate SHA = <sha>
 Base SHA studied = <sha>
-Validation = <fresh evidence for every applicable required development check>
+Base SHA synchronized = <sha>
+Validation = <fresh evidence for every applicable required development check after currentization>
 Environment change = YES | NO
 Environment action = <NONE or concise deployment/operator action>
 Environment variables = <NONE or concise affected-variable list without secret values>

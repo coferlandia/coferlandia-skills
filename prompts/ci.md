@@ -1,7 +1,7 @@
 ---
 name: ci
 description: "Generic Chat GitHub-native Qualification controller resolved directly, by explicit composition, or by the declared standalone Chat Coder default pipeline."
-version: "1.3.0"
+version: "1.4.0"
 stage: qualification
 status: active
 ---
@@ -44,13 +44,31 @@ Require all of:
 1. a current durable `READY_FOR_CI` handoff matching `_protocol/delivery/READY_FOR_CI.md`;
 2. current PR head equals its Candidate SHA;
 3. `.coferlandia/ci/profile.json` exists and validates against the central profile contract;
-4. the profile contains a GitHub qualification definition and current profile fingerprint.
+4. the profile contains a GitHub qualification definition and current profile fingerprint;
+5. the handoff contains `Base SHA synchronized`, and for a base-sensitive profile the current authoritative base SHA still equals that synchronized SHA and remains reconciled into the candidate.
 
-If any precondition is stale or missing, fail closed. Do not infer readiness from chat history, old comments, old checks, cancelled runs or a different SHA.
+If any precondition is stale or missing, fail closed. Do not infer readiness from chat history, old comments, old checks, cancelled runs or a different SHA. A base-sensitive current-base mismatch is `DEVELOPMENT_CURRENTIZATION_REQUIRED`; it must be resolved in Development before any operation that can submit or trigger expensive Qualification.
 
 ## Repository and profile authority
 
 The target repository owns its actual workflows, checks, scripts, services and policy. The profile only points to those facts. Re-read referenced repository documentation and authoritative GitHub state before acting. Never invent a workflow/check name or terminal conclusion.
+
+## Current-base qualification barrier
+
+Before any operation that can submit, trigger, or intentionally observe a new expensive Qualification run, re-read the authoritative development base and the `Base SHA synchronized` recorded in `READY_FOR_CI`.
+
+When the profile declares `identity.base_sensitive = true`, require the current authoritative base SHA to equal the synchronized base SHA and require repository/Git evidence that the current candidate is reconciled with that base. If the base moved, do **not** currentize the branch inside Qualification and do not start expensive CI. Return:
+
+```text
+DEVELOPMENT_CURRENTIZATION_REQUIRED
+Candidate SHA: <current PR head>
+Synchronized base SHA: <READY_FOR_CI base>
+Current authoritative base SHA: <current base>
+```
+
+If this `ci` stage was reached from an already-resolved sequence that includes the upstream Development controller, hand control back to that Development flow to currentize, rerun cheap Development validation/review, refresh `READY_FOR_CI`, then re-enter the same selected Qualification strategy. A direct standalone `ci` invocation reports the state and stops rather than implicitly inventing Development authority.
+
+A profile with `identity.base_sensitive = false` follows its declared identity policy; do not impose current-base equality that the repository explicitly disabled.
 
 ## Environment / configuration qualification barrier
 
@@ -71,7 +89,7 @@ This barrier validates that environment impact was recognized and mechanically c
 
 ## Qualification
 
-1. Resolve current PR, exact head, authoritative base and profile fingerprint.
+1. Resolve current PR, exact head, authoritative base, synchronized base and profile fingerprint, and pass the current-base qualification barrier.
 2. Determine the profile-declared GitHub submission mode. Trigger only the declared workflow/operation when explicit dispatch is required; otherwise observe the repository's existing PR-event qualification. Never introduce `workflow_dispatch` merely because this controller is GitHub-native when the profile declares existing PR-event submission.
 3. Read current workflow/check evidence for the exact authoritative candidate. Queued, waiting, requested, pending or in-progress is not GREEN.
 4. Evaluate every profile-required gate against its explicit allowed terminal conclusions. Missing, stale, superseded, cancelled or old-SHA evidence never satisfies the gate.
