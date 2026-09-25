@@ -13,7 +13,7 @@ metadata:
   version: "1.2.0"
   category: engineering
   status: active
-  tested: "2026-09-10 - invocation-surface ownership, activation, profile-boundary, no-fallback, environment-blocked, and READY_FOR_MERGE semantics covered by unittest pressure cases."
+  tested: "2026-09-25 - invocation ownership, no-fallback, base-sensitive pre-Qualification currentization barrier, and READY_FOR_MERGE semantics covered by contract tests."
 ---
 
 ## Context
