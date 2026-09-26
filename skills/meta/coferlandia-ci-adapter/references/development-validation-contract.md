@@ -16,7 +16,8 @@ Discover, do not invent:
 - `environment`: variable names only, never values;
 - `github.runner_labels`: the exact approved runner selector;
 - `github.shell`: `bash` or `pwsh`;
-- optional `github.setup`: ordered repository-approved GitHub Actions used to provision the job-local project toolchain before Development commands run.
+- optional `github.setup`: ordered repository-approved GitHub Actions used to provision the job-local project toolchain before Development commands run;
+- optional `github.submission.fallback`: exact-head workflow dispatch mode plus a trusted repository control ref when the normal Draft PR event path cannot produce fresh evidence.
 
 Use the standard gate name `Development Validation / Gate` unless repository policy already owns another Development gate identity. The only supported allowed conclusion in v1 is `success`.
 
@@ -60,7 +61,11 @@ The adapter does not decide which language/runtime/version a repository needs. D
   "github": {
     "submission": {
       "mode": "existing-pr-events",
-      "workflow": ".github/workflows/coferlandia-development-validation.yml"
+      "workflow": ".github/workflows/coferlandia-development-validation.yml",
+      "fallback": {
+        "mode": "workflow-dispatch-exact-head",
+        "control_ref": "dev"
+      }
     },
     "candidate_binding": "pull-request-head",
     "runner_labels": ["self-hosted", "Linux", "ARM64", "coferlandia-ci", "docker"],
@@ -93,9 +98,15 @@ The adapter does not decide which language/runtime/version a repository needs. D
 
 `development render` adds the deterministic `fingerprint` and writes both the contract and workflow.
 
+## Exact-head fallback
+
+The fallback is optional and does not replace the normal PR-event path. When declared, callers dispatch the workflow at exactly `fallback.control_ref` and pass fixed `pr_number` and `candidate_sha` inputs. The trusted workflow re-reads the pull request before candidate checkout and fails unless it is open, Draft, and its current head matches the requested SHA. Dispatching the workflow from the candidate branch is invalid.
+
+The fallback needs only read access to pull-request metadata in addition to `contents: read`. It executes the same fingerprinted setup/actions/commands and gate as PR-event Development validation.
+
 ## Safety
 
-The generated workflow uses `pull_request` Draft lifecycle events, not `pull_request_target`. Candidate code receives only `contents: read` GitHub permission from the workflow. The adapter does not inject repository credentials or private values.
+The generated workflow uses `pull_request` Draft lifecycle events and optional trusted exact-head `workflow_dispatch`, never `pull_request_target`. Candidate code receives no GitHub write permission. The adapter does not inject repository credentials or private values.
 
 Setup actions are still executable code. Use only repository-approved static action references, and pin stronger immutable refs when repository policy requires them. Do not choose a self-hosted runner unless repository policy explicitly allows candidate code and declared setup actions to execute there. Runner isolation and ambient host environment remain operator responsibilities.
 

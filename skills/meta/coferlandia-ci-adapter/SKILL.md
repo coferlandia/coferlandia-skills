@@ -11,10 +11,10 @@ compatibility: >
   for deterministic adapter tooling, and write access only after the adaptation scope is authorized.
 metadata:
   author: coferlandia
-  version: "1.3.2"
+  version: "1.4.0"
   category: meta
   status: active
-  tested: "2026-09-12 - CI profile, remote Development validation with declarative toolchain setup, configurable publication runners, isolated publication control-plane execution, immutable request retry recovery, and opt-in GitHub-native release publication rendering covered by unittest."
+  tested: "2026-09-26 - CI profile, remote Development validation with declarative toolchain setup and exact-head dispatch fallback, configurable publication runners, isolated publication control-plane execution, immutable request retry recovery, and opt-in GitHub-native release publication rendering covered by unittest."
 ---
 
 ## Context
@@ -118,7 +118,7 @@ A Development contract owns repository-specific facts:
 - working directory;
 - ordered Development commands;
 - required services and environment variable names;
-- GitHub PR-event submission;
+- GitHub PR-event submission plus an optional repository-declared exact-head dispatch fallback for Draft candidates whose normal event path cannot produce fresh evidence;
 - exact `pull-request-head` candidate binding;
 - runner labels;
 - `bash` or `pwsh` shell;
@@ -150,8 +150,8 @@ After approval, repeat without `--dry-run`.
 
 The generated workflow:
 
-- listens only to Draft-PR lifecycle events needed for Development;
-- checks out `github.event.pull_request.head.sha` explicitly and verifies `HEAD`;
+- listens to Draft-PR lifecycle events needed for Development and, only when declared, an exact-head `workflow_dispatch` fallback;
+- resolves an exact current Draft PR head before candidate checkout; normal PR events use their event head, while fallback dispatch requires the declared trusted control ref plus PR number/current candidate SHA verification;
 - grants candidate-controlled code only `contents: read` GitHub permission;
 - uses the repository-declared runner labels and shell;
 - records the exact candidate SHA and Development contract fingerprint before project setup/execution;
@@ -218,6 +218,7 @@ Re-run the adapter when any material repository fact changes: Development comman
 - **Assuming `ubuntu-latest` for publication:** prohibited when repository evidence requires another runner; declare the publication runner explicitly.
 - **Inferring runner labels across stages:** prohibited. Development, Qualification and Publication each own their declared execution contract.
 - **Auto-authorizing exceptional lanes or release publication:** prohibited.
+- **Dispatching the candidate branch as Development control plane:** prohibited; exact-head fallback must execute from the repository-declared trusted control ref and verify the current Draft PR head before checkout.
 - **Trusting a stale remote run:** candidate SHA and Development fingerprint must still match.
 
 ## Expected Output

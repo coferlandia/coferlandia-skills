@@ -1,5 +1,22 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.4.0 — 2026-09-26
+
+### Added
+
+- Adds an optional `workflow-dispatch-exact-head` fallback to remote Development validation for open Draft PRs whose normal pull-request event path cannot produce fresh exact-head evidence.
+- Binds fallback dispatch to a repository-declared trusted control ref, verifies the current Draft PR head before candidate checkout, and keeps candidate code read-only.
+
+### Boundaries
+
+- Existing PR-event submission remains preferred; fallback dispatch executes the same fingerprinted Development commands/gate and never becomes Qualification, merge, publication or deployment authority.
+- Existing v1 contracts without a fallback remain valid and render unchanged.
+
+### Compatibility
+
+- Compatible additive extension of `DEVELOPMENT_VALIDATION v1`; repositories opt in by adding `github.submission.fallback`.
+
+
 ## 1.3.2 — 2026-09-13
 
 ### Changed

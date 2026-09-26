@@ -70,8 +70,9 @@ The adapter/controller must discover toolchain versions from repository-owned ma
 A GitHub-native remote Development workflow must:
 
 - run only on the Draft pull request used by the Development stage;
-- use repository-declared existing PR events rather than inventing a Qualification dispatch;
-- explicitly check out `github.event.pull_request.head.sha`;
+- use repository-declared existing PR events as the preferred submission path; an optional `workflow-dispatch-exact-head` fallback is allowed only when declared in the Development contract and remains Development-only;
+- on the normal PR-event path, explicitly check out `github.event.pull_request.head.sha`;
+- when the optional exact-head dispatch fallback is used, dispatch the workflow from the contract's repository-declared trusted `control_ref`, never from the candidate branch; before candidate checkout, use read-only GitHub metadata access to require an open Draft PR and prove the current PR head equals the requested candidate SHA;
 - verify the checked-out `HEAD` equals that expected SHA;
 - record the Development contract fingerprint and exact candidate SHA before project setup/execution;
 - execute only repository-declared setup actions, when present, in their declared order;
@@ -95,6 +96,35 @@ Remote evidence is valid Development evidence only when all of the following are
 - the run is not cancelled, stale, superseded, from another PR/head, or from an older Development fingerprint.
 
 A later candidate SHA or Development fingerprint invalidates the evidence.
+
+## Optional exact-head dispatch fallback
+
+A repository may extend `github.submission` without changing schema version 1:
+
+```json
+{
+  "mode": "existing-pr-events",
+  "workflow": ".github/workflows/coferlandia-development-validation.yml",
+  "fallback": {
+    "mode": "workflow-dispatch-exact-head",
+    "control_ref": "dev"
+  }
+}
+```
+
+The normal PR-event path remains preferred. The fallback exists for cases where GitHub cannot produce fresh Draft-PR Development evidence through that event path, including repository-approved handling of a conflicted Draft.
+
+The controller must dispatch the declared workflow at exactly `fallback.control_ref`, not at the candidate branch/ref. Never use the candidate branch as the workflow control ref. The workflow must fail before candidate checkout unless all of the following are true:
+
+- the supplied PR number resolves to an open pull request in the same repository;
+- the pull request is still Draft;
+- the current PR head equals the requested candidate SHA;
+- the dispatch itself is executing from the declared trusted control ref.
+
+The fixed dispatch inputs are `pr_number` and `candidate_sha`. Candidate code receives no write authority. The fallback may execute only the same fingerprinted Development setup/actions/commands and declared gate as the normal path. It never selects Qualification, emits a READY marker, merges, publishes or deploys.
+
+A fallback run is valid evidence only when the same exact candidate/fingerprint/gate rules above are satisfied. Reentry must consume an already-authoritative queued/running/completed fallback run rather than dispatching a duplicate blindly.
+
 
 ## Qualification boundary
 
