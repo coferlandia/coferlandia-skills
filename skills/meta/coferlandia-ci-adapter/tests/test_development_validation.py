@@ -61,6 +61,14 @@ def sample_with_setup():
     ]
     return contract
 
+def sample_with_dispatch():
+    contract = sample()
+    contract["github"]["submission"]["fallback"] = {
+        "mode": "workflow-dispatch-exact-head",
+        "control_ref": "dev",
+    }
+    return contract
+
 
 class RemoteDevelopmentAdapterTests(unittest.TestCase):
     def test_contract_validation_and_fingerprint_are_deterministic(self):
@@ -80,6 +88,43 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
         workflow = module.render_development_workflow(contract)
         self.assertNotIn("actions/setup-python", workflow)
         self.assertNotIn("actions/setup-node", workflow)
+
+    def test_exact_head_dispatch_fallback_is_validated_fingerprinted_and_fail_closed(self):
+        module = load_module()
+        contract = sample_with_dispatch()
+        module.validate_development_contract(contract)
+        self.assertNotEqual(module.development_fingerprint(contract), module.development_fingerprint(sample()))
+
+        workflow = module.render_development_workflow(contract)
+        for token in (
+            "workflow_dispatch:",
+            "pr_number:",
+            "candidate_sha:",
+            "pull-requests: read",
+            "Resolve exact candidate identity",
+            "actions/github-script@v7",
+            "expectedControlRef",
+            "Development validation requires an open Draft PR",
+            "candidate SHA mismatch",
+            "ref: ${{ steps.identity.outputs.candidate_sha }}",
+            "EXPECTED_SHA: ${{ steps.identity.outputs.candidate_sha }}",
+        ):
+            self.assertIn(token, workflow)
+        self.assertIn('const expectedControlRef = "dev";', workflow)
+        self.assertIn("const requestedSha = '${{ inputs.candidate_sha }}';", workflow)
+        self.assertNotIn("contents: write", workflow)
+        self.assertNotIn("pull_request_target", workflow)
+        self.assertNotIn("READY_FOR_MERGE", workflow)
+
+        unsafe = sample_with_dispatch()
+        unsafe["github"]["submission"]["fallback"]["control_ref"] = "../dev"
+        with self.assertRaises(ValueError):
+            module.validate_development_contract(unsafe)
+
+        unsafe = sample_with_dispatch()
+        unsafe["github"]["submission"]["fallback"]["mode"] = "workflow-dispatch"
+        with self.assertRaises(ValueError):
+            module.validate_development_contract(unsafe)
 
     def test_setup_actions_are_validated_fingerprinted_and_rendered_in_order(self):
         module = load_module()
@@ -145,6 +190,9 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
         github_schema = schema["properties"]["github"]
         self.assertEqual(github_schema["properties"]["candidate_binding"]["const"], "pull-request-head")
         self.assertIn("setup", github_schema["properties"])
+        fallback_schema = github_schema["properties"]["submission"]["properties"]["fallback"]
+        self.assertEqual(fallback_schema["properties"]["mode"]["const"], "workflow-dispatch-exact-head")
+        self.assertIn("control_ref", fallback_schema["required"])
         self.assertNotIn("setup", github_schema["required"])
         setup_item = github_schema["properties"]["setup"]["items"]
         self.assertEqual(set(setup_item["required"]), {"name", "uses"})
