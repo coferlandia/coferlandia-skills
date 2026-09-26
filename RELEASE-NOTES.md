@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v2.15.0 (2026-09-26)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.3.2 | 1.4.0 | Adds a trusted exact-head Development Validation fallback for Draft PRs when normal PR events cannot produce fresh candidate evidence. |
+
+### Chat prompts
+
+- `chat-coder` 1.6.0 -> 1.7.0 keeps non-terminal remote Development gates resumable, reconstructs existing exact-run state instead of blindly rerunning, and classifies Development Validation failures strictly as Development.
+- Chat Coder now batches related corrections from one RED result before publishing the next candidate when safe and explicitly separates stacked parent-to-child propagation from authoritative-base currentization and final integration.
+
+### Repository and protocol
+
+- Extends `DEVELOPMENT_VALIDATION v1` compatibly with optional `github.submission.fallback.mode = workflow-dispatch-exact-head` and a repository-declared trusted `control_ref`.
+- Exact-head fallback verifies the workflow control ref, open Draft PR state, and current PR head SHA before candidate checkout, while preserving read-only candidate execution and the existing Development fingerprint/gate.
+- Existing contracts without the fallback remain valid and keep PR-event-only rendering.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.14.0 to v2.15.0 for the compatible Chat Coder orchestration and remote Development execution capability.
+
+### Migration or compatibility
+
+- Existing consumers do not need to change their Development contract unless they need exact-head fallback execution.
+- Consumers vendoring Chat controllers/protocol should synchronize `chat-coder.md`, `DEVELOPMENT_VALIDATION.md`, `development-validation.schema.json`, `READY_FOR_CI.md`, and `coferlandia-ci-adapter` together.
+
+
 ## v2.14.0 (2026-09-25)
 
 ### Skills
