@@ -19,6 +19,16 @@ class ChatCoderRemoteDevelopmentTests(unittest.TestCase):
         self.assertIn("current Development contract fingerprint", text)
         self.assertIn("Block only when no authorized Development execution backend", text)
 
+    def test_exact_head_dispatch_is_bounded_fallback_not_qualification(self):
+        text = PROMPT.read_text(encoding="utf-8")
+        protocol = PROTOCOL.read_text(encoding="utf-8")
+        self.assertIn("exact-head dispatch fallback", text)
+        self.assertIn("repository-declared trusted control ref", text)
+        self.assertIn("workflow-dispatch-exact-head", protocol)
+        self.assertIn("current PR head equals the requested candidate SHA", protocol)
+        self.assertIn("normal PR-event path remains preferred", protocol)
+        self.assertIn("candidate branch as the workflow control ref", protocol)
+
     def test_remote_development_never_substitutes_for_qualification(self):
         text = PROMPT.read_text(encoding="utf-8")
         protocol = PROTOCOL.read_text(encoding="utf-8")
