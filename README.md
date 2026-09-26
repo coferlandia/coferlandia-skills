@@ -165,7 +165,7 @@ AGENTS.md        Entry point for agents
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.4.0 | Adds trusted exact-head Development Validation fallback while keeping normal Draft PR events preferred and Development separate from Qualification. |
+| coferlandia-ci-adapter | 1.4.0 | Adds a trusted exact-head Development Validation fallback for Draft PRs when normal PR events cannot produce fresh candidate evidence. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
