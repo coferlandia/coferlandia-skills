@@ -13,6 +13,7 @@ DEFAULT_DEVELOPMENT_WORKFLOW_PATH = Path(".github/workflows/coferlandia-developm
 ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 ACTION_USES_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[A-Za-z0-9_./-]+$")
 WITH_KEY_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+CONTROL_REF_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 FORBIDDEN_KEY_PARTS = {"secret", "password", "passwd", "token", "credential", "private_key"}
 ALLOWED_TOP = {
@@ -147,11 +148,27 @@ def validate_development_contract(contract: dict, *, verify_fingerprint: bool = 
     )
     submission = github["submission"]
     _require(
-        isinstance(submission, dict) and set(submission) == {"mode", "workflow"},
+        isinstance(submission, dict)
+        and {"mode", "workflow"} <= set(submission) <= {"mode", "workflow", "fallback"},
         "github.submission fields are invalid",
     )
     _require(submission["mode"] == "existing-pr-events", "development submission mode must be existing-pr-events")
     _validate_relative_path(submission["workflow"], "github.submission.workflow")
+    fallback = submission.get("fallback")
+    if fallback is not None:
+        _require(
+            isinstance(fallback, dict) and set(fallback) == {"mode", "control_ref"},
+            "github.submission.fallback fields are invalid",
+        )
+        _require(
+            fallback["mode"] == "workflow-dispatch-exact-head",
+            "development fallback mode must be workflow-dispatch-exact-head",
+        )
+        control_ref = fallback["control_ref"]
+        _require(
+            isinstance(control_ref, str) and CONTROL_REF_RE.fullmatch(control_ref) is not None,
+            "github.submission.fallback.control_ref must be a repository ref name",
+        )
     workflow = Path(submission["workflow"])
     _require(
         workflow.parts[:2] == (".github", "workflows") and workflow.suffix in {".yml", ".yaml"},
@@ -233,6 +250,8 @@ def render_development_workflow(contract: dict) -> str:
     shell = github["shell"]
     gate_name = _yaml_string(github["gate"]["name"])
     working_directory = _yaml_string(rendered["working_directory"])
+    fallback = github["submission"].get("fallback")
+    exact_head_dispatch = fallback is not None
 
     if shell == "bash":
         identity = 'actual="$(git rev-parse HEAD)"\ntest "$actual" = "$EXPECTED_SHA"'
@@ -240,28 +259,115 @@ def render_development_workflow(contract: dict) -> str:
         identity = '$actual = (git rev-parse HEAD).Trim()\nif ($actual -ne $env:EXPECTED_SHA) { throw "candidate SHA mismatch: expected $env:EXPECTED_SHA observed $actual" }'
 
     lines = [
-        "name: Coferlandia Development Validation", "", "on:", "  pull_request:",
-        "    types: [opened, synchronize, reopened, converted_to_draft]", "", "permissions:",
-        "  contents: read", "", "concurrency:",
-        "  group: coferlandia-development-${{ github.event.pull_request.number }}",
-        "  cancel-in-progress: true", "", "jobs:", "  validation:", f"    name: {gate_name}",
-        "    if: github.event.pull_request.draft == true", f"    runs-on: {runs_on}", "    steps:",
-        "      - name: Check out exact PR head", "        uses: actions/checkout@v4", "        with:",
-        "          ref: ${{ github.event.pull_request.head.sha }}", "          fetch-depth: 0",
-        "          persist-credentials: false", "      - name: Verify exact candidate identity",
-        f"        shell: {shell}", "        env:", "          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}",
-        "        run: |", _indent_command(identity), "      - name: Record Development contract",
-        f"        shell: {shell}", "        run: |",
+        "name: Coferlandia Development Validation",
+        "",
+        "on:",
+        "  pull_request:",
+        "    types: [opened, synchronize, reopened, converted_to_draft]",
     ]
+    if exact_head_dispatch:
+        lines.extend([
+            "  workflow_dispatch:",
+            "    inputs:",
+            "      pr_number:",
+            '        description: "Draft pull request number"',
+            "        required: true",
+            "        type: number",
+            "      candidate_sha:",
+            '        description: "Exact current Draft PR head SHA"',
+            "        required: true",
+            "        type: string",
+        ])
+
+    lines.extend(["", "permissions:", "  contents: read"])
+    if exact_head_dispatch:
+        lines.append("  pull-requests: read")
+
+    concurrency_pr = "${{ github.event.pull_request.number || inputs.pr_number }}" if exact_head_dispatch else "${{ github.event.pull_request.number }}"
+    lines.extend([
+        "",
+        "concurrency:",
+        f"  group: coferlandia-development-{concurrency_pr}",
+        "  cancel-in-progress: true",
+        "",
+        "jobs:",
+        "  validation:",
+        f"    name: {gate_name}",
+    ])
+    if exact_head_dispatch:
+        lines.extend([
+            "    if: >-",
+            "      (github.event_name == 'pull_request' && github.event.pull_request.draft == true) ||",
+            "      github.event_name == 'workflow_dispatch'",
+        ])
+    else:
+        lines.append("    if: github.event.pull_request.draft == true")
+
+    lines.extend([f"    runs-on: {runs_on}", "    steps:"])
+
+    if exact_head_dispatch:
+        control_ref = json.dumps(fallback["control_ref"], ensure_ascii=False)
+        script = "\n".join([
+            "const eventName = context.eventName;",
+            "if (eventName === 'pull_request') {",
+            "  const pr = context.payload.pull_request;",
+            "  if (!pr || !pr.draft || pr.state !== 'open') throw new Error('Development validation requires an open Draft PR');",
+            "  core.setOutput('pr_number', String(pr.number));",
+            "  core.setOutput('candidate_sha', pr.head.sha);",
+            "  return;",
+            "}",
+            f"const expectedControlRef = {control_ref};",
+            "const observedControlRef = context.ref.replace(/^refs\\/(heads|tags)\\//, '');",
+            "if (observedControlRef !== expectedControlRef) throw new Error('trusted control ref mismatch: expected ' + expectedControlRef + ' observed ' + observedControlRef);",
+            "const prNumber = Number('${{ inputs.pr_number }}');",
+            "const requestedSha = '${{ inputs.candidate_sha }}';",
+            "if (!Number.isInteger(prNumber) || prNumber <= 0) throw new Error('invalid PR number');",
+            "if (!/^[0-9a-f]{40}$/.test(requestedSha)) throw new Error('candidate_sha must be a full 40-character lowercase Git SHA');",
+            "const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });",
+            "if (pr.state !== 'open' || !pr.draft) throw new Error('Development validation requires an open Draft PR');",
+            "if (pr.head.sha !== requestedSha) throw new Error('candidate SHA mismatch: requested ' + requestedSha + ' current ' + pr.head.sha);",
+            "core.setOutput('pr_number', String(pr.number));",
+            "core.setOutput('candidate_sha', pr.head.sha);",
+        ])
+        lines.extend([
+            "      - name: Resolve exact candidate identity",
+            "        id: identity",
+            "        uses: actions/github-script@v7",
+            "        with:",
+            "          github-token: ${{ github.token }}",
+            "          script: |",
+            _indent_command(script, 12),
+        ])
+        candidate_expr = "${{ steps.identity.outputs.candidate_sha }}"
+    else:
+        candidate_expr = "${{ github.event.pull_request.head.sha }}"
+
+    lines.extend([
+        "      - name: Check out exact PR head",
+        "        uses: actions/checkout@v4",
+        "        with:",
+        f"          ref: {candidate_expr}",
+        "          fetch-depth: 0",
+        "          persist-credentials: false",
+        "      - name: Verify exact candidate identity",
+        f"        shell: {shell}",
+        "        env:",
+        f"          EXPECTED_SHA: {candidate_expr}",
+        "        run: |",
+        _indent_command(identity),
+        "      - name: Record Development contract",
+        f"        shell: {shell}",
+        "        run: |",
+    ])
     if shell == "bash":
         summary = (
             f'echo "Development contract fingerprint: {fingerprint}" | tee -a "$GITHUB_STEP_SUMMARY"\n'
-            'echo "Candidate SHA: ${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"'
+            f'echo "Candidate SHA: {candidate_expr}" | tee -a "$GITHUB_STEP_SUMMARY"'
         )
     else:
         summary = (
             f'$line = "Development contract fingerprint: {fingerprint}"; Write-Output $line; Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $line\n'
-            '$line = "Candidate SHA: ${{ github.event.pull_request.head.sha }}"; Write-Output $line; Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $line'
+            f'$line = "Candidate SHA: {candidate_expr}"; Write-Output $line; Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $line'
         )
     lines.append(_indent_command(summary))
 
@@ -277,8 +383,11 @@ def render_development_workflow(contract: dict) -> str:
 
     for command in rendered["commands"]:
         lines.extend([
-            f"      - name: {_yaml_string(command['purpose'])}", f"        shell: {shell}",
-            f"        working-directory: {working_directory}", "        run: |", _indent_command(command["command"]),
+            f"      - name: {_yaml_string(command['purpose'])}",
+            f"        shell: {shell}",
+            f"        working-directory: {working_directory}",
+            "        run: |",
+            _indent_command(command["command"]),
         ])
     lines.append("")
     return "\n".join(lines)
