@@ -114,7 +114,7 @@ A repository may extend `github.submission` without changing schema version 1:
 
 The normal PR-event path remains preferred. The fallback exists for cases where GitHub cannot produce fresh Draft-PR Development evidence through that event path, including repository-approved handling of a conflicted Draft.
 
-The controller must dispatch the declared workflow at exactly `fallback.control_ref`, not at the candidate branch/ref. The workflow must fail before candidate checkout unless all of the following are true:
+The controller must dispatch the declared workflow at exactly `fallback.control_ref`, not at the candidate branch/ref. Never use the candidate branch as the workflow control ref. The workflow must fail before candidate checkout unless all of the following are true:
 
 - the supplied PR number resolves to an open pull request in the same repository;
 - the pull request is still Draft;
