@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat Development controller used by the standalone GitHub-native Chat Coder pipeline or by explicit Development-only/composed delivery flows."
-version: "1.6.0"
+version: "1.7.0"
 stage: development
 status: active
 ---
@@ -96,6 +96,19 @@ For every behavior or contract change, inspect the existing tests that cover the
 
 Test-count growth is not a goal. Add new tests only for meaningful missing coverage, and leave the smallest clear suite that adequately describes and protects the intended current behavior. Never remove, weaken, bypass or broaden a test merely to make validation pass.
 
+### Candidate batching and dependent-branch propagation
+
+Treat one logical correction batch as one candidate publication. When one exact RED Development result exposes several related stale fixtures, assertions, mappings or bounded implementation defects, investigate the complete failing evidence first and batch the related corrections before publishing the next candidate whenever that can be done safely. Do not create a new remote candidate merely because the next individual edit is known.
+
+When repository policy explicitly uses dependent or stacked implementation branches, distinguish three different operations:
+
+- **stack propagation** moves an exact parent implementation candidate into a dependent child implementation branch;
+- **authoritative-base currentization** reconciles an implementation branch with the repository's current development base before handoff;
+- **final integration** moves a qualified implementation candidate into its canonical integration target.
+
+Stack propagation changes the child candidate and invalidates child-bound validation/review evidence. It does **not** by itself currentize the child against the authoritative development base, consume the parent branch's integration lifecycle, or prove the parent is integrated into its canonical target. Follow the repository's explicit stack policy when it exists; never invent auxiliary merge semantics from branch names alone.
+
+
 ## Development readiness validation
 
 Focused tests are iteration evidence; they are not sufficient by themselves for `READY_FOR_CI` when the repository defines broader cheap deterministic checks for the changed surface.
@@ -117,9 +130,11 @@ Development requirements do not weaken merely because the active Chat client can
 2. If direct execution is unavailable, look for a current repository-owned remote Development contract, canonically `.coferlandia/development/validation.json`, and validate its fingerprint and declared GitHub workflow/gate.
 3. When that contract is absent and an installed `coferlandia-ci-adapter` supports remote Development adaptation, Chat Coder may explicitly delegate only the minimum bootstrap needed to execute its required Development checks. Derive commands, services, runner labels, shell and paths from repository truth; never invent them.
 4. If the remote surface uses existing Draft-PR events, create or reuse the one allowed Draft PR before remote validation even though terminal review and `READY_FOR_CI` are still pending.
-5. Observe only the declared Development gate for the exact current PR head SHA and current Development contract fingerprint. Pending, skipped, cancelled, stale, superseded, old-SHA or old-fingerprint evidence is not GREEN.
-6. If the Development gate is RED, inspect its exact failing job/log, make only bounded in-scope corrections, produce a new candidate, and repeat Development validation.
-7. Block only when no authorized Development execution backend can produce fresh evidence for the exact candidate, or when the repository facts needed to adapt a missing remote surface are ambiguous.
+5. Prefer the contract's normal PR-event submission. When the contract explicitly declares an exact-head dispatch fallback, use it only when the normal event surface cannot produce fresh evidence for the current Draft candidate. Dispatch only the repository-declared trusted control ref and pass the PR number plus exact current head SHA; never dispatch the candidate branch as control-plane authority.
+6. Observe only the declared Development gate for the exact current PR head SHA and current Development contract fingerprint. Pending, skipped, cancelled, stale, superseded, old-SHA or old-fingerprint evidence is not GREEN.
+7. Queued, waiting, requested, pending or in-progress Development evidence is non-terminal. During the active execution, continue observing the authoritative exact-SHA gate when the available GitHub surface permits it. If the external run remains non-terminal beyond what the active execution can observe, report `Development workflow = WAITING_CI` with the exact PR, candidate SHA and run/check identity. On reentry, reconstruct current PR/head/fingerprint/run state from GitHub and consume the existing result; do not blindly submit a duplicate run.
+8. If the Development gate is RED, classify it explicitly as a **Development** failure, inspect its exact failing job/log, make only bounded in-scope corrections, produce one new batched candidate, and repeat Development validation. Never report a remote Development gate failure as Qualification failure; Qualification has not started before a current durable `READY_FOR_CI`.
+9. Block only when no authorized Development execution backend can produce fresh evidence for the exact candidate, or when the repository facts needed to adapt a missing remote surface are ambiguous.
 
 Remote Development validation is still **Development**. It must not invoke or reuse Qualification merely as a workaround, select a Qualification strategy, satisfy `.coferlandia/ci/profile.json`, emit `READY_FOR_MERGE`, merge, publish or deploy. A remote workflow itself never writes the durable `READY_FOR_CI`; Chat Coder evaluates the evidence and owns that handoff after review.
 
@@ -166,7 +181,7 @@ Review Important = 0
 
 ## Authoritative-base currentization before handoff
 
-Development must hand Qualification a candidate that is already reconciled with the repository's current authoritative development base. Do this **before** durable `READY_FOR_CI`, not inside Qualification:
+Development must hand Qualification a candidate that is already reconciled with the repository's current authoritative development base. Do this **before** durable `READY_FOR_CI`, not inside Qualification. If a repository uses stacked implementation branches, complete any repository-approved parent-to-child stack propagation separately; stack propagation is not authoritative-base currentization.
 
 1. Re-read the authoritative development base ref and exact SHA after the candidate has passed its ordinary Development checks/review.
 2. Determine whether the current candidate already contains/reconciles that exact base according to repository-approved Git policy. Never invent merge/rebase/update-branch policy.
