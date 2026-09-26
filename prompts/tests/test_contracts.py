@@ -281,6 +281,23 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("affected pre-existing tests were reviewed", text)
         self.assertIn("materially duplicate coverage without independent value", text)
 
+    def test_chat_coder_batches_candidates_and_separates_stack_propagation(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("one logical correction batch as one candidate publication", text)
+        self.assertIn("stack propagation", text)
+        self.assertIn("authoritative-base currentization", text)
+        self.assertIn("final integration", text)
+        self.assertIn("does **not** by itself currentize the child", text)
+        self.assertIn("consume the parent branch's integration lifecycle", text)
+
+    def test_chat_coder_keeps_remote_development_waits_resumable_and_stage_correct(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("Development workflow = WAITING_CI", text)
+        self.assertIn("reconstruct current PR/head/fingerprint/run state from GitHub", text)
+        self.assertIn("do not blindly submit a duplicate run", text)
+        self.assertIn("classify it explicitly as a **Development** failure", text)
+        self.assertIn("Never report a remote Development gate failure as Qualification failure", text)
+
     def test_chat_coder_ready_for_ci_requires_complete_cheap_validation(self):
         text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
         ready = (ROOT / "_protocol" / "delivery" / "READY_FOR_CI.md").read_text(encoding="utf-8")
