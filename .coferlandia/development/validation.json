@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "repository": "coferlandia/coferlandia-skills",
+  "documentation": [
+    "AGENTS.md",
+    "_protocol/PROMPT_SPEC.md",
+    "_protocol/PROMPT_QUALITY_STANDARDS.md",
+    "skills/meta/coferlandia-ci-adapter/references/profile-contract.md"
+  ],
+  "working_directory": ".",
+  "commands": [
+    {
+      "id": "install-jsonschema",
+      "command": "python -m pip install jsonschema",
+      "purpose": "Install the dependency required by prompt and delivery contract validation"
+    },
+    {
+      "id": "profile-check",
+      "command": "python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile check --profile .coferlandia/ci/profile.json --expect-fingerprint 7f6656b89b34c79e75adadcd219ab279b6ab26061db05bc7598af5d35e2626ec --json",
+      "purpose": "Validate the repository Qualification profile and its fingerprint"
+    },
+    {
+      "id": "prompt-contracts",
+      "command": "python _protocol/scripts/validate_prompt.py validate --root . && python -m unittest discover -s prompts/tests -p \"test_*.py\" && python -m unittest _protocol.delivery.test_contracts",
+      "purpose": "Validate changed Chat prompt and shared delivery contracts"
+    },
+    {
+      "id": "version-audit",
+      "command": "python _protocol/scripts/bump_version.py --check && python _protocol/scripts/bump_version.py --audit",
+      "purpose": "Validate repository and prompt version declarations"
+    },
+    {
+      "id": "release-ready",
+      "command": "python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py check --base main --release-ready",
+      "purpose": "Validate final-delivery release readiness against the authoritative base"
+    }
+  ],
+  "required_services": [],
+  "environment": [],
+  "github": {
+    "submission": {
+      "mode": "existing-pr-events",
+      "workflow": ".github/workflows/coferlandia-development-validation.yml"
+    },
+    "candidate_binding": "pull-request-head",
+    "runner_labels": [
+      "ubuntu-latest"
+    ],
+    "shell": "bash",
+    "setup": [
+      {
+        "name": "Set up Python",
+        "uses": "actions/setup-python@v5",
+        "with": {
+          "python-version": "3.13"
+        }
+      }
+    ],
+    "gate": {
+      "name": "Development Validation / Gate",
+      "allowed_conclusions": [
+        "success"
+      ]
+    }
+  },
+  "fingerprint": "7f3223add37f045b41e3a75c482c1d99ef8e5a54d9e890282ebd608a4771a35e"
+}
