@@ -98,7 +98,7 @@
 
 ### Repository and protocol
 
-- Splits mutable release source identity from active release-candidate identity in `READY_FOR_RELEASE v1` and the requalification matrix without weakening exact candidate, target/base, profile/effective-candidate/manifest/review identity.
+- Splits mutable release source identity from active release-candidate identity in `READY_FOR_RELEASE v1` and the requalification matrix without weakening exact candidate, target/base, manifest, profile/gate, review, or publication checks.
 - Adds optional `Source snapshot SHA` and `Candidate ref` identity extensions for repositories that materialize/freeze candidates.
 - Makes source-ref advancement explicitly non-invalidating only when repository policy has already bound a distinct frozen candidate; intentional repair/candidate refresh remains a new qualification identity.
 
@@ -117,7 +117,7 @@
 ### Repository and protocol
 
 - Makes standalone `chat coder` / `chat-coder` a registry-declared convenience flow that resolves Development -> GITHUB_NATIVE Qualification -> Integration before execution while preserving each stage's authority boundary and durable handoffs.
-- Adds `chat dev` / `chat-dev` as the explicit Development-only alias for callers that intentionally want to stop at `READY_FOR_CI`.
+- Adds `chat dev` / `chat-dev` as the explicit Development-only alias for callers that intentionally want to stop after Development at `READY_FOR_CI`.
 - Extends prompt registry validation/resolution with fail-closed `standalone_defaults`; explicit `+` compositions suppress defaults, READY state never infers another stage, and LOCAL/GITHUB_NATIVE fallback remains prohibited.
 - Adds `WAITING_CI` as a factual non-terminal GitHub Actions state and continues automatically to `merge` when the already-resolved sequence includes Integration.
 - Aligns prompt distribution documentation with current packaging: public prompts ship with the plugin and may also be vendored under consumer prompt directories such as `.agents/prompts/`.
@@ -490,7 +490,7 @@
 ### Repository and protocol
 
 - Tightens `READY_FOR_CI v1` so affected versioned derived artifacts must be synchronized on the exact source candidate through repository-owned tooling, alongside the existing complete cheap-development validation contract.
-- Adds regression coverage that preserves this requirement while keeping Qualification of the effective or synthetic merge candidate separate.
+- Adds regression coverage that preserves this requirement while keeping Qualification of the effective/synthetic merge candidate separate.
 
 ### Plugin and packaging
 
@@ -683,7 +683,7 @@
 
 - Added the repository-local `coferlandia-release-maintainer` final-delivery gate under `.agents/skills/` without shipping it as a public plugin skill.
 - Added one canonical release-maintenance policy and per-skill `CHANGELOG.md` ownership for every public skill.
-- Updated skill authoring templates, skill quality standards, and validation so new and modified public skills keep `metadata.version`, changelog history, release notes, and repository release metadata coherent.
+- Updated skill authoring templates, quality standards, and validation so new and modified public skills keep `metadata.version`, changelog history, release notes, and repository release metadata coherent.
 - Added deterministic release inspection, preparation, validation, README rendering, and package verification through one Python CLI.
 - Preserved `skills/INDEX.md` as the inventory source of truth rather than duplicating release history there.
 
@@ -864,10 +864,10 @@
 
 ### Skills
 
-- **coferlandia-software-dev** — v2.2.0. Adds optional supervisory-agent role to Step 2, with explicit mode selection at task start, mandatory execution context package, structured checkpoint contract, role & authority boundary, and audit trail. No changes to Steps 1, 3, 4, or 5.
-- **coferlandia-software-dev** — v2.1.0. Adds commit proposal + explicit approval as Step 5.5, test-results-report requirement before proposing a commit, push never automatic, and optional integration with `project-documentation-archivist` for documentation updates (HISTORY.md, TODO.md, DECISIONS.md, RUNBOOK.md, AGENTS.md).
-- **coferlandia-software-dev** — v2.0.0. Complete redesign into a multi-role engineering workflow with Developer, Debugger, Code Reviewer, and Commit Prep modes. Adds strict mode detection, control-authority abstraction, code review protocol, and commit preparation gates. Replaces v1.x workflow entirely.
-- **coferlandia-software-dev** — v1.0.0. Initial development process skill: mandatory study → plan → implement → review → test/docs/commit workflow.
+- **coferlandia-software-dev** (`engineering`) — v2.2.0. Adds optional supervisory-agent role to Step 2, with explicit mode selection at task start, mandatory execution context package, structured checkpoint contract, role & authority boundary, and audit trail. No changes to Steps 1, 3, 4, or 5.
+- **coferlandia-software-dev** (`engineering`) — v2.1.0. Adds commit proposal + explicit approval as Step 5.5, test-results-report requirement before proposing a commit, push never automatic, and optional integration with `project-documentation-archivist` for documentation updates (HISTORY.md, TODO.md, DECISIONS.md, RUNBOOK.md, AGENTS.md).
+- **coferlandia-software-dev** (`engineering`) — v2.0.0. Complete redesign into a multi-role engineering workflow with Developer, Debugger, Code Reviewer, and Commit Prep modes. Adds strict mode detection, control-authority abstraction, code review protocol, and commit preparation gates. Replaces v1.x workflow entirely.
+- **coferlandia-software-dev** (`engineering`) — v1.0.0. Initial development process skill: mandatory study → plan → implement → review → test/docs/commit workflow.
 - **using-coferlandia-skills** (`meta`) — v1.0.0. First meta-skill: checks `skills/INDEX.md` and invokes matching skills before responding to any task.
 - **skill-repository-versioning** (`meta`) — v1.0.0. Pre-commit checklist: update index, classify change, bump per-skill vs. repo-wide release versions correctly.
 - **project-documentation-archivist** (`content`) — v2.0.0. Evidence-first project knowledge base with managed blocks, deterministic source indexing, open questions, module manifests, and incremental processing.
