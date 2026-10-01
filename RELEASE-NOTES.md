@@ -117,7 +117,7 @@
 ### Repository and protocol
 
 - Makes standalone `chat coder` / `chat-coder` a registry-declared convenience flow that resolves Development -> GITHUB_NATIVE Qualification -> Integration before execution while preserving each stage's authority boundary and durable handoffs.
-- Adds `chat dev` / `chat-dev` as the explicit Development-only alias for callers that intentionally want to stop after Development at `READY_FOR_CI`.
+- Adds `chat dev` / `chat-dev` as the explicit Development-only alias for callers that intentionally want to stop at `READY_FOR_CI`.
 - Extends prompt registry validation/resolution with fail-closed `standalone_defaults`; explicit `+` compositions suppress defaults, READY state never infers another stage, and LOCAL/GITHUB_NATIVE fallback remains prohibited.
 - Adds `WAITING_CI` as a factual non-terminal GitHub Actions state and continues automatically to `merge` when the already-resolved sequence includes Integration.
 - Aligns prompt distribution documentation with current packaging: public prompts ship with the plugin and may also be vendored under consumer prompt directories such as `.agents/prompts/`.
