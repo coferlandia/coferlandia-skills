@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.16.0 (2026-10-01)
+
+### Chat prompts
+
+- `chat-coder` 1.7.0 -> 1.8.0 adds a required Test Impact plan before implementation so coverage is designed by invariant, canonical authority, semantic test level, validation cost, and repository-owned performance evidence.
+- Expensive/heavy coverage now requires a concrete semantic justification for why cheaper coverage would lose the invariant; repository-owned performance regressions remain Development findings and coverage may never be weakened merely to satisfy cost.
+- Repositories without timing/budget tooling remain valid: Chat Coder records that no repository budget is defined instead of inventing universal thresholds or out-of-scope performance infrastructure.
+
+### Repository and protocol
+
+- Keeps `READY_FOR_CI v1`, Qualification, Integration, aliases, and standalone Chat Coder composition unchanged; test-cost governance remains Development-owned.
+- Adds focused semantic contract coverage for canonical test authority, cheapest-valid-level selection, consolidation traceability, heavy-test justification, repository-owned performance policy, and generic prompt boundaries.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.15.0 to v2.16.0 for the additive compatible Chat Coder test-governance capability.
+- No public Agent Skill versions change in this release.
+
+### Migration or compatibility
+
+- Existing consumers remain compatible; no `READY_FOR_CI` schema/marker, registry, Qualification, or Integration migration is required.
+- Consumers vendoring the public Chat controller family should update `chat-coder.md` to receive the new Development test-impact contract.
+
 ## v2.15.0 (2026-09-26)
 
 ### Skills

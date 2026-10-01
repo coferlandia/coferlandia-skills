@@ -161,11 +161,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.15.0 — 2026-09-26**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| coferlandia-ci-adapter | 1.4.0 | Adds a trusted exact-head Development Validation fallback for Draft PRs when normal PR events cannot produce fresh candidate evidence. |
+**v2.16.0 — 2026-10-01**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

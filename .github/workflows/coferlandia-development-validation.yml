@@ -1,0 +1,66 @@
+name: Coferlandia Development Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coferlandia-development-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    name: "Development Validation / Gate"
+    if: github.event.pull_request.draft == true
+    runs-on: ["ubuntu-latest"]
+    steps:
+      - name: Check out exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact candidate identity
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_SHA"
+      - name: Record Development contract
+        shell: bash
+        run: |
+          echo "Development contract fingerprint: 7f3223add37f045b41e3a75c482c1d99ef8e5a54d9e890282ebd608a4771a35e" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Candidate SHA: ${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: "Set up Python"
+        uses: "actions/setup-python@v5"
+        with:
+          python-version: "3.13"
+      - name: "Install the dependency required by prompt and delivery contract validation"
+        shell: bash
+        working-directory: "."
+        run: |
+          python -m pip install jsonschema
+      - name: "Validate the repository Qualification profile and its fingerprint"
+        shell: bash
+        working-directory: "."
+        run: |
+          python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile check --profile .coferlandia/ci/profile.json --expect-fingerprint 7f6656b89b34c79e75adadcd219ab279b6ab26061db05bc7598af5d35e2626ec --json
+      - name: "Validate changed Chat prompt and shared delivery contracts"
+        shell: bash
+        working-directory: "."
+        run: |
+          python _protocol/scripts/validate_prompt.py validate --root . && python -m unittest discover -s prompts/tests -p "test_*.py" && python -m unittest _protocol.delivery.test_contracts
+      - name: "Validate repository and prompt version declarations"
+        shell: bash
+        working-directory: "."
+        run: |
+          python _protocol/scripts/bump_version.py --check && python _protocol/scripts/bump_version.py --audit
+      - name: "Validate final-delivery release readiness against the authoritative base"
+        shell: bash
+        working-directory: "."
+        run: |
+          python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py check --base main --release-ready

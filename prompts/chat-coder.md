@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat Development controller used by the standalone GitHub-native Chat Coder pipeline or by explicit Development-only/composed delivery flows."
-version: "1.7.0"
+version: "1.8.0"
 stage: development
 status: active
 ---
@@ -15,6 +15,7 @@ Build a correct, reviewed development candidate for the repository named by the 
 ```text
 Issue / approved work contract
 -> ownership and current-state study
+-> Test Impact planning
 -> one implementation branch
 -> TDD / implementation
 -> focused iteration validation
@@ -78,7 +79,74 @@ If the delegated context is missing durable authority, unsupported by current re
 
 Study architecture, relevant source, tests, current consumers, durable repository documentation, related merged work and current base. Reconcile the plan with implementation reality without silently changing product requirements or public compatibility decisions.
 
+During Study, before production edits, freeze a Test Impact plan for every behavior or contract change. The plan may remain internal when the execution surface does not need to display it, but its decisions must be reflected in implementation, review and candidate-bound evidence.
+
 If the supplied contract has an unresolved required Architecture Gate, stop before production edits.
+
+## Test Impact
+
+Treat test strategy as a Development design decision rather than historical accumulation. Before implementation, establish a Test Impact plan equivalent to:
+
+```text
+Test Impact
+
+Affected invariants:
+- ...
+
+Existing canonical coverage:
+- ...
+
+Coverage changes:
+- reused:
+- updated:
+- consolidated:
+- new:
+
+Selected test level per invariant:
+- ...
+
+Heavy-test justification:
+- NONE | <why a cheaper level would lose semantics>
+
+Expected validation surface:
+- ...
+
+Repository-owned performance budget/tooling:
+- <discovered authority | NONE>
+
+Expected performance impact:
+- negligible | low | material | unknown
+```
+
+Coverage is owned by invariant and canonical authority, not by issue history or raw test count. Before adding coverage, search the affected surface for the existing regression, existing canonical contract, higher-level integration authority, parameterizable variants, and duplicate semantic coverage. If the same invariant is already protected, prefer extending, parameterizing or consolidating that authority; add another level only when it protects a distinct boundary, failure mode or contract.
+
+When coverage is consolidated or retired, preserve an auditable mapping:
+
+```text
+old coverage
+-> protected invariant
+-> retained canonical authority
+```
+
+The mapping must remain reconstructible from the plan, diff, review or other durable Development evidence.
+
+Use this conceptual cost model only as a reasoning aid; consumer repositories do not need to adopt these labels:
+
+```text
+Tier 0 — pure/unit
+Tier 1 — service/component
+Tier 2 — persistence/integration
+Tier 3 — real concurrency/external-system semantics
+Tier 4 — migration/history/E2E/full-stack
+```
+
+Use the cheapest test level that preserves the complete invariant. Tier 3/4 tests, or any test the repository classifies as expensive/heavy, require a concrete Heavy-test justification explaining why a cheaper level would lose semantics.
+
+Cost optimization must not replace a test with a cheaper level when that would lose real database, authentication, tenancy, locks, transactions, migrations, network, side effects, or equivalent system guarantees. A cheaper test must not replace integration or end-to-end authority merely because it executes faster; correctness and the complete invariant remain controlling.
+
+When the repository exposes timings, budgets or regression checks, use the repository-owned performance tooling applicable to the changed validation surface. Compare the candidate against the repository-owned authority or baseline, treat a material regression outside repository policy as a Development finding, investigate before accepting the cost, and optimize safely within scope. If the cost is semantically necessary but exceeds policy, require the repository-defined authority or waiver. Do not reduce coverage, weaken assertions or downgrade the required semantic level to satisfy a performance budget.
+
+When the repository does not define performance tooling or a budget, Chat Coder must not invent thresholds, percentages or universal timing limits and must not create performance infrastructure outside the work scope merely to measure the change. Record `Performance evidence: repository budget not defined`, evaluate qualitatively whether the candidate introduces a new expensive/heavy class, and continue when all actual repository contracts pass; the absence of a repository budget does not block Development by itself.
 
 ## Implementation
 
@@ -116,6 +184,8 @@ Focused tests are iteration evidence; they are not sufficient by themselves for 
 Immediately before the terminal development review and handoff, discover and run every applicable cheap deterministic development check owned by the repository on the exact candidate that will be handed off. Before those checks, identify repository-owned derived artifacts that repository-owned instructions, tooling, or policy explicitly declare to be versioned contracts and whose authoritative inputs changed; synchronize those artifacts with the repository-owned generation or synchronization mechanism rather than editing generated output by hand. At minimum:
 
 - for changed behavior, verify that the affected pre-existing tests were reviewed and that the resulting suite contains no known assertions for superseded behavior, materially duplicate coverage without independent value, or test-only artifacts made obsolete by the change;
+- reconcile the frozen Test Impact plan with the final suite: every affected invariant has a retained canonical authority, every new expensive/heavy test has a current justification, and every consolidation still maps the protected invariant to its retained authority;
+- when repository-owned performance tooling, timings, budgets or regression checks apply to the changed validation surface, run them on the exact candidate, investigate any out-of-policy regression as a Development finding, and require any repository-defined waiver before readiness; when no such authority exists, record that performance evidence is not defined rather than inventing a gate;
 - synchronize every applicable repository-owned derived artifact explicitly declared as a versioned contract and affected by changed inputs, such as generated API/schema clients, schemas, snapshots, inventories/manifests, and equivalent code-generation outputs; when the repository defines a deterministic freshness, idempotence, or diff check for that versioned contract, rerun it and require no unexpected diff after the expected outputs are part of the candidate;
 - do not create, add to Git, or require snapshot freshness for a reproducible diagnostic/report output merely because the repository can generate it; a test inventory, generated test manifest, or equivalent report is a synchronization prerequisite only when repository-owned policy explicitly declares that output to be a versioned contract;
 - for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
@@ -175,9 +245,14 @@ Terminal development review state:
 
 ```text
 Implementation = COMPLETE
+Test impact = <reused/updated/consolidated/new summary>
+Heavy test impact = YES | NO
+Performance evidence = <repository-owned evidence | NOT DEFINED>
 Review Critical = 0
 Review Important = 0
 ```
+
+When `Heavy test impact = YES`, the evidence must identify the concrete justification without dumping a full test inventory.
 
 ## Authoritative-base currentization before handoff
 
@@ -237,6 +312,9 @@ Candidate SHA = <sha>
 Base SHA studied = <sha>
 Base SHA synchronized = <sha>
 Validation = <fresh evidence for every applicable required development check after currentization>
+Test impact = <reused/updated/consolidated/new summary>
+Heavy test impact = YES | NO
+Performance evidence = <repository-owned evidence | NOT DEFINED>
 Environment change = YES | NO
 Environment action = <NONE or concise deployment/operator action>
 Environment variables = <NONE or concise affected-variable list without secret values>
