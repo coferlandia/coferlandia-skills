@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "profile_version": "1.0.0",
+  "repository": "coferlandia/coferlandia-skills",
+  "documentation": [
+    "AGENTS.md",
+    ".github/workflows/ci.yml",
+    "_protocol/RELEASE_MAINTENANCE.md"
+  ],
+  "local": {
+    "working_directory": ".",
+    "qualification_commands": [
+      {
+        "id": "install-jsonschema",
+        "command": "python -m pip install jsonschema",
+        "purpose": "install the dependency required by repository orchestration and contract tests"
+      },
+      {
+        "id": "archivist",
+        "command": "python -m unittest skills.content.project-documentation-archivist.tests.test_github_native_migration",
+        "purpose": "validate Archivist GitHub-native migration behavior"
+      },
+      {
+        "id": "project-manager-reporting",
+        "command": "python -m unittest skills.ops.coferlandia-project-manager.tests.test_github_native_reporting",
+        "purpose": "validate Project Manager GitHub-native reporting"
+      },
+      {
+        "id": "project-manager-workflow",
+        "command": "python skills/ops/coferlandia-project-manager/tests/test_workflow_contract.py",
+        "purpose": "validate Project Manager workflow contracts"
+      },
+      {
+        "id": "architect",
+        "command": "python -m unittest discover -s skills/engineering/the-architect/tests -p \"test_*.py\"",
+        "purpose": "validate Architect activation, contracts, and CLI behavior"
+      },
+      {
+        "id": "orchestrator",
+        "command": "python -m unittest discover -s skills/ops/project-orchestrator/tests -p \"test_*.py\"",
+        "purpose": "validate Project Orchestrator behavior"
+      },
+      {
+        "id": "release-maintainer",
+        "command": "python -m unittest discover -s .agents/skills/coferlandia-release-maintainer/tests -p \"test_*.py\"",
+        "purpose": "validate repository-local release maintainer behavior"
+      },
+      {
+        "id": "config-toolsmith",
+        "command": "python -m unittest discover -s skills/meta/coferlandia-config-toolsmith/tests -p \"test_*.py\"",
+        "purpose": "validate Config Toolsmith behavior"
+      },
+      {
+        "id": "config-devops",
+        "command": "python -m unittest discover -s skills/ops/coferlandia-config-devops/tests -p \"test_*.py\"",
+        "purpose": "validate Config DevOps behavior"
+      },
+      {
+        "id": "release-publisher",
+        "command": "python -m unittest discover -s skills/ops/coferlandia-release-publisher/tests -p \"test_*.py\"",
+        "purpose": "validate Release Publisher behavior"
+      },
+      {
+        "id": "delivery-contracts",
+        "command": "python _protocol/scripts/validate_prompt.py validate --root . && python -m unittest discover -s prompts/tests -p \"test_*.py\" && python -m unittest _protocol.delivery.test_contracts",
+        "purpose": "validate prompt registry and delivery contracts"
+      },
+      {
+        "id": "local-ci",
+        "command": "python -m unittest discover -s skills/engineering/local-ci/tests -p \"test_*.py\"",
+        "purpose": "validate Local CI skill behavior"
+      },
+      {
+        "id": "ci-adapter",
+        "command": "python -m unittest discover -s skills/meta/coferlandia-ci-adapter/tests -p \"test_*.py\"",
+        "purpose": "validate CI Adapter behavior"
+      },
+      {
+        "id": "public-skills",
+        "command": "python _protocol/scripts/validate_skill.py --all skills",
+        "purpose": "validate all public Agent Skills"
+      },
+      {
+        "id": "release-skill",
+        "command": "python _protocol/scripts/validate_skill.py .agents/skills/coferlandia-release-maintainer",
+        "purpose": "validate the repository-local release skill"
+      },
+      {
+        "id": "version-check",
+        "command": "python _protocol/scripts/bump_version.py --check",
+        "purpose": "check repository version drift"
+      },
+      {
+        "id": "version-audit",
+        "command": "python _protocol/scripts/bump_version.py --audit",
+        "purpose": "audit repository version declarations"
+      },
+      {
+        "id": "release-ready",
+        "command": "python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py check --base main --release-ready",
+        "purpose": "enforce final-delivery release readiness against the authoritative integration base"
+      },
+      {
+        "id": "package",
+        "command": "python .agents/skills/coferlandia-release-maintainer/scripts/coferlandia-release-maintainer-cli.py package --output coferlandia-skills.plugin --verify",
+        "purpose": "build and verify the exact local candidate package"
+      }
+    ],
+    "required_services": [],
+    "environment": []
+  },
+  "github": {
+    "submission": {
+      "mode": "existing-pr-events",
+      "workflow": ".github/workflows/ci.yml"
+    },
+    "gates": [
+      {
+        "id": "ci",
+        "kind": "workflow",
+        "workflow": ".github/workflows/ci.yml",
+        "allowed_conclusions": [
+          "success"
+        ]
+      }
+    ],
+    "merge_group": {
+      "supported": false,
+      "authoritative_when_present": false
+    }
+  },
+  "identity": {
+    "base_sensitive": true,
+    "profile_sensitive": true
+  },
+  "exceptions": [],
+  "fingerprint": "7f6656b89b34c79e75adadcd219ab279b6ab26061db05bc7598af5d35e2626ec"
+}
