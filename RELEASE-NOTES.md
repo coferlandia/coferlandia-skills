@@ -263,7 +263,7 @@
 
 ### Migration or compatibility
 
-- Compatible patch: existing repository publication policies and runner declarations remain valid.
+- Compatible patch: existing repository publication policies, tags and matching draft Releases remain valid; partial `TAG + DRAFT` state resumes without recreating or moving release identity.
 
 ## v2.10.0 (2026-09-12)
 
@@ -281,7 +281,7 @@
 
 - Adds `DEVELOPMENT_VALIDATION v1` and a JSON schema for a separate `.coferlandia/development/validation.json` contract that owns Development commands, working directory, required services/environment names, runner labels, shell, exact pull-request-head binding, and one success-only Development gate.
 - Generated Development workflows run only for Draft pull requests, explicitly checkout and verify the exact PR head SHA, execute repository-declared commands with `contents: read`, record the Development contract fingerprint, and never emit Qualification or merge authority.
-- Extends `READY_FOR_CI v1` so repository-owned remote Development evidence is valid only when candidate SHA, current Development fingerprint, declared gate, and allowed terminal conclusion all match.
+- Extends `READY_FOR_CI v1` so repository-owned remote Development evidence is valid only when candidate SHA, current Development contract fingerprint, declared Development gate and an allowed terminal conclusion all match.
 - Keeps `.coferlandia/ci/profile.json` strictly scoped to Qualification; remote Development GREEN never satisfies `READY_FOR_MERGE` or an effective/synthetic merge candidate.
 
 ### Plugin and packaging
@@ -689,7 +689,7 @@
 
 ### Plugin and packaging
 
-- Bumped the repository/plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
+- Bumped the installable plugin from v2.1.0 to v2.2.0 for the accumulated shipped skill and protocol changes.
 - Corrected plugin repository/homepage metadata to `coferlandia/coferlandia-skills` and refreshed marketplace descriptions.
 - Replaced pull-before-package behavior with deterministic packaging of the already-reviewed branch state.
 - The package now includes `RELEASE-NOTES.md` and `SKILLS-GUIDE.md`, excludes repository-local `.agents/**` and `.agent/**`, reopens the archive for verification, and reports a SHA-256 digest.
