@@ -35,6 +35,9 @@ jobs:
       - name: Archivist GitHub-native migration tests
         run: python -m unittest skills.content.project-documentation-archivist.tests.test_github_native_migration
 
+      - name: Product Knowledge Sync tests
+        run: python -m unittest discover -s skills/content/product-knowledge-sync/tests -p "test_*.py"
+
       - name: Project Manager GitHub-native reporting tests
         run: python -m unittest skills.ops.coferlandia-project-manager.tests.test_github_native_reporting
 
