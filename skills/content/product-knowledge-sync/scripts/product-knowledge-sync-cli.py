@@ -56,7 +56,7 @@ class ContractError(Exception):
 
 
 class StaleEvidenceError(Exception):
-    """Evidence is structurally valid but bound to a different candidate/profile."""
+    """Evidence is structurally valid enough to identify as stale."""
 
 
 def _canonical_bytes(value: Any) -> bytes:
@@ -74,7 +74,9 @@ def _read_json(path: Path) -> Any:
     except FileNotFoundError as exc:
         raise ContractError(f"JSON file does not exist: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise ContractError(f"Invalid JSON in {path}: line {exc.lineno} column {exc.colno}: {exc.msg}") from exc
+        raise ContractError(
+            f"Invalid JSON in {path}: line {exc.lineno} column {exc.colno}: {exc.msg}"
+        ) from exc
     except OSError as exc:
         raise OSError(f"Cannot read {path}: {exc}") from exc
 
@@ -98,13 +100,13 @@ def _require_bool(value: Any, where: str) -> bool:
 
 
 def _validate_repo_pattern(pattern: Any, where: str) -> str:
-    pattern = _require_nonempty_string(pattern, where).replace("\\", "/")
-    candidate = Path(pattern)
-    if candidate.is_absolute() or pattern.startswith("/"):
-        raise ContractError(f"{where} must be repository-relative: {pattern}")
+    normalized = _require_nonempty_string(pattern, where).replace("\\", "/")
+    candidate = Path(normalized)
+    if candidate.is_absolute() or normalized.startswith("/"):
+        raise ContractError(f"{where} must be repository-relative: {normalized}")
     if ".." in candidate.parts:
-        raise ContractError(f"{where} may not escape the project root: {pattern}")
-    return pattern
+        raise ContractError(f"{where} may not escape the project root: {normalized}")
+    return normalized
 
 
 def _pattern_exists(project_root: Path, pattern: str) -> bool:
@@ -133,9 +135,12 @@ def validate_profile(profile: Any, project_root: Path, check_paths: bool = True)
         if not isinstance(raw, dict):
             raise ContractError(f"{where} must be an object")
         _reject_unknown_keys(raw, SURFACE_KEYS, where)
+
         surface_id = _require_nonempty_string(raw.get("id"), f"{where}.id")
         if not SURFACE_ID_RE.fullmatch(surface_id):
-            raise ContractError(f"{where}.id must use lowercase letters, digits and hyphens: {surface_id}")
+            raise ContractError(
+                f"{where}.id must use lowercase letters, digits and hyphens: {surface_id}"
+            )
         if surface_id in seen:
             raise ContractError(f"duplicate surface id: {surface_id}")
         seen.add(surface_id)
@@ -151,15 +156,21 @@ def validate_profile(profile: Any, project_root: Path, check_paths: bool = True)
         if policy == "required":
             required_count += 1
 
-        item: dict[str, Any] = {"id": surface_id, "kind": kind, "release_policy": policy}
+        normalized_surface: dict[str, Any] = {
+            "id": surface_id,
+            "kind": kind,
+            "release_policy": policy,
+        }
         if kind == "repository":
             paths = raw.get("paths")
             if not isinstance(paths, list) or not paths:
                 raise ContractError(f"{where}.paths must be a non-empty list for repository surfaces")
-            normalized_paths = [_validate_repo_pattern(p, f"{where}.paths") for p in paths]
-            item["paths"] = normalized_paths
-            if check_paths and policy == "required" and not any(
-                _pattern_exists(project_root, pattern) for pattern in normalized_paths
+            normalized_paths = [_validate_repo_pattern(item, f"{where}.paths") for item in paths]
+            normalized_surface["paths"] = normalized_paths
+            if (
+                check_paths
+                and policy == "required"
+                and not any(_pattern_exists(project_root, pattern) for pattern in normalized_paths)
             ):
                 raise ContractError(
                     f"required repository surface '{surface_id}' matches no paths under {project_root}: "
@@ -167,7 +178,7 @@ def validate_profile(profile: Any, project_root: Path, check_paths: bool = True)
                 )
         elif "paths" in raw:
             raise ContractError(f"{where}.paths is forbidden for external surfaces")
-        normalized_surfaces.append(item)
+        normalized_surfaces.append(normalized_surface)
 
     evidence = profile.get("evidence", {})
     if not isinstance(evidence, dict):
@@ -197,14 +208,15 @@ def validate_profile(profile: Any, project_root: Path, check_paths: bool = True)
     return normalized
 
 
-def _load_profile(project_root: Path, required: bool = True) -> tuple[dict[str, Any] | None, str | None]:
+def _load_profile(
+    project_root: Path, required: bool = True
+) -> tuple[dict[str, Any] | None, str | None]:
     path = project_root / PROFILE_RELATIVE
     if not path.exists():
         if required:
             raise ContractError(f"Product Knowledge profile not found: {path}")
         return None, None
-    raw = _read_json(path)
-    normalized = validate_profile(raw, project_root, check_paths=True)
+    normalized = validate_profile(_read_json(path), project_root, check_paths=True)
     return normalized, _fingerprint(normalized)
 
 
@@ -215,15 +227,19 @@ def _validate_subject(raw: Any, where: str) -> dict[str, str]:
     subject_type = raw.get("type")
     if subject_type not in SUBJECT_TYPES:
         raise ContractError(f"{where}.type must be one of: {', '.join(sorted(SUBJECT_TYPES))}")
-    reference = _require_nonempty_string(raw.get("reference"), f"{where}.reference")
-    return {"type": subject_type, "reference": reference}
+    return {
+        "type": subject_type,
+        "reference": _require_nonempty_string(raw.get("reference"), f"{where}.reference"),
+    }
 
 
 def _validate_candidate_fields(report: dict[str, Any], where: str) -> None:
     if "candidate" in report:
         _require_nonempty_string(report["candidate"], f"{where}.candidate")
     if "profile_fingerprint" in report:
-        fingerprint = _require_nonempty_string(report["profile_fingerprint"], f"{where}.profile_fingerprint")
+        fingerprint = _require_nonempty_string(
+            report["profile_fingerprint"], f"{where}.profile_fingerprint"
+        )
         if not HEX64_RE.fullmatch(fingerprint):
             raise ContractError(f"{where}.profile_fingerprint must be a lowercase SHA-256 hex string")
 
@@ -233,10 +249,10 @@ def _validate_references(value: Any, where: str) -> list[str]:
         return []
     if not isinstance(value, list):
         raise ContractError(f"{where} must be a list")
-    result = []
-    for index, entry in enumerate(value):
-        result.append(_require_nonempty_string(entry, f"{where}[{index}]"))
-    return result
+    return [
+        _require_nonempty_string(entry, f"{where}[{index}]")
+        for index, entry in enumerate(value)
+    ]
 
 
 def _validate_handoffs(value: Any, where: str) -> list[dict[str, Any]]:
@@ -244,7 +260,7 @@ def _validate_handoffs(value: Any, where: str) -> list[dict[str, Any]]:
         return []
     if not isinstance(value, list):
         raise ContractError(f"{where} must be a list")
-    result = []
+    result: list[dict[str, Any]] = []
     allowed = {"owner", "type", "summary", "blocking"}
     for index, raw in enumerate(value):
         item_where = f"{where}[{index}]"
@@ -265,20 +281,32 @@ def _validate_handoffs(value: Any, where: str) -> list[dict[str, Any]]:
 def _profile_surface_map(profile: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
     if not profile:
         return {}
-    return {item["id"]: item for item in profile["surfaces"]}
+    return {surface["id"]: surface for surface in profile["surfaces"]}
 
 
 def validate_impact(report: Any, profile: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(report, dict):
         raise ContractError("impact report must be an object")
-    allowed = {
-        "schema_version", "mode", "subject", "candidate", "profile_fingerprint", "user_facing",
-        "rationale", "behaviors", "surfaces", "handoffs",
-    }
-    _reject_unknown_keys(report, allowed, "impact")
+    _reject_unknown_keys(
+        report,
+        {
+            "schema_version",
+            "mode",
+            "subject",
+            "candidate",
+            "profile_fingerprint",
+            "user_facing",
+            "rationale",
+            "behaviors",
+            "surfaces",
+            "handoffs",
+        },
+        "impact",
+    )
     if report.get("schema_version") != 1 or report.get("mode") != "impact":
         raise ContractError("impact report requires schema_version=1 and mode='impact'")
     _validate_candidate_fields(report, "impact")
+
     subject = _validate_subject(report.get("subject"), "impact.subject")
     user_facing = _require_bool(report.get("user_facing"), "impact.user_facing")
     rationale = _require_nonempty_string(report.get("rationale"), "impact.rationale")
@@ -288,7 +316,8 @@ def validate_impact(report: Any, profile: dict[str, Any] | None) -> dict[str, An
         raise ContractError("impact.behaviors must be a list")
     if user_facing and not behaviors:
         raise ContractError("impact.behaviors must be non-empty when user_facing=true")
-    normalized_behaviors = []
+
+    normalized_behaviors: list[dict[str, Any]] = []
     behavior_ids: set[str] = set()
     for index, raw in enumerate(behaviors):
         where = f"impact.behaviors[{index}]"
@@ -311,7 +340,7 @@ def validate_impact(report: Any, profile: dict[str, Any] | None) -> dict[str, An
     if not isinstance(surfaces, list):
         raise ContractError("impact.surfaces must be a list")
     profile_map = _profile_surface_map(profile)
-    normalized_surfaces = []
+    normalized_surfaces: list[dict[str, Any]] = []
     seen: set[str] = set()
     for index, raw in enumerate(surfaces):
         where = f"impact.surfaces[{index}]"
@@ -324,23 +353,35 @@ def validate_impact(report: Any, profile: dict[str, Any] | None) -> dict[str, An
         seen.add(surface_id)
         if profile_map and surface_id not in profile_map:
             raise ContractError(f"impact references unknown profile surface: {surface_id}")
+
         disposition = raw.get("disposition")
         if disposition not in IMPACT_DISPOSITIONS:
             raise ContractError(f"{where}.disposition is invalid: {disposition}")
-        refs = _validate_references(raw.get("references"), f"{where}.references")
+        references = _validate_references(raw.get("references"), f"{where}.references")
         reason = raw.get("reason")
-        if disposition in {"verified-no-change", "not-applicable", "manual-review-required", "blocked"}:
+        if disposition in {
+            "verified-no-change",
+            "not-applicable",
+            "manual-review-required",
+            "blocked",
+        }:
             reason = _require_nonempty_string(reason, f"{where}.reason")
         elif reason is not None and not isinstance(reason, str):
             raise ContractError(f"{where}.reason must be string or null")
         normalized_surfaces.append(
-            {"id": surface_id, "disposition": disposition, "references": refs, "reason": reason}
+            {
+                "id": surface_id,
+                "disposition": disposition,
+                "references": references,
+                "reason": reason,
+            }
         )
 
     if profile_map and user_facing:
         missing = sorted(set(profile_map) - seen)
         if missing:
             raise ContractError("impact is missing configured surface(s): " + ", ".join(missing))
+
     normalized: dict[str, Any] = {
         "schema_version": 1,
         "mode": "impact",
@@ -360,17 +401,29 @@ def validate_impact(report: Any, profile: dict[str, Any] | None) -> dict[str, An
 def validate_audit(report: Any, profile: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(report, dict):
         raise ContractError("audit report must be an object")
-    allowed = {"schema_version", "mode", "subject", "candidate", "profile_fingerprint", "surfaces", "handoffs"}
-    _reject_unknown_keys(report, allowed, "audit")
+    _reject_unknown_keys(
+        report,
+        {
+            "schema_version",
+            "mode",
+            "subject",
+            "candidate",
+            "profile_fingerprint",
+            "surfaces",
+            "handoffs",
+        },
+        "audit",
+    )
     if report.get("schema_version") != 1 or report.get("mode") != "audit":
         raise ContractError("audit report requires schema_version=1 and mode='audit'")
     _validate_candidate_fields(report, "audit")
+
     subject = _validate_subject(report.get("subject"), "audit.subject")
     surfaces = report.get("surfaces")
     if not isinstance(surfaces, list):
         raise ContractError("audit.surfaces must be a list")
     profile_map = _profile_surface_map(profile)
-    normalized_surfaces = []
+    normalized_surfaces: list[dict[str, Any]] = []
     seen: set[str] = set()
     for index, raw in enumerate(surfaces):
         where = f"audit.surfaces[{index}]"
@@ -383,6 +436,7 @@ def validate_audit(report: Any, profile: dict[str, Any] | None) -> dict[str, Any
         seen.add(surface_id)
         if profile_map and surface_id not in profile_map:
             raise ContractError(f"audit references unknown profile surface: {surface_id}")
+
         status = raw.get("status")
         if status not in AUDIT_STATUSES:
             raise ContractError(f"{where}.status is invalid: {status}")
@@ -394,10 +448,12 @@ def validate_audit(report: Any, profile: dict[str, Any] | None) -> dict[str, Any
                 "reason": _require_nonempty_string(raw.get("reason"), f"{where}.reason"),
             }
         )
+
     if profile_map:
         missing = sorted(set(profile_map) - seen)
         if missing:
             raise ContractError("audit is missing configured surface(s): " + ", ".join(missing))
+
     normalized: dict[str, Any] = {
         "schema_version": 1,
         "mode": "audit",
@@ -414,26 +470,51 @@ def validate_audit(report: Any, profile: dict[str, Any] | None) -> dict[str, Any
 def _validate_report(raw: Any, profile: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ContractError("report must be an object")
-    mode = raw.get("mode")
-    if mode == "impact":
+    if raw.get("mode") == "impact":
         return validate_impact(raw, profile)
-    if mode == "audit":
+    if raw.get("mode") == "audit":
         return validate_audit(raw, profile)
-    raise ContractError(f"report.mode must be 'impact' or 'audit', got: {mode!r}")
+    raise ContractError(f"report.mode must be 'impact' or 'audit', got: {raw.get('mode')!r}")
+
+
+def _require_current_identity(
+    raw: Any,
+    candidate: str,
+    profile_fingerprint: str,
+    path: Path,
+) -> None:
+    """Classify candidate/profile mismatch before current-profile shape validation."""
+    if not isinstance(raw, dict):
+        raise ContractError(f"report {path} must be an object")
+    report_candidate = raw.get("candidate")
+    if report_candidate != candidate:
+        raise StaleEvidenceError(
+            f"report {path} candidate mismatch: expected '{candidate}', got '{report_candidate}'"
+        )
+    report_profile_fingerprint = raw.get("profile_fingerprint")
+    if report_profile_fingerprint != profile_fingerprint:
+        raise StaleEvidenceError(
+            f"report {path} profile fingerprint mismatch: expected {profile_fingerprint}, "
+            f"got {report_profile_fingerprint}"
+        )
 
 
 def verify(project_root: Path, candidate: str, input_paths: list[Path]) -> dict[str, Any]:
     candidate = _require_nonempty_string(candidate, "candidate")
-    profile, profile_fp = _load_profile(project_root, required=True)
-    assert profile is not None and profile_fp is not None
+    profile, profile_fingerprint = _load_profile(project_root, required=True)
+    assert profile is not None and profile_fingerprint is not None
     if not input_paths:
         raise ContractError("verify requires at least one --input report")
 
     surface_map = _profile_surface_map(profile)
-    required_ids = {sid for sid, item in surface_map.items() if item["release_policy"] == "required"}
+    required_ids = {
+        surface_id
+        for surface_id, surface in surface_map.items()
+        if surface["release_policy"] == "required"
+    }
     policy_totals = {policy: 0 for policy in sorted(RELEASE_POLICIES)}
-    for item in surface_map.values():
-        policy_totals[item["release_policy"]] += 1
+    for surface in surface_map.values():
+        policy_totals[surface["release_policy"]] += 1
 
     blockers: list[dict[str, str]] = []
     report_fingerprints: list[dict[str, str]] = []
@@ -443,17 +524,8 @@ def verify(project_root: Path, candidate: str, input_paths: list[Path]) -> dict[
 
     for path in input_paths:
         raw = _read_json(path)
+        _require_current_identity(raw, candidate, profile_fingerprint, path)
         report = _validate_report(raw, profile)
-        report_candidate = report.get("candidate")
-        if report_candidate != candidate:
-            raise StaleEvidenceError(
-                f"report {path} candidate mismatch: expected '{candidate}', got '{report_candidate}'"
-            )
-        report_profile_fp = report.get("profile_fingerprint")
-        if report_profile_fp != profile_fp:
-            raise StaleEvidenceError(
-                f"report {path} profile fingerprint mismatch: expected {profile_fp}, got {report_profile_fp}"
-            )
         report_fingerprints.append({"path": str(path), "sha256": _fingerprint(report)})
         if report["mode"] == "impact" and report["user_facing"]:
             user_facing_changes += 1
@@ -465,10 +537,19 @@ def verify(project_root: Path, candidate: str, input_paths: list[Path]) -> dict[
             if state == "manual-review-required":
                 manual_review_pending += 1
             if policy == "required":
-                resolved_set = REQUIRED_IMPACT_RESOLVED if report["mode"] == "impact" else REQUIRED_AUDIT_RESOLVED
-                if state not in resolved_set:
+                resolved_states = (
+                    REQUIRED_IMPACT_RESOLVED
+                    if report["mode"] == "impact"
+                    else REQUIRED_AUDIT_RESOLVED
+                )
+                if state not in resolved_states:
                     blockers.append(
-                        {"report": str(path), "surface": surface_id, "state": state, "mode": report["mode"]}
+                        {
+                            "report": str(path),
+                            "surface": surface_id,
+                            "state": state,
+                            "mode": report["mode"],
+                        }
                     )
                 else:
                     resolved_entries += 1
@@ -488,18 +569,23 @@ def verify(project_root: Path, candidate: str, input_paths: list[Path]) -> dict[
 
     report_fingerprints.sort(key=lambda item: (item["path"], item["sha256"]))
     blockers.sort(key=lambda item: (item["report"], item["surface"], item["state"], item["mode"]))
+    unresolved_required_surfaces = sum(
+        1 for blocker in blockers if blocker["surface"] != "handoff"
+    )
+    blocking_handoffs = sum(1 for blocker in blockers if blocker["surface"] == "handoff")
     result = "BLOCKED" if blockers else "PASS"
     return {
         "schema_version": 1,
         "mode": "verify",
         "candidate": candidate,
-        "profile_fingerprint": profile_fp,
+        "profile_fingerprint": profile_fingerprint,
         "reports": report_fingerprints,
         "surface_policy_totals": policy_totals,
         "required_surface_ids": sorted(required_ids),
         "user_facing_changes": user_facing_changes,
         "resolved_entries": resolved_entries,
-        "unresolved_required_surfaces": len(blockers),
+        "unresolved_required_surfaces": unresolved_required_surfaces,
+        "blocking_handoffs": blocking_handoffs,
         "manual_review_pending": manual_review_pending,
         "blockers": blockers,
         "result": result,
@@ -516,8 +602,8 @@ def _emit(payload: Any, as_json: bool) -> None:
             if isinstance(value, (dict, list)):
                 value = json.dumps(value, sort_keys=True, ensure_ascii=False)
             print(f"{key}: {value}")
-    else:
-        print(payload)
+        return
+    print(payload)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -528,18 +614,18 @@ def _build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     profile = commands.add_parser("profile", help="Profile operations")
-    profile_sub = profile.add_subparsers(dest="profile_command", required=True)
-    profile_validate = profile_sub.add_parser("validate", help="Validate project profile")
+    profile_subcommands = profile.add_subparsers(dest="profile_command", required=True)
+    profile_validate = profile_subcommands.add_parser("validate", help="Validate project profile")
     profile_validate.add_argument("--project-root", required=True)
     profile_validate.add_argument("--json", action="store_true")
 
     for name in ("impact", "audit"):
-        mode = commands.add_parser(name, help=f"{name.capitalize()} report operations")
-        mode_sub = mode.add_subparsers(dest=f"{name}_command", required=True)
-        validate = mode_sub.add_parser("validate", help=f"Validate {name} report")
-        validate.add_argument("--input", required=True)
-        validate.add_argument("--project-root", required=True)
-        validate.add_argument("--json", action="store_true")
+        mode_parser = commands.add_parser(name, help=f"{name.capitalize()} report operations")
+        mode_subcommands = mode_parser.add_subparsers(dest=f"{name}_command", required=True)
+        validate_parser = mode_subcommands.add_parser("validate", help=f"Validate {name} report")
+        validate_parser.add_argument("--input", required=True)
+        validate_parser.add_argument("--project-root", required=True)
+        validate_parser.add_argument("--json", action="store_true")
 
     fingerprint = commands.add_parser("fingerprint", help="Print canonical project profile SHA-256")
     fingerprint.add_argument("--project-root", required=True)
@@ -564,7 +650,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "profile":
             profile, fingerprint = _load_profile(project_root, required=True)
             assert profile is not None and fingerprint is not None
-            _emit({"valid": True, "profile_fingerprint": fingerprint, "surfaces": len(profile["surfaces"])}, args.json)
+            _emit(
+                {
+                    "valid": True,
+                    "profile_fingerprint": fingerprint,
+                    "surfaces": len(profile["surfaces"]),
+                },
+                args.json,
+            )
             return EXIT_OK
 
         if args.command == "fingerprint":
@@ -574,14 +667,14 @@ def main(argv: list[str] | None = None) -> int:
             return EXIT_OK
 
         if args.command in {"impact", "audit"}:
-            profile, profile_fp = _load_profile(project_root, required=False)
+            profile, profile_fingerprint = _load_profile(project_root, required=False)
             raw = _read_json(Path(args.input))
             report = validate_impact(raw, profile) if args.command == "impact" else validate_audit(raw, profile)
             _emit(
                 {
                     "valid": True,
                     "mode": args.command,
-                    "profile_fingerprint": profile_fp,
+                    "profile_fingerprint": profile_fingerprint,
                     "report_fingerprint": _fingerprint(report),
                     "profile_configured": profile is not None,
                 },
