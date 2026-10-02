@@ -67,8 +67,8 @@ class CrossSkillIntegrationTests(unittest.TestCase):
             "| project-documentation-archivist | 3.0.0 | 3.1.0 |", notes
         )
         versions = {
-            "skills/ops/coferlandia-project-manager/SKILL.md": 'version: "0.8.0"',
-            "skills/engineering/software-development/SKILL.md": 'version: "4.6"',
+            "skills/ops/coferlandia-project-manager/SKILL.md": 'version: "0.9.0"',
+            "skills/engineering/software-development/SKILL.md": 'version: "4.7"',
             "skills/ops/project-orchestrator/SKILL.md": 'version: "2.4"',
             "skills/content/project-documentation-archivist/SKILL.md": 'version: "3.1.0"',
         }
