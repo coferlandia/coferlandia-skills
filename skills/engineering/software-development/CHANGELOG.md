@@ -1,5 +1,11 @@
 # Changelog — software-development
 
+## 4.7 — 2026-10-01
+
+### Changed
+
+- Carries an optional Product Knowledge Impact contract through analysis, implementation, and review while preserving existing workflows when no such contract is present.
+
 ## 4.6 — 2026-07-31
 
 ### Changed
