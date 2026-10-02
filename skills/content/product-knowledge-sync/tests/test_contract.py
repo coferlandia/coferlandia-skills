@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import re
 import unittest
 from pathlib import Path
 
@@ -32,6 +31,7 @@ class ProductKnowledgeContractTests(unittest.TestCase):
             "tests/test_contract.py",
             "tests/test_cli.py",
             "tests/test_activation.py",
+            "tests/test_cross_skill.py",
         }
         for relative in required:
             self.assertTrue((SKILL_DIR / relative).is_file(), relative)
@@ -69,6 +69,13 @@ class ProductKnowledgeContractTests(unittest.TestCase):
         self.assertIn(".coferlandia/product-knowledge/profile.json", text)
         self.assertIn("Installing this skill alone never adds a gate", text)
 
+    def test_skill_maintenance_discipline_is_explicit(self) -> None:
+        text = self.skill_text()
+        self.assertIn("superpowers:writing-skills", text)
+        self.assertIn("RED baseline", text)
+        self.assertIn("smallest GREEN", text)
+        self.assertIn("verification-before-completion", text)
+
     def test_skill_stays_within_hard_line_cap(self) -> None:
         self.assertLessEqual(len(self.skill_text().splitlines()), 500)
 
@@ -92,9 +99,18 @@ class ProductKnowledgeContractTests(unittest.TestCase):
         combined = "\n".join(
             path.read_text(encoding="utf-8")
             for path in SKILL_DIR.rglob("*")
-            if path.is_file() and path.suffix in {".md", ".json", ".py"}
+            if path.is_file()
+            and path.suffix in {".md", ".json", ".py"}
+            and path.name != "test_contract.py"
         ).lower()
-        for private_marker in ("secretaria", "cadencia.com.ar", "diegocofre", "api_key=", "password="):
+        private_markers = (
+            "secre" + "taria",
+            "cadencia" + ".com.ar",
+            "diego" + "cofre",
+            "api_" + "key=",
+            "pass" + "word=",
+        )
+        for private_marker in private_markers:
             self.assertNotIn(private_marker, combined)
 
     def test_changelog_matches_version(self) -> None:
