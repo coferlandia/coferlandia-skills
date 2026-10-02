@@ -62,31 +62,18 @@ conflict to the control authority and `the-architect`; do not silently rewrite i
 Read `references/architecture-gate.md` before acting on a contract that contains an Architecture Gate.
 
 ## Product Knowledge Impact
-
 A work contract may optionally carry:
-
 ```md
 ## Product Knowledge Impact
-
 Status: required | not-required | already-resolved
 Reference: <impact contract/report or none>
 Expected surfaces: <surface IDs or defer-to-product-knowledge-sync>
 ```
-
-This handshake is conditional. Absence of the section and absence of an opted-in Product Knowledge
-profile preserve existing development behavior.
-
-- Analyst preserves the status/reference in the execution task(s) that change the affected behavior
-  and carries explicitly required documentation work into scope without re-deciding Product
-  Knowledge semantics.
-- Developer/coding-agent treats `Status: required` plus its referenced impact contract as approved
-  implementation/documentation scope and resolves only the surfaces assigned to that work.
-- Code Reviewer verifies the candidate against the exact Product Knowledge Impact reference,
-  including required documentation/surface dispositions; release notes or capability-name presence
-  alone never proves semantic coverage.
-- Requirement, ownership, or semantic conflicts return to the control authority and
-  `product-knowledge-sync`; development roles do not invent a shadow product catalog or release gate.
-
+Without this section and an opted-in Product Knowledge profile, existing development behavior is unchanged.
+- Analyst preserves status/reference and carries explicitly required documentation work without re-deciding Product Knowledge semantics.
+- Developer/coding-agent treats `Status: required` plus its referenced impact contract as approved scope and resolves only assigned surfaces.
+- Code Reviewer checks the exact impact reference and required dispositions; release notes or capability-name presence alone never proves coverage.
+- Requirement, ownership, or semantic conflicts return to the control authority and `product-knowledge-sync`; development roles do not invent product truth or release gates.
 Read `references/product-knowledge-impact.md` whenever this section/reference is present.
 
 ## Retouch Mode
