@@ -16,7 +16,7 @@
     },
     {
       "id": "profile-check",
-      "command": "python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile check --profile .coferlandia/ci/profile.json --expect-fingerprint 7f6656b89b34c79e75adadcd219ab279b6ab26061db05bc7598af5d35e2626ec --json",
+      "command": "python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile check --profile .coferlandia/ci/profile.json --expect-fingerprint 4220cac44505839f0a22ddce91dc511ad3b15f4db94929332c5526f5b65c1e39 --json",
       "purpose": "Validate the repository Qualification profile and its fingerprint"
     },
     {
@@ -63,5 +63,5 @@
       ]
     }
   },
-  "fingerprint": "7f3223add37f045b41e3a75c482c1d99ef8e5a54d9e890282ebd608a4771a35e"
+  "fingerprint": "81081741a8a4cdd08529af993fa664b8a4b21b21fd14dd6bfc767c001372691e"
 }

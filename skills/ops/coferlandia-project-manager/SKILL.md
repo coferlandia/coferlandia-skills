@@ -12,10 +12,10 @@ compatibility: >
   local `.agent/work-items/` contracts when GitHub is unavailable or local tracking is selected.
 metadata:
   author: coferlandia
-  version: "0.8.0"
+  version: "0.9.0"
   category: ops
   status: active
-  tested: "2026-07-31 - Architecture Gate selection and the-architect handoff contract covered by cross-skill tests."
+  tested: "2026-10-01 - Architecture Gate selection plus optional Product Knowledge Impact planning handoff covered by cross-skill tests."
 ---
 
 ## Context
@@ -126,6 +126,30 @@ Blocker: Architecture Preflight pending
 
 Read `references/architecture-gate.md` whenever gate selection may apply. The Architect updates the
 managed addendum and changes the status to `passed` or `blocked` before Analyst or direct execution.
+
+### Product Knowledge Impact
+
+When an initiative changes user-facing product behavior, or explicitly requests reconciliation
+across Help/support/developer/commercial/release knowledge, planning may add:
+
+```md
+## Product Knowledge Impact
+
+Status: required | not-required | already-resolved
+Reference: <impact contract/report or none>
+Expected surfaces: <known surface IDs or defer-to-product-knowledge-sync>
+```
+
+PM surfaces the need and reference; it does not perform the Product Knowledge audit or become the
+author of every documentation destination. Use `required` when the initiative clearly changes
+user-facing behavior and a configured profile/explicit reconciliation request applies. Use
+`not-required` for non-user-facing work with no such impact, and `already-resolved` only when an
+exact current impact contract/report is supplied. `Expected surfaces` may defer to
+`product-knowledge-sync`; do not create a shadow surface catalog.
+
+If no Product Knowledge profile exists and no explicit reconciliation request is present, do not
+invent a new release gate. Downstream Analyst/development preserves this section/reference when
+present. Read `references/product-knowledge-impact.md` whenever Product Knowledge scope may apply.
 
 ### Planning storage policy
 
@@ -350,6 +374,7 @@ resolves uniquely across the managed portfolio, and GitHub Issue URLs are also a
 - Preserve manual user notes in Obsidian.
 - Do not ask workflow-selection questions whose answer is already explicit in the initiating request.
 - Do not let Project fields redefine an Epic/task contract.
+- Do not invent Product Knowledge surface catalogs or release gates; only record the optional impact handoff when applicable.
 
 ## Expected output
 
@@ -361,5 +386,6 @@ PM coordination output:
 - Git/Archivist health
 - project architecture or next design action when requested
 - selected Execution Strategy when development delivery is being coordinated
+- Product Knowledge Impact status/reference when applicable
 - migration warnings when a project has not completed GitHub-native cutover
 ```

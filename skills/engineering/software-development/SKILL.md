@@ -11,10 +11,10 @@ compatibility: >
   GitHub is optional for Analyst/coding-agent execution; local fallback contracts use `.agent/`.
 metadata:
   author: community
-  version: "4.6"
+  version: "4.7"
   category: engineering
   status: active
-  tested: "2026-07-31 - Architecture Gate blocking, passed, absent, not-required, and Retouch compatibility covered by cross-skill tests."
+  tested: "2026-10-01 - Architecture Gate compatibility plus optional Product Knowledge Impact propagation/review covered by contract tests."
 ---
 
 ## Context
@@ -60,6 +60,21 @@ settled there. If current repository evidence, scope, or safety contradicts the 
 conflict to the control authority and `the-architect`; do not silently rewrite it.
 
 Read `references/architecture-gate.md` before acting on a contract that contains an Architecture Gate.
+
+## Product Knowledge Impact
+A work contract may optionally carry:
+```md
+## Product Knowledge Impact
+Status: required | not-required | already-resolved
+Reference: <impact contract/report or none>
+Expected surfaces: <surface IDs or defer-to-product-knowledge-sync>
+```
+Without this section and an opted-in Product Knowledge profile, existing development behavior is unchanged.
+- Analyst preserves status/reference and carries explicitly required documentation work without re-deciding Product Knowledge semantics.
+- Developer/coding-agent treats `Status: required` plus its referenced impact contract as approved scope and resolves only assigned surfaces.
+- Code Reviewer checks the exact impact reference and required dispositions; release notes or capability-name presence alone never proves coverage.
+- Requirement, ownership, or semantic conflicts return to the control authority and `product-knowledge-sync`; development roles do not invent product truth or release gates.
+Read `references/product-knowledge-impact.md` whenever this section/reference is present.
 
 ## Retouch Mode
 
@@ -456,9 +471,13 @@ affects them.
 - **Implementation agent self-reviews:** prohibited; reviewer identity must be distinct.
 - **Scope-changing review fix:** escalate rather than changing the approved contract.
 - **Retouch expanded silently:** stop when a mandatory exclusion appears.
+- **Product Knowledge Impact silently inferred:** wrong. Consume an explicit impact contract/profile;
+  do not manufacture product-documentation scope from filenames or assumptions.
 
 ## References
 
+- Read `references/product-knowledge-impact.md` when a supplied work contract contains a Product
+  Knowledge Impact section or report reference.
 - `developer` and `coding-agent`: use `superpowers:test-driven-development` when available;
   otherwise follow RED-GREEN-REFACTOR and disclose the fallback.
 - `debugger`: use `superpowers:systematic-debugging` when available; otherwise follow explicit

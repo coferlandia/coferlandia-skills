@@ -161,7 +161,13 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.16.0 — 2026-10-01**
+**v2.17.0 — 2026-10-01**
+
+| Changed skill | Version | Main change |
+|---|---:|---|
+| product-knowledge-sync | 1.0 | Adds agentic product-knowledge impact/audit workflows plus deterministic candidate-bound documentation-drift verification. |
+| coferlandia-project-manager | 0.9.0 | Adds an optional Product Knowledge Impact planning handoff without making Project Manager own reconciliation semantics or release gating. |
+| software-development | 4.7 | Carries explicit Product Knowledge Impact scope through analysis, implementation, and review while preserving existing workflows when absent. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

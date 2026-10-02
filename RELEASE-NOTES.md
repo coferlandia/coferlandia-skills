@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## v2.17.0 (2026-10-01)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| product-knowledge-sync | new | 1.0 | Adds agentic product-knowledge impact/audit workflows plus deterministic candidate-bound documentation-drift verification. |
+| coferlandia-project-manager | 0.8.0 | 0.9.0 | Adds an optional Product Knowledge Impact planning handoff without making Project Manager own reconciliation semantics or release gating. |
+| software-development | 4.6 | 4.7 | Carries explicit Product Knowledge Impact scope through analysis, implementation, and review while preserving existing workflows when absent. |
+
+### Repository and protocol
+
+- Adds the opt-in `.coferlandia/product-knowledge/profile.json` contract for repository/external knowledge surfaces and release policy without creating a shadow product catalog.
+- Adds a Python 3.11+ standard-library CLI for profile/report validation, canonical fingerprints, candidate/profile stale-evidence rejection, and deterministic PASS/BLOCKED verification.
+- Adds synthetic activation, contract, CLI, stale-evidence, Archivist-present/absent, multi-surface, and cross-skill regression coverage.
+- Adds the new public skill suite to repository Qualification and synchronizes the remote Development Validation profile fingerprint.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.16.0 to v2.17.0 for the additive compatible Product Knowledge Sync capability and its optional planning/development handoffs.
+- Refreshes plugin discovery metadata to include product-knowledge synchronization while preserving the existing public skill/prompt package boundaries.
+
+### Migration or compatibility
+
+- Existing consumers remain compatible: installing the skill alone does not introduce a Product Knowledge release gate.
+- Repositories opt in to persistent release blocking through their own Product Knowledge profile plus repository-owned Qualification policy; explicit impact/audit analysis remains usable without such opt-in.
+- Archivist and Project Evangelist remain independently usable and keep their existing ownership; Product Knowledge Sync reads/hands off to them rather than rewriting their canonical artifacts implicitly.
+
 ## v2.16.0 (2026-10-01)
 
 ### Chat prompts
@@ -117,7 +145,7 @@
 ### Repository and protocol
 
 - Makes standalone `chat coder` / `chat-coder` a registry-declared convenience flow that resolves Development -> GITHUB_NATIVE Qualification -> Integration before execution while preserving each stage's authority boundary and durable handoffs.
-- Adds `chat dev` / `chat-dev` as the explicit Development-only alias for callers that intentionally want to stop at `READY_FOR_CI`.
+- Adds `chat dev` / `chat-dev` as the explicit Development-only alias for callers that intentionally want to stop after Development at `READY_FOR_CI`.
 - Extends prompt registry validation/resolution with fail-closed `standalone_defaults`; explicit `+` compositions suppress defaults, READY state never infers another stage, and LOCAL/GITHUB_NATIVE fallback remains prohibited.
 - Adds `WAITING_CI` as a factual non-terminal GitHub Actions state and continues automatically to `merge` when the already-resolved sequence includes Integration.
 - Aligns prompt distribution documentation with current packaging: public prompts ship with the plugin and may also be vendored under consumer prompt directories such as `.agents/prompts/`.
@@ -328,7 +356,7 @@
 
 ### Chat prompts
 
-- `chat-release` 1.0.0 -> 1.1.0 completes the GITHUB_NATIVE publication path after release integration. It resolves `publication.github` independently from the CI profile, transports only explicit release identity, observes one authoritative publication run, and independently verifies the resulting annotated tag and GitHub Release against the exact integrated commit.
+- `chat-release` 1.0.0 -> 1.1.0 completes the GITHUB_NATIVE publication path after release integration. It resolves `publication.github` independently from the CI profile, transports only explicit release identity, observes one authoritative publication run, and independently verifies the resulting tag and GitHub Release against the exact integrated commit.
 - Adds the standard Chat-compatible `issue-comment` transport: a versioned control comment on the merged release PR carries `schema`, `target_sha`, `version`, `impact`, `title`, and `notes`; a repository workflow validates authority and invokes `coferlandia-release-publisher`.
 - Keeps `workflow-dispatch` as an optional publication transport only for GitHub-native clients that actually expose an Actions dispatch primitive. Missing/unsupported publication surfaces fail closed as `RELEASE_PUBLICATION_BLOCKED`; no LOCAL fallback or direct tag/Release mutation is introduced.
 
@@ -383,7 +411,7 @@
 
 - Existing standard repositories remain compatible: `chat-coder -> ci/local-ci -> merge` still works when the pull request targets the default branch, with ordinary Development remaining the default delivery context.
 - Consumer repositories may define non-default ordinary integration targets and explicit exceptional delivery contexts through their own policy; generic controllers resolve those targets/contexts instead of assuming branch names.
-- Release and hotfix topology, workflows, tests, runners, deployment and reconciliation remain repository-owned; no consumer repository is migrated automatically.
+- Release and hotfix topology, workflows, tests, runners, deployment and reconciliation remain repository-owned; no consumer repository is migrated automatically by this release.
 - LOCAL and GITHUB_NATIVE remain explicit alternatives. `local-release` never falls back to `chat-release`, and GitHub-native release qualification never falls back to LOCAL. Both surfaces own equivalent candidate initialization, aggregate review, exact-candidate release authority, integration and publisher composition; only Qualification evidence differs.
 - A temporary hotfix mitigation is not equivalent to permanent resolution: the permanent-fix Issue remains open after production stabilization until the structural correction is completed through normal work.
 

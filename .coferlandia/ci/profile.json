@@ -21,6 +21,11 @@
         "purpose": "validate Archivist GitHub-native migration behavior"
       },
       {
+        "id": "product-knowledge-sync",
+        "command": "python -m unittest discover -s skills/content/product-knowledge-sync/tests -p \"test_*.py\"",
+        "purpose": "validate Product Knowledge Sync activation, contracts, CLI behavior, and anti-drift verification"
+      },
+      {
         "id": "project-manager-reporting",
         "command": "python -m unittest skills.ops.coferlandia-project-manager.tests.test_github_native_reporting",
         "purpose": "validate Project Manager GitHub-native reporting"
@@ -134,5 +139,5 @@
     "profile_sensitive": true
   },
   "exceptions": [],
-  "fingerprint": "7f6656b89b34c79e75adadcd219ab279b6ab26061db05bc7598af5d35e2626ec"
+  "fingerprint": "4220cac44505839f0a22ddce91dc511ad3b15f4db94929332c5526f5b65c1e39"
 }

@@ -10,7 +10,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 - Compose controllers only when the task crosses responsibility boundaries.
 - Planning defines work; development changes code; Qualification proves one exact candidate; Integration merges/closes ordinary delivery; Release qualifies and promotes an aggregate release candidate; publication gives one exact integrated commit a formal release identity.
 - Explicit emergency remediation is separate from ordinary bug development: `hotfix` may orchestrate repository-approved owners but never bypass their safeguards.
-- Durable project knowledge, operational work state, and cross-project architecture memory have different owners.
+- Durable project knowledge, product-knowledge coverage, operational work state, and cross-project architecture memory have different owners.
 - Chat prompts and local Agent Skills are different execution surfaces even when they implement the same semantic stage.
 - For development Qualification, `local-ci` is `LOCAL`, while resolved Chat `ci` is `GITHUB_NATIVE`; standalone `chat coder` resolves that GitHub-native stage through its declared default sequence.
 - For release Qualification, `local-release` is `LOCAL`, while explicit `chat-release` is `GITHUB_NATIVE`.
@@ -32,14 +32,15 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 | Skill | Use when | Delivers | Boundary |
 |---|---|---|---|
 | [`project-documentation-archivist`](./skills/content/project-documentation-archivist/) | Project documentation is fragmented, stale, missing, or mixed with work history. | Canonical present-state documentation, agent constraints, decisions, runbooks, and source traceability. | GitHub owns active work state; the Architect owns cross-project architecture memory. |
+| [`product-knowledge-sync`](./skills/content/product-knowledge-sync/) | Implemented product behavior must be reconciled with Help, support, operator, developer, commercial, or release knowledge; drift must be audited; or an opted-in release needs documentation readiness verification. | Agentic `impact`/`audit` evidence plus deterministic profile/report validation, candidate-bound fingerprints, stale-evidence rejection, and PASS/BLOCKED verification. | Owns reconciliation/coverage only: no shadow product truth, no automatic doc rewriting, no implicit Archivist dependency, and no release gate without repository opt-in. |
 | [`the-architect`](./skills/engineering/the-architect/) | An initiative has material architectural risk, shared contracts, migrations, security, reliability, or reusable-component implications. | Architecture Preflight, a passed or blocked Architecture Gate, concise addenda, and durable architecture evidence. | Not for routine localized work, generic review, or in-project documentation maintenance. |
 
 ## Software Delivery
 
 | Skill / controller | Use when | Delivers | Boundary |
 |---|---|---|---|
-| [`coferlandia-project-manager`](./skills/ops/coferlandia-project-manager/) | A rough idea, requirement, document, or bug cluster must become a coherent initiative. | Initiative WHAT/WHY, scope, acceptance criteria, execution strategy, and one authoritative Epic or local contract. | Does not perform technical decomposition, implementation, review, or Git integration. |
-| [`software-development`](./skills/engineering/software-development/) | Code work needs analysis, implementation, debugging, executable-plan execution, fixes, or independent review. | Bounded role execution through Analyst, Developer, Debugger, Coding Agent, Fix Agent, and Code Reviewer. | Does not own portfolio planning or orchestrated Git lifecycle operations. |
+| [`coferlandia-project-manager`](./skills/ops/coferlandia-project-manager/) | A rough idea, requirement, document, or bug cluster must become a coherent initiative. | Initiative WHAT/WHY, scope, acceptance criteria, execution strategy, optional Product Knowledge Impact handoff, and one authoritative Epic or local contract. | Does not perform technical decomposition, implementation, Product Knowledge reconciliation, review, or Git integration. |
+| [`software-development`](./skills/engineering/software-development/) | Code work needs analysis, implementation, debugging, executable-plan execution, fixes, or independent review. | Bounded role execution through Analyst, Developer, Debugger, Coding Agent, Fix Agent, and Code Reviewer, preserving explicit Product Knowledge Impact when supplied. | Does not invent product-documentation semantics, portfolio planning, or orchestrated Git lifecycle operations. |
 | [`project-orchestrator`](./skills/ops/project-orchestrator/) | An approved direct plan or Analyst task graph must run through a controlled local delivery lifecycle. | Contract materialization, claims, Git/worktrees, commits, reviews, traceability, final PR, explicit integration, and cleanup. | Executes approved contracts; it does not silently re-plan or redesign them. |
 | [`local-ci`](./skills/engineering/local-ci/) | Development Qualification is executed through an Agent Skills/local surface for a durable READY_FOR_CI candidate. | LOCAL strategy READY_FOR_MERGE evidence for exact candidate/base/profile. | Invocation selects LOCAL; it never runs GitHub-native CI as fallback or merges. |
 | [`local-release`](./skills/engineering/local-release/) | One exact release candidate must use the LOCAL release surface. | LOCAL READY_FOR_RELEASE evidence plus repository-approved release completion using the shared publisher. | Never falls back to GitHub-native release Qualification and never deploys. |
@@ -65,7 +66,9 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 ## Common compositions
 
 ```text
-Controlled local delivery: Project Manager -> optional Architect -> Analyst/direct plan -> Orchestrator -> development roles
+Controlled local delivery: Project Manager -> optional Architect -> optional Product Knowledge Impact -> Analyst/direct plan -> Orchestrator -> development roles
+Product knowledge audit:   Product Knowledge Sync audit -> owner handoffs -> optional Archivist/Evangelist execution
+Product release gate:      opted-in repository Qualification -> Product Knowledge Sync verify -> normal CI/release controller
 Chat delivery:             chat coder (default -> chat-coder -> ci -> merge)
 Mixed local qualification: chat coder + local ci + merge
 GitHub-native release:     exact release candidate -> chat-release -> Release Publisher internally

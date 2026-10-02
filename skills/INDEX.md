@@ -52,6 +52,7 @@ Writing, documentation, communication, release notes.
 |-------|-------------|--------|
 | [project-documentation-archivist](./content/project-documentation-archivist/) | Distill durable project knowledge and migrate legacy TODO/HISTORY work tracking into GitHub Issues with traceability | active |
 | [project-evangelist](./content/project-evangelist/) | Build progressive, evidence-based developer documentation with a verified technology overview, architecture, repository map, reading paths, and contributor orientation | active |
+| [product-knowledge-sync](./content/product-knowledge-sync/) | Reconcile implemented product behavior with Help, support, developer, commercial and release knowledge surfaces; audit drift and verify candidate-bound documentation readiness | active |
 | [sagan-scientific-debunker](./content/sagan-scientific-debunker/) | Evaluate claims and news with scientific rigor: evidence map, confidence scale, and conclusions traceable to sources | active |
 
 ## Design
@@ -75,4 +76,4 @@ Operations, automation, incidents, standups.
 
 ---
 
-*Last updated: 2026-09-11*
+*Last updated: 2026-10-01*
