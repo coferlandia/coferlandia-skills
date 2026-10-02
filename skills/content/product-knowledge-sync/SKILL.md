@@ -178,6 +178,21 @@ Result: PASS | BLOCKED | STALE | VALID
 Evidence: <paths/references>
 ```
 
+## Skill maintenance
+
+When changing this skill itself, use `superpowers:writing-skills` when available and treat the
+instruction contract as test-driven process documentation. Run the natural-language activation and
+pressure cases in `tests/cases.json` before relying on a change: establish the RED baseline or gap,
+make the smallest GREEN instruction/contract/CLI correction, then REFACTOR only while the pressure,
+contract, CLI, and cross-skill tests remain green. Add a new pressure case whenever review exposes a
+new rationalization or boundary loophole; never encode private conversation or customer data in a
+public fixture.
+
+For deterministic CLI behavior, use `superpowers:test-driven-development` when available or the
+same RED -> minimal GREEN -> refactor discipline. Before claiming any verification, package, or
+release gate passed, use `superpowers:verification-before-completion` when available and require
+fresh evidence for the exact candidate.
+
 ## Gotchas
 
 - **Release notes are enough:** wrong. Evaluate each configured surface independently.
