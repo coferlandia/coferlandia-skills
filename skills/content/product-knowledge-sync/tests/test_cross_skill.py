@@ -23,8 +23,8 @@ class ProductKnowledgeCrossSkillTests(unittest.TestCase):
         self.assertIn('version: "4.7"', text)
         self.assertIn("## Product Knowledge Impact", text)
         self.assertIn("Analyst preserves", text)
-        self.assertIn("Code Reviewer verifies", text)
-        self.assertIn("preserve existing development behavior", text)
+        self.assertIn("Code Reviewer checks the exact impact reference", text)
+        self.assertIn("existing development behavior is unchanged", text)
         self.assertIn("references/product-knowledge-impact.md", text)
 
     def test_archivist_and_evangelist_keep_existing_ownership(self) -> None:
