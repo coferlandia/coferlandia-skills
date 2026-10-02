@@ -1,5 +1,11 @@
 # Changelog — coferlandia-project-manager
 
+## 0.9.0 — 2026-10-01
+
+### Changed
+
+- Adds an optional Product Knowledge Impact section to initiatives so user-facing work can carry an explicit reconciliation reference without making Project Manager own documentation semantics or invent release gates.
+
 ## 0.8.0 — 2026-07-31
 
 ### Changed
