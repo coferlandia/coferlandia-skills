@@ -26,4 +26,6 @@ Next stage: Merge
 
 Both strategies emit the same identity envelope. Only `Qualification evidence` is strategy-specific. LOCAL evidence names executed commands/results for the exact candidate; GITHUB_NATIVE evidence names workflow/check/run identities and conclusions.
 
+The `Issue:` identity must be the same controlling work-item identity bound by the source `READY_FOR_CI` and the pull request's repository-defined linkage. Integration must fail closed rather than merge or close a different work item when those identities diverge.
+
 The handoff is stale if current candidate/profile/effective-base authority no longer matches the recorded qualification.
