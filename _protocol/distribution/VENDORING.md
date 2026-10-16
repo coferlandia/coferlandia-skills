@@ -22,7 +22,7 @@ From an exact Coferlandia source checkout:
 ```bash
 python _protocol/distribution/vendor_manifest.py generate \
   --root . \
-  --release-version 2.19.0 \
+  --release-version <release-version> \
   --source-revision <40-char-source-sha> \
   --output /path/to/vendor-manifest.json
 ```
@@ -43,7 +43,7 @@ Consumers keep a small JSON file beside their vendored source metadata:
 {
   "schema_version": 1,
   "source_repository": "coferlandia/coferlandia-skills",
-  "source_release_version": "2.19.0",
+  "source_release_version": "<release-version>",
   "source_revision": "<40-char-source-sha>",
   "manifest_fingerprint": "<sha256>",
   "families": [
