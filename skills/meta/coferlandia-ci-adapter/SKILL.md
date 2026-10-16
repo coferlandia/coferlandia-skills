@@ -11,10 +11,10 @@ compatibility: >
   for deterministic adapter tooling, and write access only after the adaptation scope is authorized.
 metadata:
   author: coferlandia
-  version: "1.4.0"
+  version: "1.5.0"
   category: meta
   status: active
-  tested: "2026-09-26 - CI profile, remote Development validation with declarative toolchain setup and exact-head dispatch fallback, configurable publication runners, isolated publication control-plane execution, immutable request retry recovery, and opt-in GitHub-native release publication rendering covered by unittest."
+  tested: "2026-10-16 - Qualification activation, label-triggered and exact-head Development validation, bounded same-candidate retry, evidence-cache compatibility, publication rendering, and profile/development fingerprints covered by unittest."
 ---
 
 ## Context
@@ -96,6 +96,8 @@ The Qualification interface remains:
 
 Use the existing `profile validate`, `profile fingerprint`, `profile check`, and `profile render` commands. `.coferlandia/ci/profile.json` remains Qualification-only; never place Development execution or release publication fields there.
 
+For GitHub-native existing-event Qualification, a repository may optionally declare `github.submission.activation.kind = ready-for-review`. The adapter validates and fingerprints that static policy; the Chat `ci` controller performs the lifecycle mutation only after exact `READY_FOR_CI` validation. Profiles without activation keep their prior event behavior.
+
 ## Remote Development validation
 
 Read `references/development-validation-contract.md` and `_protocol/delivery/DEVELOPMENT_VALIDATION.md`.
@@ -118,11 +120,12 @@ A Development contract owns repository-specific facts:
 - working directory;
 - ordered Development commands;
 - required services and environment variable names;
-- GitHub PR-event submission plus an optional repository-declared exact-head dispatch fallback for Draft candidates whose normal event path cannot produce fresh evidence;
+- GitHub submission as legacy Draft PR events, controller-owned pull-request-label events, or trusted primary exact-head dispatch, with the compatible exact-head fallback retained where declared;
 - exact `pull-request-head` candidate binding;
 - runner labels;
 - `bash` or `pwsh` shell;
 - optional ordered `github.setup` actions for project-specific job-local toolchains;
+- optional bounded reusable evidence cache for compatible label-triggered bash Development workflows;
 - one Development gate whose only GREEN conclusion is `success`.
 
 Existing v1 contracts without `github.setup` remain valid. When setup is needed, declare only repository-approved static `owner/repo@ref` actions with flat scalar `with` inputs. The adapter rejects local/dynamic actions, nested or multiline inputs, dynamic expressions, sensitive-key inputs and per-step private-value transport.
@@ -203,7 +206,7 @@ After adaptation, pressure-test the relevant consumers:
 - Exceptional lanes remain externally authorized.
 - Publication remains separately resolved, uses its repository-approved runner contract, and fails closed.
 
-Re-run the adapter when any material repository fact changes: Development commands, setup actions/inputs, runner labels, shell, required services/environment names, Development workflow identity, Qualification commands/gates, merge-group semantics, publication policy/runner labels or exceptional lanes. A changed Development fingerprint invalidates older remote Development evidence for the handoff that relied on it.
+Re-run the adapter when any material repository fact changes: Development commands, submission trigger/activation, setup actions/inputs, runner labels, shell, required services/environment names, Development workflow identity, Qualification commands/gates, merge-group semantics, publication policy/runner labels or exceptional lanes. A changed Development fingerprint invalidates older remote Development evidence for the handoff that relied on it.
 
 ## Gotchas
 
