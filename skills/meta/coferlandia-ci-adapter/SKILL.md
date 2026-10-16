@@ -98,6 +98,8 @@ Use the existing `profile validate`, `profile fingerprint`, `profile check`, and
 
 For GitHub-native existing-event Qualification, a repository may optionally declare `github.submission.activation.kind = ready-for-review`. The adapter validates and fingerprints that static policy; the Chat `ci` controller performs the lifecycle mutation only after exact `READY_FOR_CI` validation. Profiles without activation keep their prior event behavior.
 
+For GitHub-native existing-event Qualification, a repository may optionally declare `github.submission.activation.kind = ready-for-review`. The adapter validates and fingerprints that static policy; the Chat `ci` controller performs the lifecycle mutation only after exact `READY_FOR_CI` validation. Profiles without activation keep their prior event behavior.
+
 ## Remote Development validation
 
 Read `references/development-validation-contract.md` and `_protocol/delivery/DEVELOPMENT_VALIDATION.md`.
@@ -125,6 +127,7 @@ A Development contract owns repository-specific facts:
 - runner labels;
 - `bash` or `pwsh` shell;
 - optional ordered `github.setup` actions for project-specific job-local toolchains;
+- optional bounded reusable evidence cache for compatible label-triggered bash Development workflows;
 - optional bounded reusable evidence cache for compatible label-triggered bash Development workflows;
 - one Development gate whose only GREEN conclusion is `success`.
 
