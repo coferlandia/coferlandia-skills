@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## v2.19.0 (2026-10-16)
+
+### Distribution integrity
+
+- Adds a deterministic public vendor-manifest generator/checker for exact vendoring of Chat prompts, Agent Skills, and shared delivery protocol files.
+- Exact consumer verification is offline and fails closed on missing artifacts, byte drift, source release/revision mismatch, manifest-fingerprint mismatch, or unknown selected families.
+- Local-only artifacts remain allowed outside selected upstream-owned families; same-version mutations of upstream-owned paths are explicitly treated as drift.
+
+### Repository and protocol
+
+- Adds `_protocol/distribution/VENDORING.md` as the public provenance contract.
+- Adds cross-platform unit coverage for reproducible manifests, byte drift, missing files, provenance mismatch, and consumer-local extra artifacts.
+- Adds the vendor-distribution integrity suite to repository CI.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.18.0 to v2.19.0.
+- No existing public skill or Chat prompt semantic versions change in this release.
+
+### Migration or compatibility
+
+- Existing consumers remain compatible and need not adopt exact vendoring immediately.
+- Consumers that claim exact vendoring should generate a manifest from the selected source checkout, store a provenance file listing installed families, and run the checker in their cheap repository/preflight guard.
+- Legitimate repository-local prompts/skills remain supported when kept outside exact upstream-owned artifact identities.
+
 ## v2.18.0 (2026-10-16)
 
 ### Skills
