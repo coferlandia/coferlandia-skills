@@ -74,6 +74,26 @@ class AdapterCLITests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module.validate_profile(profile)
 
+    def test_profile_supports_ready_for_review_activation_and_fingerprints_it(self):
+        module = load_profile_module()
+        profile = self.sample()
+        base = module.profile_fingerprint(profile)
+        profile["github"]["submission"]["activation"] = {"kind": "ready-for-review"}
+        module.validate_profile(profile)
+        activated = module.profile_fingerprint(profile)
+        self.assertNotEqual(base, activated)
+
+    def test_profile_rejects_ready_for_review_activation_for_non_event_submission(self):
+        module = load_profile_module()
+        profile = self.sample()
+        profile["github"]["submission"] = {
+            "mode": "workflow-dispatch",
+            "workflow": ".github/workflows/ci.yml",
+            "activation": {"kind": "ready-for-review"},
+        }
+        with self.assertRaises(ValueError):
+            module.validate_profile(profile)
+
     def test_cli_validate_fingerprint_and_render(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

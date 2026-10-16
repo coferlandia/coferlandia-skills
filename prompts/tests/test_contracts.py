@@ -192,6 +192,21 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("TEMPORARY_MITIGATION", texts["hotfix"])
         self.assertIn("HOTFIX_BLOCKED", texts["hotfix"])
 
+    def test_chat_coder_uses_non_closing_work_item_linkage_when_integration_owns_closeout(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("non-closing", text)
+        self.assertIn("Refs #N", text)
+        self.assertIn("must not use `Closes`, `Fixes`, or `Resolves`", text)
+        self.assertIn("same controlling work-item identity", text)
+
+    def test_ci_validates_ready_for_ci_before_repository_activation(self):
+        text = (PROMPTS / "ci.md").read_text(encoding="utf-8")
+        self.assertIn("activation", text)
+        self.assertIn("ready-for-review", text)
+        self.assertIn("validate the exact current `READY_FOR_CI` before activation", text)
+        self.assertIn("Do not toggle Ready/Draft", text)
+        self.assertIn("same-candidate transient failure", text)
+
     def test_merge_explicitly_closes_work_item_after_authoritative_integration(self):
         text = (PROMPTS / "merge.md").read_text(encoding="utf-8")
         self.assertIn("Work-item closure is a required Integration closeout side effect", text)
