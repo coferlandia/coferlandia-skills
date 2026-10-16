@@ -121,3 +121,9 @@ Re-rendering the same input produces the same stored contract and workflow. Setu
 ## Stage boundary
 
 This surface is Development-only. Do not encode Qualification gates, merge-group behavior, release publication, deployment or exceptional-lane authority here. Those remain owned by their existing contracts.
+
+## Optional controller-owned label trigger
+
+An `existing-pr-events` submission may declare `trigger` with `kind: pull-request-label`, `label`, boolean `rerun_on_synchronize`, and unique nonempty `base_branches`. Trigger and fallback are mutually exclusive. Legacy unlabelled PR events and dispatch contracts retain their behavior. See the shared protocol for controller reentry and bounded retry rules.
+
+The generated eligible validation job owns PR-scoped concurrency, so unrelated metadata cannot cancel active work or displace queued work. The generated run title binds PR number, exact candidate SHA and contract fingerprint; consumers must verify that title against the validated current contract as well as the current successful attempt and gate.
