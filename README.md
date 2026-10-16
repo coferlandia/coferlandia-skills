@@ -164,10 +164,6 @@ AGENTS.md        Entry point for agents
 
 **v2.19.0 — 2026-10-16**
 
-| Changed surface | Version | Main change |
-|---|---:|---|
-| Distribution protocol | 1 | Adds deterministic exact-vendor manifests, provenance, and offline byte-drift verification. |
-
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
 
