@@ -87,9 +87,9 @@ A GitHub-native remote Development workflow must:
 - execute only repository-declared setup actions, when present, in their declared order;
 - execute only repository-declared Development commands in their declared order;
 - use the repository-declared runner labels, working directory and shell;
-- grant candidate-controlled code no GitHub write authority; the standard generated surface includes `contents: read`, and exact-head dispatch may add only the read permission required to re-read PR metadata;
+- grant candidate-controlled code no GitHub write authority; exact-head dispatch may add only the read permission required to re-read PR metadata;
 - avoid injecting private values;
-- the remote workflow never writes the durable `READY_FOR_CI` or any `READY_FOR_MERGE` marker itself.
+- never write the durable `READY_FOR_CI` or any `READY_FOR_MERGE` marker itself.
 
 Repositories using self-hosted runners are responsible for runner isolation and ambient environment visible to candidate/setup code. Generic runner images should provide the execution substrate; project-specific runtime versions belong to the repository-owned setup contract when deterministic provisioning is needed.
 
@@ -154,7 +154,7 @@ A compatible repository may retain:
 }
 ```
 
-In this shape the normal PR-event path remains preferred. The fallback exists only when that event surface cannot produce fresh evidence for the current Draft candidate. It has the same trusted-control-ref, PR-state, exact-head and reentry requirements as primary dispatch. Never use the candidate branch as the workflow control ref.
+In this shape the normal PR-event path remains preferred. The fallback exists only when that event surface cannot produce fresh evidence for the current Draft candidate. It has the same trusted-control-ref, PR-state, exact-head and reentry requirements as primary dispatch.
 
 Neither primary nor fallback dispatch selects Qualification, emits a READY marker, merges, publishes or deploys. Both execute only the same fingerprinted Development setup/actions/commands and declared gate.
 
