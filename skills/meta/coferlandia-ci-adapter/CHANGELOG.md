@@ -17,6 +17,24 @@
 
 - Additive schema-v1 extension. Existing CI profiles and Development contracts remain valid without activation, label triggers, primary dispatch, or evidence caching.
 
+
+## 1.5.0 — 2026-10-16
+
+### Added
+
+- Adds optional fingerprinted `github.submission.activation.kind = ready-for-review` for existing-event GitHub-native Qualification profiles.
+- Adds controller-owned `pull-request-label` Development submission with explicit base branches and optional rerun on synchronize, plus primary trusted `workflow-dispatch-exact-head` submission.
+- Adds bounded reusable Development evidence-cache support for compatible label-triggered bash workflows.
+
+### Changed
+
+- Makes Development retry semantics exact-candidate aware: compatible transient failures may be rerun without lifecycle toggles or empty commits, while a new head invalidates old evidence.
+- Preserves legacy PR-event and exact-head fallback contracts unchanged when the new fields are absent.
+
+### Compatibility
+
+- Additive schema-v1 extension. Existing CI profiles and Development contracts remain valid without activation, label triggers, primary dispatch, or evidence caching.
+
 ## 1.4.0 — 2026-09-26
 
 ### Added
