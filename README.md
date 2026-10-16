@@ -142,6 +142,7 @@ The workflows are modular. The Project Manager, Architect, development roles, Ar
 | [`skills/INDEX.md`](./skills/INDEX.md) | Canonical inventory, category, status, and location of every Agent Skill. |
 | [`prompts/INDEX.md`](./prompts/INDEX.md) | Public Chat delivery prompt catalog. |
 | [`prompts/registry.json`](./prompts/registry.json) | Machine-readable Chat aliases/composition registry. |
+| [`_protocol/distribution/VENDORING.md`](./_protocol/distribution/VENDORING.md) | Exact-vendoring manifest/provenance and offline drift-verification contract. |
 | [`AGENTS.md`](./AGENTS.md) | Entry point and maintenance rules for AI agents. |
 | Each `SKILL.md` | Complete operational contract for one Agent Skill. |
 | Each skill `CHANGELOG.md` | Version history for one public skill. |
@@ -161,11 +162,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.18.0 — 2026-10-16**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| coferlandia-ci-adapter | 1.5.0 | Adds declarative Qualification activation, label-triggered/primary-dispatch Development validation, and bounded same-candidate retry semantics. |
+**v2.19.0 — 2026-10-16**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
