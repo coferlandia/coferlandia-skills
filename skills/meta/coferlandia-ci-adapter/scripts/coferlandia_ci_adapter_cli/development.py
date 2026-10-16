@@ -27,6 +27,8 @@ ALLOWED_TOP = {
     "github",
     "fingerprint",
 }
+EXISTING_PR_EVENTS = "existing-pr-events"
+EXACT_HEAD_DISPATCH = "workflow-dispatch-exact-head"
 
 
 def _require(condition: bool, message: str) -> None:
@@ -81,7 +83,6 @@ def _validate_setup(setup: object) -> None:
             f"{label}.uses must be a static owner/repo@ref action",
         )
         names.append(name)
-
         inputs = item.get("with", {})
         _require(isinstance(inputs, dict), f"{label}.with must be an object")
         for key, value in inputs.items():
@@ -98,6 +99,94 @@ def _validate_setup(setup: object) -> None:
                 _require("${{" not in value, f"{label}.with.{key} must not contain GitHub expressions")
                 _require("\n" not in value and "\r" not in value, f"{label}.with.{key} must be a single-line value")
     _require(len(names) == len(set(names)), "github.setup names must be unique")
+
+
+def _validate_evidence_cache(cache: object, contract: dict) -> None:
+    _require(isinstance(cache, dict) and set(cache) == {
+        "path", "prefix", "verify_command", "before_command_id"
+    }, "github.evidence_cache fields are invalid")
+    _validate_relative_path(cache["path"], "github.evidence_cache.path")
+    _require(
+        re.fullmatch(r"[A-Za-z0-9._/-]+", cache["path"]) is not None,
+        "github.evidence_cache.path must contain static safe characters",
+    )
+    _require(
+        isinstance(cache["prefix"], str) and re.fullmatch(r"[a-z][a-z0-9-]{0,48}", cache["prefix"]) is not None,
+        "github.evidence_cache.prefix must be a static safe prefix",
+    )
+    _require(
+        isinstance(cache["verify_command"], str) and cache["verify_command"].strip()
+        and len(cache["verify_command"]) < 1000,
+        "github.evidence_cache.verify_command is required",
+    )
+    _require(
+        cache["before_command_id"] in [c["id"] for c in contract["commands"]],
+        "github.evidence_cache.before_command_id must name an existing command",
+    )
+    _require(contract["github"]["shell"] == "bash", "github.evidence_cache requires bash")
+    submission = contract["github"]["submission"]
+    _require(
+        submission.get("mode") == EXISTING_PR_EVENTS and submission.get("trigger", {}).get("kind") == "pull-request-label",
+        "github.evidence_cache requires a labeled pull-request trigger",
+    )
+
+
+def _validate_control_ref(value: object, label: str) -> str:
+    _require(
+        isinstance(value, str) and CONTROL_REF_RE.fullmatch(value) is not None,
+        f"{label} must be a repository ref name",
+    )
+    return value
+
+
+def _validate_trigger(trigger: object) -> None:
+    _require(isinstance(trigger, dict), "github.submission.trigger must be an object")
+    _require(set(trigger) == {"kind", "label", "rerun_on_synchronize", "base_branches"}, "trigger fields are invalid")
+    _require(trigger["kind"] == "pull-request-label", "trigger.kind must be pull-request-label")
+    label = trigger["label"]
+    _require(
+        isinstance(label, str) and bool(label.strip()) and len(label) <= 50
+        and not any(ord(char) < 32 or ord(char) == 127 for char in label) and "${{" not in label,
+        "trigger.label must be a static non-empty single-line label of at most 50 characters",
+    )
+    _require(isinstance(trigger["rerun_on_synchronize"], bool), "trigger.rerun_on_synchronize must be boolean")
+    bases = trigger["base_branches"]
+    _require(isinstance(bases, list) and bool(bases), "trigger.base_branches must be a non-empty list")
+    for base in bases:
+        _validate_control_ref(base, "trigger.base_branches entry")
+    _require(len(bases) == len(set(bases)), "trigger.base_branches entries must be unique")
+
+
+def _validate_submission(submission: object) -> None:
+    _require(isinstance(submission, dict), "github.submission must be an object")
+    _require("mode" in submission and "workflow" in submission, "github.submission fields are invalid")
+    mode = submission["mode"]
+    _require(mode in {EXISTING_PR_EVENTS, EXACT_HEAD_DISPATCH}, "invalid development submission mode")
+    _validate_relative_path(submission["workflow"], "github.submission.workflow")
+    workflow = Path(submission["workflow"])
+    _require(
+        workflow.parts[:2] == (".github", "workflows") and workflow.suffix in {".yml", ".yaml"},
+        "development workflow must live under .github/workflows and be YAML",
+    )
+
+    if mode == EXACT_HEAD_DISPATCH:
+        _require(set(submission) == {"mode", "workflow", "control_ref"}, "primary exact-head dispatch fields are invalid")
+        _validate_control_ref(submission["control_ref"], "github.submission.control_ref")
+        return
+
+    _require(set(submission) <= {"mode", "workflow", "fallback", "trigger"}, "github.submission fields are invalid")
+    if "trigger" in submission:
+        _require("fallback" not in submission, "label trigger cannot be combined with dispatch fallback")
+        _validate_trigger(submission["trigger"])
+    fallback = submission.get("fallback")
+    if fallback is None:
+        return
+    _require(
+        isinstance(fallback, dict) and set(fallback) == {"mode", "control_ref"},
+        "github.submission.fallback fields are invalid",
+    )
+    _require(fallback["mode"] == EXACT_HEAD_DISPATCH, "development fallback mode must be workflow-dispatch-exact-head")
+    _validate_control_ref(fallback["control_ref"], "github.submission.fallback.control_ref")
 
 
 def validate_development_contract(contract: dict, *, verify_fingerprint: bool = False) -> None:
@@ -118,9 +207,7 @@ def validate_development_contract(contract: dict, *, verify_fingerprint: bool = 
         "documentation must be a string list",
     )
     _require(len(docs) == len(set(docs)), "documentation entries must be unique")
-
-    working_directory = contract.get("working_directory")
-    _validate_relative_path(working_directory, "working_directory")
+    _validate_relative_path(contract.get("working_directory"), "working_directory")
     _validate_commands(contract.get("commands"))
 
     services = contract.get("required_services")
@@ -129,7 +216,6 @@ def validate_development_contract(contract: dict, *, verify_fingerprint: bool = 
         "required_services must be a string list",
     )
     _require(len(services) == len(set(services)), "required_services entries must be unique")
-
     environment = contract.get("environment")
     _require(
         isinstance(environment, list)
@@ -140,40 +226,12 @@ def validate_development_contract(contract: dict, *, verify_fingerprint: bool = 
 
     github = contract.get("github")
     required_github_fields = {"submission", "candidate_binding", "runner_labels", "shell", "gate"}
-    allowed_github_fields = required_github_fields | {"setup"}
+    allowed_github_fields = required_github_fields | {"setup", "evidence_cache"}
     _require(
-        isinstance(github, dict)
-        and required_github_fields <= set(github) <= allowed_github_fields,
+        isinstance(github, dict) and required_github_fields <= set(github) <= allowed_github_fields,
         "github fields are invalid",
     )
-    submission = github["submission"]
-    _require(
-        isinstance(submission, dict)
-        and {"mode", "workflow"} <= set(submission) <= {"mode", "workflow", "fallback"},
-        "github.submission fields are invalid",
-    )
-    _require(submission["mode"] == "existing-pr-events", "development submission mode must be existing-pr-events")
-    _validate_relative_path(submission["workflow"], "github.submission.workflow")
-    fallback = submission.get("fallback")
-    if fallback is not None:
-        _require(
-            isinstance(fallback, dict) and set(fallback) == {"mode", "control_ref"},
-            "github.submission.fallback fields are invalid",
-        )
-        _require(
-            fallback["mode"] == "workflow-dispatch-exact-head",
-            "development fallback mode must be workflow-dispatch-exact-head",
-        )
-        control_ref = fallback["control_ref"]
-        _require(
-            isinstance(control_ref, str) and CONTROL_REF_RE.fullmatch(control_ref) is not None,
-            "github.submission.fallback.control_ref must be a repository ref name",
-        )
-    workflow = Path(submission["workflow"])
-    _require(
-        workflow.parts[:2] == (".github", "workflows") and workflow.suffix in {".yml", ".yaml"},
-        "development workflow must live under .github/workflows and be YAML",
-    )
+    _validate_submission(github["submission"])
     _require(github["candidate_binding"] == "pull-request-head", "github.candidate_binding must be pull-request-head")
     labels = github["runner_labels"]
     _require(
@@ -183,6 +241,8 @@ def validate_development_contract(contract: dict, *, verify_fingerprint: bool = 
     _require(len(labels) == len(set(labels)), "github.runner_labels entries must be unique")
     _require(github["shell"] in {"bash", "pwsh"}, "github.shell must be bash or pwsh")
     _validate_setup(github.get("setup", []))
+    if "evidence_cache" in github:
+        _validate_evidence_cache(github["evidence_cache"], contract)
 
     gate = github["gate"]
     _require(isinstance(gate, dict) and set(gate) == {"name", "allowed_conclusions"}, "github.gate fields are invalid")
@@ -242,29 +302,81 @@ def _indent_command(command: str, spaces: int = 10) -> str:
     return "\n".join(prefix + line for line in command.splitlines())
 
 
+def _dispatch_script(control_ref: str, *, allow_pr_events: bool) -> str:
+    lines: list[str] = []
+    if allow_pr_events:
+        lines.extend([
+            "const eventName = context.eventName;",
+            "if (eventName === 'pull_request') {",
+            "  const pr = context.payload.pull_request;",
+            "  if (!pr || !pr.draft || pr.state !== 'open') throw new Error('Development validation requires an open Draft PR');",
+            "  core.setOutput('pr_number', String(pr.number));",
+            "  core.setOutput('candidate_sha', pr.head.sha);",
+            "  return;",
+            "}",
+        ])
+    lines.extend([
+        f"const expectedControlRef = {json.dumps(control_ref, ensure_ascii=False)};",
+        "const observedControlRef = context.ref.replace(/^refs\\/(heads|tags)\\//, '');",
+        "if (observedControlRef !== expectedControlRef) throw new Error('trusted control ref mismatch: expected ' + expectedControlRef + ' observed ' + observedControlRef);",
+        "const prNumber = Number('${{ inputs.pr_number }}');",
+        "const requestedSha = '${{ inputs.candidate_sha }}';",
+        "if (!Number.isInteger(prNumber) || prNumber <= 0) throw new Error('invalid PR number');",
+        "if (!/^[0-9a-f]{40}$/.test(requestedSha)) throw new Error('candidate_sha must be a full 40-character lowercase Git SHA');",
+        "const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });",
+        "if (pr.state !== 'open' || !pr.draft) throw new Error('Development validation requires an open Draft PR');",
+        "if (pr.head.sha !== requestedSha) throw new Error('candidate SHA mismatch: requested ' + requestedSha + ' current ' + pr.head.sha);",
+        "core.setOutput('pr_number', String(pr.number));",
+        "core.setOutput('candidate_sha', pr.head.sha);",
+    ])
+    return "\n".join(lines)
+
+
 def render_development_workflow(contract: dict) -> str:
     rendered = render_development_contract(contract)
     github = rendered["github"]
+    submission = github["submission"]
+    mode = submission["mode"]
+    primary_dispatch = mode == EXACT_HEAD_DISPATCH
+    trigger = submission.get("trigger")
+    fallback = submission.get("fallback") if mode == EXISTING_PR_EVENTS else None
+    fallback_dispatch = fallback is not None
+    exact_head_dispatch = primary_dispatch or fallback_dispatch
+    control_ref = submission.get("control_ref") if primary_dispatch else (fallback or {}).get("control_ref")
+
     fingerprint = rendered["fingerprint"]
     runs_on = json.dumps(github["runner_labels"], ensure_ascii=False)
     shell = github["shell"]
     gate_name = _yaml_string(github["gate"]["name"])
     working_directory = _yaml_string(rendered["working_directory"])
-    fallback = github["submission"].get("fallback")
-    exact_head_dispatch = fallback is not None
 
     if shell == "bash":
         identity = 'actual="$(git rev-parse HEAD)"\ntest "$actual" = "$EXPECTED_SHA"'
     else:
         identity = '$actual = (git rev-parse HEAD).Trim()\nif ($actual -ne $env:EXPECTED_SHA) { throw "candidate SHA mismatch: expected $env:EXPECTED_SHA observed $actual" }'
 
-    lines = [
-        "name: Coferlandia Development Validation",
-        "",
-        "on:",
-        "  pull_request:",
-        "    types: [opened, synchronize, reopened, converted_to_draft]",
-    ]
+    lines = ["name: Coferlandia Development Validation"]
+    if primary_dispatch:
+        lines.append('run-name: "Development Validation / PR #${{ inputs.pr_number }} candidate:${{ inputs.candidate_sha }}"')
+    elif fallback_dispatch:
+        lines.append('run-name: "Development Validation / PR #${{ github.event.pull_request.number || inputs.pr_number }} candidate:${{ github.event.pull_request.head.sha || inputs.candidate_sha }}"')
+    elif trigger:
+        lines.append('run-name: "Development Validation / PR #${{ github.event.pull_request.number }} candidate:${{ github.event.pull_request.head.sha }} fingerprint:' + fingerprint + '"')
+    lines.extend(["", "on:"])
+    if trigger:
+        events = ["labeled", "reopened", "converted_to_draft"]
+        if trigger["rerun_on_synchronize"]:
+            events.insert(1, "synchronize")
+        lines.extend([
+            "  pull_request:",
+            "    types: [" + ", ".join(events) + "]",
+            "    branches: " + json.dumps(trigger["base_branches"], ensure_ascii=False),
+        ])
+    elif not primary_dispatch:
+        lines.extend([
+            "  pull_request:",
+            "    types: [opened, synchronize, reopened, converted_to_draft, ready_for_review, closed]",
+        ])
     if exact_head_dispatch:
         lines.extend([
             "  workflow_dispatch:",
@@ -280,55 +392,66 @@ def render_development_workflow(contract: dict) -> str:
         ])
 
     lines.extend(["", "permissions:", "  contents: read"])
+    evidence_cache = github.get("evidence_cache")
+    if evidence_cache:
+        lines.append("  actions: read")
     if exact_head_dispatch:
         lines.append("  pull-requests: read")
 
-    concurrency_pr = "${{ github.event.pull_request.number || inputs.pr_number }}" if exact_head_dispatch else "${{ github.event.pull_request.number }}"
-    lines.extend([
-        "",
-        "concurrency:",
-        f"  group: coferlandia-development-{concurrency_pr}",
-        "  cancel-in-progress: true",
-        "",
-        "jobs:",
-        "  validation:",
-        f"    name: {gate_name}",
-    ])
-    if exact_head_dispatch:
+    if primary_dispatch:
+        concurrency_pr = "${{ inputs.pr_number }}"
+    elif fallback_dispatch:
+        concurrency_pr = "${{ github.event.pull_request.number || inputs.pr_number }}"
+    else:
+        concurrency_pr = "${{ github.event.pull_request.number }}"
+    if not trigger:
+        lines.extend([
+            "", "concurrency:",
+            f"  group: coferlandia-development-{concurrency_pr}",
+            "  cancel-in-progress: true",
+        ])
+    lines.extend(["", "jobs:", "  validation:", f"    name: {gate_name}"])
+    if trigger:
+        label = "'" + trigger["label"].replace("'", "''") + "'"
+        bases = "'" + json.dumps(trigger["base_branches"]).replace("'", "''") + "'"
+        actions = ["github.event.action == 'reopened'", "github.event.action == 'converted_to_draft'"]
+        if trigger["rerun_on_synchronize"]:
+            actions.append("github.event.action == 'synchronize'")
+        actions.insert(0, f"(github.event.action == 'labeled' && github.event.label.name == {label})")
         lines.extend([
             "    if: >-",
-            "      (github.event_name == 'pull_request' && github.event.pull_request.draft == true) ||",
+            "      github.event_name == 'pull_request' &&",
+            "      github.event.pull_request.state == 'open' && github.event.pull_request.draft == true &&",
+            f"      contains(fromJSON({bases}), github.event.pull_request.base.ref) &&",
+            f"      contains(github.event.pull_request.labels.*.name, {label}) &&",
+            "      (" + " || ".join(actions) + ")",
+            # Skipped metadata jobs must never enter the eligible PR queue: even
+            # cancel-in-progress false at workflow level replaces a pending run.
+            "    concurrency:",
+            f"      group: coferlandia-development-{concurrency_pr}",
+            "      cancel-in-progress: true",
+        ])
+    elif primary_dispatch:
+        lines.append("    if: github.event_name == 'workflow_dispatch'")
+    elif fallback_dispatch:
+        lines.extend([
+            "    if: >-",
+            "      (github.event_name == 'pull_request' && github.event.pull_request.draft == true && github.event.action != 'ready_for_review' && github.event.action != 'closed') ||",
             "      github.event_name == 'workflow_dispatch'",
         ])
     else:
-        lines.append("    if: github.event.pull_request.draft == true")
+        lines.append("    if: github.event.pull_request.draft == true && github.event.action != 'ready_for_review' && github.event.action != 'closed'")
 
-    lines.extend([f"    runs-on: {runs_on}", "    steps:"])
-
-    if exact_head_dispatch:
-        control_ref = json.dumps(fallback["control_ref"], ensure_ascii=False)
-        script = "\n".join([
-            "const eventName = context.eventName;",
-            "if (eventName === 'pull_request') {",
-            "  const pr = context.payload.pull_request;",
-            "  if (!pr || !pr.draft || pr.state !== 'open') throw new Error('Development validation requires an open Draft PR');",
-            "  core.setOutput('pr_number', String(pr.number));",
-            "  core.setOutput('candidate_sha', pr.head.sha);",
-            "  return;",
-            "}",
-            f"const expectedControlRef = {control_ref};",
-            "const observedControlRef = context.ref.replace(/^refs\\/(heads|tags)\\//, '');",
-            "if (observedControlRef !== expectedControlRef) throw new Error('trusted control ref mismatch: expected ' + expectedControlRef + ' observed ' + observedControlRef);",
-            "const prNumber = Number('${{ inputs.pr_number }}');",
-            "const requestedSha = '${{ inputs.candidate_sha }}';",
-            "if (!Number.isInteger(prNumber) || prNumber <= 0) throw new Error('invalid PR number');",
-            "if (!/^[0-9a-f]{40}$/.test(requestedSha)) throw new Error('candidate_sha must be a full 40-character lowercase Git SHA');",
-            "const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });",
-            "if (pr.state !== 'open' || !pr.draft) throw new Error('Development validation requires an open Draft PR');",
-            "if (pr.head.sha !== requestedSha) throw new Error('candidate SHA mismatch: requested ' + requestedSha + ' current ' + pr.head.sha);",
-            "core.setOutput('pr_number', String(pr.number));",
-            "core.setOutput('candidate_sha', pr.head.sha);",
+    lines.append(f"    runs-on: {runs_on}")
+    if evidence_cache:
+        lines.extend([
+            "    env:",
+            "      CI_PR_NUMBER: ${{ github.event.pull_request.number }}",
+            "      CI_HEAD_REF: ${{ github.event.pull_request.head.ref }}",
         ])
+    lines.append("    steps:")
+    if exact_head_dispatch:
+        script = _dispatch_script(str(control_ref), allow_pr_events=fallback_dispatch)
         lines.extend([
             "      - name: Resolve exact candidate identity",
             "        id: identity",
@@ -382,12 +505,51 @@ def render_development_workflow(contract: dict) -> str:
                 lines.append(f"          {key}: {_yaml_scalar(setup['with'][key])}")
 
     for command in rendered["commands"]:
+        if evidence_cache and command["id"] == evidence_cache["before_command_id"]:
+            prefix = evidence_cache["prefix"]
+            path = evidence_cache["path"]
+            lines.extend([
+                "      - name: Restore prior Development evidence",
+                "        uses: actions/cache/restore@v4",
+                "        continue-on-error: true",
+                "        with:",
+                f"          path: {path}",
+                f"          key: {prefix}-pr${{{{ github.event.pull_request.number }}}}-${{{{ github.run_id }}}}-${{{{ github.run_attempt }}}}",
+                "          restore-keys: |",
+                f"            {prefix}-pr${{{{ github.event.pull_request.number }}}}-",
+                "      - name: Verify prior Development evidence",
+                "        shell: bash",
+                "        env:",
+                "          GITHUB_TOKEN: ${{ github.token }}",
+                "        run: |",
+                _indent_command(evidence_cache["verify_command"]),
+            ])
         lines.extend([
             f"      - name: {_yaml_string(command['purpose'])}",
             f"        shell: {shell}",
             f"        working-directory: {working_directory}",
             "        run: |",
             _indent_command(command["command"]),
+        ])
+    if evidence_cache:
+        prefix = evidence_cache["prefix"]
+        path = evidence_cache["path"]
+        lines.extend([
+            "      - name: Upload partial Development evidence",
+            "        if: always()",
+            "        uses: actions/upload-artifact@v4",
+            "        with:",
+            f"          name: {prefix}-${{{{ github.event.pull_request.number }}}}-${{{{ github.run_id }}}}-${{{{ github.run_attempt }}}}",
+            f"          path: {path}",
+            "          if-no-files-found: ignore",
+            "          retention-days: 30",
+            "      - name: Cache partial Development evidence",
+            f"        if: always() && hashFiles('{path}') != ''",
+            "        uses: actions/cache/save@v4",
+            "        continue-on-error: true",
+            "        with:",
+            f"          path: {path}",
+            f"          key: {prefix}-pr${{{{ github.event.pull_request.number }}}}-${{{{ github.run_id }}}}-${{{{ github.run_attempt }}}}",
         ])
     lines.append("")
     return "\n".join(lines)

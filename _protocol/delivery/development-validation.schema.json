@@ -15,105 +15,60 @@
     "github"
   ],
   "properties": {
-    "schema_version": {
-      "const": 1
-    },
-    "repository": {
-      "type": "string",
-      "pattern": "^[^/]+/[^/]+$"
-    },
+    "schema_version": {"const": 1},
+    "repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
     "documentation": {
       "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
+      "items": {"type": "string", "minLength": 1},
       "uniqueItems": true
     },
-    "working_directory": {
-      "type": "string",
-      "minLength": 1
-    },
+    "working_directory": {"type": "string", "minLength": 1},
     "commands": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "id",
-          "command",
-          "purpose"
-        ],
+        "required": ["id", "command", "purpose"],
         "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "command": {
-            "type": "string",
-            "minLength": 1
-          },
-          "purpose": {
-            "type": "string",
-            "minLength": 1
-          }
+          "id": {"type": "string", "minLength": 1},
+          "command": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1}
         }
       }
     },
     "required_services": {
       "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
+      "items": {"type": "string", "minLength": 1},
       "uniqueItems": true
     },
     "environment": {
       "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
-      },
+      "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
       "uniqueItems": true
     },
     "github": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "submission",
-        "candidate_binding",
-        "runner_labels",
-        "shell",
-        "gate"
-      ],
+      "required": ["submission", "candidate_binding", "runner_labels", "shell", "gate"],
       "properties": {
         "submission": {
           "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "mode",
-            "workflow"
-          ],
           "properties": {
-            "mode": {
-              "const": "existing-pr-events"
-            },
-            "workflow": {
+            "mode": {"enum": ["existing-pr-events", "workflow-dispatch-exact-head"]},
+            "workflow": {"type": "string", "pattern": "^\\.github/workflows/.+\\.ya?ml$"},
+            "control_ref": {
               "type": "string",
-              "pattern": "^\\.github/workflows/.+\\.ya?ml$"
+              "minLength": 1,
+              "pattern": "^(?!.*\\.\\.)(?!.*//)[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
             },
+            "trigger": {"$ref": "#/$defs/pullRequestLabelTrigger"},
             "fallback": {
               "type": "object",
               "additionalProperties": false,
-              "required": [
-                "mode",
-                "control_ref"
-              ],
+              "required": ["mode", "control_ref"],
               "properties": {
-                "mode": {
-                  "const": "workflow-dispatch-exact-head"
-                },
+                "mode": {"const": "workflow-dispatch-exact-head"},
                 "control_ref": {
                   "type": "string",
                   "minLength": 1,
@@ -121,91 +76,134 @@
                 }
               }
             }
-          }
+          },
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "required": ["mode", "workflow"],
+              "properties": {
+                "mode": {"const": "existing-pr-events"},
+                "workflow": {"type": "string"},
+                "fallback": {"$ref": "#/$defs/dispatchFallback"},
+                "trigger": {"$ref": "#/$defs/pullRequestLabelTrigger"}
+              },
+              "not": {"required": ["trigger", "fallback"]}
+            },
+            {
+              "additionalProperties": false,
+              "required": ["mode", "workflow", "control_ref"],
+              "properties": {
+                "mode": {"const": "workflow-dispatch-exact-head"},
+                "workflow": {"type": "string"},
+                "control_ref": {"type": "string"}
+              }
+            }
+          ]
         },
-        "candidate_binding": {
-          "const": "pull-request-head"
-        },
+        "candidate_binding": {"const": "pull-request-head"},
         "runner_labels": {
           "type": "array",
           "minItems": 1,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
+          "items": {"type": "string", "minLength": 1},
           "uniqueItems": true
         },
-        "shell": {
-          "enum": [
-            "bash",
-            "pwsh"
-          ]
-        },
+        "shell": {"enum": ["bash", "pwsh"]},
         "setup": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "name",
-              "uses"
-            ],
+            "required": ["name", "uses"],
             "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
+              "name": {"type": "string", "minLength": 1},
               "uses": {
                 "type": "string",
                 "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[A-Za-z0-9_./-]+$"
               },
               "with": {
                 "type": "object",
-                "propertyNames": {
-                  "pattern": "^[A-Za-z0-9_.-]+$"
-                },
+                "propertyNames": {"pattern": "^[A-Za-z0-9_.-]+$"},
                 "additionalProperties": {
                   "oneOf": [
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "boolean"
-                    }
+                    {"type": "string", "minLength": 1},
+                    {"type": "integer"},
+                    {"type": "boolean"}
                   ]
                 }
               }
             }
           }
         },
+        "evidence_cache": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "prefix", "verify_command", "before_command_id"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "prefix": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,48}$"},
+            "verify_command": {"type": "string", "minLength": 1, "maxLength": 999},
+            "before_command_id": {"type": "string", "minLength": 1}
+          }
+        },
         "gate": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "name",
-            "allowed_conclusions"
-          ],
+          "required": ["name", "allowed_conclusions"],
           "properties": {
-            "name": {
-              "type": "string",
-              "minLength": 1
-            },
-            "allowed_conclusions": {
-              "const": [
-                "success"
-              ]
-            }
+            "name": {"type": "string", "minLength": 1},
+            "allowed_conclusions": {"const": ["success"]}
           }
         }
       }
     },
-    "fingerprint": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {
+    "pullRequestLabelTrigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "label",
+        "rerun_on_synchronize",
+        "base_branches"
+      ],
+      "properties": {
+        "kind": {
+          "const": "pull-request-label"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "pattern": "^(?!.*\\$\\{\\{)(?!.*[\\u0000-\\u001f\\u007f]).*\\S.*$"
+        },
+        "rerun_on_synchronize": {
+          "type": "boolean"
+        },
+        "base_branches": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*\\.\\.)(?!.*//)[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+          }
+        }
+      }
+    },
+    "dispatchFallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "control_ref"],
+      "properties": {
+        "mode": {"const": "workflow-dispatch-exact-head"},
+        "control_ref": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!.*\\.\\.)(?!.*//)[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+        }
+      }
     }
   }
 }

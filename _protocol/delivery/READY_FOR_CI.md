@@ -19,6 +19,7 @@ Base SHA studied: <exact authoritative base studied during development>
 Base SHA synchronized: <exact authoritative development base reconciled into the candidate immediately before handoff>
 Implementation: COMPLETE
 Development validation: <fresh evidence for every applicable required development check>
+Development evidence: <concise proof containing candidate:<exact PR head SHA>>
 Environment change: YES | NO
 Environment evidence: <NONE or concise candidate-bound evidence including affected inputs and deployment actions>
 Review Critical: 0
@@ -29,9 +30,13 @@ Next stage: Qualification
 Validity requires all of the following:
 
 - the recorded Candidate SHA equals the current PR head;
+- when repository policy exposes a controlling PR work item, the `Issue:` field matches that exact current identity; the same controlling work-item identity must be preserved through `READY_FOR_MERGE` and Integration closeout;
+- the handoff exists and validates before any repository-declared Qualification activation mutation such as Draft -> Ready; activation never backfills or implies `READY_FOR_CI`;
 - `Base SHA synchronized` identifies the exact authoritative development base reconciled into that candidate immediately before handoff;
 - repository-approved Git evidence proves the candidate contains/reconciles the recorded synchronized base;
 - development validation evidence was produced against that exact Candidate SHA;
+- `Development evidence` is present, identifies the exact candidate as `candidate:<sha>`, and the handoff's PR number and branch match the current pull request;
+- when `Development evidence` references a repository Development run, Qualification verifies the run's current successful attempt and declared gate through GitHub Actions; an exact-head dispatch also exposes its PR number and requested candidate in the workflow run title so a run for another request cannot be reused;
 - Development checks may execute directly or through repository-owned Remote Development validation as defined by `DEVELOPMENT_VALIDATION.md`; remote evidence may come from the preferred PR-event path or a contract-declared exact-head dispatch fallback, and in either case it must bind the exact Candidate SHA, current Development contract fingerprint, declared Development gate and an allowed terminal conclusion;
 - a remote Development gate is Development evidence only and never substitutes for Qualification, an effective/synthetic merge candidate, or `READY_FOR_MERGE`;
 - every applicable repository-owned derived artifact that repository-owned policy explicitly declares to be a versioned contract and that is affected by the candidate is synchronized through the repository-owned generation/synchronization mechanism, and any repository-defined deterministic freshness/idempotence/diff check for that versioned contract is passing without unexpected diff;

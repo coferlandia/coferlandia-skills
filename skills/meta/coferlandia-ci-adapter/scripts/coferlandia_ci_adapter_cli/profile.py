@@ -76,7 +76,12 @@ def validate_profile(profile: dict, *, verify_fingerprint: bool = False) -> None
     submission = github["submission"]
     _require(isinstance(submission, dict), "github.submission must be an object")
     _require(submission.get("mode") in {"existing-pr-events", "workflow-dispatch", "none"}, "invalid github.submission.mode")
-    _require(set(submission) <= {"mode", "workflow"}, "unknown github.submission fields")
+    activation = submission.get("activation")
+    if activation is not None:
+        _require(submission["mode"] == "existing-pr-events", "github.submission.activation requires existing-pr-events")
+        _require(isinstance(activation, dict) and set(activation) == {"kind"}, "github.submission.activation fields are invalid")
+        _require(activation.get("kind") == "ready-for-review", "unsupported github.submission.activation.kind")
+    _require(set(submission) <= {"mode", "workflow", "activation"}, "unknown github.submission fields")
     if submission["mode"] == "workflow-dispatch":
         _require(isinstance(submission.get("workflow"), str) and submission["workflow"], "workflow-dispatch requires workflow")
     gates = github["gates"]

@@ -60,6 +60,13 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("`UNRESOLVED` is allowed only", hotfix)
         self.assertIn("must never advance to `HOTFIX_READY` or `HOTFIX_COMPLETE`", hotfix)
 
+    def test_development_and_merge_handoffs_preserve_controlling_work_item_identity(self):
+        ready_ci = (Path(__file__).parent / "READY_FOR_CI.md").read_text(encoding="utf-8")
+        ready_merge = (Path(__file__).parent / "READY_FOR_MERGE.md").read_text(encoding="utf-8")
+        self.assertIn("same controlling work-item identity", ready_ci)
+        self.assertIn("before any repository-declared Qualification activation", ready_ci)
+        self.assertIn("same controlling work-item identity", ready_merge)
+
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
         self.assertIn("Development PR head changes", text)

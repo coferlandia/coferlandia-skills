@@ -20,12 +20,21 @@ A conforming contract identifies:
 - working directory;
 - ordered cheap deterministic Development commands;
 - required services and environment variable names;
-- GitHub Actions workflow submitted by existing Draft-PR events;
+- GitHub Actions workflow plus one supported submission mode;
 - exact `pull-request-head` candidate binding;
 - repository-owned runner labels and shell;
 - optional ordered repository-owned setup actions for job-local project toolchains;
 - one Development gate whose allowed GREEN conclusion is `success`;
 - a deterministic SHA-256 fingerprint over the semantic contract.
+
+Schema v1 supports two submission shapes:
+
+```text
+existing-pr-events
+workflow-dispatch-exact-head
+```
+
+`existing-pr-events` remains valid for compatible repositories and may declare exact-head dispatch as a fallback. `workflow-dispatch-exact-head` may also be the primary mode; when primary it requires a trusted `control_ref` and does not imply an automatic Draft-PR run.
 
 No private values, credentials, current run IDs or current conclusions belong in the contract.
 
@@ -42,7 +51,7 @@ A script shared with Qualification is acceptable only when repository policy ind
 A Development controller resolves validation in this order:
 
 1. Execute the repository-owned Development checks directly when the active environment can do so correctly.
-2. When direct execution is unavailable, use a current repository-owned remote Development contract.
+2. When direct execution is unavailable, use a current repository-owned remote Development contract according to its declared primary submission mode.
 3. When that contract is absent and the explicitly available repository adapter is authorized to materialize it, delegate only the minimal Development adaptation and then use the resulting remote surface.
 4. Block when no authorized execution backend can produce fresh evidence for the exact candidate.
 
@@ -69,18 +78,18 @@ The adapter/controller must discover toolchain versions from repository-owned ma
 
 A GitHub-native remote Development workflow must:
 
-- run only on the Draft pull request used by the Development stage;
-- use repository-declared existing PR events as the preferred submission path; an optional `workflow-dispatch-exact-head` fallback is allowed only when declared in the Development contract and remains Development-only;
-- on the normal PR-event path, explicitly check out `github.event.pull_request.head.sha`;
-- when the optional exact-head dispatch fallback is used, dispatch the workflow from the contract's repository-declared trusted `control_ref`, never from the candidate branch; before candidate checkout, use read-only GitHub metadata access to require an open Draft PR and prove the current PR head equals the requested candidate SHA;
+- validate only the open Draft pull request used by the Development stage;
+- submit according to the contract's declared mode rather than assuming PR events;
+- for `existing-pr-events`, explicitly check out `github.event.pull_request.head.sha` and run only for the repository-declared Draft event surface;
+- for `workflow-dispatch-exact-head`, dispatch from the contract's trusted `control_ref`, never from the candidate branch; before candidate checkout, use read-only GitHub metadata access to require an open Draft PR and prove the current PR head equals the requested candidate SHA;
 - verify the checked-out `HEAD` equals that expected SHA;
 - record the Development contract fingerprint and exact candidate SHA before project setup/execution;
 - execute only repository-declared setup actions, when present, in their declared order;
 - execute only repository-declared Development commands in their declared order;
 - use the repository-declared runner labels, working directory and shell;
-- grant candidate-controlled code no GitHub write authority; the standard generated surface uses only `contents: read`;
+- grant candidate-controlled code no GitHub write authority; the standard generated surface includes `contents: read`, and exact-head dispatch may add only the read permission required to re-read PR metadata;
 - avoid injecting private values;
-- never writes the durable `READY_FOR_CI` or any `READY_FOR_MERGE` marker itself.
+- the remote workflow never writes the durable `READY_FOR_CI` or any `READY_FOR_MERGE` marker itself.
 
 Repositories using self-hosted runners are responsible for runner isolation and ambient environment visible to candidate/setup code. Generic runner images should provide the execution substrate; project-specific runtime versions belong to the repository-owned setup contract when deterministic provisioning is needed.
 
@@ -97,9 +106,42 @@ Remote evidence is valid Development evidence only when all of the following are
 
 A later candidate SHA or Development fingerprint invalidates the evidence.
 
-## Optional exact-head dispatch fallback
+## Submission modes
 
-A repository may extend `github.submission` without changing schema version 1:
+### Controller-owned label trigger
+
+`existing-pr-events` may declare `trigger` with `kind: pull-request-label`, a nonempty static `label`, boolean `rerun_on_synchronize`, and explicit unique `base_branches`. The trigger cannot coexist with a dispatch fallback. Plain PR events and primary/fallback dispatch remain backward compatible.
+
+Only open Draft PRs on a declared base execute. Matching `labeled`, `reopened`, and `converted_to_draft` events submit; `synchronize` submits only when enabled and the label remains present. Unrelated labels never execute or participate in the eligible jobs' PR-scoped concurrency, including pending replacement. Checkout uses the exact PR event head, never the synthetic merge SHA.
+
+The generated run title is `Development Validation / PR #<number> candidate:<sha> fingerprint:<sha256>`. The consumer validates the current contract/fingerprint, then requires the exact title, workflow, branch/head, latest successful attempt and declared successful gate. Missing or stale evidence fails closed. The existing READY run/attempt reference is unchanged.
+
+Development owns adding/removing the label and READY_FOR_CI. Only previously resolved GITHUB_NATIVE Qualification may mark Ready. Terminal Development-only and LOCAL paths retain their Draft semantics. Reentry observes compatible existing work before submitting. Same-candidate transient failures/cancellations allow one bounded rerun per recovery pass after current Draft/head/base/fingerprint revalidation; repeated failures require environment recovery, not empty commits or label toggles.
+
+### Primary exact-head dispatch
+
+A repository may declare exact-head dispatch as the primary schema-v1 submission mode:
+
+```json
+{
+  "mode": "workflow-dispatch-exact-head",
+  "workflow": ".github/workflows/coferlandia-development-validation.yml",
+  "control_ref": "dev"
+}
+```
+
+The controller dispatches the declared workflow at exactly `control_ref`, not at the candidate branch/ref. The fixed inputs are `pr_number` and `candidate_sha`. The workflow fails before candidate checkout unless all of the following are true:
+
+- the supplied PR number resolves to an open pull request in the same repository;
+- the pull request is still Draft;
+- the current PR head equals the requested full SHA;
+- the dispatch itself is executing from the declared trusted control ref.
+
+Primary dispatch means intermediate Draft pushes do not automatically run the complete remote Development contract. The controller requests it only for an explicitly chosen candidate when remote execution is needed. Reentry must first look for a compatible queued/running/completed run so it does not blindly create duplicates.
+
+### Existing PR events with optional exact-head fallback
+
+A compatible repository may retain:
 
 ```json
 {
@@ -112,19 +154,9 @@ A repository may extend `github.submission` without changing schema version 1:
 }
 ```
 
-The normal PR-event path remains preferred. The fallback exists for cases where GitHub cannot produce fresh Draft-PR Development evidence through that event path, including repository-approved handling of a conflicted Draft.
+In this shape the normal PR-event path remains preferred. The fallback exists only when that event surface cannot produce fresh evidence for the current Draft candidate. It has the same trusted-control-ref, PR-state, exact-head and reentry requirements as primary dispatch. Never use the candidate branch as the workflow control ref.
 
-The controller must dispatch the declared workflow at exactly `fallback.control_ref`, not at the candidate branch/ref. Never use the candidate branch as the workflow control ref. The workflow must fail before candidate checkout unless all of the following are true:
-
-- the supplied PR number resolves to an open pull request in the same repository;
-- the pull request is still Draft;
-- the current PR head equals the requested candidate SHA;
-- the dispatch itself is executing from the declared trusted control ref.
-
-The fixed dispatch inputs are `pr_number` and `candidate_sha`. Candidate code receives no write authority. The fallback may execute only the same fingerprinted Development setup/actions/commands and declared gate as the normal path. It never selects Qualification, emits a READY marker, merges, publishes or deploys.
-
-A fallback run is valid evidence only when the same exact candidate/fingerprint/gate rules above are satisfied. Reentry must consume an already-authoritative queued/running/completed fallback run rather than dispatching a duplicate blindly.
-
+Neither primary nor fallback dispatch selects Qualification, emits a READY marker, merges, publishes or deploys. Both execute only the same fingerprinted Development setup/actions/commands and declared gate.
 
 ## Qualification boundary
 

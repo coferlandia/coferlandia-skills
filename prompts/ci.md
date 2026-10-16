@@ -1,7 +1,7 @@
 ---
 name: ci
 description: "Generic Chat GitHub-native Qualification controller resolved directly, by explicit composition, or by the declared standalone Chat Coder default pipeline."
-version: "1.4.0"
+version: "1.5.0"
 stage: qualification
 status: active
 ---
@@ -46,6 +46,7 @@ Require all of:
 3. `.coferlandia/ci/profile.json` exists and validates against the central profile contract;
 4. the profile contains a GitHub qualification definition and current profile fingerprint;
 5. the handoff contains `Base SHA synchronized`, and for a base-sensitive profile the current authoritative base SHA still equals that synchronized SHA and remains reconciled into the candidate.
+6. when repository policy exposes a controlling PR work item, that identity matches the `Issue:` identity in `READY_FOR_CI`.
 
 If any precondition is stale or missing, fail closed. Do not infer readiness from chat history, old comments, old checks, cancelled runs or a different SHA. A base-sensitive current-base mismatch is `DEVELOPMENT_CURRENTIZATION_REQUIRED`; it must be resolved in Development before any operation that can submit or trigger expensive Qualification.
 
@@ -87,13 +88,20 @@ When `Environment change: YES`, require candidate-bound evidence covering every 
 
 This barrier validates that environment impact was recognized and mechanically checked where the repository provides such checks; it does not invent repository-specific environment policy.
 
+## Qualification activation barrier
+
+A repository may declare an optional GitHub submission `activation` in `.coferlandia/ci/profile.json`. Activation is a Qualification side effect and can never manufacture Development readiness. For `activation.kind = ready-for-review`, require an open Draft PR and validate the exact current `READY_FOR_CI` before activation, including candidate/head, synchronized base, review, environment, Development evidence and controlling work-item identity. Only then mark the PR Ready exactly once, immediately re-read PR state/head, and treat the resulting `ready_for_review` event as the repository-declared submission.
+
+Do not toggle Ready/Draft, remove/re-add activation state, or manufacture empty commits as a retry mechanism. If the profile omits `activation`, preserve the repository's legacy/passive existing-event semantics and observe only events that repository policy already authorizes.
+
 ## Qualification
 
-1. Resolve current PR, exact head, authoritative base, synchronized base and profile fingerprint, and pass the current-base qualification barrier.
-2. Determine the profile-declared GitHub submission mode. Trigger only the declared workflow/operation when explicit dispatch is required; otherwise observe the repository's existing PR-event qualification. Never introduce `workflow_dispatch` merely because this controller is GitHub-native when the profile declares existing PR-event submission.
-3. Read current workflow/check evidence for the exact authoritative candidate. Queued, waiting, requested, pending or in-progress is not GREEN.
-4. Evaluate every profile-required gate against its explicit allowed terminal conclusions. Missing, stale, superseded, cancelled or old-SHA evidence never satisfies the gate.
-5. If Merge Queue/`merge_group` is declared authoritative when present, bind qualification to that exact effective candidate rather than reusing older PR-head evidence.
+1. Resolve current PR, exact head, authoritative base, synchronized base and profile fingerprint, and pass the current-base qualification barrier. Re-resolve the exact `READY_FOR_CI` and any repository-owned adjunct Development evidence; a comment marker or old GREEN without current identity is insufficient.
+2. Determine the profile-declared GitHub submission mode and optional activation. Trigger only the declared workflow/operation when explicit dispatch is required; otherwise use only the repository-authorized PR event. When `activation.kind = ready-for-review`, apply the activation barrier above before the single Draft -> Ready mutation. When no explicit activation is declared for `existing-pr-events`, otherwise observe the repository's existing PR-event qualification rather than inventing a manual dispatch. Never introduce `workflow_dispatch` merely because this controller is GitHub-native; dispatch remains valid only when the profile explicitly declares it.
+3. Treat later candidate-identity changes as invalidation, not implicit resubmission. A compatible same-candidate transient failure may use only the repository-approved bounded rerun/retry mechanism after currentness is rechecked; a code/head change returns to Development and requires a fresh handoff.
+4. Read current workflow/check evidence for the exact authoritative candidate and validation depth. Queued, waiting, requested, pending or in-progress is not GREEN. A repository-authorized depth change invalidates evidence that does not satisfy the new depth without implying unrelated compatible evidence must be rerun.
+5. Evaluate every profile-required gate against its explicit allowed terminal conclusions. Missing, stale, superseded, cancelled or old-identity evidence never satisfies the gate.
+6. If Merge Queue/`merge_group` is declared authoritative when present, bind qualification to that exact effective candidate rather than reusing older PR-head evidence.
 
 ### Non-terminal GitHub Actions state
 

@@ -126,6 +126,40 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module.validate_development_contract(unsafe)
 
+    def test_label_trigger_validation_and_fingerprint(self):
+        module = load_module()
+        trigger = {"kind": "pull-request-label", "label": "development:validate",
+                   "rerun_on_synchronize": True, "base_branches": ["dev"]}
+        contract = sample()
+        contract["github"]["submission"]["trigger"] = trigger.copy()
+        module.validate_development_contract(contract)
+        baseline = module.development_fingerprint(contract)
+        self.assertNotEqual(baseline, module.development_fingerprint(sample()))
+        for field, value in (("label", "another:label"), ("rerun_on_synchronize", False), ("base_branches", ["main"])):
+            changed = json.loads(json.dumps(contract))
+            changed["github"]["submission"]["trigger"][field] = value
+            self.assertNotEqual(baseline, module.development_fingerprint(changed))
+        invalid = [None, {}, dict(trigger, extra=True), dict(trigger, kind="other"),
+                   dict(trigger, label=""), dict(trigger, label="a\nb"),
+                   dict(trigger, label="${{ github.token }}"),
+                   dict(trigger, rerun_on_synchronize="true"),
+                   dict(trigger, base_branches=[]), dict(trigger, base_branches=["dev", "dev"]),
+                   dict(trigger, base_branches=["*"]), dict(trigger, base_branches="dev")]
+        invalid.extend({k: v for k, v in trigger.items() if k != field} for field in trigger)
+        for value in invalid:
+            with self.subTest(trigger=value):
+                bad = sample()
+                bad["github"]["submission"]["trigger"] = value
+                with self.assertRaises(ValueError):
+                    module.validate_development_contract(bad)
+        for mode in ("fallback", "primary"):
+            bad = sample_with_dispatch()
+            if mode == "primary":
+                bad["github"]["submission"] = {"mode": "workflow-dispatch-exact-head", "workflow": ".github/workflows/dev.yml", "control_ref": "dev"}
+            bad["github"]["submission"]["trigger"] = trigger
+            with self.assertRaises(ValueError):
+                module.validate_development_contract(bad)
+
     def test_setup_actions_are_validated_fingerprinted_and_rendered_in_order(self):
         module = load_module()
         contract = sample_with_setup()
@@ -152,6 +186,75 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
         node_version_index = workflow.index("node-version: 22")
         self.assertLess(cache_index, dependency_index)
         self.assertLess(dependency_index, node_version_index)
+
+    def test_incremental_evidence_cache_requires_safe_label_trigger_and_emits_partial_save(self):
+        module = load_module()
+        contract = sample()
+        contract["github"]["submission"]["trigger"] = {
+            "kind": "pull-request-label", "label": "development:validate",
+            "rerun_on_synchronize": True, "base_branches": ["dev"],
+        }
+        contract["github"]["evidence_cache"] = {
+            "path": "artifacts/backend-suite-evidence.json",
+            "prefix": "dev-suite-v1",
+            "verify_command": "python scripts/evidence.py verify",
+            "before_command_id": "unit",
+        }
+        module.validate_development_contract(contract)
+        workflow = module.render_development_workflow(contract)
+        self.assertIn("  actions: read", workflow)
+        self.assertIn("GITHUB_TOKEN: ${{ github.token }}", workflow)
+        self.assertIn("uses: actions/cache/restore@v4", workflow)
+        self.assertIn("uses: actions/cache/save@v4", workflow)
+        self.assertIn("uses: actions/upload-artifact@v4", workflow)
+        self.assertIn("if: always()", workflow)
+        self.assertLess(workflow.index("Verify prior Development evidence"), workflow.index("Run Development tests"))
+        self.assertLess(workflow.index("Run Development tests"), workflow.index("Upload partial Development evidence"))
+        self.assertNotIn("contents: write", workflow)
+        bad = json.loads(json.dumps(contract))
+        bad["github"]["evidence_cache"]["before_command_id"] = "missing"
+        with self.assertRaises(ValueError): module.validate_development_contract(bad)
+        bad = json.loads(json.dumps(contract))
+        bad["github"]["evidence_cache"]["prefix"] = "bad-${{ secrets.x }}"
+        with self.assertRaises(ValueError): module.validate_development_contract(bad)
+        bad = json.loads(json.dumps(contract))
+        bad["github"]["submission"].pop("trigger")
+        with self.assertRaises(ValueError): module.validate_development_contract(bad)
+        bad = json.loads(json.dumps(contract))
+        bad["github"]["shell"] = "pwsh"
+        with self.assertRaises(ValueError): module.validate_development_contract(bad)
+
+    def test_evidence_cache_rejects_incompatible_submission_modes(self):
+        module = load_module()
+        for submission in (
+            {"mode": "existing-pr-events",
+             "workflow": ".github/workflows/coferlandia-development-validation.yml"},
+            {"mode": "workflow-dispatch-exact-head",
+             "workflow": ".github/workflows/coferlandia-development-validation.yml",
+             "control_ref": "dev"},
+        ):
+            with self.subTest(mode=submission["mode"]):
+                contract = sample()
+                contract["github"]["submission"] = submission
+                contract["github"]["evidence_cache"] = {
+                    "path": "artifacts/backend-suite-evidence.json",
+                    "prefix": "dev-suite-v1",
+                    "verify_command": "python scripts/evidence.py verify",
+                    "before_command_id": "unit",
+                }
+                with self.assertRaisesRegex(ValueError, "requires a labeled pull-request trigger"):
+                    module.validate_development_contract(contract)
+
+    def test_repository_development_workflow_matches_current_contract(self):
+        module = load_module()
+        root = SKILL_ROOT.parents[2]
+        contract_path = root / ".coferlandia/development/validation.json"
+        if not contract_path.is_file():
+            self.skipTest("repository has no published Development contract")
+        contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        module.validate_development_contract(contract, verify_fingerprint=True)
+        workflow_path = root / contract["github"]["submission"]["workflow"]
+        self.assertEqual(module.render_development_workflow(contract), workflow_path.read_text(encoding="utf-8"))
 
     def test_contract_rejects_unsafe_or_ambiguous_inputs(self):
         module = load_module()
@@ -193,6 +296,17 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
         fallback_schema = github_schema["properties"]["submission"]["properties"]["fallback"]
         self.assertEqual(fallback_schema["properties"]["mode"]["const"], "workflow-dispatch-exact-head")
         self.assertIn("control_ref", fallback_schema["required"])
+        trigger_schema = schema["$defs"]["pullRequestLabelTrigger"]
+        self.assertEqual(set(trigger_schema["required"]), {"kind", "label", "rerun_on_synchronize", "base_branches"})
+        self.assertFalse(trigger_schema["additionalProperties"])
+        self.assertEqual(trigger_schema["properties"]["kind"]["const"], "pull-request-label")
+        self.assertEqual(trigger_schema["properties"]["rerun_on_synchronize"]["type"], "boolean")
+        self.assertTrue(trigger_schema["properties"]["base_branches"]["uniqueItems"])
+        submission_schema = github_schema["properties"]["submission"]
+        self.assertEqual(submission_schema["properties"]["trigger"], {"$ref": "#/$defs/pullRequestLabelTrigger"})
+        pr_schema = submission_schema["oneOf"][0]
+        self.assertIn("trigger", pr_schema["properties"])
+        self.assertEqual(pr_schema["not"], {"required": ["trigger", "fallback"]})
         self.assertNotIn("setup", github_schema["required"])
         setup_item = github_schema["properties"]["setup"]["items"]
         self.assertEqual(set(setup_item["required"]), {"name", "uses"})

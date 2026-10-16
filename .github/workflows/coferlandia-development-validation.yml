@@ -2,7 +2,7 @@ name: Coferlandia Development Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, converted_to_draft]
+    types: [opened, synchronize, reopened, converted_to_draft, ready_for_review, closed]
 
 permissions:
   contents: read
@@ -14,7 +14,7 @@ concurrency:
 jobs:
   validation:
     name: "Development Validation / Gate"
-    if: github.event.pull_request.draft == true
+    if: github.event.pull_request.draft == true && github.event.action != 'ready_for_review' && github.event.action != 'closed'
     runs-on: ["ubuntu-latest"]
     steps:
       - name: Check out exact PR head
