@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v2.19.1 (2026-10-16)
+
+### Distribution integrity
+
+- Extends exact-vendor provenance with optional explicit `artifacts` selection inside declared families.
+- Adds explicit `overlays` with required reasons for intentionally non-exact upstream paths.
+- Fails closed on unknown artifact/overlay paths and exact/overlay conflicts while preserving the complete reproducible source manifest.
+
+### Migration or compatibility
+
+- Existing whole-family provenance remains valid when `artifacts` is omitted.
+- Runtime-only consumers may now protect exact installed files without copying upstream tests or falsely claiming locally extended registry/index files are exact.
+
+
 ## v2.19.0 (2026-10-16)
 
 ### Distribution integrity
