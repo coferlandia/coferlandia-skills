@@ -50,12 +50,22 @@ Consumers keep a small JSON file beside their vendored source metadata:
     "prompts",
     "delivery",
     "skill:coferlandia-ci-adapter"
+  ],
+  "artifacts": [
+    ".agents/prompts/chat-coder.md",
+    ".agents/prompts/ci.md",
+    "_protocol/delivery/READY_FOR_CI.md"
+  ],
+  "overlays": [
+    {
+      "consumer_path": ".agents/prompts/registry.json",
+      "reason": "repository-local aliases extend the upstream registry"
+    }
   ]
 }
 ```
 
-Only listed families are claimed as exact vendoring. Local-only skills/prompts remain allowed
-outside those upstream-owned families.
+Families bound the upstream namespace. When `artifacts` is omitted, every manifest entry in the listed families is exact. When `artifacts` is present, only those explicit consumer paths are exact; every selected path must exist in the source manifest. `overlays` documents intentional non-exact upstream paths with a non-empty reason. An exact artifact and overlay may not overlap, and unknown artifact/overlay paths fail closed. Local-only skills/prompts remain allowed outside upstream-owned paths.
 
 ## Offline verification
 
@@ -73,7 +83,10 @@ The command fails closed on:
 - mismatched source repository/release/revision;
 - invalid manifest fingerprint;
 - provenance manifest fingerprint mismatch;
-- unknown selected family.
+- unknown selected family;
+- unknown exact artifact path;
+- unknown/invalid overlay declaration;
+- overlap between an exact artifact and declared overlay.
 
 It does not use GitHub or any network service.
 
@@ -94,7 +107,6 @@ Do not silently modify an exact upstream-owned path while preserving the upstrea
 A consumer that needs a true adaptation should either:
 
 1. upstream the generic behavior and re-vendor the released artifact; or
-2. keep the adaptation under a separately identified local artifact/overlay outside the exact
-   upstream-owned path.
+2. declare the specific upstream path as a provenance `overlay` with an explicit reason when the consumer intentionally maintains that path locally.
 
-The checker intentionally treats same-version/different-bytes as drift.
+Prefer exact artifact selection for runtime subsets rather than copying upstream tests that the consumer does not install. The source manifest remains complete; consumer provenance decides which installed paths are exact and which are explicit overlays. The checker intentionally treats same-version/different-bytes as drift for every exact artifact.
