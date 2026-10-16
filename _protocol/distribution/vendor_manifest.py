@@ -110,7 +110,47 @@ def check_consumer(root: Path, manifest: dict[str, Any], provenance: dict[str, A
         if family not in available_families:
             errors.append(f"family:{family}")
 
-    selected = [entry for entry in manifest.get("entries", []) if entry.get("family") in set(families)]
+    family_entries = [entry for entry in manifest.get("entries", []) if entry.get("family") in set(families)]
+    by_path = {entry["consumer_path"]: entry for entry in family_entries}
+
+    artifacts = provenance.get("artifacts")
+    if artifacts is None:
+        selected = family_entries
+        artifact_paths = set(by_path)
+    elif isinstance(artifacts, list) and artifacts and all(isinstance(item, str) and item for item in artifacts):
+        artifact_paths = set(artifacts)
+        unknown = sorted(artifact_paths - set(by_path))
+        errors.extend(f"artifact:{path}" for path in unknown)
+        selected = [by_path[path] for path in artifacts if path in by_path]
+    else:
+        errors.append("artifacts")
+        artifact_paths = set()
+        selected = []
+
+    overlays = provenance.get("overlays", [])
+    overlay_paths: set[str] = set()
+    if not isinstance(overlays, list):
+        errors.append("overlays")
+    else:
+        for overlay in overlays:
+            if not isinstance(overlay, dict):
+                errors.append("overlay")
+                continue
+            path = overlay.get("consumer_path")
+            reason = overlay.get("reason")
+            if not isinstance(path, str) or not path or not isinstance(reason, str) or not reason.strip():
+                errors.append("overlay")
+                continue
+            if path not in by_path:
+                errors.append(f"overlay:{path}")
+                continue
+            if path in overlay_paths:
+                errors.append(f"overlay-duplicate:{path}")
+            overlay_paths.add(path)
+
+    for path in sorted(artifact_paths & overlay_paths):
+        errors.append(f"artifact-overlay-conflict:{path}")
+
     for entry in selected:
         consumer_path = entry["consumer_path"]
         path = root / consumer_path
@@ -126,6 +166,7 @@ def check_consumer(root: Path, manifest: dict[str, Any], provenance: dict[str, A
         "missing": sorted(missing),
         "modified": sorted(modified),
         "checked": len(selected),
+        "overlays": sorted(overlay_paths),
     }
     return result
 
