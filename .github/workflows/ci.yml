@@ -68,6 +68,9 @@ jobs:
           python -m unittest discover -s prompts/tests -p "test_*.py" &&
           python -m unittest _protocol.delivery.test_contracts
 
+      - name: Vendor distribution integrity tests
+        run: python -m unittest _protocol.distribution.test_vendor_manifest
+
       - name: Local CI skill tests
         run: python -m unittest discover -s skills/engineering/local-ci/tests -p "test_*.py"
 
