@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat Development controller used by the standalone GitHub-native Chat Coder pipeline or by explicit Development-only/composed delivery flows."
-version: "1.8.0"
+version: "1.9.0"
 stage: development
 status: active
 ---
@@ -74,6 +74,12 @@ If the delegated context is missing durable authority, unsupported by current re
 5. If the Issue has one or more assignees and the authenticated GitHub user is not among them, preserve the existing ownership and stop, reporting an ownership blocker.
 6. Inspect current branch/PR state before creating anything. Reuse the work branch/PR only when it clearly belongs to the same work item, delivery context, target and current candidate.
 7. Keep implementation in one non-default branch and one Draft PR unless repository policy explicitly requires another approved structure.
+
+## Work-item linkage and Draft PR contract
+
+When downstream Integration owns explicit work-item closeout, Development must keep the pull request link non-closing. Use the repository-defined non-closing representation; for a GitHub Issue with no stricter repository convention, use a standalone `Refs #N` line. In this mode Chat Coder must not use `Closes`, `Fixes`, or `Resolves` in the PR body, title, or implementation commit message to grant GitHub automatic close authority.
+
+The Draft PR, `READY_FOR_CI`, downstream `READY_FOR_MERGE`, and Integration closeout must preserve the same controlling work-item identity. Before Development readiness, re-read the PR linkage and current work item; a missing, ambiguous, closing, or mismatched controlling identity is a Development work-surface blocker.
 
 ## Study before modification
 
@@ -176,7 +182,6 @@ When repository policy explicitly uses dependent or stacked implementation branc
 
 Stack propagation changes the child candidate and invalidates child-bound validation/review evidence. It does **not** by itself currentize the child against the authoritative development base, consume the parent branch's integration lifecycle, or prove the parent is integrated into its canonical target. Follow the repository's explicit stack policy when it exists; never invent auxiliary merge semantics from branch names alone.
 
-
 ## Development readiness validation
 
 Focused tests are iteration evidence; they are not sufficient by themselves for `READY_FOR_CI` when the repository defines broader cheap deterministic checks for the changed surface.
@@ -191,19 +196,20 @@ Immediately before the terminal development review and handoff, discover and run
 - for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
 - for frontend behavior or contract changes, run the repository's canonical complete frontend unit-test suite, plus repository-defined lint and typecheck checks when they are part of the cheap development contract;
 - run any other cheap deterministic contract check that repository instructions, scripts, or repository-owned Development/CI contracts explicitly require before Qualification.
+- validate every applicable cheap repository-owned work-surface guard for the Draft PR, including required work-item linkage, branch/target topology, Draft lifecycle state and equivalent metadata contracts; do not emit `READY_FOR_CI` while a required work-surface guard is RED, stale or unknown.
 
 ### Execution backends for Development validation
 
 Development requirements do not weaken merely because the active Chat client cannot execute them locally. Resolve where the required checks can run using `_protocol/delivery/DEVELOPMENT_VALIDATION.md` when that shared protocol is available:
 
 1. Prefer direct execution in the active development environment when it can correctly run every applicable required check.
-2. If direct execution is unavailable, look for a current repository-owned remote Development contract, canonically `.coferlandia/development/validation.json`, and validate its fingerprint and declared GitHub workflow/gate.
+2. If direct execution is unavailable, look for a current repository-owned remote Development contract, canonically `.coferlandia/development/validation.json`, validate its fingerprint and declared GitHub workflow/gate, and read its declared submission mode.
 3. When that contract is absent and an installed `coferlandia-ci-adapter` supports remote Development adaptation, Chat Coder may explicitly delegate only the minimum bootstrap needed to execute its required Development checks. Derive commands, services, runner labels, shell and paths from repository truth; never invent them.
-4. If the remote surface uses existing Draft-PR events, create or reuse the one allowed Draft PR before remote validation even though terminal review and `READY_FOR_CI` are still pending.
-5. Prefer the contract's normal PR-event submission. When the contract explicitly declares an exact-head dispatch fallback, use it only when the normal event surface cannot produce fresh evidence for the current Draft candidate. Dispatch only the repository-declared trusted control ref and pass the PR number plus exact current head SHA; never dispatch the candidate branch as control-plane authority.
+4. If the contract declares `existing-pr-events`, create or reuse the one allowed Draft PR before remote validation and observe its declared event-driven Development gate. When `submission.trigger.kind` is `pull-request-label`, first reconstruct current PR/head/base/fingerprint and compatible runs; add the declared label only when fresh execution is needed and no compatible queued/running/successful request exists. Respect declared base branches. Keep the label through bounded, atomically published correction candidates so synchronization requests fresh validation; do not publish intermediate edits while armed. After current GREEN evidence and final review, remove the label before writing READY_FOR_CI. This Development stage leaves the PR Draft: only an already-resolved GITHUB_NATIVE `ci` owns the Ready transition; `chat dev` stops and explicit LOCAL follows its own lifecycle. If that mode also declares an exact-head dispatch fallback, use the fallback only when the normal event surface cannot produce fresh evidence for the current Draft candidate.
+5. If the contract declares primary `workflow-dispatch-exact-head`, do not wait for or manufacture a PR event. Dispatch only the repository-declared trusted `control_ref` with the current Draft PR number plus exact current head SHA, after checking for a compatible queued/running/completed request so reentry does not create duplicates. Never dispatch the candidate branch as control-plane authority.
 6. Observe only the declared Development gate for the exact current PR head SHA and current Development contract fingerprint. Pending, skipped, cancelled, stale, superseded, old-SHA or old-fingerprint evidence is not GREEN.
 7. Queued, waiting, requested, pending or in-progress Development evidence is non-terminal. During the active execution, continue observing the authoritative exact-SHA gate when the available GitHub surface permits it. If the external run remains non-terminal beyond what the active execution can observe, report `Development workflow = WAITING_CI` with the exact PR, candidate SHA and run/check identity. On reentry, reconstruct current PR/head/fingerprint/run state from GitHub and consume the existing result; do not blindly submit a duplicate run.
-8. If the Development gate is RED, classify it explicitly as a **Development** failure, inspect its exact failing job/log, make only bounded in-scope corrections, produce one new batched candidate, and repeat Development validation. Never report a remote Development gate failure as Qualification failure; Qualification has not started before a current durable `READY_FOR_CI`.
+8. If the Development gate is RED, classify it explicitly as a **Development** failure, inspect its exact failing job/log, make only bounded in-scope corrections, produce one new batched candidate, and repeat Development validation. For same-candidate infrastructure failure/cancellation, recheck current Draft/head/base/fingerprint and allow one rerun of the failed/cancelled request per recovery pass; consume its latest attempt. Repeated failure is an environment blocker. Do not toggle labels or manufacture commits for retries. Never report a remote Development gate failure as Qualification failure; Qualification has not started before a current durable `READY_FOR_CI`.
 9. Block only when no authorized Development execution backend can produce fresh evidence for the exact candidate, or when the repository facts needed to adapt a missing remote surface are ambiguous.
 
 Remote Development validation is still **Development**. It must not invoke or reuse Qualification merely as a workaround, select a Qualification strategy, satisfy `.coferlandia/ci/profile.json`, emit `READY_FOR_MERGE`, merge, publish or deploy. A remote workflow itself never writes the durable `READY_FOR_CI`; Chat Coder evaluates the evidence and owns that handoff after review.
@@ -295,7 +301,7 @@ Review Important: 0
 Next stage: Qualification
 ```
 
-Immediately before writing it, re-read the PR and prove `Candidate SHA == current PR head SHA`. Re-read the PR target and ensure it still matches the repository-authorized target for the active delivery context. The handoff is development evidence, not merge authority. Any later head change makes it stale; a target/context mismatch blocks the handoff until reconciled.
+Immediately before writing it, re-read the PR and prove `Candidate SHA == current PR head SHA`. Re-read the PR target and ensure it still matches the repository-authorized target for the active delivery context. Re-resolve the controlling work-item linkage and require that it is the same controlling work-item identity recorded in `Issue:`; Development must not hand Qualification a PR whose work-item identity is ambiguous or closing by side effect. The handoff is development evidence, not merge authority. Any later head change makes it stale; a target/context mismatch blocks the handoff until reconciled.
 
 ## Terminal report
 
