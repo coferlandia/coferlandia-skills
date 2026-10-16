@@ -33,6 +33,37 @@
 - Repositories that want controlled Draft -> Ready submission declare it in `.coferlandia/ci/profile.json`; repository-specific labels, branches, workflows and gates remain consumer-owned.
 - Consumers vendoring the delivery family should synchronize `chat-coder.md`, `ci.md`, `READY_FOR_CI.md`, `READY_FOR_MERGE.md`, CI/development schemas, and `coferlandia-ci-adapter` together.
 
+## v2.18.0 (2026-10-16)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.4.0 | 1.5.0 | Adds declarative Qualification activation, label-triggered/primary-dispatch Development validation, and bounded same-candidate retry semantics. |
+
+### Chat prompts
+
+- `chat-coder` 1.8.0 -> 1.9.0 makes controlling work-item linkage explicitly non-closing when Integration owns closeout, validates cheap PR work-surface guards before handoff, and consumes repository-declared label-triggered Development validation without lifecycle toggles.
+- `ci` 1.4.0 -> 1.5.0 makes Qualification activation explicit and ordered: validate exact current `READY_FOR_CI` first, then perform a repository-declared `ready-for-review` activation exactly once.
+
+### Repository and protocol
+
+- Extends the Qualification profile compatibly with optional fingerprinted `github.submission.activation.kind = ready-for-review`.
+- Upstreams the generic Development label-trigger, primary exact-head dispatch, bounded retry and reusable evidence-cache contracts previously proven in a consumer repository.
+- Requires controlling work-item identity continuity across PR linkage, `READY_FOR_CI`, `READY_FOR_MERGE` and Integration closeout.
+- Keeps `READY_FOR_CI`/`READY_FOR_MERGE` marker/schema versions unchanged while strengthening their validity rules.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.17.0 to v2.18.0 for the additive lifecycle-alignment capability.
+- Ships the updated Chat prompt family and `coferlandia-ci-adapter` 1.5.0 together so consumers no longer need same-version local prompt/adapter forks.
+
+### Migration or compatibility
+
+- Existing repositories that omit Qualification activation and Development triggers retain their previous behavior.
+- Repositories that want controlled Draft -> Ready submission declare it in `.coferlandia/ci/profile.json`; repository-specific labels, branches, workflows and gates remain consumer-owned.
+- Consumers vendoring the delivery family should synchronize `chat-coder.md`, `ci.md`, `READY_FOR_CI.md`, `READY_FOR_MERGE.md`, CI/development schemas, and `coferlandia-ci-adapter` together.
+
 ## v2.17.0 (2026-10-01)
 
 ### Skills
