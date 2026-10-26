@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -135,6 +136,14 @@ class ExternalSkillProviderTests(unittest.TestCase):
         self.assertNotIn("subprocess.run(", text)
 
     def test_legacy_wrappers_and_doctor_use_generic_resolver(self) -> None:
+        bash = "bash"
+        if os.name == "nt":
+            git_executable = shutil.which("git")
+            if git_executable:
+                git_bash = Path(git_executable).with_name("bash.exe")
+                if git_bash.is_file():
+                    bash = str(git_bash)
+
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             make_skill(root, "brainstorming")
@@ -145,7 +154,7 @@ class ExternalSkillProviderTests(unittest.TestCase):
 
             legacy = subprocess.run(
                 [
-                    "bash",
+                    bash,
                     "skills/ops/coferlandia-project-manager/scripts/pm-check-superpowers-skills.sh",
                     "--config",
                     "skills/ops/coferlandia-project-manager/templates/config.template.json",
@@ -167,7 +176,7 @@ class ExternalSkillProviderTests(unittest.TestCase):
 
             doctor = subprocess.run(
                 [
-                    "bash",
+                    bash,
                     "skills/ops/coferlandia-project-manager/scripts/pm-doctor.sh",
                     "--config",
                     "skills/ops/coferlandia-project-manager/templates/config.template.json",
