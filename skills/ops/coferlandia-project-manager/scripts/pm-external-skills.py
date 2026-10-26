@@ -24,7 +24,11 @@ def split_override_roots(value: str | None) -> list[Path]:
 
 def default_skill_roots() -> list[Path]:
     home = Path.home()
+    cwd = Path.cwd()
     candidates = [
+        cwd / ".codex" / "skills",
+        cwd / ".agents" / "skills",
+        cwd / ".claude" / "skills",
         home / ".codex" / "skills",
         home / ".agents" / "skills",
         home / ".claude" / "skills",
