@@ -1,5 +1,12 @@
 # Changelog — software-development
 
+## 4.8 — 2026-10-25
+
+### Changed
+
+- Adds context-driven use of independently installed specialist Agent Skills for API/interface design, official-source grounding, security, UI/browser work, performance, observability, migration, simplification, and context quality while keeping Coferlandia/Superpowers lifecycle ownership canonical.
+
+
 ## 4.7 — 2026-10-01
 
 ### Changed
