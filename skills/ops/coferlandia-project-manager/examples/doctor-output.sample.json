@@ -186,6 +186,10 @@
           "commands": [
             "codex plugin marketplace add addyosmani/agent-skills",
             "codex plugin add agent-skills@agent-skills"
+          ],
+          "scope": "provider",
+          "warnings": [
+            "Provider installation also exposes lifecycle skills that Coferlandia will never auto-request: code-review-and-quality, debugging-and-error-recovery, git-workflow-and-versioning, incremental-implementation, planning-and-task-breakdown, spec-driven-development, test-driven-development, using-agent-skills"
           ]
         },
         "verification": "Start a fresh Codex session and verify the requested Agent Skills are discoverable."
