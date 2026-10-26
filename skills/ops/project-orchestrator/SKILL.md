@@ -11,10 +11,10 @@ compatibility: >
   (`gh`); local `--spec` and `--manifest` execution do not.
 metadata:
   author: coferlandia
-  version: "2.4"
+  version: "2.5"
   category: ops
   status: active
-  tested: "2026-09-03 - Exact-candidate integration gates, durable CI states, rerun selection, remote-base validation, and conditional squash merge covered across repository CI."
+  tested: "2026-10-26 - External specialist recommendation deduplication plus prior exact-candidate integration contracts covered across repository CI."
 ---
 
 ## Context
@@ -25,6 +25,18 @@ and cleanup. Semantic models provide coding, completion verification, review, an
 they never own controller state or Git lifecycle.
 
 Reuse `software-development` role contracts rather than duplicating their semantic responsibilities.
+
+### External specialist recommendation ownership
+
+Workers may report a missing `required` or `recommended` external specialist through the
+structured agent-result field `external_skill_recommendations`. The controller owns notification
+deduplication for an orchestrated run: it persists the first `provider_id + skill_id` occurrence in
+durable run state and suppresses later repeats from other workers, retries, or review rounds.
+`optional` recommendations are discarded from user-facing notification state.
+
+This mechanism is notification state only. It never installs, updates, invokes, or grants authority
+to an external provider. Installation remains a separate explicit current-user action through the
+owning external-provider/doctor contract.
 
 The controller supports two first-class execution modes:
 
