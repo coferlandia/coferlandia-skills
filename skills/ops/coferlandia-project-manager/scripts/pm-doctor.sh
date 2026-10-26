@@ -43,11 +43,11 @@ config_path="$(pm_resolve_config_path "${config_path}")"
 pm_require_file "${config_path}"
 
 python_cmd="$(pm_python_cmd)"
-config_json="$("${script_dir}/pm-validate-config.sh" --config "${config_path}" --json)"
+config_json="$(bash "${script_dir}/pm-validate-config.sh" --config "${config_path}" --json)"
 external_json="$("${python_cmd}" "${script_dir}/pm-external-skills.py" --config "${config_path}" --json)"
-superpowers_json="$("${script_dir}/pm-detect-superpowers.sh" --config "${config_path}" --json)"
-skills_json="$("${script_dir}/pm-check-superpowers-skills.sh" --config "${config_path}" --json)"
-git_json="$("${script_dir}/pm-detect-git-capabilities.sh" --json)"
+superpowers_json="$(bash "${script_dir}/pm-detect-superpowers.sh" --config "${config_path}" --json)"
+skills_json="$(bash "${script_dir}/pm-check-superpowers-skills.sh" --config "${config_path}" --json)"
+git_json="$(bash "${script_dir}/pm-detect-git-capabilities.sh" --json)"
 effective_vault_root="$(pm_effective_obsidian_vault_root "${config_path}")"
 
 "${python_cmd}" - "${config_json}" "${external_json}" "${superpowers_json}" "${skills_json}" "${git_json}" "${json_output}" "${effective_vault_root}" <<'PY'
