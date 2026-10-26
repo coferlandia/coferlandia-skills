@@ -105,10 +105,7 @@ def provider_policy(provider: dict[str, Any], config: dict[str, Any]) -> dict[st
 
 def recipe_for(provider: dict[str, Any], runtime: str) -> dict[str, Any] | None:
     recipes = provider.get("install_recipes", {})
-    recipe = recipes.get(runtime)
-    if recipe is None and runtime != "unknown":
-        recipe = recipes.get("generic")
-    return recipe
+    return recipes.get(runtime) or recipes.get("generic")
 
 def build_provider_result(
     provider: dict[str, Any],
