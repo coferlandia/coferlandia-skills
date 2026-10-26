@@ -29,9 +29,9 @@
         "missing": 11
       },
       "optional": {
-        "available": 1,
-        "total": 9,
-        "missing": 8
+        "available": 0,
+        "total": 7,
+        "missing": 7
       }
     },
     "providers": [
@@ -113,20 +113,41 @@
         "policy": {
           "required": [],
           "recommended": [
-            "source-driven-development",
-            "security-and-hardening"
+            "api-and-interface-design",
+            "browser-testing-with-devtools",
+            "code-simplification",
+            "context-engineering",
+            "deprecation-and-migration",
+            "doubt-driven-development",
+            "frontend-ui-engineering",
+            "idea-refine",
+            "observability-and-instrumentation",
+            "performance-optimization",
+            "security-and-hardening",
+            "source-driven-development"
           ],
           "optional": [
-            "documentation-and-adrs"
+            "ci-cd-and-automation",
+            "constraint-driven-development",
+            "documentation-and-adrs",
+            "interview-me",
+            "shipping-and-launch"
           ],
           "never_request": [
+            "using-agent-skills",
+            "spec-driven-development",
+            "planning-and-task-breakdown",
+            "incremental-implementation",
             "test-driven-development",
-            "using-agent-skills"
+            "debugging-and-error-recovery",
+            "code-review-and-quality",
+            "git-workflow-and-versioning"
           ]
         },
         "skills": {
           "available": [
-            "source-driven-development"
+            "source-driven-development",
+            "test-driven-development"
           ],
           "locations": {},
           "required_available": [],
@@ -135,11 +156,25 @@
             "source-driven-development"
           ],
           "recommended_missing": [
+            "api-and-interface-design",
+            "browser-testing-with-devtools",
+            "code-simplification",
+            "context-engineering",
+            "deprecation-and-migration",
+            "doubt-driven-development",
+            "frontend-ui-engineering",
+            "idea-refine",
+            "observability-and-instrumentation",
+            "performance-optimization",
             "security-and-hardening"
           ],
           "optional_available": [],
           "optional_missing": [
-            "documentation-and-adrs"
+            "ci-cd-and-automation",
+            "constraint-driven-development",
+            "documentation-and-adrs",
+            "interview-me",
+            "shipping-and-launch"
           ],
           "ambiguous_conflicting_names_present": [
             "test-driven-development"
