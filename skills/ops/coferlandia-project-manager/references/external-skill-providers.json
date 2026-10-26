@@ -47,7 +47,17 @@
           ],
           "verification": "Restart Gemini CLI and verify Superpowers skills are discoverable."
         }
-      }
+      },
+      "manifest_identity": {
+        "names": [
+          "superpowers"
+        ],
+        "repositories": [
+          "https://github.com/obra/superpowers",
+          "https://github.com/obra/superpowers.git"
+        ]
+      },
+      "allow_legacy_flat_detection": true
     },
     {
       "id": "addy-agent-skills",
@@ -129,7 +139,17 @@
           ],
           "verification": "Verify the runtime's skills directory contains the requested Agent Skills."
         }
-      }
+      },
+      "manifest_identity": {
+        "names": [
+          "agent-skills"
+        ],
+        "repositories": [
+          "https://github.com/addyosmani/agent-skills",
+          "https://github.com/addyosmani/agent-skills.git"
+        ]
+      },
+      "allow_legacy_flat_detection": false
     }
   ]
 }
