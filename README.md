@@ -164,6 +164,12 @@ AGENTS.md        Entry point for agents
 
 **v2.20.0 — 2026-10-25**
 
+| Changed skill | Version | Main change |
+|---|---:|---|
+| coferlandia-project-manager | 0.10.0 | Adds provider-neutral external Agent Skill discovery, doctor diagnostics, canonical upstream links, and explicit-approval installation handoffs while preserving legacy Superpowers checks. |
+| software-development | 4.8 | Requests independently installed specialist skills contextually without transferring Coferlandia scope, Git, review, or delivery authority. |
+| the-architect | 1.1.0 | Adds subordinate specialist review/evidence disciplines for material architecture work without changing Architecture Gate ownership. |
+
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
 
