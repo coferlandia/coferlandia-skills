@@ -60,8 +60,11 @@ python scripts/pm-external-skills.py --config <path> --json
 ```
 
 The provider registry records canonical repository/documentation links, license, reviewed
-compatibility evidence, required/recommended/optional policy, conflict names, and reviewed
-installation recipes for supported runtimes. Initial registered upstreams are:
+compatibility evidence, manifest identity, required/recommended/optional policy, conflict names,
+and reviewed installation recipes for supported runtimes. Provider identity must come from
+runtime/plugin provenance when available; a same-named flat skill is not sufficient evidence.
+Legacy flat Superpowers discovery remains an explicit compatibility mode and is reported as
+unverified rather than silently attributed to a provider. Initial registered upstreams are:
 
 - Superpowers — https://github.com/obra/superpowers
 - Addy Osmani Agent Skills — https://github.com/addyosmani/agent-skills
