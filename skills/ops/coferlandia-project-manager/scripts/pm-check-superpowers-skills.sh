@@ -7,15 +7,21 @@ source "${script_dir}/lib/config.sh"
 
 print_help() {
   cat <<'EOF'
-Usage: pm-check-superpowers-skills.sh [--json]
-Description: Check which required and optional Superpowers skills are available.
+Usage: pm-check-superpowers-skills.sh [--config <path>] [--json]
+Description: Compatibility wrapper that checks Superpowers skills through the generic external-skill resolver.
 EOF
 }
 
 json_output=false
+config_path="$(pm_config_template_path)"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --config)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --config"
+      config_path="$1"
+      ;;
     --json)
       json_output=true
       ;;
@@ -30,52 +36,33 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+pm_require_file "${config_path}"
 python_cmd="$(pm_python_cmd)"
-skill_root="$(pm_skill_root)"
-"${python_cmd}" - "${json_output}" "${skill_root}" <<'PY'
+provider_json="$("${python_cmd}" "${script_dir}/pm-external-skills.py" --config "${config_path}" --provider superpowers --json)"
+
+"${python_cmd}" - "${provider_json}" "${json_output}" <<'PY'
 import json
-import os
 import sys
-from pathlib import Path
 
-json_output = sys.argv[1].lower() == "true"
-repo_root = Path(sys.argv[2])
-template = json.loads(
-    (repo_root / "templates" / "config.template.json").read_text(
-        encoding="utf-8"
-    )
-)
-required = template["superpowers"]["required_skills"]
-optional = template["superpowers"]["optional_skills"]
-
-roots = [Path(os.path.expanduser("~/.codex/skills")), Path(os.path.expanduser("~/.agents/skills"))]
-available_names = set()
-for root in roots:
-    if not root.is_dir():
-        continue
-    for child in root.iterdir():
-        if (child / "SKILL.md").is_file():
-          available_names.add(child.name)
-
-required_available = sorted([name for name in required if name in available_names])
-required_missing = sorted([name for name in required if name not in available_names])
-optional_available = sorted([name for name in optional if name in available_names])
-optional_missing = sorted([name for name in optional if name not in available_names])
-status = "ok" if not required_missing else "partial"
+provider = json.loads(sys.argv[1])
+json_output = sys.argv[2].lower() == "true"
+skills = provider["skills"]
 payload = {
-    "status": status,
-    "required_available": required_available,
-    "required_missing": required_missing,
-    "optional_available": optional_available,
-    "optional_missing": optional_missing,
+    "status": "ok" if not skills["required_missing"] else "partial",
+    "required_available": skills["required_available"],
+    "required_missing": skills["required_missing"],
+    "optional_available": skills["optional_available"],
+    "optional_missing": skills["optional_missing"],
+    "repository_url": provider.get("repository_url"),
 }
 
 if json_output:
     print(json.dumps(payload, indent=2))
 else:
-    print(f"status: {status}")
-    print(f"required_available: {', '.join(required_available) if required_available else 'none'}")
-    print(f"required_missing: {', '.join(required_missing) if required_missing else 'none'}")
-    print(f"optional_available: {', '.join(optional_available) if optional_available else 'none'}")
-    print(f"optional_missing: {', '.join(optional_missing) if optional_missing else 'none'}")
+    print(f"status: {payload['status']}")
+    print(f"repository: {payload['repository_url']}")
+    print(f"required_available: {', '.join(payload['required_available']) if payload['required_available'] else 'none'}")
+    print(f"required_missing: {', '.join(payload['required_missing']) if payload['required_missing'] else 'none'}")
+    print(f"optional_available: {', '.join(payload['optional_available']) if payload['optional_available'] else 'none'}")
+    print(f"optional_missing: {', '.join(payload['optional_missing']) if payload['optional_missing'] else 'none'}")
 PY
