@@ -11,10 +11,10 @@ compatibility: >
   GitHub is optional for Analyst/coding-agent execution; local fallback contracts use `.agent/`.
 metadata:
   author: community
-  version: "4.7"
+  version: "4.8"
   category: engineering
   status: active
-  tested: "2026-10-01 - Architecture Gate compatibility plus optional Product Knowledge Impact propagation/review covered by contract tests."
+  tested: "2026-10-25 - External specialist routing and authority boundaries covered by project-manager cross-role contract tests."
 ---
 
 ## Context
@@ -75,6 +75,42 @@ Without this section and an opted-in Product Knowledge profile, existing develop
 - Code Reviewer checks the exact impact reference and required dispositions; release notes or capability-name presence alone never proves coverage.
 - Requirement, ownership, or semantic conflicts return to the control authority and `product-knowledge-sync`; development roles do not invent product truth or release gates.
 Read `references/product-knowledge-impact.md` whenever this section/reference is present.
+
+## External specialist skills
+
+External providers are independently installed dependencies. When a task matches a specialist skill
+that is available, use it as a subordinate discipline inside the already-selected Coferlandia role
+and work contract. An external skill refines how authorized work is reasoned about; it never
+increases the active role's scope, Git authority, approval authority, or delivery ownership.
+
+For `addyosmani/agent-skills`, request these specialists when materially applicable:
+
+- `api-and-interface-design` for public APIs, shared module boundaries, compatibility, idempotency,
+  or interface contracts;
+- `source-driven-development` for framework/library work whose correctness depends on current,
+  version-specific official documentation;
+- `security-and-hardening` for authentication, authorization, untrusted input, secrets, personal
+  data, dependency/supply-chain risk, or external service boundaries;
+- `frontend-ui-engineering` and `browser-testing-with-devtools` for user-facing UI/runtime browser
+  work when the browser capability is available;
+- `performance-optimization` only for measured performance work or explicit performance
+  requirements;
+- `observability-and-instrumentation` for production telemetry, diagnostics, metrics, traces, and
+  alerts;
+- `deprecation-and-migration` for approved compatibility transitions/removals;
+- `code-simplification` only inside an approved behavior-preserving simplification/refactor scope;
+- `context-engineering` when task/session context is materially degraded.
+
+If a recommended specialist is missing, surface the provider, exact skill, concrete benefit, and
+canonical repository once for the current task/session, then continue when the Coferlandia contract
+has a safe fallback. Installation is never implicit and requires explicit current user approval.
+
+Never auto-request Addy's `using-agent-skills`, `spec-driven-development`,
+`planning-and-task-breakdown`, `incremental-implementation`, `test-driven-development`,
+`debugging-and-error-recovery`, `code-review-and-quality`, or
+`git-workflow-and-versioning`. Coferlandia and its canonical Superpowers dependencies already own
+those lifecycle responsibilities. In particular, `superpowers:test-driven-development` and
+`superpowers:systematic-debugging` remain canonical where this skill requires them.
 
 ## Retouch Mode
 
