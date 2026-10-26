@@ -46,9 +46,11 @@ import sys
 
 provider = json.loads(sys.argv[1])
 json_output = sys.argv[2].lower() == "true"
-roots = provider.get("roots", [])
+instances = provider.get("instances", [])
+roots = [item.get("skill_root") for item in instances if item.get("skill_root")]
 payload = {
-    "status": "ok" if roots else "missing",
+    "status": "ok" if provider.get("present") else "missing",
+    "presence": provider.get("presence"),
     "roots": roots,
     "repository_url": provider.get("repository_url"),
     "tested": provider.get("tested", {}),
