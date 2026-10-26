@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -128,6 +129,62 @@ class ExternalSkillProviderTests(unittest.TestCase):
         self.assertNotIn("os.system(", text)
         self.assertNotIn("shell=True", text)
         self.assertNotIn("subprocess.run(", text)
+
+    def test_legacy_wrappers_and_doctor_use_generic_resolver(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            make_skill(root, "brainstorming")
+            make_skill(root, "writing-plans")
+            env = os.environ.copy()
+            env["COFERLANDIA_EXTERNAL_SKILL_ROOTS"] = str(root)
+            env["COFERLANDIA_AGENT_RUNTIME"] = "codex"
+
+            legacy = subprocess.run(
+                [
+                    "bash",
+                    str(SKILL_ROOT / "scripts" / "pm-check-superpowers-skills.sh"),
+                    "--config",
+                    str(CONFIG),
+                    "--json",
+                ],
+                text=True,
+                capture_output=True,
+                env=env,
+                check=False,
+            )
+            self.assertEqual(legacy.returncode, 0, legacy.stderr)
+            legacy_payload = json.loads(legacy.stdout)
+            self.assertEqual(legacy_payload["status"], "ok")
+            self.assertEqual(
+                legacy_payload["repository_url"],
+                "https://github.com/obra/superpowers",
+            )
+
+            doctor = subprocess.run(
+                [
+                    "bash",
+                    str(SKILL_ROOT / "scripts" / "pm-doctor.sh"),
+                    "--config",
+                    str(CONFIG),
+                    "--json",
+                ],
+                text=True,
+                capture_output=True,
+                env=env,
+                check=False,
+            )
+            self.assertEqual(doctor.returncode, 0, doctor.stderr)
+            doctor_payload = json.loads(doctor.stdout)
+            self.assertIn("external_skills", doctor_payload)
+            providers = {
+                provider["provider_id"]: provider
+                for provider in doctor_payload["external_skills"]["providers"]
+            }
+            self.assertEqual(providers["superpowers"]["status"], "ok")
+            self.assertEqual(providers["addy-agent-skills"]["status"], "missing")
+            self.assertTrue(
+                providers["addy-agent-skills"]["install_action"]["requires_user_approval"]
+            )
 
     def test_coferlandia_roles_keep_external_specialists_subordinate(self) -> None:
         software = (REPO_ROOT / "skills" / "engineering" / "software-development" / "SKILL.md").read_text(encoding="utf-8")
