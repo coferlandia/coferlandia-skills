@@ -15,10 +15,10 @@ compatibility: >
   not commit, push, merge, reset, or rewrite Git history without direct current authorization.
 metadata:
   author: coferlandia
-  version: "1.0.0"
+  version: "1.1.0"
   category: engineering
   status: active
-  tested: "2026-07-31 - activation, contract, CLI, architecture-home, link, report-limit, and Architecture Gate tests passed."
+  tested: "2026-10-25 - External architecture-specialist routing and authority boundaries covered by project-manager cross-role contract tests."
 ---
 
 ## Context
@@ -112,6 +112,31 @@ The model decides quality attributes, scenarios, risks, trade-offs, materiality,
 boundaries, suitability, and recommendations. The CLI only initializes, creates templates,
 validates metadata/sections, allocates stable IDs, detects duplicates/broken links, maintains
 managed indexes, checks report limits, and writes files atomically.
+
+### External specialist skills
+
+The Architect may request independently installed specialist skills as evidence/review disciplines,
+never as replacement architecture authorities. External guidance remains subordinate to the active
+Architecture Gate, source contract, Materiality Gate, and the Architect's existing mutation limits.
+
+For `addyosmani/agent-skills`, use when materially applicable:
+
+- `doubt-driven-development` for fresh-context adversarial review of consequential, unfamiliar, or
+  irreversible architectural decisions, but never from a nested context that violates the active
+  orchestration boundary;
+- `api-and-interface-design` for shared/public interface and compatibility decisions;
+- `security-and-hardening` for trust boundaries, auth, privacy, secrets, or supply-chain risk;
+- `performance-optimization` for evidence-backed performance/scalability constraints;
+- `observability-and-instrumentation` for operational visibility and diagnostic design;
+- `deprecation-and-migration` for migration/sunset architecture;
+- `source-driven-development` when framework/library architecture depends on current official
+  documentation.
+
+Missing recommended specialists are non-blocking unless the supplied work contract explicitly marks
+one as required. Surface a missing recommendation once with its upstream project identity; never
+install or update an external provider without explicit current user approval. External skills do
+not authorize source-project mutation, component extraction, Git operations, or Architecture Gate
+passage.
 
 ## Workflow 1 — Architecture Preflight
 
