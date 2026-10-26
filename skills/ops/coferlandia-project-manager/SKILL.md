@@ -77,7 +77,10 @@ Dependency levels have distinct behavior:
 `pm-doctor.sh` is read-only. It may expose a machine-readable `install_action` containing the
 upstream repository and reviewed runtime-specific installation/verification recipe, but detection
 never authorizes installation. A controlling agent may execute that action only after explicit
-current user approval and must rerun provider resolution afterward.
+current user approval and must rerun provider resolution afterward. When a whole-provider recipe
+also exposes skills in that provider's `never_request` set, the install action must disclose those
+conflicting names before asking for approval; availability never makes them part of Coferlandia's
+automatic workflow.
 
 For rough product exploration, Addy's `idea-refine` may complement the canonical Coferlandia /
 Superpowers planning path when already installed. It does not replace `brainstorming`,
