@@ -238,8 +238,9 @@ def provider_matches_instance(provider: dict[str, Any], instance: dict[str, Any]
     if names and str(instance.get("name", "")).lower() not in names:
         return False
     instance_repo = _normalize_repository(instance.get("repository"))
-    if instance_repo and repositories and instance_repo not in repositories:
-        return False
+    if repositories:
+        if instance_repo is None or instance_repo not in repositories:
+            return False
     return bool(names or repositories)
 
 
