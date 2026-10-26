@@ -27,3 +27,9 @@ to that contract; fix agents address only approved in-scope findings.
 Validate every result against the role schema before a state transition. Provider/model/session,
 run/work-item/attempt identity, status, changed files, tests, blockers, deviations, findings, and
 candidate/base SHAs remain durable controller evidence.
+
+Workers may additionally emit `external_skill_recommendations` entries containing
+`provider_id`, `skill_id`, `level`, and `reason`. The controller keeps only the first
+non-optional provider+skill recommendation in durable run state and removes duplicates from later
+attempt results. This field is advisory expertise discovery only and cannot authorize installation,
+Git operations, lifecycle transitions, or scope changes.

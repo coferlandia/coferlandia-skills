@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+
+## v2.20.0 (2026-10-25)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-project-manager | 0.9.0 | 0.10.0 | Adds provider-neutral external Agent Skill discovery, doctor diagnostics, canonical upstream links, and explicit-approval installation handoffs while preserving legacy Superpowers checks. |
+| software-development | 4.7 | 4.8 | Requests independently installed specialist skills contextually without transferring Coferlandia scope, Git, review, or delivery authority. |
+| the-architect | 1.0.0 | 1.1.0 | Adds subordinate specialist review/evidence disciplines for material architecture work without changing Architecture Gate ownership. |
+| project-orchestrator | 2.4 | 2.5 | Deduplicates missing external specialist recommendations durably at the controller boundary so workers cannot spam the same provider/skill warning across one run. |
+
+### External skill providers
+
+- Registers Superpowers (tested against 7.0.1) and Addy Osmani Agent Skills (tested against 0.6.13) as independently installed upstream providers.
+- Adds required/recommended/optional dependency semantics and an explicit never-request set for conflicting Addy lifecycle skills.
+- Adds a read-only provider resolver that identifies plugins from canonical manifests/repositories, detects installed versions when available, preserves same-name flat skills as unverified evidence instead of provider identity, and emits reviewed runtime-specific install actions.
+- Doctor output now includes canonical GitHub repositories, licenses, verified/legacy/unverified provenance, installed-vs-tested compatibility evidence, missing recommendations, and installation/verification guidance.
+- Project Orchestrator persists first-seen external recommendations by provider + skill and suppresses duplicates across workers/retries/review rounds; optional capabilities stay silent.
+- Installation remains user-owned: doctor never mutates the environment, every executable install handoff requires explicit current approval, and provider resolution must be rerun afterward.
+
+### Compatibility
+
+- Existing Superpowers config and the public `pm-detect-superpowers.sh` / `pm-check-superpowers-skills.sh` entry points remain available and are routed through the generic resolver.
+- Missing recommended Addy skills do not block development; required dependencies continue to fail only at their dependent capability boundary when no authorized fallback exists.
+- Coferlandia does not vendor, fork, patch, pin, or automatically update third-party skills.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.19.1 to v2.20.0 for the additive external-provider capability and cross-role specialist routing.
+
 ## v2.19.1 (2026-10-16)
 
 ### Distribution integrity

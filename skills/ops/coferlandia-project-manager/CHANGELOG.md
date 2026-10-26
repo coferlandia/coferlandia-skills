@@ -1,5 +1,17 @@
 # Changelog — coferlandia-project-manager
 
+## 0.10.0 — 2026-10-25
+
+### Added
+
+- Adds a provider-neutral, read-only external Agent Skill resolver and doctor output with canonical upstream links, licenses, compatibility evidence, dependency levels, runtime-specific installation guidance, and explicit-approval install handoffs.
+
+### Changed
+
+- Routes legacy Superpowers detection/checking through the generic resolver without removing the existing compatibility entry points.
+- Defines external providers as independently installed dependencies whose skills can add expertise but never expand Coferlandia authority.
+
+
 ## 0.9.0 — 2026-10-01
 
 ### Changed

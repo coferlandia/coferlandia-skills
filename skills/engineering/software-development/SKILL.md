@@ -11,10 +11,10 @@ compatibility: >
   GitHub is optional for Analyst/coding-agent execution; local fallback contracts use `.agent/`.
 metadata:
   author: community
-  version: "4.7"
+  version: "4.8"
   category: engineering
   status: active
-  tested: "2026-10-01 - Architecture Gate compatibility plus optional Product Knowledge Impact propagation/review covered by contract tests."
+  tested: "2026-10-25 - External specialist routing and authority boundaries covered by project-manager cross-role contract tests."
 ---
 
 ## Context
@@ -75,6 +75,18 @@ Without this section and an opted-in Product Knowledge profile, existing develop
 - Code Reviewer checks the exact impact reference and required dispositions; release notes or capability-name presence alone never proves coverage.
 - Requirement, ownership, or semantic conflicts return to the control authority and `product-knowledge-sync`; development roles do not invent product truth or release gates.
 Read `references/product-knowledge-impact.md` whenever this section/reference is present.
+
+## External specialist skills
+
+External providers are independently installed dependencies. When a task may benefit from one, keep
+the selected Coferlandia role/work contract authoritative: an external skill adds expertise and never
+increases scope, Git authority, approval authority, or delivery ownership.
+
+Read `references/external-specialists.md` whenever work involves public APIs, framework/library
+behavior, security/trust boundaries, UI/browser runtime, performance, observability, migration,
+behavior-preserving simplification, or materially degraded context. It owns the Addy specialist map,
+missing-skill notification rule, and never-request lifecycle conflicts. Canonical Superpowers TDD
+and systematic-debugging requirements in this skill remain unchanged.
 
 ## Retouch Mode
 

@@ -7,15 +7,21 @@ source "${script_dir}/lib/config.sh"
 
 print_help() {
   cat <<'EOF'
-Usage: pm-detect-superpowers.sh [--json]
-Description: Detect whether the required Superpowers skill roots are present.
+Usage: pm-detect-superpowers.sh [--config <path>] [--json]
+Description: Compatibility wrapper that detects Superpowers through the generic external-skill resolver.
 EOF
 }
 
 json_output=false
+config_path="$(pm_config_template_path)"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --config)
+      shift
+      [[ $# -gt 0 ]] || die "Missing value for --config"
+      config_path="$1"
+      ;;
     --json)
       json_output=true
       ;;
@@ -24,38 +30,40 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      printf 'Unknown argument: %s\n' "$1" >&2
-      exit 1
+      die "Unknown argument: $1"
       ;;
   esac
   shift
 done
 
-roots=()
-[[ -d "${HOME}/.codex/skills" ]] && roots+=("${HOME}/.codex/skills")
-[[ -d "${HOME}/.agents/skills" ]] && roots+=("${HOME}/.agents/skills")
+pm_require_file "${config_path}"
+python_cmd="$(pm_python_cmd)"
+provider_json="$("${python_cmd}" "${script_dir}/pm-external-skills.py" --config "${config_path}" --provider superpowers --json)"
 
-status="missing"
-[[ ${#roots[@]} -gt 0 ]] && status="ok"
-
-if [[ "${json_output}" == true ]]; then
-  python_cmd="$(pm_python_cmd)"
-  "${python_cmd}" - "${status}" "${roots[@]}" <<'PY'
+"${python_cmd}" - "${provider_json}" "${json_output}" <<'PY'
 import json
 import sys
 
-status = sys.argv[1]
-roots = sys.argv[2:]
-print(json.dumps({"status": status, "roots": roots}, indent=2))
+provider = json.loads(sys.argv[1])
+json_output = sys.argv[2].lower() == "true"
+roots = provider.get("roots", [])
+payload = {
+    "status": "ok" if provider.get("present") else "missing",
+    "presence": provider.get("presence"),
+    "roots": roots,
+    "repository_url": provider.get("repository_url"),
+    "tested": provider.get("tested", {}),
+}
+
+if json_output:
+    print(json.dumps(payload, indent=2))
+else:
+    print(f"status: {payload['status']}")
+    print(f"repository: {payload['repository_url']}")
+    if roots:
+        print("roots:")
+        for root in roots:
+            print(f"- {root}")
+    else:
+        print("roots: none")
 PY
-else
-  printf 'status: %s\n' "${status}"
-  if [[ ${#roots[@]} -eq 0 ]]; then
-    printf 'roots: none\n'
-  else
-    printf 'roots:\n'
-    for root in "${roots[@]}"; do
-      printf -- '- %s\n' "${root}"
-    done
-  fi
-fi

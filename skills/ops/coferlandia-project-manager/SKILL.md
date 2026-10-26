@@ -3,7 +3,8 @@ name: coferlandia-project-manager
 description: >
   Use ONLY when the user explicitly wants Coferlandia portfolio/project management across
   an explicit projects.json registry, GitHub Issues/Projects reporting, project architecture,
-  Archivist knowledge-health coordination, or Obsidian portfolio projection. Explicit invocation only.
+  external Agent Skill provider readiness/install recommendations, Archivist knowledge-health coordination,
+  or Obsidian portfolio projection. Explicit invocation only.
 license: Apache-2.0
 compatibility: >
   Requires Bash, git, and Python 3.11+. GitHub-backed planning/reporting requires GitHub CLI
@@ -12,10 +13,10 @@ compatibility: >
   local `.agent/work-items/` contracts when GitHub is unavailable or local tracking is selected.
 metadata:
   author: coferlandia
-  version: "0.9.0"
+  version: "0.10.0"
   category: ops
   status: active
-  tested: "2026-10-01 - Architecture Gate selection plus optional Product Knowledge Impact planning handoff covered by cross-skill tests."
+  tested: "2026-10-25 - External provider registry, read-only doctor/install handoff, Superpowers compatibility wrappers, and cross-role specialist boundaries covered by contract tests."
 ---
 
 ## Context
@@ -44,6 +45,49 @@ Relevant Superpowers remain intentionally available for design work, especially:
 
 Execution-oriented Superpowers are not PM runtime dependencies merely for task tracking.
 Development/execution remains delegated to the selected delivery workflow or development role.
+
+### External skill providers
+
+External Agent Skill providers remain independently installed, versioned, and owned by their upstream
+projects. Coferlandia may discover and request their skills, but it must not vendor, fork, patch,
+silently install, or silently update them. Loading an external skill grants expertise only; it never
+increases the authority of Project Manager or any downstream Coferlandia role.
+
+Use the read-only resolver when environment capability matters:
+
+```bash
+python scripts/pm-external-skills.py --config <path> --json
+```
+
+The provider registry records canonical repository/documentation links, license, reviewed
+compatibility evidence, manifest identity, required/recommended/optional policy, conflict names,
+and reviewed installation recipes for supported runtimes. Provider identity must come from
+runtime/plugin provenance when available; a same-named flat skill is not sufficient evidence.
+Legacy flat Superpowers discovery remains an explicit compatibility mode and is reported as
+unverified rather than silently attributed to a provider. Initial registered upstreams are:
+
+- Superpowers — https://github.com/obra/superpowers
+- Addy Osmani Agent Skills — https://github.com/addyosmani/agent-skills
+
+Dependency levels have distinct behavior:
+
+- `required`: block only the dependent operation when the skill is missing and no owning contract
+  defines a fallback.
+- `recommended`: surface the missing capability once for the current task/session, explain the
+  benefit, and continue safely under the Coferlandia fallback.
+- `optional`: use it when present; absence stays silent outside doctor/readiness output.
+
+`pm-doctor.sh` is read-only. It may expose a machine-readable `install_action` containing the
+upstream repository and reviewed runtime-specific installation/verification recipe, but detection
+never authorizes installation. A controlling agent may execute that action only after explicit
+current user approval and must rerun provider resolution afterward. When a whole-provider recipe
+also exposes skills in that provider's `never_request` set, the install action must disclose those
+conflicting names before asking for approval; availability never makes them part of Coferlandia's
+automatic workflow.
+
+For rough product exploration, Addy's `idea-refine` may complement the canonical Coferlandia /
+Superpowers planning path when already installed. It does not replace `brainstorming`,
+`writing-plans`, Epic Planner, Analyst, or the selected execution strategy.
 
 ### Epic Planner
 

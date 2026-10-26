@@ -1,5 +1,11 @@
 # Changelog — project-orchestrator
 
+## 2.5 — 2026-10-26
+
+### Changed
+
+- Adds durable controller-owned deduplication for missing external specialist recommendations so one provider/skill warning is surfaced once per orchestrated run while optional capabilities remain silent.
+
 ## 2.4 — 2026-09-03
 
 ### Changed

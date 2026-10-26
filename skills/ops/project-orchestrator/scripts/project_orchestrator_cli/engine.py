@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .contracts import DependencyError, ValidationError, validate_json_schema
+from .external_recommendations import dedupe_external_recommendations
 from .git_service import GitService
 from .integration_gates import validate_integration_config
 from .materialization import materialize_github_epic
@@ -305,16 +306,16 @@ def normalize_provider_result(role: str, value: dict[str, Any]) -> dict[str, Any
         result["status"] = {"pass": "completed", "passed": "completed", "success": "completed", "fail": "incomplete", "failed": "incomplete"}.get(status, status)
         acceptance = result.get("acceptance", {})
         result["requirement_completion"] = [{"criterion": key, "status": val} for key, val in acceptance.items()] if isinstance(acceptance, dict) else acceptance
-        keys = ("protocol_version", "run_id", "phase_id", "attempt_id", "role", "worktree_path", "status", "requirement_completion", "remaining_work", "blockers", "scope_deviations", "tests")
-        result = {key: result.get(key, [] if key in {"requirement_completion", "remaining_work", "blockers", "scope_deviations", "tests"} else "") for key in keys}
+        keys = ("protocol_version", "run_id", "phase_id", "attempt_id", "role", "worktree_path", "status", "requirement_completion", "remaining_work", "blockers", "scope_deviations", "tests", "external_skill_recommendations")
+        result = {key: result.get(key, [] if key in {"requirement_completion", "remaining_work", "blockers", "scope_deviations", "tests", "external_skill_recommendations"} else "") for key in keys}
     elif role == "code-reviewer":
         result["status"] = {"pass": "approved", "passed": "approved", "success": "approved", "fail": "changes-required", "failed": "changes-required"}.get(status, status)
-        keys = ("protocol_version", "run_id", "phase_id", "attempt_id", "role", "worktree_path", "status", "candidate_commit", "base_commit", "findings", "tests", "scope_deviations")
-        result = {key: result.get(key, [] if key in {"findings", "tests", "scope_deviations"} else "") for key in keys}
+        keys = ("protocol_version", "run_id", "phase_id", "attempt_id", "role", "worktree_path", "status", "candidate_commit", "base_commit", "findings", "tests", "scope_deviations", "external_skill_recommendations")
+        result = {key: result.get(key, [] if key in {"findings", "tests", "scope_deviations", "external_skill_recommendations"} else "") for key in keys}
     elif role == "fix-agent":
         result["status"] = {"pass": "completed", "passed": "completed", "success": "completed"}.get(status, status)
-        keys = ("protocol_version", "run_id", "phase_id", "attempt_id", "role", "worktree_path", "status", "findings", "changed_files", "tests", "blockers")
-        result = {key: result.get(key, [] if key in {"findings", "changed_files", "tests", "blockers"} else "") for key in keys}
+        keys = ("protocol_version", "run_id", "phase_id", "attempt_id", "role", "worktree_path", "status", "findings", "changed_files", "tests", "blockers", "external_skill_recommendations")
+        result = {key: result.get(key, [] if key in {"findings", "changed_files", "tests", "blockers", "external_skill_recommendations"} else "") for key in keys}
     elif role == "coding-agent":
         result["status"] = {"pass": "completed", "passed": "completed", "success": "completed"}.get(status, status)
         if "changed_files" not in result and isinstance(result.get("changes"), list):
@@ -416,11 +417,19 @@ def _invoke(store: RunStore, state: dict[str, Any], config: dict[str, Any], work
         if role == "code-reviewer":
             result.setdefault("candidate_commit", candidate or git_head_safe(worktree))
             result.setdefault("base_commit", state["resources"].get("epic_base_commit", ""))
+        result.setdefault("external_skill_recommendations", [])
         try:
             validate_json_schema(result, schema)
         except ValidationError as exc:
             last_error = exc
             continue
+        result["external_skill_recommendations"] = dedupe_external_recommendations(
+            state,
+            result.get("external_skill_recommendations"),
+            work_item_id=work_item_id,
+            role=role,
+        )
+        atomic_json(store.state_file, state)
         result.setdefault("candidate_commit", candidate)
         result.setdefault("provider", client)
         result.setdefault("model", model)
@@ -459,7 +468,10 @@ def _contract_prompt(state: dict[str, Any], work_item: dict[str, Any], role: str
         f"Candidate: {candidate or 'none'}\n"
         f"Findings: {json.dumps(findings or [])}\n"
         "Read only the bounded contract files plus repository context necessary to execute/verify them. "
-        "Do not browse GitHub or redesign the contract. Return the required agent-result.json protocol as the final JSON object."
+        "Do not browse GitHub or redesign the contract. If a relevant external specialist is unavailable, "
+        "report it in external_skill_recommendations with provider_id, skill_id, level, and reason; optional "
+        "capabilities remain silent. The controller deduplicates recommendations across the run. "
+        "Return the required agent-result.json protocol as the final JSON object."
     )
 
 
