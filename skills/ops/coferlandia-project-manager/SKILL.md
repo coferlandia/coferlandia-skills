@@ -3,7 +3,8 @@ name: coferlandia-project-manager
 description: >
   Use ONLY when the user explicitly wants Coferlandia portfolio/project management across
   an explicit projects.json registry, GitHub Issues/Projects reporting, project architecture,
-  Archivist knowledge-health coordination, or Obsidian portfolio projection. Explicit invocation only.
+  external Agent Skill provider readiness/install recommendations, Archivist knowledge-health coordination,
+  or Obsidian portfolio projection. Explicit invocation only.
 license: Apache-2.0
 compatibility: >
   Requires Bash, git, and Python 3.11+. GitHub-backed planning/reporting requires GitHub CLI
