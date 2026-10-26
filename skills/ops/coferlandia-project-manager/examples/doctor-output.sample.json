@@ -10,23 +10,178 @@
     "git": true,
     "python": true
   },
+  "external_skills": {
+    "schema_version": 1,
+    "status": "ok",
+    "runtime": "codex",
+    "roots": [
+      "/path/to/.codex/skills"
+    ],
+    "summary": {
+      "required": {
+        "available": 2,
+        "total": 2,
+        "missing": 0
+      },
+      "recommended": {
+        "available": 1,
+        "total": 12,
+        "missing": 11
+      },
+      "optional": {
+        "available": 1,
+        "total": 9,
+        "missing": 8
+      }
+    },
+    "providers": [
+      {
+        "provider_id": "superpowers",
+        "display_name": "Superpowers",
+        "status": "ok",
+        "present": true,
+        "repository_url": "https://github.com/obra/superpowers",
+        "documentation_url": "https://github.com/obra/superpowers",
+        "license": "MIT",
+        "tested": {
+          "version": "7.0.1",
+          "revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b"
+        },
+        "installed": {
+          "version": null,
+          "revision": null
+        },
+        "runtime": "codex",
+        "roots": [
+          "/path/to/.codex/skills"
+        ],
+        "policy": {
+          "required": [
+            "brainstorming",
+            "writing-plans"
+          ],
+          "recommended": [],
+          "optional": [
+            "preserving-productive-tensions",
+            "writing-skills"
+          ],
+          "never_request": []
+        },
+        "skills": {
+          "available": [
+            "brainstorming",
+            "writing-plans"
+          ],
+          "locations": {},
+          "required_available": [
+            "brainstorming",
+            "writing-plans"
+          ],
+          "required_missing": [],
+          "recommended_available": [],
+          "recommended_missing": [],
+          "optional_available": [],
+          "optional_missing": [
+            "preserving-productive-tensions",
+            "writing-skills"
+          ],
+          "ambiguous_conflicting_names_present": []
+        },
+        "install_action": null,
+        "verification": "Start a fresh Codex session and verify Superpowers skills are discoverable."
+      },
+      {
+        "provider_id": "addy-agent-skills",
+        "display_name": "Addy Osmani Agent Skills",
+        "status": "partial",
+        "present": true,
+        "repository_url": "https://github.com/addyosmani/agent-skills",
+        "documentation_url": "https://github.com/addyosmani/agent-skills",
+        "license": "MIT",
+        "tested": {
+          "version": "0.6.13",
+          "revision": "aeac41d4d005999432bb7312f7ff06383a91d59d"
+        },
+        "installed": {
+          "version": null,
+          "revision": null
+        },
+        "runtime": "codex",
+        "roots": [
+          "/path/to/.codex/skills"
+        ],
+        "policy": {
+          "required": [],
+          "recommended": [
+            "source-driven-development",
+            "security-and-hardening"
+          ],
+          "optional": [
+            "documentation-and-adrs"
+          ],
+          "never_request": [
+            "test-driven-development",
+            "using-agent-skills"
+          ]
+        },
+        "skills": {
+          "available": [
+            "source-driven-development"
+          ],
+          "locations": {},
+          "required_available": [],
+          "required_missing": [],
+          "recommended_available": [
+            "source-driven-development"
+          ],
+          "recommended_missing": [
+            "security-and-hardening"
+          ],
+          "optional_available": [],
+          "optional_missing": [
+            "documentation-and-adrs"
+          ],
+          "ambiguous_conflicting_names_present": [
+            "test-driven-development"
+          ]
+        },
+        "install_action": {
+          "requires_user_approval": true,
+          "execution": "shell",
+          "commands": [
+            "codex plugin marketplace add addyosmani/agent-skills",
+            "codex plugin add agent-skills@agent-skills"
+          ]
+        },
+        "verification": "Start a fresh Codex session and verify the requested Agent Skills are discoverable."
+      }
+    ],
+    "read_only": true
+  },
   "superpowers": {
     "status": "ok",
     "roots": [
-      "/path/to/.codex/skills",
-      "/path/to/.agents/skills"
-    ]
+      "/path/to/.codex/skills"
+    ],
+    "repository_url": "https://github.com/obra/superpowers",
+    "tested": {
+      "version": "7.0.1",
+      "revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b"
+    }
   },
   "superpowers_skills": {
     "status": "ok",
     "required_available": [
-      "brainstorming"
+      "brainstorming",
+      "writing-plans"
     ],
     "required_missing": [],
     "optional_available": [],
     "optional_missing": [
-      "preserving-productive-tensions"
-    ]
+      "preserving-productive-tensions",
+      "writing-skills"
+    ],
+    "repository_url": "https://github.com/obra/superpowers"
   },
   "git_capabilities": {
     "status": "ok",
