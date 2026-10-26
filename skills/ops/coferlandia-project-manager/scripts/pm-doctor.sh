@@ -8,7 +8,7 @@ source "${script_dir}/lib/config.sh"
 print_help() {
   cat <<'EOF'
 Usage: pm-doctor.sh --config <path> [--json]
-Description: Report environment readiness for the project manager skill.
+Description: Report environment readiness, including independently installed external skill providers.
 Examples:
   pm-doctor.sh --config skills/ops/coferlandia-project-manager/examples/config.sample.json
   pm-doctor.sh --json
@@ -44,22 +44,24 @@ pm_require_file "${config_path}"
 
 python_cmd="$(pm_python_cmd)"
 config_json="$("${script_dir}/pm-validate-config.sh" --config "${config_path}" --json)"
-superpowers_json="$("${script_dir}/pm-detect-superpowers.sh" --json)"
-skills_json="$("${script_dir}/pm-check-superpowers-skills.sh" --json)"
+external_json="$("${python_cmd}" "${script_dir}/pm-external-skills.py" --config "${config_path}" --json)"
+superpowers_json="$("${script_dir}/pm-detect-superpowers.sh" --config "${config_path}" --json)"
+skills_json="$("${script_dir}/pm-check-superpowers-skills.sh" --config "${config_path}" --json)"
 git_json="$("${script_dir}/pm-detect-git-capabilities.sh" --json)"
 effective_vault_root="$(pm_effective_obsidian_vault_root "${config_path}")"
 
-"${python_cmd}" - "${config_json}" "${superpowers_json}" "${skills_json}" "${git_json}" "${json_output}" "${effective_vault_root}" <<'PY'
+"${python_cmd}" - "${config_json}" "${external_json}" "${superpowers_json}" "${skills_json}" "${git_json}" "${json_output}" "${effective_vault_root}" <<'PY'
 import json
 import shutil
 import sys
 
 config = json.loads(sys.argv[1])
-superpowers = json.loads(sys.argv[2])
-skills = json.loads(sys.argv[3])
-git_capabilities = json.loads(sys.argv[4])
-json_output = sys.argv[5].lower() == "true"
-effective_vault_root = sys.argv[6]
+external_skills = json.loads(sys.argv[2])
+superpowers = json.loads(sys.argv[3])
+skills = json.loads(sys.argv[4])
+git_capabilities = json.loads(sys.argv[5])
+json_output = sys.argv[6].lower() == "true"
+effective_vault_root = sys.argv[7]
 
 environment = {
     "status": "ok",
@@ -71,6 +73,7 @@ environment = {
 payload = {
     "config": config,
     "environment": environment,
+    "external_skills": external_skills,
     "superpowers": superpowers,
     "superpowers_skills": skills,
     "git_capabilities": git_capabilities,
@@ -84,6 +87,20 @@ else:
     print("Phase 1 readiness report:")
     print(f"- config status: {config['status']}")
     print(f"- environment status: {environment['status']}")
+    print(f"- external skills status: {external_skills['status']}")
+    for provider in external_skills["providers"]:
+        print(f"  - {provider['display_name']}: {provider['status']}")
+        print(f"    repository: {provider['repository_url']}")
+        missing = provider["skills"]["recommended_missing"]
+        if missing:
+            print(f"    recommended missing: {', '.join(missing)}")
+        action = provider.get("install_action")
+        if action:
+            print("    install: explicit user approval required")
+            for command in action.get("commands", []):
+                print(f"      {command}")
+            for step in action.get("steps", []):
+                print(f"      {step}")
     print(f"- superpowers status: {superpowers['status']}")
     print(f"- superpowers skills status: {skills['status']}")
     print(f"- git capability status: {git_capabilities['status']}")
