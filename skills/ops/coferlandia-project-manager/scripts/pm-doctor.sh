@@ -91,6 +91,13 @@ else:
     for provider in external_skills["providers"]:
         print(f"  - {provider['display_name']}: {provider['status']}")
         print(f"    repository: {provider['repository_url']}")
+        print(f"    presence: {provider.get('presence', 'unknown')}")
+        installed = provider.get("installed", {})
+        if installed.get("version"):
+            print(f"    installed: {installed['version']} ({installed.get('compatibility', 'unknown')})")
+        unverified = provider["skills"].get("unverified_name_matches", [])
+        if unverified:
+            print(f"    unverified name matches: {', '.join(unverified)}")
         missing = provider["skills"]["recommended_missing"]
         if missing:
             print(f"    recommended missing: {', '.join(missing)}")
