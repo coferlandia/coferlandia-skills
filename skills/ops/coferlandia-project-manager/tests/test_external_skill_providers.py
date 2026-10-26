@@ -157,7 +157,7 @@ class ExternalSkillProviderTests(unittest.TestCase):
                 env=env,
                 check=False,
             )
-            self.assertEqual(legacy.returncode, 0, legacy.stderr)
+            self.assertEqual(legacy.returncode, 0, legacy.stdout + legacy.stderr)
             legacy_payload = json.loads(legacy.stdout)
             self.assertEqual(legacy_payload["status"], "ok")
             self.assertEqual(
@@ -179,7 +179,7 @@ class ExternalSkillProviderTests(unittest.TestCase):
                 env=env,
                 check=False,
             )
-            self.assertEqual(doctor.returncode, 0, doctor.stderr)
+            self.assertEqual(doctor.returncode, 0, doctor.stdout + doctor.stderr)
             doctor_payload = json.loads(doctor.stdout)
             self.assertIn("external_skills", doctor_payload)
             providers = {
