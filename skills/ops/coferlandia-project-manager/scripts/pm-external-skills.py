@@ -334,12 +334,23 @@ def build_provider_result(
     presence = "verified" if matching_instances else "missing"
     available_skills = set(verified_skills)
 
+    legacy_available: set[str] = set()
     if not matching_instances and provider.get("allow_legacy_flat_detection"):
         legacy_names = set(policy["required"]) | set(policy["optional"]) | set(provider.get("sentinel_skills", []))
         legacy_available = legacy_names & set(flat_locations)
         if legacy_available:
             presence = "legacy-flat-unverified"
             available_skills.update(legacy_available)
+
+    discovery_roots = {
+        str(Path(instance["skill_root"]))
+        for instance in matching_instances
+        if instance.get("skill_root")
+    }
+    if presence == "legacy-flat-unverified":
+        for name in legacy_available:
+            for location in flat_locations.get(name, []):
+                discovery_roots.add(str(Path(location).parent))
 
     unverified_matches = sorted((tracked & set(flat_locations)) - available_skills)
     required_missing = sorted(set(policy["required"]) - available_skills)
@@ -393,6 +404,7 @@ def build_provider_result(
             "compatibility": compatibility_relation(installed_version, tested.get("version")),
         },
         "instances": matching_instances,
+        "roots": sorted(discovery_roots),
         "runtime": runtime,
         "policy": policy,
         "skills": {
