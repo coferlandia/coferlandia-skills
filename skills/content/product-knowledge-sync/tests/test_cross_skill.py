@@ -13,14 +13,14 @@ class ProductKnowledgeCrossSkillTests(unittest.TestCase):
 
     def test_project_manager_has_optional_product_knowledge_handoff(self) -> None:
         text = self.text("skills/ops/coferlandia-project-manager/SKILL.md")
-        self.assertIn('version: "0.9.0"', text)
+        self.assertIn('version: "0.10.0"', text)
         self.assertIn("## Product Knowledge Impact", text)
         self.assertIn("do not\ninvent a new release gate", text)
         self.assertIn("references/product-knowledge-impact.md", text)
 
     def test_software_development_preserves_and_reviews_explicit_handoff(self) -> None:
         text = self.text("skills/engineering/software-development/SKILL.md")
-        self.assertIn('version: "4.7"', text)
+        self.assertIn('version: "4.8"', text)
         self.assertIn("## Product Knowledge Impact", text)
         self.assertIn("Analyst preserves", text)
         self.assertIn("Code Reviewer checks the exact impact reference", text)
