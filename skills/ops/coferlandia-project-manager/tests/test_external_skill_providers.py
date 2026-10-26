@@ -72,6 +72,10 @@ class ExternalSkillProviderTests(unittest.TestCase):
         action = providers["addy-agent-skills"]["install_action"]
         self.assertTrue(action["requires_user_approval"])
         self.assertIn("codex plugin marketplace add addyosmani/agent-skills", action["commands"])
+        self.assertEqual(action["scope"], "provider")
+        self.assertTrue(action["warnings"])
+        self.assertIn("using-agent-skills", action["warnings"][0])
+        self.assertIn("test-driven-development", action["warnings"][0])
         self.assertTrue(payload["read_only"])
 
     def test_missing_required_superpowers_blocks_readiness(self) -> None:
