@@ -194,11 +194,21 @@ class ExternalSkillProviderTests(unittest.TestCase):
         software = (REPO_ROOT / "skills" / "engineering" / "software-development" / "SKILL.md").read_text(encoding="utf-8")
         architect = (REPO_ROOT / "skills" / "engineering" / "the-architect" / "SKILL.md").read_text(encoding="utf-8")
         project_manager = (REPO_ROOT / "skills" / "ops" / "coferlandia-project-manager" / "SKILL.md").read_text(encoding="utf-8")
+        specialist_reference = (
+            REPO_ROOT
+            / "skills"
+            / "engineering"
+            / "software-development"
+            / "references"
+            / "external-specialists.md"
+        ).read_text(encoding="utf-8")
         normalized_software = " ".join(software.split())
         self.assertIn("External specialist skills", software)
-        self.assertIn("source-driven-development", software)
-        self.assertIn("security-and-hardening", software)
-        self.assertIn("never increases the active role's scope", normalized_software)
+        self.assertIn("references/external-specialists.md", software)
+        self.assertIn("never increases scope", normalized_software)
+        self.assertIn("source-driven-development", specialist_reference)
+        self.assertIn("security-and-hardening", specialist_reference)
+        self.assertIn("test-driven-development", specialist_reference)
         self.assertIn("External specialist skills", architect)
         self.assertIn("doubt-driven-development", architect)
         self.assertIn("External skill providers", project_manager)
