@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "providers": [
+    {
+      "id": "superpowers",
+      "display_name": "Superpowers",
+      "repository_url": "https://github.com/obra/superpowers",
+      "documentation_url": "https://github.com/obra/superpowers",
+      "license": "MIT",
+      "tested": {
+        "version": "7.0.1",
+        "revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b"
+      },
+      "sentinel_skills": [
+        "brainstorming",
+        "writing-plans",
+        "systematic-debugging",
+        "verification-before-completion"
+      ],
+      "default_policy": {
+        "required": [],
+        "recommended": [],
+        "optional": [],
+        "never_request": []
+      },
+      "install_recipes": {
+        "claude": {
+          "execution": "agent-ui",
+          "commands": [
+            "/plugin install superpowers@claude-plugins-official"
+          ],
+          "verification": "Start a fresh Claude Code session and verify Superpowers skills are discoverable."
+        },
+        "codex": {
+          "execution": "interactive",
+          "steps": [
+            "/plugins",
+            "Search for Superpowers",
+            "Select Install Plugin"
+          ],
+          "verification": "Start a fresh Codex session and verify Superpowers skills are discoverable."
+        },
+        "gemini": {
+          "execution": "shell",
+          "commands": [
+            "gemini extensions install https://github.com/obra/superpowers"
+          ],
+          "verification": "Restart Gemini CLI and verify Superpowers skills are discoverable."
+        }
+      }
+    },
+    {
+      "id": "addy-agent-skills",
+      "display_name": "Addy Osmani Agent Skills",
+      "repository_url": "https://github.com/addyosmani/agent-skills",
+      "documentation_url": "https://github.com/addyosmani/agent-skills",
+      "license": "MIT",
+      "tested": {
+        "version": "0.6.13",
+        "revision": "aeac41d4d005999432bb7312f7ff06383a91d59d"
+      },
+      "sentinel_skills": [
+        "api-and-interface-design",
+        "source-driven-development",
+        "using-agent-skills"
+      ],
+      "default_policy": {
+        "required": [],
+        "recommended": [
+          "api-and-interface-design",
+          "browser-testing-with-devtools",
+          "code-simplification",
+          "context-engineering",
+          "deprecation-and-migration",
+          "doubt-driven-development",
+          "frontend-ui-engineering",
+          "idea-refine",
+          "observability-and-instrumentation",
+          "performance-optimization",
+          "security-and-hardening",
+          "source-driven-development"
+        ],
+        "optional": [
+          "ci-cd-and-automation",
+          "constraint-driven-development",
+          "documentation-and-adrs",
+          "interview-me",
+          "shipping-and-launch"
+        ],
+        "never_request": [
+          "using-agent-skills",
+          "spec-driven-development",
+          "planning-and-task-breakdown",
+          "incremental-implementation",
+          "test-driven-development",
+          "debugging-and-error-recovery",
+          "code-review-and-quality",
+          "git-workflow-and-versioning"
+        ]
+      },
+      "install_recipes": {
+        "claude": {
+          "execution": "agent-ui",
+          "commands": [
+            "/plugin marketplace add addyosmani/agent-skills",
+            "/plugin install agent-skills@addy-agent-skills"
+          ],
+          "verification": "Start a fresh Claude Code session and verify the requested Agent Skills are discoverable."
+        },
+        "codex": {
+          "execution": "shell",
+          "commands": [
+            "codex plugin marketplace add addyosmani/agent-skills",
+            "codex plugin add agent-skills@agent-skills"
+          ],
+          "verification": "Start a fresh Codex session and verify the requested Agent Skills are discoverable."
+        },
+        "gemini": {
+          "execution": "shell",
+          "commands": [
+            "gemini skills install https://github.com/addyosmani/agent-skills.git --path skills"
+          ],
+          "verification": "Start a fresh Gemini CLI session and verify the requested Agent Skills are discoverable."
+        },
+        "generic": {
+          "execution": "shell",
+          "commands": [
+            "npx skills add addyosmani/agent-skills"
+          ],
+          "verification": "Verify the runtime's skills directory contains the requested Agent Skills."
+        }
+      }
+    }
+  ]
+}
