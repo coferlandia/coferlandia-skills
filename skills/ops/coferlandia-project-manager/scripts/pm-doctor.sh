@@ -101,6 +101,8 @@ else:
                 print(f"      {command}")
             for step in action.get("steps", []):
                 print(f"      {step}")
+            for warning in action.get("warnings", []):
+                print(f"      warning: {warning}")
     print(f"- superpowers status: {superpowers['status']}")
     print(f"- superpowers skills status: {skills['status']}")
     print(f"- git capability status: {git_capabilities['status']}")
