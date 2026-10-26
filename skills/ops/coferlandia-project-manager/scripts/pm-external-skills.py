@@ -143,8 +143,14 @@ def build_provider_result(
     if status != "ok" and selected_recipe:
         install_action = {
             "requires_user_approval": True,
+            "scope": "provider",
             "execution": selected_recipe["execution"],
         }
+        if policy["never_request"]:
+            install_action["warnings"] = [
+                "Provider installation also exposes lifecycle skills that Coferlandia "
+                "will never auto-request: " + ", ".join(sorted(policy["never_request"]))
+            ]
         if "commands" in selected_recipe:
             install_action["commands"] = selected_recipe["commands"]
         if "steps" in selected_recipe:
@@ -245,6 +251,8 @@ def print_human(payload: dict[str, Any]) -> None:
                 print(f"    {command}")
             for step in action.get("steps", []):
                 print(f"    {step}")
+            for warning in action.get("warnings", []):
+                print(f"    warning: {warning}")
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
