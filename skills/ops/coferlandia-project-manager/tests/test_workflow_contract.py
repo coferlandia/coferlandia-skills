@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -30,6 +32,16 @@ class ProjectManagerWorkflowContractTests(unittest.TestCase):
     def test_github_prerequisites_are_mode_specific(self) -> None:
         self.assertIn("Required only for GitHub-backed operations", self.text)
         self.assertIn("does not by itself block", self.text)
+
+    def test_external_skill_provider_contract_suite(self) -> None:
+        suite = Path(__file__).with_name("test_external_skill_providers.py")
+        result = subprocess.run(
+            [sys.executable, str(suite)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":
