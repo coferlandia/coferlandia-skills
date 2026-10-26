@@ -146,11 +146,12 @@ class ExternalSkillProviderTests(unittest.TestCase):
             legacy = subprocess.run(
                 [
                     "bash",
-                    str(SKILL_ROOT / "scripts" / "pm-check-superpowers-skills.sh"),
+                    "skills/ops/coferlandia-project-manager/scripts/pm-check-superpowers-skills.sh",
                     "--config",
-                    str(CONFIG),
+                    "skills/ops/coferlandia-project-manager/templates/config.template.json",
                     "--json",
                 ],
+                cwd=REPO_ROOT,
                 text=True,
                 capture_output=True,
                 env=env,
@@ -167,11 +168,12 @@ class ExternalSkillProviderTests(unittest.TestCase):
             doctor = subprocess.run(
                 [
                     "bash",
-                    str(SKILL_ROOT / "scripts" / "pm-doctor.sh"),
+                    "skills/ops/coferlandia-project-manager/scripts/pm-doctor.sh",
                     "--config",
-                    str(CONFIG),
+                    "skills/ops/coferlandia-project-manager/templates/config.template.json",
                     "--json",
                 ],
+                cwd=REPO_ROOT,
                 text=True,
                 capture_output=True,
                 env=env,
