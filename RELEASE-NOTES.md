@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## v2.19.3 (2026-10-31)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.5.1 | 1.5.2 | Completes Node 24-compatible first-party GitHub Actions majors in the release-publication renderer without changing publication authority or application runtimes. |
+
+### Repository and protocol
+
+- Updates the GitHub-native publication renderer to setup-python v7 and checkout v7 for both the trusted publication control plane and exact release target.
+- Preserves publication runner selection, minimal permissions, exact integrated-SHA binding, control-plane isolation, and authenticated Git publication semantics.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.19.2 to v2.19.3 for the compatible publication renderer maintenance fix.
+
+### Migration or compatibility
+
+- Publication policy schema and release authority are unchanged; consumers using GitHub-native publication should re-render or re-vendor the adapter to remove the remaining Node 20-targeting first-party action majors.
+
 ## v2.19.2 (2026-10-31)
 
 ### Skills
