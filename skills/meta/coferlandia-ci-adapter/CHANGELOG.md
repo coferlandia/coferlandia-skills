@@ -1,5 +1,16 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.5.2 — 2026-10-31
+
+### Fixed
+
+- Generates GitHub-native release publication workflows with Node 24-compatible first-party action majors: setup-python v7 and checkout v7 for both the trusted control-plane and exact release-target checkouts.
+- Keeps the publication runner, permissions, exact integrated-SHA binding, control-plane isolation, and release-target `persist-credentials: true` semantics unchanged.
+
+### Compatibility
+
+- Existing publication policy schema and release authority remain unchanged; consumers can re-render publication workflows without changing application runtimes or release configuration.
+
 ## 1.5.1 — 2026-10-31
 
 ### Fixed

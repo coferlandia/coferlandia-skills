@@ -162,11 +162,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.19.2 — 2026-10-31**
+**v2.19.3 — 2026-10-31**
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.5.1 | Generates Node 24-compatible GitHub Actions majors for remote Development validation without changing repository application runtimes. |
+| coferlandia-ci-adapter | 1.5.2 | Completes Node 24-compatible first-party GitHub Actions majors in the release-publication renderer without changing publication authority or application runtimes. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

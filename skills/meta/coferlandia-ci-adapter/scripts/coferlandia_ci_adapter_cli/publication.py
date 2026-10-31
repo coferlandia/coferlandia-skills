@@ -119,7 +119,7 @@ jobs:
       GITHUB_TOKEN: ${{{{ github.token }}}}
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -289,14 +289,14 @@ jobs:
           test "$MERGE_SHA" = "$TARGET_SHA"
 
       - name: Check out exact publication control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{{{ github.sha }}}}
           path: control-plane
           persist-credentials: false
 
       - name: Check out exact publication target
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{{{ steps.request.outputs.target_sha }}}}
           path: release-target
