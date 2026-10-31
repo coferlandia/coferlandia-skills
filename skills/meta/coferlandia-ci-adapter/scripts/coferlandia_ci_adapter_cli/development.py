@@ -467,7 +467,7 @@ def render_development_workflow(contract: dict) -> str:
 
     lines.extend([
         "      - name: Check out exact PR head",
-        "        uses: actions/checkout@v4",
+        "        uses: actions/checkout@v7",
         "        with:",
         f"          ref: {candidate_expr}",
         "          fetch-depth: 0",
@@ -510,7 +510,7 @@ def render_development_workflow(contract: dict) -> str:
             path = evidence_cache["path"]
             lines.extend([
                 "      - name: Restore prior Development evidence",
-                "        uses: actions/cache/restore@v4",
+                "        uses: actions/cache/restore@v6",
                 "        continue-on-error: true",
                 "        with:",
                 f"          path: {path}",
@@ -537,7 +537,7 @@ def render_development_workflow(contract: dict) -> str:
         lines.extend([
             "      - name: Upload partial Development evidence",
             "        if: always()",
-            "        uses: actions/upload-artifact@v4",
+            "        uses: actions/upload-artifact@v7",
             "        with:",
             f"          name: {prefix}-${{{{ github.event.pull_request.number }}}}-${{{{ github.run_id }}}}-${{{{ github.run_attempt }}}}",
             f"          path: {path}",
@@ -545,7 +545,7 @@ def render_development_workflow(contract: dict) -> str:
             "          retention-days: 30",
             "      - name: Cache partial Development evidence",
             f"        if: always() && hashFiles('{path}') != ''",
-            "        uses: actions/cache/save@v4",
+            "        uses: actions/cache/save@v6",
             "        continue-on-error: true",
             "        with:",
             f"          path: {path}",

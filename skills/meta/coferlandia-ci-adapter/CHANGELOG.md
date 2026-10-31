@@ -1,5 +1,16 @@
 # Changelog — coferlandia-ci-adapter
 
+## 1.5.1 — 2026-10-31
+
+### Fixed
+
+- Generates remote Development workflows with Node 24-compatible first-party action majors: checkout v7, cache restore/save v6, and upload-artifact v7.
+- Updates Python/Node setup examples and regression coverage to setup-python v7 and setup-node v7 while leaving repository-declared application runtime versions unchanged.
+
+### Compatibility
+
+- Existing Development contract schema and semantics remain unchanged; only the GitHub Actions implementation majors advance.
+
 ## 1.5.0 — 2026-10-16
 
 ### Added

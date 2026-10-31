@@ -73,14 +73,14 @@ The adapter does not decide which language/runtime/version a repository needs. D
     "setup": [
       {
         "name": "Set up Python",
-        "uses": "actions/setup-python@v5",
+        "uses": "actions/setup-python@v7",
         "with": {
           "python-version": "3.12"
         }
       },
       {
         "name": "Set up Node",
-        "uses": "actions/setup-node@v4",
+        "uses": "actions/setup-node@v7",
         "with": {
           "node-version": 22,
           "cache": "npm",

@@ -11,10 +11,10 @@ compatibility: >
   for deterministic adapter tooling, and write access only after the adaptation scope is authorized.
 metadata:
   author: coferlandia
-  version: "1.5.0"
+  version: "1.5.1"
   category: meta
   status: active
-  tested: "2026-10-16 - Qualification activation, label-triggered and exact-head Development validation, bounded same-candidate retry, evidence-cache compatibility, publication rendering, and profile/development fingerprints covered by unittest."
+  tested: "2026-10-31 - Development renderer/tests cover Node 24-compatible first-party action majors, exact-head validation, evidence-cache compatibility, publication rendering, and profile/development fingerprints."
 ---
 
 ## Context
