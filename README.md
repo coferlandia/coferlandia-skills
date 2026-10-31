@@ -166,7 +166,7 @@ AGENTS.md        Entry point for agents
 
 | Changed skill | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.5.2 | Completes the Node 24-compatible first-party action migration for GitHub-native release publication while preserving release authority and application runtimes. |
+| coferlandia-ci-adapter | 1.5.2 | Completes Node 24-compatible first-party GitHub Actions majors in the release-publication renderer without changing publication authority or application runtimes. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
