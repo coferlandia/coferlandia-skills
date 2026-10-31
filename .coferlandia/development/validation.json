@@ -50,7 +50,7 @@
     "setup": [
       {
         "name": "Set up Python",
-        "uses": "actions/setup-python@v5",
+        "uses": "actions/setup-python@v7",
         "with": {
           "python-version": "3.13"
         }
@@ -63,5 +63,5 @@
       ]
     }
   },
-  "fingerprint": "81081741a8a4cdd08529af993fa664b8a4b21b21fd14dd6bfc767c001372691e"
+  "fingerprint": "0bdab7871300fd9d2376713411de92c29e754c32fcbf8c8a7a628bea2b1365e5"
 }

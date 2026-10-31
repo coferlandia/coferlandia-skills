@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v2.19.2 (2026-10-31)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-ci-adapter | 1.5.0 | 1.5.1 | Generates Node 24-compatible GitHub Actions majors for remote Development validation without changing repository application runtimes. |
+
+### Repository and protocol
+
+- Regenerates this repository's own Development contract/workflow with setup-python v7 and checkout v7, preserving its Python 3.13 runtime and exact-head semantics.
+- Updates the repository CI bootstrap to checkout v7 and setup-python v7 so its own validation no longer depends on Node 20-targeting first-party action majors.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.19.1 to v2.19.2 for the compatible Development renderer maintenance fix.
+
+### Migration or compatibility
+
+- Development contract schema, candidate binding, runner policy, permissions and application runtime declarations remain unchanged; consumers should re-render/re-vendor the adapter to remove Node 20-targeting action majors.
+
+
 ## v2.19.1 (2026-10-16)
 
 ### Distribution integrity

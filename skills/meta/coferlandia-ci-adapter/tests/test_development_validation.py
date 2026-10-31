@@ -46,12 +46,12 @@ def sample_with_setup():
     contract["github"]["setup"] = [
         {
             "name": "Set up Python",
-            "uses": "actions/setup-python@v5",
+            "uses": "actions/setup-python@v7",
             "with": {"python-version": "3.12"},
         },
         {
             "name": "Set up Node",
-            "uses": "actions/setup-node@v4",
+            "uses": "actions/setup-node@v7",
             "with": {
                 "cache-dependency-path": "apps/frontend/package-lock.json",
                 "cache": "npm",
@@ -174,9 +174,9 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
         self.assertLess(record_index, python_index)
         self.assertLess(python_index, node_index)
         self.assertLess(node_index, command_index)
-        self.assertIn('uses: "actions/setup-python@v5"', workflow)
+        self.assertIn('uses: "actions/setup-python@v7"', workflow)
         self.assertIn('python-version: "3.12"', workflow)
-        self.assertIn('uses: "actions/setup-node@v4"', workflow)
+        self.assertIn('uses: "actions/setup-node@v7"', workflow)
         self.assertIn('cache: "npm"', workflow)
         self.assertIn('cache-dependency-path: "apps/frontend/package-lock.json"', workflow)
         self.assertIn("node-version: 22", workflow)
@@ -204,9 +204,9 @@ class RemoteDevelopmentAdapterTests(unittest.TestCase):
         workflow = module.render_development_workflow(contract)
         self.assertIn("  actions: read", workflow)
         self.assertIn("GITHUB_TOKEN: ${{ github.token }}", workflow)
-        self.assertIn("uses: actions/cache/restore@v4", workflow)
-        self.assertIn("uses: actions/cache/save@v4", workflow)
-        self.assertIn("uses: actions/upload-artifact@v4", workflow)
+        self.assertIn("uses: actions/cache/restore@v6", workflow)
+        self.assertIn("uses: actions/cache/save@v6", workflow)
+        self.assertIn("uses: actions/upload-artifact@v7", workflow)
         self.assertIn("if: always()", workflow)
         self.assertLess(workflow.index("Verify prior Development evidence"), workflow.index("Run Development tests"))
         self.assertLess(workflow.index("Run Development tests"), workflow.index("Upload partial Development evidence"))
