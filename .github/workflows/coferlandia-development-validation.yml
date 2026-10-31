@@ -18,7 +18,7 @@ jobs:
     runs-on: ["ubuntu-latest"]
     steps:
       - name: Check out exact PR head
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -33,10 +33,10 @@ jobs:
       - name: Record Development contract
         shell: bash
         run: |
-          echo "Development contract fingerprint: 81081741a8a4cdd08529af993fa664b8a4b21b21fd14dd6bfc767c001372691e" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Development contract fingerprint: 0bdab7871300fd9d2376713411de92c29e754c32fcbf8c8a7a628bea2b1365e5" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "Candidate SHA: ${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: "Set up Python"
-        uses: "actions/setup-python@v5"
+        uses: "actions/setup-python@v7"
         with:
           python-version: "3.13"
       - name: "Install the dependency required by prompt and delivery contract validation"
