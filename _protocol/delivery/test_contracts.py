@@ -92,7 +92,7 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertEqual(len(fp), 64)
         generic_controller_text = "\n".join(
             (ROOT / "prompts" / f"{name}.md").read_text(encoding="utf-8")
-            for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix")
+            for name in ("chat-coder", "chat-reviewer", "ci", "merge", "chat-release", "hotfix")
         ) + (ROOT / "skills" / "engineering" / "local-ci" / "SKILL.md").read_text(encoding="utf-8")
         for project_specific in ("scripts/validate-all.sh", ".github/workflows/fast-ci.yml", "docs/development/hotfix-lane.md"):
             self.assertNotIn(project_specific, generic_controller_text)
