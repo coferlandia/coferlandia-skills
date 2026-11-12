@@ -164,10 +164,6 @@ AGENTS.md        Entry point for agents
 
 **v2.20.0 — 2026-11-11**
 
-| Changed prompt | Version | Main change |
-|---|---:|---|
-| chat-coder | 1.10.0 | Requires production artifact/build contract parity when behavior crosses a packaging, compilation, bundling, image, runtime-assembly, or deployment boundary. |
-
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
 
