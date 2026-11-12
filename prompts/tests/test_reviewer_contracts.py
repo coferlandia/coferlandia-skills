@@ -10,6 +10,7 @@ class ChatReviewerContractTests(unittest.TestCase):
     def setUp(self):
         self.text = (PROMPTS / "chat-reviewer.md").read_text(encoding="utf-8")
         self.registry = json.loads((PROMPTS / "registry.json").read_text(encoding="utf-8"))
+        self.contract = (ROOT / "_protocol" / "delivery" / "INDEPENDENT_REVIEW.md").read_text(encoding="utf-8")
 
     def test_reviewer_is_registered_as_explicit_review_stage(self):
         reviewer = next(item for item in self.registry["prompts"] if item["id"] == "chat-reviewer")
@@ -25,9 +26,10 @@ class ChatReviewerContractTests(unittest.TestCase):
         self.assertIn("Do not modify code, documentation, Git state, or implementation artifacts", self.text)
 
     def test_reviewer_binds_verdict_to_exact_delta_and_contract(self):
+        self.assertIn("authoritative work contract", self.text)
+        self.assertIn("exact head and base identities", self.text)
         for token in (
-            "authoritative work contract",
-            "exact PR delta",
+            "<!-- independent-review:v1 -->",
             "Head reviewed:",
             "Base reviewed:",
             "Critical:",
@@ -35,7 +37,7 @@ class ChatReviewerContractTests(unittest.TestCase):
             "Completeness: COMPLETE | INCOMPLETE",
             "Ready: YES | NO",
         ):
-            self.assertIn(token, self.text)
+            self.assertIn(token, self.contract)
 
     def test_reviewer_requires_zero_blockers_and_complete_scope(self):
         self.assertIn("Critical = 0", self.text)
