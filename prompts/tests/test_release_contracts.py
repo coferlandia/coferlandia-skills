@@ -92,6 +92,27 @@ class ReleasePromptContractTests(unittest.TestCase):
         self.assertIn("Source-ref advancement alone is not drift", text)
         self.assertIn("explicit new release candidate initialization", text)
 
+    def test_chat_release_preserves_integrated_target_across_publication_repairs(self):
+        text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
+        for token in (
+            "## Post-integration publication identity",
+            "integrated target SHA",
+            "publication control-plane",
+            "does **not** require a new release candidate or a new release Qualification",
+            "Do not create a new release generation merely because",
+            "## Closeout and reentry",
+            "retry the same integrated target",
+            "Operational scanner failure",
+            "Actual product/security finding",
+            "checkout/revalidate the control-plane and release target as separate identities",
+        ):
+            self.assertIn(token, text)
+
+        self.assertIn(
+            "Do not rebuild Release Manifest, aggregate review, Product Knowledge evidence",
+            text,
+        )
+
     def test_chat_release_uses_repository_declared_github_native_publication_transport(self):
         text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
         for token in (
