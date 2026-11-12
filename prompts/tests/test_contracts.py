@@ -32,10 +32,11 @@ class PromptContractTests(unittest.TestCase):
         registry = json.loads((PROMPTS / "registry.json").read_text(encoding="utf-8"))
         self.assertEqual(registry["schema_version"], 1)
         ids = [item["id"] for item in registry["prompts"]]
-        self.assertEqual(ids, ["chat-coder", "ci", "merge", "chat-release", "hotfix"])
+        self.assertEqual(ids, ["chat-coder", "chat-reviewer", "ci", "merge", "chat-release", "hotfix"])
         aliases = {alias: item["id"] for item in registry["prompts"] for alias in item["aliases"]}
         self.assertEqual(aliases["chat coder"], "chat-coder")
         self.assertEqual(aliases["chat dev"], "chat-coder")
+        self.assertEqual(aliases["chat reviewer"], "chat-reviewer")
         self.assertEqual(aliases["gh ci"], "ci")
         self.assertEqual(aliases["merge"], "merge")
         self.assertEqual(aliases["chat release"], "chat-release")
@@ -116,6 +117,10 @@ class PromptContractTests(unittest.TestCase):
             ["chat-coder", "local-ci", "merge"],
         )
 
+        reviewer = self.run_resolve("chat reviewer")
+        self.assertFalse(reviewer["defaulted"])
+        self.assertEqual(reviewer["sequence"], [{"alias": "chat reviewer", "kind": "prompt", "target": "chat-reviewer"}])
+
         release = self.run_resolve("chat release")
         self.assertFalse(release["defaulted"])
         self.assertEqual(release["sequence"][0]["target"], "chat-release")
@@ -173,7 +178,7 @@ class PromptContractTests(unittest.TestCase):
             "projects/2",
         ]
         texts = {}
-        for name in ("chat-coder", "ci", "merge", "chat-release", "hotfix"):
+        for name in ("chat-coder", "chat-reviewer", "ci", "merge", "chat-release", "hotfix"):
             text = (PROMPTS / f"{name}.md").read_text(encoding="utf-8")
             texts[name] = text
             for token in banned:
