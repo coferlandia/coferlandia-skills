@@ -5,12 +5,15 @@ First-class Chat controllers maintained centrally by `coferlandia-skills`.
 | Prompt | Stage | Aliases | Terminal state |
 |---|---|---|---|
 | [`chat-coder`](./chat-coder.md) | Development | `chat coder`, `chat-coder`, `chat dev`, `chat-dev` | `READY_FOR_CI` for the Development stage; standalone `chat coder` continues by default through GitHub-native Qualification and Integration to `COMPLETE` |
+| [`chat-reviewer`](./chat-reviewer.md) | Independent Review | `chat reviewer`, `chat-reviewer` | `READY` or `NOT_READY` for the exact reviewed PR/branch delta |
 | [`ci`](./ci.md) | Qualification / GitHub-native | `ci`, `gh ci`, `github ci` | `READY_FOR_MERGE`, `WAITING_CI`, or precise failure/blocker state |
 | [`merge`](./merge.md) | Integration | `merge` | `COMPLETE`, `REQUALIFICATION_REQUIRED`, or `CLOSEOUT_BLOCKED` |
 | [`chat-release`](./chat-release.md) | Release / GitHub-native | `chat release`, `chat-release` | `COMPLETE` or resumable release state |
 | [`hotfix`](./hotfix.md) | Explicit emergency remediation | `hotfix` | `HOTFIX_COMPLETE`, resumable state, or `HOTFIX_BLOCKED` |
 
 Standalone `chat coder` / `chat-coder` has a registry-declared default sequence of Development -> `ci` (`GITHUB_NATIVE`) -> `merge`, so ordinary Chat development continues to verified Integration without requiring separate user commands. `READY_FOR_CI` and `READY_FOR_MERGE` remain durable internal stage contracts. Use standalone `chat dev` / `chat-dev` when Development itself should be terminal at `READY_FOR_CI`.
+
+`chat reviewer` / `chat-reviewer` is an explicit standalone independent-review surface for one exact PR or branch delta. It has no standalone expansion and is not inferred from the internal review steps owned by other controllers.
 
 Explicit `+` composition always takes precedence over the standalone default and executes exactly as written. For example, `chat coder + local ci + merge` remains LOCAL Qualification. A `READY_*` state never infers a next stage by itself, and LOCAL/GITHUB_NATIVE strategies never fall back to each other automatically.
 
