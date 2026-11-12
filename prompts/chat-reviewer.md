@@ -73,6 +73,8 @@ Do not modify code, documentation, Git state, or implementation artifacts, and d
 
 ## Review result
 
+Use the durable `_protocol/delivery/INDEPENDENT_REVIEW.md` contract and its `<!-- independent-review:v1 -->` marker.
+
 Use this compact format:
 
 ```text
