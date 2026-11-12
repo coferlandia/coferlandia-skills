@@ -304,7 +304,7 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("source-level behavior is correct", text)
         self.assertIn("production artifact/runtime contract omits, strips, shadows, or cannot activate it", text)
         self.assertIn("source-level tests alone are insufficient for that invariant", text)
-        self.assertIn("artifact/build contract impact is \`NOT APPLICABLE\`", text)
+        self.assertIn("artifact/build contract impact is `NOT APPLICABLE`", text)
         for token in ("SecretarIA", "Next.js", "middleware.ts", "Dockerfile", "CSP"):
             self.assertNotIn(token, text)
 
