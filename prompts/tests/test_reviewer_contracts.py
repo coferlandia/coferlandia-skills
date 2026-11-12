@@ -42,7 +42,7 @@ class ChatReviewerContractTests(unittest.TestCase):
     def test_reviewer_requires_zero_blockers_and_complete_scope(self):
         self.assertIn("Critical = 0", self.text)
         self.assertIn("Important = 0", self.text)
-        self.assertIn("complete for its declared scope", self.text)
+        self.assertIn("complete declared scope", self.text)
         self.assertIn("no contradiction with the current authoritative contract", self.text)
         self.assertIn("Missing evidence required to establish completeness", self.text)
 
