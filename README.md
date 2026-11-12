@@ -162,11 +162,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.19.3 — 2026-10-31**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| coferlandia-ci-adapter | 1.5.2 | Completes Node 24-compatible first-party GitHub Actions majors in the release-publication renderer without changing publication authority or application runtimes. |
+**v2.20.0 — 2026-11-11**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->

@@ -1,7 +1,7 @@
 ---
 name: chat-coder
 description: "Generic Chat Development controller used by the standalone GitHub-native Chat Coder pipeline or by explicit Development-only/composed delivery flows."
-version: "1.9.0"
+version: "1.10.0"
 stage: development
 status: active
 ---
@@ -154,6 +154,23 @@ When the repository exposes timings, budgets or regression checks, use the repos
 
 When the repository does not define performance tooling or a budget, Chat Coder must not invent thresholds, percentages or universal timing limits and must not create performance infrastructure outside the work scope merely to measure the change. Record `Performance evidence: repository budget not defined`, evaluate qualitatively whether the candidate introduces a new expensive/heavy class, and continue when all actual repository contracts pass; the absence of a repository budget does not block Development by itself.
 
+## Production artifact / build contract impact
+
+Treat source correctness and production-artifact correctness as separate Development invariants whenever changed behavior depends on packaging, compilation, bundling, image construction, code generation, runtime assembly, deployment manifests, or equivalent build-time inclusion.
+
+Before implementation, determine whether any affected invariant can be lost between reviewed source and the artifact/runtime contract that production actually executes. When applicable:
+
+- identify the repository-owned build/package/runtime inputs that must carry the behavior into the production artifact;
+- inspect existing artifact/build contract coverage before adding tests;
+- select the cheapest deterministic evidence that proves the complete inclusion invariant, preferring structural or contract checks over heavyweight builds when they preserve the same semantics;
+- use a real build/package/runtime check when cheaper evidence cannot prove that the production artifact contains and activates the required behavior;
+- keep framework-, container-, compiler-, and deployment-specific details in repository-owned policy/tests rather than hardcoding them into this generic controller;
+- treat a candidate as defective when source-level behavior is correct but the repository-owned production artifact/runtime contract omits, strips, shadows, or cannot activate it.
+
+Do not infer that a successful source/unit suite proves artifact parity. Conversely, do not introduce an expensive production build solely for ceremony when an existing cheap deterministic repository-owned contract fully protects the same inclusion boundary.
+
+Record the result in the Test Impact plan under the affected invariant and expected validation surface. If no affected behavior crosses a build/package/runtime boundary, artifact/build contract impact is `NOT APPLICABLE`.
+
 ## Implementation
 
 For behavior changes use RED -> minimal GREEN -> refactor. Keep scope bounded to the work contract. Run focused validation while iterating. Never invent a canonical command: discover validation from current repository-owned documentation, scripts, package metadata, Development validation contract, CI profile, or executable workflows.
@@ -196,6 +213,7 @@ Immediately before the terminal development review and handoff, discover and run
 - for backend behavior or contract changes, run the narrow regression target plus the repository's standard backend development validation when one is defined;
 - for frontend behavior or contract changes, run the repository's canonical complete frontend unit-test suite, plus repository-defined lint and typecheck checks when they are part of the cheap development contract;
 - run any other cheap deterministic contract check that repository instructions, scripts, or repository-owned Development/CI contracts explicitly require before Qualification.
+- when an affected invariant depends on packaging/build/runtime inclusion, execute the repository-owned artifact/build contract evidence selected in Test Impact and require it to prove that the production artifact/runtime retains and can activate the reviewed behavior; source-level tests alone are insufficient for that invariant.
 - validate every applicable cheap repository-owned work-surface guard for the Draft PR, including required work-item linkage, branch/target topology, Draft lifecycle state and equivalent metadata contracts; do not emit `READY_FOR_CI` while a required work-surface guard is RED, stale or unknown.
 
 ### Execution backends for Development validation
