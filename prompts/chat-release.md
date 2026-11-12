@@ -1,7 +1,7 @@
 ---
 name: chat-release
 description: "Generic Chat GITHUB_NATIVE release controller that initializes or reuses one release candidate, reviews and qualifies it, integrates it through repository policy, and publishes the resulting exact commit through coferlandia-release-publisher."
-version: "1.2.0"
+version: "1.3.0"
 stage: release
 status: active
 ---
@@ -178,6 +178,26 @@ Use the strongest repository-approved integration mechanism. Respect the reposit
 
 After integration, prove the intended release candidate reached the declared target ref and resolve the exact resulting target commit SHA. Do not infer the publish target from a pre-merge source SHA when integration produced a distinct commit.
 
+## Post-integration publication identity
+
+Once release integration succeeds, the exact **integrated target SHA** becomes the immutable publication target for that release generation.
+
+From this point onward, keep two authorities separate:
+
+- **release target** — the already-qualified, already-integrated exact commit that must receive the formal release identity;
+- **publication control-plane** — the current repository-approved workflow/helpers/publisher/scanner used to publish and verify that target.
+
+Normal advancement of the source ref, target branch, default branch, or publication control-plane after integration does **not** replace the integrated target SHA and does **not** require a new release candidate or a new release Qualification. A newer control-plane may intentionally publish an older exact integrated target when repository policy permits historical-target publication.
+
+The integrated target remains authoritative until one of these occurs:
+
+- publication completes successfully;
+- an actual product/security finding requires changing the released product;
+- the release identity itself becomes inconsistent or ambiguous (for example conflicting tag/Release state);
+- repository policy explicitly revokes eligibility of that exact target.
+
+Do not create a new release generation merely because a publication workflow, package registry, image builder, vulnerability scanner, GitHub API call, or publisher helper failed operationally.
+
 ## Release publication
 
 Use the public `coferlandia-release-publisher` skill for **Commit -> Release**. Do not duplicate version/tag/GitHub Release mechanics in this prompt.
@@ -251,11 +271,24 @@ If `publication.github` is absent, declares `mode = none`, is invalid, reference
 
 After publication, verify the annotated tag and GitHub Release resolve coherently to the exact intended commit. Publication success is not deployment success.
 
+### Post-integration publication failure classification
+
+When publication fails after integration, classify the failure without changing the integrated target by default:
+
+- **Transient/provider failure:** retry through the repository-approved publication mechanism against the same exact integrated target.
+- **Publication control-plane defect:** keep the same integrated target and release work surface. Repair only the workflow/helper/publisher/scanner control-plane through the repository's normal development authority. After that repair reaches the publication-capable history, re-enter `chat-release`, revalidate the current publication transport, and retry the same target. Do not rebuild Release Manifest, aggregate review, Product Knowledge evidence, `READY_FOR_RELEASE`, or RELEASE Qualification solely because publication tooling changed after integration.
+- **Operational scanner failure:** if the scanner fails before producing policy findings (for example authentication, database acquisition, registry access, parser, cache, runtime or provider failure), treat it as a publication control-plane/provider defect, not as a product security finding.
+- **Actual product/security finding:** if publication-time evidence establishes a real policy finding against the exact target and remediation requires changing product/runtime dependencies or release artifacts owned by the product, return `RELEASE_REPAIR_REQUIRED`. That path creates a new candidate through normal Development and requires fresh review/Qualification.
+
+A publication retry must preserve the original publication identity: same integrated `target_sha`, version, semantic impact, title/notes unless a repository-owned metadata correction is explicitly authorized, and the same durable release work surface when policy binds requests to it.
+
+For an issue-comment transport, a later retry may execute with a newer repository-approved publication control-plane while the request remains bound to the original merged release PR and its exact `merge_commit_sha`. The workflow must checkout/revalidate the control-plane and release target as separate identities.
+
 ## Closeout and reentry
 
 Apply only repository-declared release closeout behavior after publication verification, for example release-manifest traceability, issue annotations, branch reconciliation, or release-state cleanup. Generic `chat-release` does not invent those policies.
 
-Reentry always reconstructs current state. If integration already completed but publication is partially complete, use `coferlandia-release-publisher` consistency/recovery semantics rather than recreating or moving published identities. If a prior GitHub-native publication workflow already ran, bind to and inspect that exact run/release state before considering any new trigger.
+Reentry always reconstructs current state. If integration already completed, recover the durable integrated target SHA before inspecting current branch heads. Publication reentry resumes that exact target; later source/target/control-plane advancement alone is not release-candidate drift. If publication is partially complete, use `coferlandia-release-publisher` consistency/recovery semantics rather than recreating or moving published identities. If a prior GitHub-native publication workflow already ran, bind to and inspect that exact run/release state before considering any new trigger. When a control-plane repair has landed since that run, revalidate the current publication transport and retry the same integrated target rather than initializing a new release generation.
 
 Terminal/resumable states include:
 
