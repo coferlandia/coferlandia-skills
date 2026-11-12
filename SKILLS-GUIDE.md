@@ -92,6 +92,6 @@ For ordinary delivery, Integration completion is tied to the repository-approved
 - [`skills/INDEX.md`](./skills/INDEX.md) is the only Agent Skill inventory and status catalog.
 - [`prompts/INDEX.md`](./prompts/INDEX.md) and [`prompts/registry.json`](./prompts/registry.json) own the Chat controller registry/aliases.
 - Each skill's `SKILL.md` is its complete operational contract.
-- `_protocol/delivery/` owns shared READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification semantics.
+- `_protocol/delivery/` owns shared Independent Review / READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification semantics.
 - This guide explains selection and composition; it does not redefine behavior.
 - [`AGENTS.md`](./AGENTS.md) remains the entry point for agents maintaining or consuming the repository.
