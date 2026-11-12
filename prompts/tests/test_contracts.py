@@ -296,6 +296,18 @@ class PromptContractTests(unittest.TestCase):
         self.assertIn("affected pre-existing tests were reviewed", text)
         self.assertIn("materially duplicate coverage without independent value", text)
 
+    def test_chat_coder_requires_artifact_build_contract_parity_when_applicable(self):
+        text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
+        self.assertIn("Production artifact / build contract impact", text)
+        self.assertIn("source correctness and production-artifact correctness as separate Development invariants", text)
+        self.assertIn("cheapest deterministic evidence", text)
+        self.assertIn("source-level behavior is correct", text)
+        self.assertIn("production artifact/runtime contract omits, strips, shadows, or cannot activate it", text)
+        self.assertIn("source-level tests alone are insufficient for that invariant", text)
+        self.assertIn("artifact/build contract impact is \`NOT APPLICABLE\`", text)
+        for token in ("SecretarIA", "Next.js", "middleware.ts", "Dockerfile", "CSP"):
+            self.assertNotIn(token, text)
+
     def test_chat_coder_batches_candidates_and_separates_stack_propagation(self):
         text = (PROMPTS / "chat-coder.md").read_text(encoding="utf-8")
         self.assertIn("one logical correction batch as one candidate publication", text)
