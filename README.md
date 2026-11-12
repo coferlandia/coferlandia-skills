@@ -162,11 +162,11 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.19.3 — 2026-10-31**
+**v2.20.0 — 2026-11-11**
 
-| Changed skill | Version | Main change |
+| Changed prompt | Version | Main change |
 |---|---:|---|
-| coferlandia-ci-adapter | 1.5.2 | Completes Node 24-compatible first-party GitHub Actions majors in the release-publication renderer without changing publication authority or application runtimes. |
+| chat-coder | 1.10.0 | Requires production artifact/build contract parity when behavior crosses a packaging, compilation, bundling, image, runtime-assembly, or deployment boundary. |
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
