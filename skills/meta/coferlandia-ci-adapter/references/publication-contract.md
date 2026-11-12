@@ -6,6 +6,7 @@ Use this reference only when repository adaptation explicitly includes complete 
 
 Qualification, Integration and Publication are separate authorities:
 
+- after Integration, the exact integrated target SHA is durable publication authority and is independent from later publication control-plane changes;
 - `.coferlandia/ci/profile.json` describes Qualification only.
 - repository release policy describes Integration/Publication topology and local decisions.
 - `chat-release` orchestrates the GITHUB_NATIVE release lifecycle.
@@ -122,7 +123,9 @@ The standard generated workflow must:
 13. materialize notes without shell-evaluating their content;
 14. build a deterministic publisher plan from exact request data;
 15. execute `coferlandia-release-publisher publish` from that plan;
-16. never deploy or invoke repository deployment workflows.
+16. never deploy or invoke repository deployment workflows;
+17. keep the release target checkout separate from the publication control-plane checkout so a repaired/current control-plane can publish an older exact integrated target;
+18. on retry, preserve the original release request identity and require `target_sha` to remain equal to the original merged release PR's `merge_commit_sha`.
 
 The target repository supplies the repository-relative publisher entrypoint and publication runner contract during adaptation. The adapter rejects absolute publisher paths, parent traversal, empty runner labels, duplicate labels, and multiline labels.
 
@@ -132,7 +135,9 @@ The target repository supplies the repository-relative publisher entrypoint and 
 
 For `workflow-dispatch`, the same identity and verification rules apply, but it is usable only when the active client actually exposes a dispatch primitive.
 
-A missing workflow, unsupported mode, unavailable publication runner, insufficient actor authority, trigger capability gap, ambiguous run binding, RED workflow, stale SHA, release-PR integration mismatch, or release/tag mismatch is a publication blocker. None authorizes direct shell mutation or a LOCAL fallback.
+A missing workflow, unsupported mode, unavailable publication runner, insufficient actor authority, trigger capability gap, ambiguous run binding, RED workflow, stale request identity, release-PR integration mismatch, or release/tag mismatch is a publication blocker. None authorizes direct shell mutation or a LOCAL fallback.
+
+After a release PR has been integrated, a transient publication failure or a defect in the publication workflow/helper/publisher/scanner does not invalidate the already-qualified release target. Repair the control-plane independently, then retry the same exact target. Only an actual product/security defect that requires changing the product creates a new release candidate and fresh Qualification.
 
 ## Adaptation review checklist
 
