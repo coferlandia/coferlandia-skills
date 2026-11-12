@@ -59,6 +59,10 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("distinct open follow-up work item", hotfix)
         self.assertIn("`UNRESOLVED` is allowed only", hotfix)
         self.assertIn("must never advance to `HOTFIX_READY` or `HOTFIX_COMPLETE`", hotfix)
+        review = (Path(__file__).parent / "INDEPENDENT_REVIEW.md").read_text(encoding="utf-8")
+        for field in ("<!-- independent-review:v1 -->", "Target:", "Head reviewed:", "Base reviewed:", "Critical:", "Important:", "Completeness: COMPLETE | INCOMPLETE", "Ready: YES | NO"):
+            self.assertIn(field, review)
+        self.assertIn("head or base identity change makes the prior verdict stale", review)
 
     def test_development_and_merge_handoffs_preserve_controlling_work_item_identity(self):
         ready_ci = (Path(__file__).parent / "READY_FOR_CI.md").read_text(encoding="utf-8")
