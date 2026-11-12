@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.20.0 (2026-11-11)
+
+### Chat prompts
+
+- `chat-coder` 1.9.0 -> 1.10.0 adds an explicit production artifact/build contract parity check to Development.
+- Behavior that depends on packaging, compilation, bundling, image construction, runtime assembly, deployment manifests, or equivalent build-time inclusion must be proven against the repository-owned production artifact/runtime boundary rather than inferred from source-level tests alone.
+- The controller selects the cheapest deterministic evidence that preserves the full invariant and requires real build/package/runtime validation only when cheaper structural or contract evidence cannot prove inclusion and activation.
+
+### Repository and protocol
+
+- Keeps the contract framework- and repository-agnostic: build-system specifics remain consumer-owned.
+- Adds prompt contract coverage that prevents consumer-specific names or implementation details from leaking into the generic controller.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.19.3 to v2.20.0 for the additive compatible Chat Coder Development capability.
+
+### Migration or compatibility
+
+- Existing repositories remain compatible.
+- Consumers vendoring `chat-coder` should refresh the prompt artifact to gain artifact/build parity enforcement; repositories decide their own cheap contract test or build/runtime evidence.
+
+
 ## v2.19.3 (2026-10-31)
 
 ### Skills
