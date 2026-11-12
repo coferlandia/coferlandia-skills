@@ -7,7 +7,7 @@
 name: chat-coder
 description: "What this Chat controller does and when to load it."
 version: "1.0.0"
-stage: development | qualification | integration | release | hotfix
+stage: development | review | qualification | integration | release | hotfix
 status: active | deprecated
 ---
 ```
@@ -17,6 +17,7 @@ Rules:
 - `name` matches the filename without `.md` and its registry `id`.
 - `version` is `MAJOR.MINOR.PATCH` for this prompt family.
 - `stage` is exactly one delivery responsibility.
+- `review` is reserved for explicit independent assessment of an exact pull-request or branch delta against its current authoritative contract. Review controllers may publish their verdict but do not create validation evidence or modify implementation state.
 - `release` is reserved for controllers that own a release-candidate lifecycle; it is distinct from ordinary candidate Integration and from Commit -> Release publication helpers.
 - `hotfix` is reserved for explicitly invoked emergency-remediation orchestration. It may compose repository-approved Development, Qualification, Integration and publication surfaces, but it must preserve their authority boundaries and must not infer exceptional-lane authority from an ordinary bug report.
 - `description` is discovery text, not the full workflow.
