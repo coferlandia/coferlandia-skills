@@ -2,7 +2,7 @@
 
 Operational contracts and reusable Chat delivery controllers for AI agents working on real software projects.
 
-Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification for its public skills and additionally maintains a public Chat prompt family for Development, Qualification, Integration, aggregate Release, and explicit emergency Hotfix orchestration.
+Coferlandia Skills turns general-purpose models into specialized collaborators with explicit responsibilities, bounded authority, deterministic tooling, and auditable outcomes. The repository follows the [Agent Skills](https://agentskills.io) specification for its public skills and additionally maintains a public Chat prompt family for Development, independent Review, Qualification, Integration, aggregate Release, and explicit emergency Hotfix orchestration.
 
 ## Is this library for you?
 
@@ -18,7 +18,7 @@ It is probably not the right fit when you only need isolated prompt snippets, ex
 ## Operating philosophy
 
 - **Agent Skills are operational contracts, not prompt fragments.** Each skill defines activation conditions, authority, boundaries, outputs, and completion criteria.
-- **Chat delivery controllers are first-class but distinct.** `chat-coder`, `ci`, `merge`, `chat-release`, and `hotfix` are centrally maintained prompts for Chat execution surfaces; `local-ci` and `local-release` provide the corresponding LOCAL qualification surfaces.
+- **Chat delivery controllers are first-class but distinct.** `chat-coder`, `chat-reviewer`, `ci`, `merge`, `chat-release`, and `hotfix` are centrally maintained prompts for Chat execution surfaces; `local-ci` and `local-release` provide the corresponding LOCAL qualification surfaces.
 - **Semantic judgment and deterministic control are separated.** Models reason and produce domain work; code owns mechanical state, validation, and lifecycle operations where reliability matters.
 - **Every responsibility has one owner.** Planning, architecture, implementation, Qualification, Integration, release publication, emergency orchestration, and durable knowledge are not silently duplicated.
 - **Autonomy remains supervised and traceable.** Human or agentic control authorities may approve work, but consequential decisions and evidence remain inspectable.
@@ -63,6 +63,8 @@ COMPLETE
 ```
 
 Standalone `chat coder` / `chat-coder` is the simple GitHub-native path: the prompt registry resolves Development -> `ci` -> `merge` before execution starts, so the user does not need separate CI and merge commands. The stages keep their existing authority boundaries and durable handoffs. Use `chat dev` / `chat-dev` to stop after Development at `READY_FOR_CI`, or compose explicitly (for example `chat coder + local ci + merge`) when another Qualification surface is intended. Explicit composition always overrides the standalone default, and no strategy silently falls back to another.
+
+`chat reviewer` / `chat-reviewer` is a separate explicit independent-review surface. It evaluates one exact pull-request or branch delta against its authoritative contract, records the reviewed head/base identity, and returns a concise READY/NOT_READY verdict without modifying implementation state or creating new validation evidence.
 
 Aggregate releases use the same explicit strategy split:
 
@@ -162,7 +164,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.20.0 — 2026-11-11**
+**v2.21.0 — 2026-11-12**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
