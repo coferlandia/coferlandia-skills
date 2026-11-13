@@ -8,6 +8,12 @@
       "aliases": ["chat coder", "chat-coder", "chat dev", "chat-dev"]
     },
     {
+      "id": "chat-reviewer",
+      "path": "prompts/chat-reviewer.md",
+      "stage": "review",
+      "aliases": ["chat reviewer", "chat-reviewer"]
+    },
+    {
       "id": "ci",
       "path": "prompts/ci.md",
       "stage": "qualification",

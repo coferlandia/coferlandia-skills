@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v2.21.0 (2026-11-12)
+
+### Chat prompts
+
+- Adds `chat-reviewer` 1.0.0 as an explicit independent Review controller for one exact pull request or branch delta.
+- The reviewer resolves the current authoritative contract, records exact head/base identity, evaluates correctness, completeness, regressions/contradictions, applicable security or isolation concerns, target-specific checks, and blockers, then emits a compact READY/NOT_READY verdict using the versioned `<!-- independent-review:v1 -->` format.
+- Review execution is read-only over repository and Git state. Existing validation evidence may be consumed, while tests, builds, linters, workflows, operational commands, and implementation fixes remain outside this controller. The only allowed side effect is publishing the review to the requested canonical destination.
+
+### Repository and protocol
+
+- Adds `review` as a first-class Chat prompt stage in the prompt specification and validator.
+- Registers `chat reviewer` / `chat-reviewer` without a standalone default expansion, keeps it independent from internal reviews owned by other controllers, and extends catalog/bootstrap/contract coverage accordingly.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.20.0 to v2.21.0 for the new compatible independent-review capability.
+
+### Migration or compatibility
+
+- Existing Chat controllers, Agent Skills, aliases, Qualification strategies, and standalone Chat Coder orchestration remain compatible and unchanged.
+- Consumers that vendor the prompt catalog should refresh the registry, prompt specification, and new `chat-reviewer.md` artifact together.
+
 ## v2.20.0 (2026-11-11)
 
 ### Chat prompts

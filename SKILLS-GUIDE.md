@@ -8,7 +8,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 
 - Choose the narrowest skill or prompt that owns the required outcome.
 - Compose controllers only when the task crosses responsibility boundaries.
-- Planning defines work; development changes code; Qualification proves one exact candidate; Integration merges/closes ordinary delivery; Release qualifies and promotes an aggregate release candidate; publication gives one exact integrated commit a formal release identity.
+- Planning defines work; development changes code; independent Review evaluates one exact delta; Qualification proves one exact candidate; Integration merges/closes ordinary delivery; Release qualifies and promotes an aggregate release candidate; publication gives one exact integrated commit a formal release identity.
 - Explicit emergency remediation is separate from ordinary bug development: `hotfix` may orchestrate repository-approved owners but never bypass their safeguards.
 - Durable project knowledge, product-knowledge coverage, operational work state, and cross-project architecture memory have different owners.
 - Chat prompts and local Agent Skills are different execution surfaces even when they implement the same semantic stage.
@@ -45,6 +45,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 | [`local-ci`](./skills/engineering/local-ci/) | Development Qualification is executed through an Agent Skills/local surface for a durable READY_FOR_CI candidate. | LOCAL strategy READY_FOR_MERGE evidence for exact candidate/base/profile. | Invocation selects LOCAL; it never runs GitHub-native CI as fallback or merges. |
 | [`local-release`](./skills/engineering/local-release/) | One exact release candidate must use the LOCAL release surface. | LOCAL READY_FOR_RELEASE evidence plus repository-approved release completion using the shared publisher. | Never falls back to GitHub-native release Qualification and never deploys. |
 | [`chat-coder`](./prompts/chat-coder.md) | Development is being driven from Chat. | Standalone `chat coder` completes Development -> GITHUB_NATIVE Qualification -> Integration; `chat dev` produces the Draft PR plus durable READY_FOR_CI only. | Stage authority remains separated; explicit `+` composition overrides the standalone default. |
+| [`chat-reviewer`](./prompts/chat-reviewer.md) | One PR or branch needs a concise independent review against its authoritative contract. | Exact head/base-bound findings plus READY/NOT_READY, optionally published to the requested canonical destination. | Read-only except review publication; does not run validation, implement fixes, or infer a next stage. |
 | [`ci`](./prompts/ci.md) | GitHub-native development Qualification is resolved from Chat, either directly, by explicit composition, or by the standalone Chat Coder default. | GITHUB_NATIVE READY_FOR_MERGE evidence. | Does not run Local CI or merge. |
 | [`merge`](./prompts/merge.md) | An already-qualified development candidate must be integrated from Chat. | Repository-approved Integration, explicit work-item closeout, and COMPLETE. | Never executes CI; stale qualification returns REQUALIFICATION_REQUIRED and failed post-merge Issue closure returns CLOSEOUT_BLOCKED. |
 | [`chat-release`](./prompts/chat-release.md) | One exact release candidate must use GitHub-native release Qualification and promotion. | GITHUB_NATIVE READY_FOR_RELEASE, repository-approved release integration, and publication through the shared publisher. | Does not invoke `ci`, fall back to LOCAL, or deploy. |
@@ -70,6 +71,7 @@ Controlled local delivery: Project Manager -> optional Architect -> optional Pro
 Product knowledge audit:   Product Knowledge Sync audit -> owner handoffs -> optional Archivist/Evangelist execution
 Product release gate:      opted-in repository Qualification -> Product Knowledge Sync verify -> normal CI/release controller
 Chat delivery:             chat coder (default -> chat-coder -> ci -> merge)
+Independent Chat review:   exact PR/branch -> chat-reviewer -> READY | NOT_READY
 Mixed local qualification: chat coder + local ci + merge
 GitHub-native release:     exact release candidate -> chat-release -> Release Publisher internally
 LOCAL release:             exact release candidate -> local-release -> Release Publisher internally
@@ -90,6 +92,6 @@ For ordinary delivery, Integration completion is tied to the repository-approved
 - [`skills/INDEX.md`](./skills/INDEX.md) is the only Agent Skill inventory and status catalog.
 - [`prompts/INDEX.md`](./prompts/INDEX.md) and [`prompts/registry.json`](./prompts/registry.json) own the Chat controller registry/aliases.
 - Each skill's `SKILL.md` is its complete operational contract.
-- `_protocol/delivery/` owns shared READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification semantics.
+- `_protocol/delivery/` owns shared Independent Review / READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification semantics.
 - This guide explains selection and composition; it does not redefine behavior.
 - [`AGENTS.md`](./AGENTS.md) remains the entry point for agents maintaining or consuming the repository.

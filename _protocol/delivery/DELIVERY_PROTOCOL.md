@@ -9,6 +9,8 @@ chat-coder           ci (GITHUB_NATIVE)             merge
 READY_FOR_CI  ->          READY_FOR_MERGE      ->   COMPLETE
 ```
 
+Independent Review is an explicit orthogonal assessment surface over one exact pull-request or branch delta. `chat-reviewer` binds its verdict to exact head/base identity through `INDEPENDENT_REVIEW.md`; it does not create Qualification or Integration authority and is never inferred from another controller's internal review step.
+
 Aggregate release is a separate lifecycle over one exact release candidate. Repository policy may keep that candidate live-bound to the source ref or materialize/freeze it at initialization; in the latter mode, later normal source-ref advancement does not replace the active candidate:
 
 ```text

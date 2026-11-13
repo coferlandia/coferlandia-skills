@@ -57,9 +57,9 @@ coferlandia-skills/
 ## Using Chat delivery prompts
 
 1. Read `prompts/BOOTSTRAP.md` and `prompts/registry.json`.
-2. Resolve only aliases explicitly requested (`chat coder`, `chat dev`, `ci`/`gh ci`, `merge`, `chat release`, `hotfix`, or external `local ci` / `local release`). A single standalone alias may expand only through `composition.standalone_defaults` declared in the registry.
+2. Resolve only aliases explicitly requested (`chat coder`, `chat dev`, `chat reviewer`, `ci`/`gh ci`, `merge`, `chat release`, `hotfix`, or external `local ci` / `local release`). A single standalone alias may expand only through `composition.standalone_defaults` declared in the registry.
 3. Explicit `+` controller compositions execute left-to-right exactly as written and suppress standalone defaults; do not infer missing stages from READY state or change Qualification strategy. `hotfix` is an explicit high-level emergency-remediation controller and must never be inferred from an ordinary bug report.
-4. Read `_protocol/delivery/` for shared READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification contracts.
+4. Read `_protocol/delivery/` for shared Independent Review / READY_FOR_CI / READY_FOR_MERGE / READY_FOR_RELEASE / HOTFIX / requalification contracts.
 5. `prompts/` ships as a public prompt artifact family alongside Agent Skills, but it is not itself an Agent Skill surface; load it through the prompt catalog rather than Agent Skill discovery.
 
 ## Creating or changing a public skill
