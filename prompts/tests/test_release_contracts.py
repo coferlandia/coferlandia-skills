@@ -101,6 +101,8 @@ class ReleasePromptContractTests(unittest.TestCase):
             "repository-declared deterministic compatibility gates/evidence",
             "absent, stale, ambiguous, or unproven",
             "every repository-declared release compatibility classification/gate",
+            "an explicitly allowed `incompatible` result remains valid release evidence",
+            "violates the repository's required compatibility guarantee",
         ):
             self.assertIn(token, text)
 

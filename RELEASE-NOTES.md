@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v2.21.2 (2026-11-17)
+
+### Chat prompts
+
+- `chat-release` 1.3.1 -> 1.3.2 makes compatibility outcome handling repository-policy-driven: an explicitly allowed rollback-incompatible result is valid evidence and does not itself block a release.
+- A compatibility result blocks as `RELEASE_REPAIR_REQUIRED` only when it violates a repository-declared compatibility guarantee; missing/ambiguous required evidence remains fail-closed.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.21.1 to v2.21.2 for the compatibility-policy clarification.
+
+
 ## v2.21.1 (2026-11-17)
 
 ### Chat prompts
