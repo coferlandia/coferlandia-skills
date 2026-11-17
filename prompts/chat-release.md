@@ -1,7 +1,7 @@
 ---
 name: chat-release
 description: "Generic Chat GITHUB_NATIVE release controller that initializes or reuses one release candidate, reviews and qualifies it, integrates it through repository policy, and publishes the resulting exact commit through coferlandia-release-publisher."
-version: "1.3.0"
+version: "1.3.1"
 stage: release
 status: active
 ---
@@ -94,6 +94,8 @@ Before release Qualification, perform or consume the repository-approved aggrega
 
 At minimum, reason across the combined release rather than merely trusting each previously merged work item in isolation. Review relevant cross-change interactions, integration/history correctness, public/API/data-contract compatibility, migrations, environment/configuration effects, release-manifest completeness, operational impact, and any repository-declared release risks.
 
+When repository policy declares versioned persistent state, migration compatibility, a rollback window, previous-release operability, or an equivalent release concern, classify **forward deployment compatibility** and **previous-release/rollback compatibility** separately. Never infer rollback safety solely because migrations are additive, forward-safe, or non-destructive. Consume repository-declared deterministic compatibility gates/evidence when available; if required previous-release compatibility is absent, stale, ambiguous, or unproven for the exact candidate/base, fail closed rather than labeling it compatible. A product/runtime incompatibility is a `RELEASE_REPAIR_REQUIRED` finding; missing or ambiguous release-owned evidence is a `RELEASE_REVIEW_BLOCKED` finding.
+
 Use the repository's review mechanism when one is declared; otherwise perform the review within this controller. The resulting exact-candidate release review must end with:
 
 ```text
@@ -113,7 +115,8 @@ Require all of:
 4. current profile fingerprint;
 5. current aggregate release review with Critical = 0 and Important = 0 for the exact candidate/base/manifest;
 6. repository policy that permits release integration from the resolved candidate identity into the resolved target;
-7. no repository-declared reconciliation, ancestry, freeze, active-release, or release-state blocker.
+7. no repository-declared reconciliation, ancestry, freeze, active-release, or release-state blocker;
+8. every repository-declared release compatibility classification/gate required for the exact candidate/base is resolved and current.
 
 A repository may impose stronger release preconditions. Consume them without copying project-specific facts into this generic prompt.
 

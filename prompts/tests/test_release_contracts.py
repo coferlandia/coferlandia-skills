@@ -92,6 +92,21 @@ class ReleasePromptContractTests(unittest.TestCase):
         self.assertIn("Source-ref advancement alone is not drift", text)
         self.assertIn("explicit new release candidate initialization", text)
 
+    def test_chat_release_separates_forward_and_rollback_compatibility(self):
+        text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
+        for token in (
+            "forward deployment compatibility",
+            "previous-release/rollback compatibility",
+            "Never infer rollback safety solely because migrations are additive",
+            "repository-declared deterministic compatibility gates/evidence",
+            "absent, stale, ambiguous, or unproven",
+            "every repository-declared release compatibility classification/gate",
+        ):
+            self.assertIn(token, text)
+
+        for repository_specific in ("Alembic", "alembic_version", "SecretarIA"):
+            self.assertNotIn(repository_specific, text)
+
     def test_chat_release_preserves_integrated_target_across_publication_repairs(self):
         text = (PROMPTS / "chat-release.md").read_text(encoding="utf-8")
         for token in (

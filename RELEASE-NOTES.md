@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v2.21.1 (2026-11-17)
+
+### Chat prompts
+
+- `chat-release` 1.3.0 -> 1.3.1 separates forward deployment compatibility from previous-release/rollback compatibility whenever repository policy declares versioned persistent state, migration compatibility, a rollback window, previous-release operability, or an equivalent release concern.
+- Release review may no longer infer rollback safety solely from additive, forward-safe, or non-destructive migrations; repository-declared deterministic compatibility evidence is consumed when available and required but unproven compatibility fails closed.
+
+### Repository and protocol
+
+- Adds prompt contract coverage for the compatibility-classification invariant while keeping application/framework-specific migration systems outside the generic controller.
+- Keeps repository-owned policy and gates authoritative for the actual compatibility mechanism.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.21.0 to v2.21.1 for the compatible release-safety correction.
+
+### Migration or compatibility
+
+- Existing repositories without a declared rollback/previous-release compatibility concern are unchanged.
+- Consumers vendoring `chat-release` should refresh the prompt artifact to receive the stricter release-review invariant.
+
+
 ## v2.21.0 (2026-11-12)
 
 ### Chat prompts
