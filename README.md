@@ -164,7 +164,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.21.2 — 2026-11-17**
+**v2.22.0 — 2026-11-20**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
