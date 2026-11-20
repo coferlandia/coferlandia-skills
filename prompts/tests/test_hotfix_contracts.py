@@ -69,6 +69,16 @@ class HotfixContractTests(unittest.TestCase):
             self.assertNotIn(token, self.prompt)
             self.assertNotIn(token, self.contract)
 
+    def test_controller_delegates_production_stabilization_without_owning_deployment(self):
+        self.assertIn("coferlandia-deploy", self.prompt)
+        self.assertIn("HOTFIX_STABILIZED", self.prompt)
+        self.assertIn("HOTFIX_STABILIZED", self.contract)
+        self.assertIn("Deployment evidence", self.contract)
+        self.assertIn("exact release", self.prompt.lower())
+        self.assertIn("HEALTHY", self.prompt)
+        self.assertIn("post-deploy", self.prompt.lower())
+        self.assertIn("must not block production stabilization", self.prompt)
+
     def test_temporary_completion_does_not_claim_structural_resolution(self):
         self.assertIn("production stabilization is complete **while permanent resolution remains open**", self.prompt)
         self.assertIn("Permanent resolution = PENDING", self.prompt)
