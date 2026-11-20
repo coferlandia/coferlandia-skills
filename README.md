@@ -166,6 +166,10 @@ AGENTS.md        Entry point for agents
 
 **v2.22.0 — 2026-11-20**
 
+| Changed skill | Version | Main change |
+|---|---:|---|
+| coferlandia-deploy | 1.0 | Adds exact immutable-release deployment delegation through a repository-declared authority, with expected-SHA binding, HEALTHY no-op re-entry, terminal evidence, and no provider-state duplication. |
+
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
 
