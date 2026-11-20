@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## v2.22.0 (2026-11-20)
+
+### Skills
+
+| Skill | Previous | Current | Summary |
+|---|---:|---:|---|
+| coferlandia-deploy | new | 1.0 | Adds exact immutable-release deployment delegation through a repository-declared authority, with expected-SHA binding, HEALTHY no-op re-entry, terminal evidence, and no provider-state duplication. |
+
+### Chat prompts
+
+- `hotfix` 1.0.0 -> 1.1.0 adds `HOTFIX_STABILIZED` as the production-restoration milestone and delegates required production deployment to `coferlandia-deploy` after formal publication.
+- Post-deploy reconciliation, broad validation, and administrative closeout remain repository-owned and may complete after stabilization when policy keeps them off the MTTR-critical path.
+- `chat-release` remains publish-only and `coferlandia-release-publisher` remains Commit -> Release only.
+
+### Repository and protocol
+
+- Extends the HOTFIX v1 durable lifecycle compatibly with conditional deployment evidence and `HOTFIX_STABILIZED` while preserving existing pre-qualification records.
+- Reuses repository policy as deployment-authority discovery rather than introducing a second configuration registry.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.21.2 to v2.22.0 for the additive generic deployment and HOTFIX-stabilization capability.
+
+### Migration or compatibility
+
+- Existing repositories that do not declare deployment requirements retain their current release/HOTFIX behavior.
+- Repositories that require production deployment may declare an authority/environment mapping and vendor `coferlandia-deploy`; provider-specific execution remains outside Skills.
+
 ## v2.21.2 (2026-11-17)
 
 ### Chat prompts
