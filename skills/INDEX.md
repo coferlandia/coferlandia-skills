@@ -73,7 +73,8 @@ Operations, automation, incidents, standups.
 | [project-orchestrator](./ops/project-orchestrator/) | Execute direct plans or Analyst DAGs after one-time GitHub/filesystem initialization, using a frozen local snapshot, immutable reviews, final PR traceability, and explicit integration | active |
 | [coferlandia-config-devops](./ops/coferlandia-config-devops/) | Operate a Toolsmith-prepared configuration facade from natural-language intent in direct Execute Mode or control-tower Guide Mode | active |
 | [coferlandia-release-publisher](./ops/coferlandia-release-publisher/) | Convert an exact Git commit into a formal annotated-tag plus GitHub Release with SemVer planning, idempotent publication, verification, and machine-readable resolution without deployment coupling | active |
+| [coferlandia-deploy](./ops/coferlandia-deploy/) | Deploy one immutable release through a repository-declared authority with exact-SHA binding, idempotent HEALTHY re-entry, and terminal deployment evidence | active |
 
 ---
 
-*Last updated: 2026-10-01*
+*Last updated: 2026-11-20*

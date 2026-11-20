@@ -33,7 +33,7 @@ jobs:
       - name: Record Development contract
         shell: bash
         run: |
-          echo "Development contract fingerprint: 0bdab7871300fd9d2376713411de92c29e754c32fcbf8c8a7a628bea2b1365e5" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Development contract fingerprint: 2ed720fc985969fd114799dc2f2ed612c6e144ed33c8591f33112d2910c00b1d" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "Candidate SHA: ${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: "Set up Python"
         uses: "actions/setup-python@v7"
@@ -48,7 +48,7 @@ jobs:
         shell: bash
         working-directory: "."
         run: |
-          python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile check --profile .coferlandia/ci/profile.json --expect-fingerprint 4220cac44505839f0a22ddce91dc511ad3b15f4db94929332c5526f5b65c1e39 --json
+          python skills/meta/coferlandia-ci-adapter/scripts/coferlandia-ci-adapter-cli.py profile check --profile .coferlandia/ci/profile.json --expect-fingerprint 0f8ba59435eb5230e7cba0b93417497e32e2ed0e990c93f17a207962708dbc68 --json
       - name: "Validate changed Chat prompt and shared delivery contracts"
         shell: bash
         working-directory: "."

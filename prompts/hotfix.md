@@ -1,7 +1,7 @@
 ---
 name: hotfix
 description: "Generic explicit emergency-remediation Chat controller that turns an existing Issue or free-form bug report into a repository-approved hotfix flow with durable permanent-fix follow-up when mitigation is temporary."
-version: "1.0.0"
+version: "1.1.0"
 stage: hotfix
 status: active
 ---
@@ -36,7 +36,10 @@ explicit hotfix request
 -> repository-approved emergency qualification
 -> emergency integration
 -> release/publication when repository policy requires it
--> repository-defined reconciliation/post-integration verification
+-> generic coferlandia-deploy when repository policy requires production stabilization
+-> exact release deployed HEALTHY
+-> HOTFIX_STABILIZED
+-> repository-defined post-deploy reconciliation/verification
 -> HOTFIX_COMPLETE
 ```
 
@@ -50,7 +53,7 @@ The explicit invocation is authority to attempt the repository's declared hotfix
 
 Reconstruct current state from repository instructions and authoritative GitHub evidence. Do not hardcode a branch name, production ref, workflow/check, merge method, release version, deployment mechanism, Project ID, runner, or reconciliation topology.
 
-Resolve the repository-approved emergency source/target, development surface, qualification contract, integration mechanism, publication policy and any post-integration reconciliation/verification. Repository-specific facts belong in repository policy/configuration rather than this prompt.
+Resolve the repository-approved emergency source/target, development surface, qualification contract, integration mechanism, publication policy, production-stabilization requirement/deployment authority and any post-deploy reconciliation/verification. Repository-specific facts belong in repository policy/configuration rather than this prompt.
 
 ## Primary Issue
 
@@ -143,17 +146,23 @@ Current queued/pending work is not GREEN. Old-SHA, superseded, cancelled or unre
 
 After qualification succeeds, integrate only through repository-approved safeguards. Do not force-push, bypass required controls or weaken tests/checks to make the emergency path pass.
 
-## Release, reconciliation and verification
+## Release, deployment, reconciliation and verification
 
 When repository policy requires a formal release for a hotfix, pass the exact integrated commit to `coferlandia-release-publisher`; do not duplicate its SemVer/tag/GitHub Release logic. The repository decides whether the emergency release must be PATCH-compatible or follows another declared version policy.
 
-Perform only repository-declared post-integration reconciliation and verification. Examples may include reconciling the production line back into a development line or running asynchronous broad validation, but this prompt must not assume concrete branch names or workflows.
+When repository policy requires production stabilization through deployment, do not stop at a merely deployable release. After the exact release is formally published and verified, delegate immediately to generic `coferlandia-deploy` with the immutable release identity and the independently known exact expected SHA. The deployment skill resolves only the repository-declared authority; this controller must not implement host commands, provider state transitions, SSH fallbacks or deployment mechanics.
 
-When a release identity becomes known, update the primary Issue and, for temporary mitigation, the permanent-fix Issue with the durable release/PR references required by repository policy.
+Production is `HOTFIX_STABILIZED` only when durable deployment evidence proves that the exact release resolved to the expected SHA and the declared deployment authority returned `HEALTHY`. A release/SHA mismatch, conflicting active deployment or unavailable authority remains fail-closed and resumable rather than permission to invent an emergency deployment path.
+
+Treat stabilization and engineering closeout as distinct milestones. Perform repository-declared post-deploy reconciliation and verification after stabilization when policy classifies them as closeout guarantees. Examples may include reconciling the production line back into a development line or running asynchronous broad validation, but this prompt must not assume concrete branch names or workflows. Repository-declared post-deploy work **must not block production stabilization**.
+
+When a release or deployment identity becomes known, update the primary Issue and, for temporary mitigation, the permanent-fix Issue with the durable release/PR/deployment references required by repository policy.
 
 ## Completion semantics
 
-For `PERMANENT`, `HOTFIX_COMPLETE` means the emergency correction is integrated and all repository-required publication/reconciliation/verification closeout has succeeded.
+`HOTFIX_STABILIZED` means the production-restoration boundary is proven: the exact formal release is bound to the expected integrated SHA and the repository-declared deployment authority reports `HEALTHY`. It does not imply that broader reconciliation or verification has completed.
+
+For `PERMANENT`, `HOTFIX_COMPLETE` means the emergency correction is integrated, production stabilization is complete when required, and all repository-required publication/post-deploy reconciliation/verification closeout has succeeded.
 
 For `TEMPORARY_MITIGATION`, `HOTFIX_COMPLETE` means production stabilization is complete **while permanent resolution remains open**. Do not describe the structural bug as permanently fixed.
 
@@ -164,10 +173,12 @@ HOTFIX workflow = COMPLETE
 Primary issue = <identity>
 Resolution strategy = TEMPORARY_MITIGATION
 Production mitigation = COMPLETE
+Production stabilization = HOTFIX_STABILIZED | repository-declared NONE
 Candidate/integrated SHA = <sha>
 Release = <release or NONE per repository policy>
+Deployment evidence = <provider event/reference or NONE per repository policy>
 Permanent resolution = PENDING <follow-up Issue>
-Post-integration verification = PASS | repository-defined pending state
+Post-deploy verification = PASS | repository-defined pending state
 ```
 
 Blocked example:

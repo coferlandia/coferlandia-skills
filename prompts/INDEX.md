@@ -9,7 +9,7 @@ First-class Chat controllers maintained centrally by `coferlandia-skills`.
 | [`ci`](./ci.md) | Qualification / GitHub-native | `ci`, `gh ci`, `github ci` | `READY_FOR_MERGE`, `WAITING_CI`, or precise failure/blocker state |
 | [`merge`](./merge.md) | Integration | `merge` | `COMPLETE`, `REQUALIFICATION_REQUIRED`, or `CLOSEOUT_BLOCKED` |
 | [`chat-release`](./chat-release.md) | Release / GitHub-native | `chat release`, `chat-release` | `COMPLETE` or resumable release state |
-| [`hotfix`](./hotfix.md) | Explicit emergency remediation | `hotfix` | `HOTFIX_COMPLETE`, resumable state, or `HOTFIX_BLOCKED` |
+| [`hotfix`](./hotfix.md) | Explicit emergency remediation | `hotfix` | `HOTFIX_STABILIZED`, `HOTFIX_COMPLETE`, resumable state, or `HOTFIX_BLOCKED` |
 
 Standalone `chat coder` / `chat-coder` has a registry-declared default sequence of Development -> `ci` (`GITHUB_NATIVE`) -> `merge`, so ordinary Chat development continues to verified Integration without requiring separate user commands. `READY_FOR_CI` and `READY_FOR_MERGE` remain durable internal stage contracts. Use standalone `chat dev` / `chat-dev` when Development itself should be terminal at `READY_FOR_CI`.
 
@@ -23,6 +23,6 @@ Development Qualification and Release Qualification are separate responsibilitie
 
 Integration closeout is explicit: after `merge` verifies that the qualified candidate reached the repository-approved authoritative target ref, it must verify the associated work item is closed, closing it directly when still open rather than depending on GitHub default-branch closing-keyword semantics. Failure to verify that closeout returns `CLOSEOUT_BLOCKED` instead of `COMPLETE`.
 
-`hotfix` is intentionally a higher-level explicit emergency controller. It accepts an existing Issue or a free-form bug report, creates/reuses the primary work item, classifies `PERMANENT` versus `TEMPORARY_MITIGATION`, requires a permanent-fix follow-up Issue for temporary mitigations, and delegates Development/Qualification/Integration/publication to repository-approved owners. A normal bug report never implicitly selects the hotfix lane, and stage-scoped delegation to `chat-coder` does not activate the standalone Chat Coder default sequence.
+`hotfix` is intentionally a higher-level explicit emergency controller. It accepts an existing Issue or a free-form bug report, creates/reuses the primary work item, classifies `PERMANENT` versus `TEMPORARY_MITIGATION`, requires a permanent-fix follow-up Issue for temporary mitigations, and delegates Development/Qualification/Integration/publication plus repository-declared production deployment to approved owners. Exact HEALTHY deployment may establish `HOTFIX_STABILIZED` before broader post-deploy closeout reaches `HOTFIX_COMPLETE`. A normal bug report never implicitly selects the hotfix lane, and stage-scoped delegation to `chat-coder` does not activate the standalone Chat Coder default sequence.
 
 The machine-readable registry is [`registry.json`](./registry.json).

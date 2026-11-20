@@ -39,14 +39,20 @@ hotfix #issue | hotfix: <report>
           |
  repository-approved Development / Qualification / Integration
           |
- publication + reconciliation/verification when repository policy requires
+ formal publication when repository policy requires
+          |
+ coferlandia-deploy when production stabilization requires deployment
+          |
+ HOTFIX_STABILIZED
+          |
+ repository-defined post-deploy reconciliation/verification
           |
  HOTFIX_COMPLETE | HOTFIX_BLOCKED
 ```
 
-For `TEMPORARY_MITIGATION`, a distinct permanent-fix Issue is mandatory before the emergency candidate becomes `HOTFIX_READY`; the hotfix may complete with production stabilized while that structural follow-up remains open.
+For `TEMPORARY_MITIGATION`, a distinct permanent-fix Issue is mandatory before the emergency candidate becomes `HOTFIX_READY`; the hotfix may reach `HOTFIX_STABILIZED` and later complete while that structural follow-up remains open. `HOTFIX_STABILIZED` separates the MTTR-critical production-restoration boundary from repository-defined engineering closeout.
 
-Development, Qualification and Integration are separate responsibilities. Qualification strategy is explicitly selected; `LOCAL` and `GITHUB_NATIVE` are equal alternatives, not fallback paths. Release controllers preserve that same strategy distinction. `hotfix` is loaded only by explicit invocation and may orchestrate repository-approved owners without absorbing or weakening their contracts.
+Development, Qualification and Integration are separate responsibilities. Qualification strategy is explicitly selected; `LOCAL` and `GITHUB_NATIVE` are equal alternatives, not fallback paths. Release controllers preserve that same strategy distinction. Deployment is also a separate responsibility: `coferlandia-deploy` delegates an immutable release to a repository-declared authority and normalizes terminal evidence without reproducing provider mechanics. `hotfix` is loaded only by explicit invocation and may orchestrate repository-approved owners without absorbing or weakening their contracts.
 
 Durable state defaults to managed GitHub comments/records with exact candidate identity. Controllers re-read current repository/GitHub state on every invocation. Chat history, old local results and superseded checks are never authority.
 
