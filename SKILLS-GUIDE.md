@@ -51,6 +51,7 @@ Use [`skills/INDEX.md`](./skills/INDEX.md) as the canonical Agent Skill inventor
 | [`chat-release`](./prompts/chat-release.md) | One exact release candidate must use GitHub-native release Qualification and promotion. | GITHUB_NATIVE READY_FOR_RELEASE, repository-approved release integration, and publication through the shared publisher. | Does not invoke `ci`, fall back to LOCAL, or deploy. |
 | [`hotfix`](./prompts/hotfix.md) | An explicit urgent bug/incident should take the repository-approved emergency path from Issue/report through production stabilization. | Durable HOTFIX state, exact emergency candidate, and mandatory permanent-fix follow-up when the production correction is only temporary. | Explicit invocation only; delegates Development/Qualification/Integration/publication and fails closed instead of weakening safeguards. |
 | [`coferlandia-release-publisher`](./skills/ops/coferlandia-release-publisher/) | An exact existing commit must become, dry-run, verify, or resolve as a formal product release. | Semantic-version plan, exact annotated tag, GitHub Release, optional artifacts/provenance, consistency verification, and a normalized machine-readable release contract. | Owns Commit -> Release only; it does not qualify a release candidate or deploy. |
+| [`coferlandia-deploy`](./skills/ops/coferlandia-deploy/) | A published immutable release must reach a repository-declared environment through its approved deployment authority. | Exact release/SHA binding, idempotent HEALTHY re-entry, terminal deployment evidence, and fail-closed provider delegation. | Owns release -> deployment-authority handoff only; no publication, host command fallback, or provider-state duplication. |
 
 ## Configuration Operations
 
@@ -75,8 +76,9 @@ Independent Chat review:   exact PR/branch -> chat-reviewer -> READY | NOT_READY
 Mixed local qualification: chat coder + local ci + merge
 GitHub-native release:     exact release candidate -> chat-release -> Release Publisher internally
 LOCAL release:             exact release candidate -> local-release -> Release Publisher internally
-Emergency remediation:     hotfix -> repository-approved development/qualification/integration -> optional Release Publisher
-Direct publication:        exact integrated commit -> Release Publisher -> separate deployment authority when needed
+Emergency remediation:     hotfix -> repository-approved development/qualification/integration -> optional Release Publisher -> optional coferlandia-deploy -> HOTFIX_STABILIZED -> closeout
+Direct publication:        exact integrated commit -> Release Publisher
+Direct deployment:         immutable release + expected SHA -> coferlandia-deploy -> declared deployment authority
 Knowledge recovery:        Archivist -> optional Project Skill Miner
 Skill mechanization:       Existing skill -> Skill Toolsmith -> Skill Repository Versioning
 Configuration tooling:     Config Toolsmith -> Config DevOps
