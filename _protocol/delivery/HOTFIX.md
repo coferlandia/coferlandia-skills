@@ -35,7 +35,7 @@ Deployment evidence: PENDING | <authority/target/application/release/expected-SH
 
 ## Strategy invariants
 
-`UNRESOLVED` is allowed only while the hotfix is still being diagnosed or when it is `HOTFIX_BLOCKED` before a safe resolution strategy can be justified. A record with `Resolution strategy: UNRESOLVED` must never advance to `HOTFIX_READY`, `HOTFIX_STABILIZED` or `HOTFIX_COMPLETE`.
+`UNRESOLVED` is allowed only while the hotfix is still being diagnosed or when it is `HOTFIX_BLOCKED` before a safe resolution strategy can be justified. A record with `Resolution strategy: UNRESOLVED` must never advance to `HOTFIX_READY` or `HOTFIX_COMPLETE`; it must likewise never advance to `HOTFIX_STABILIZED`.
 
 `PERMANENT` means the bounded emergency change is itself the intended long-term correction. It requires:
 
