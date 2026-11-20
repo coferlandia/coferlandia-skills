@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.0",
+  "profile_version": "1.1.0",
   "repository": "coferlandia/coferlandia-skills",
   "documentation": [
     "AGENTS.md",
@@ -64,6 +64,11 @@
         "id": "release-publisher",
         "command": "python -m unittest discover -s skills/ops/coferlandia-release-publisher/tests -p \"test_*.py\"",
         "purpose": "validate Release Publisher behavior"
+      },
+      {
+        "id": "deploy-skill",
+        "command": "python -m unittest discover -s skills/ops/coferlandia-deploy/tests -p \"test_*.py\"",
+        "purpose": "validate generic exact-release deployment and HOTFIX stabilization contracts"
       },
       {
         "id": "delivery-contracts",
@@ -139,5 +144,5 @@
     "profile_sensitive": true
   },
   "exceptions": [],
-  "fingerprint": "4220cac44505839f0a22ddce91dc511ad3b15f4db94929332c5526f5b65c1e39"
+  "fingerprint": "0f8ba59435eb5230e7cba0b93417497e32e2ed0e990c93f17a207962708dbc68"
 }
