@@ -57,3 +57,7 @@ Development, Qualification and Integration are separate responsibilities. Qualif
 Durable state defaults to managed GitHub comments/records with exact candidate identity. Controllers re-read current repository/GitHub state on every invocation. Chat history, old local results and superseded checks are never authority.
 
 Ordinary controller composition is left-to-right and exact. A controller verifies its own precondition and stops if it is not satisfied. No controller inserts a missing stage. The explicitly invoked `hotfix` controller is a declared higher-level orchestration surface and therefore owns only the emergency lifecycle described by `_protocol/delivery/HOTFIX.md`.
+
+## Integration work-item closeout
+
+`READY_FOR_MERGE` preserves ordinary completed-work behavior by defaulting to `Work-item closeout: CLOSE` when the optional field is absent. An explicitly authorized partial delivery may instead use `KEEP_OPEN` plus a durable closeout-authority reference for the same controlling work item. Qualification may transport that authority but never infer it from repository metadata. Integration revalidates it before merge, verifies the selected post-merge issue state idempotently, and keeps Project Done projection consistent with the disposition when that surface is supported. A `KEEP_OPEN` delivery never uses close/reopen as its normal mechanism.
