@@ -7,7 +7,7 @@ First-class Chat controllers maintained centrally by `coferlandia-skills`.
 | [`chat-coder`](./chat-coder.md) | Development | `chat coder`, `chat-coder`, `chat dev`, `chat-dev` | `READY_FOR_CI` for the Development stage; standalone `chat coder` continues by default through GitHub-native Qualification and Integration to `COMPLETE` |
 | [`chat-reviewer`](./chat-reviewer.md) | Independent Review | `chat reviewer`, `chat-reviewer` | `READY` or `NOT_READY` for the exact reviewed PR/branch delta |
 | [`ci`](./ci.md) | Qualification / GitHub-native | `ci`, `gh ci`, `github ci` | `READY_FOR_MERGE`, `WAITING_CI`, or precise failure/blocker state |
-| [`merge`](./merge.md) | Integration | `merge` | `COMPLETE`, `REQUALIFICATION_REQUIRED`, or `CLOSEOUT_BLOCKED` |
+| [`merge`](./merge.md) | Integration | `merge` | `COMPLETE`, `REQUALIFICATION_REQUIRED`, `CLOSEOUT_POLICY_CONFLICT`, or `CLOSEOUT_BLOCKED` |
 | [`chat-release`](./chat-release.md) | Release / GitHub-native | `chat release`, `chat-release` | `COMPLETE` or resumable release state |
 | [`hotfix`](./hotfix.md) | Explicit emergency remediation | `hotfix` | `HOTFIX_STABILIZED`, `HOTFIX_COMPLETE`, resumable state, or `HOTFIX_BLOCKED` |
 
@@ -21,7 +21,7 @@ Explicit `+` composition always takes precedence over the standalone default and
 
 Development Qualification and Release Qualification are separate responsibilities. `READY_FOR_CI`/`READY_FOR_MERGE` belong to a development candidate; `READY_FOR_RELEASE` belongs to one exact release candidate. Formal Commit -> Release publication mechanics remain owned by `coferlandia-release-publisher` and may be composed by a release controller.
 
-Integration closeout is explicit: after `merge` verifies that the qualified candidate reached the repository-approved authoritative target ref, it must verify the associated work item is closed, closing it directly when still open rather than depending on GitHub default-branch closing-keyword semantics. Failure to verify that closeout returns `CLOSEOUT_BLOCKED` instead of `COMPLETE`.
+Integration closeout is explicit and disposition-driven. `CLOSE` remains the compatible default for completed work items: after `merge` verifies that the qualified candidate reached the repository-approved authoritative target ref, it explicitly closes and verifies the associated work item rather than depending on GitHub closing-keyword behavior. An explicitly authorized partial delivery may carry `KEEP_OPEN`; Integration revalidates that authority, verifies the controlling work item remains open, and must not project it to Project Done. Invalid authority fails before merge as `CLOSEOUT_POLICY_CONFLICT`; inability to verify the selected post-merge disposition returns `CLOSEOUT_BLOCKED`.
 
 `hotfix` is intentionally a higher-level explicit emergency controller. It accepts an existing Issue or a free-form bug report, creates/reuses the primary work item, classifies `PERMANENT` versus `TEMPORARY_MITIGATION`, requires a permanent-fix follow-up Issue for temporary mitigations, and delegates Development/Qualification/Integration/publication plus repository-declared production deployment to approved owners. Exact HEALTHY deployment may establish `HOTFIX_STABILIZED` before broader post-deploy closeout reaches `HOTFIX_COMPLETE`. A normal bug report never implicitly selects the hotfix lane, and stage-scoped delegation to `chat-coder` does not activate the standalone Chat Coder default sequence.
 

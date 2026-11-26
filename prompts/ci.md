@@ -1,7 +1,7 @@
 ---
 name: ci
 description: "Generic Chat GitHub-native Qualification controller resolved directly, by explicit composition, or by the declared standalone Chat Coder default pipeline."
-version: "1.5.0"
+version: "1.5.1"
 stage: qualification
 status: active
 ---
@@ -130,7 +130,11 @@ A new candidate invalidates old qualification evidence. Do not switch to Local C
 
 ## Durable READY_FOR_MERGE
 
-Only after every current required GitHub-native gate is authoritative and allowed-GREEN for the exact effective candidate, create/update one idempotent managed PR comment per `_protocol/delivery/READY_FOR_MERGE.md` using:
+Only after every current required GitHub-native gate is authoritative and allowed-GREEN for the exact effective candidate, create/update one idempotent managed PR comment per `_protocol/delivery/READY_FOR_MERGE.md`.
+
+Qualification must not infer `KEEP_OPEN` from labels, titles, milestones, branch names, hierarchy, or conversational assumptions. The legacy/default disposition is `CLOSE`. When durable repository/supervisor authority explicitly requires the same controlling work item to remain open for this delivery, Qualification may transport that authority unchanged into the optional READY_FOR_MERGE closeout extension; it does not create or reinterpret the authority.
+
+Use:
 
 ```html
 <!-- coferlandia-ready-for-merge:v1 -->
@@ -151,6 +155,8 @@ Qualification evidence: <workflow/check/run identifiers and conclusions>
 Review Critical: 0
 Review Important: 0
 Next stage: Merge
+Work-item closeout: <optional CLOSE | KEEP_OPEN; absence defaults to CLOSE>
+Closeout authority: <required durable reference when KEEP_OPEN>
 ```
 
 Re-read PR/base/profile immediately before writing the handoff. If any identity changed, qualification is stale.

@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.22.1 (2026-11-26)
+
+### Chat prompts
+
+- `merge` 1.1.1 -> 1.1.2 adds explicit `CLOSE | KEEP_OPEN` work-item closeout disposition so an authorized partial delivery can preserve its controlling work item open while ordinary completed work keeps the existing close behavior.
+- `ci` 1.5.0 -> 1.5.1 transports durable `KEEP_OPEN` authority into READY_FOR_MERGE without inferring umbrella/partial semantics from repository metadata.
+
+### Repository and protocol
+
+- Extends READY_FOR_MERGE v1 compatibly with optional `Work-item closeout` and `Closeout authority` fields; absence remains equivalent to `CLOSE`.
+- Adds fail-closed `CLOSEOUT_POLICY_CONFLICT` before merge when `KEEP_OPEN` authority is missing, stale, ambiguous, mismatched or contradictory.
+- Makes both closeout paths idempotent and prohibits close/reopen as the normal partial-delivery mechanism.
+- Keeps GitHub Project projection separate: `KEEP_OPEN` must not project Done, and unsupported projection surfaces are reported explicitly rather than claimed as synchronized.
+
+### Plugin and packaging
+
+- Bumps the repository/plugin from v2.22.0 to v2.22.1 for the compatible Integration lifecycle correction.
+
+### Migration or compatibility
+
+- Existing READY_FOR_MERGE records and consumer repositories remain compatible because omitted closeout disposition retains the existing `CLOSE` behavior.
+- Consumers that vendor Chat delivery controllers should refresh `ci.md`, `merge.md`, READY_FOR_MERGE, and related catalog documentation together before using `KEEP_OPEN`.
+
 ## v2.22.0 (2026-11-20)
 
 ### Skills

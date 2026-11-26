@@ -71,6 +71,28 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("before any repository-declared Qualification activation", ready_ci)
         self.assertIn("same controlling work-item identity", ready_merge)
 
+    def test_merge_closeout_supports_authorized_partial_delivery(self):
+        ready_merge = (Path(__file__).parent / "READY_FOR_MERGE.md").read_text(encoding="utf-8")
+        merge_prompt = (ROOT / "prompts" / "merge.md").read_text(encoding="utf-8")
+        ci_prompt = (ROOT / "prompts" / "ci.md").read_text(encoding="utf-8")
+        prompt_index = (ROOT / "prompts" / "INDEX.md").read_text(encoding="utf-8")
+
+        self.assertIn("Work-item closeout: CLOSE | KEEP_OPEN", ready_merge)
+        self.assertIn("Closeout authority:", ready_merge)
+        self.assertIn("absence", ready_merge.lower())
+        self.assertIn("KEEP_OPEN", merge_prompt)
+        self.assertIn("must remain open", merge_prompt)
+        self.assertIn("must not", merge_prompt)
+        self.assertIn("Project Done", merge_prompt)
+        self.assertIn("CLOSEOUT_POLICY_CONFLICT", merge_prompt)
+        self.assertIn("absence means `CLOSE`", merge_prompt)
+        self.assertIn("already closed", merge_prompt)
+        self.assertIn("already open", merge_prompt)
+        self.assertIn("must not infer", ci_prompt)
+        self.assertIn("Work-item closeout", ci_prompt)
+        self.assertIn("KEEP_OPEN", prompt_index)
+        self.assertIn("disposition", prompt_index.lower())
+
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
         self.assertIn("Development PR head changes", text)
