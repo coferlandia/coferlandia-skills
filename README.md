@@ -57,12 +57,12 @@ ci (GITHUB_NATIVE Qualification)
 READY_FOR_MERGE (internal durable handoff)
   |
   v
-merge (Integration + Issue closeout)
+merge (Integration + explicit work-item closeout policy)
   |
 COMPLETE
 ```
 
-Standalone `chat coder` / `chat-coder` is the simple GitHub-native path: the prompt registry resolves Development -> `ci` -> `merge` before execution starts, so the user does not need separate CI and merge commands. The stages keep their existing authority boundaries and durable handoffs. Use `chat dev` / `chat-dev` to stop after Development at `READY_FOR_CI`, or compose explicitly (for example `chat coder + local ci + merge`) when another Qualification surface is intended. Explicit composition always overrides the standalone default, and no strategy silently falls back to another.
+Standalone `chat coder` / `chat-coder` is the simple GitHub-native path: the prompt registry resolves Development -> `ci` -> `merge` before execution starts, so the user does not need separate CI and merge commands. The stages keep their existing authority boundaries and durable handoffs. Integration closes ordinary completed work items by default; an explicitly authorized partial delivery can instead preserve its controlling work item open without marking it Done. Use `chat dev` / `chat-dev` to stop after Development at `READY_FOR_CI`, or compose explicitly (for example `chat coder + local ci + merge`) when another Qualification surface is intended. Explicit composition always overrides the standalone default, and no strategy silently falls back to another.
 
 `chat reviewer` / `chat-reviewer` is a separate explicit independent-review surface. It evaluates one exact pull-request or branch delta against its authoritative contract, records the reviewed head/base identity, and returns a concise READY/NOT_READY verdict without modifying implementation state or creating new validation evidence.
 
@@ -164,11 +164,7 @@ AGENTS.md        Entry point for agents
 <!-- coferlandia-latest-release:start -->
 ## Latest release
 
-**v2.22.0 — 2026-11-20**
-
-| Changed skill | Version | Main change |
-|---|---:|---|
-| coferlandia-deploy | 1.0 | Adds exact immutable-release deployment delegation through a repository-declared authority, with expected-SHA binding, HEALTHY no-op re-entry, terminal evidence, and no provider-state duplication. |
+**v2.22.1 — 2026-11-26**
 
 [Read the complete release notes](./RELEASE-NOTES.md)
 <!-- coferlandia-latest-release:end -->
