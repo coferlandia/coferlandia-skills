@@ -84,7 +84,7 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("must not", merge_prompt)
         self.assertIn("Project Done", merge_prompt)
         self.assertIn("CLOSEOUT_POLICY_CONFLICT", merge_prompt)
-        self.assertIn("absence means \`CLOSE\`", merge_prompt)
+        self.assertIn("absence means `CLOSE`", merge_prompt)
         self.assertIn("already closed", merge_prompt)
         self.assertIn("already open", merge_prompt)
         self.assertIn("must not infer", ci_prompt)
