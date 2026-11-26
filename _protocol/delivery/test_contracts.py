@@ -75,6 +75,7 @@ class DeliveryContractTests(unittest.TestCase):
         ready_merge = (Path(__file__).parent / "READY_FOR_MERGE.md").read_text(encoding="utf-8")
         merge_prompt = (ROOT / "prompts" / "merge.md").read_text(encoding="utf-8")
         ci_prompt = (ROOT / "prompts" / "ci.md").read_text(encoding="utf-8")
+        prompt_index = (ROOT / "prompts" / "INDEX.md").read_text(encoding="utf-8")
 
         self.assertIn("Work-item closeout: CLOSE | KEEP_OPEN", ready_merge)
         self.assertIn("Closeout authority:", ready_merge)
@@ -89,6 +90,8 @@ class DeliveryContractTests(unittest.TestCase):
         self.assertIn("already open", merge_prompt)
         self.assertIn("must not infer", ci_prompt)
         self.assertIn("Work-item closeout", ci_prompt)
+        self.assertIn("KEEP_OPEN", prompt_index)
+        self.assertIn("disposition", prompt_index.lower())
 
     def test_requalification_matrix_is_fail_closed(self):
         text = (Path(__file__).parent / "REQUALIFICATION.md").read_text(encoding="utf-8")
